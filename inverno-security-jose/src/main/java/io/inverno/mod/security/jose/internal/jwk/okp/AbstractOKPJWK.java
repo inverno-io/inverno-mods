@@ -24,7 +24,6 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * <p>
@@ -62,7 +61,7 @@ public abstract class AbstractOKPJWK<A extends PublicKey, B extends PrivateKey> 
 	/**
 	 * The private key.
 	 */
-	protected Optional<B> privateKey;
+	protected B privateKey;
 	
 	/**
 	 * <p>
@@ -136,7 +135,7 @@ public abstract class AbstractOKPJWK<A extends PublicKey, B extends PrivateKey> 
 	 * @param certificate an X.509 certificate
 	 */
 	public AbstractOKPJWK(OKPCurve curve, String x, String d, X509Certificate certificate) {
-		this(curve, x, null, null, certificate, certificate != null);
+		this(curve, x, d, null, certificate, certificate != null);
 	}
 	
 	/**
@@ -157,7 +156,7 @@ public abstract class AbstractOKPJWK<A extends PublicKey, B extends PrivateKey> 
 		this.curve = curve;
 		this.x = x;
 		this.d = d;
-		this.privateKey = key != null ? Optional.of(key) : null;
+		this.privateKey = key;
 	}
 	
 	@Override

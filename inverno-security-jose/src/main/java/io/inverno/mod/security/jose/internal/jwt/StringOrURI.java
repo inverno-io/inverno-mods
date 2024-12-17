@@ -74,7 +74,7 @@ public class StringOrURI {
 	 * Returns the URI
 	 * </p>
 	 * 
-	 * @return 
+	 * @return the URI
 	 */
 	public URI asURI() {
 		if(this.uri == null) {

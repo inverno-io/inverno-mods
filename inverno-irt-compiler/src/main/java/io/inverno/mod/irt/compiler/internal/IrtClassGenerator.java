@@ -66,13 +66,11 @@ import java.time.ZonedDateTime;
 
 /**
  * <p>
- * A {@link TemplateSetInfoVisitor} implementation used to generate a template
- * set class from a {@link TemplateSetInfo} extracted from an IRT source file.
+ * A {@link TemplateSetInfoVisitor} implementation used to generate a template set class from a {@link TemplateSetInfo} extracted from an IRT source file.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- * 
  */
 public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, IrtClassGenerationContext> {
 
@@ -160,7 +158,7 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 			return irtClass;
 		}
 		else if(context.getMode() == IrtClassGenerationContext.GenerationMode.TEMPLATE_SET_INTERFACES) {
-			StringBuilder templateSetInterfaces = Arrays.stream(context.getOptions().getModes())
+			return Arrays.stream(context.getOptions().getModes())
 				.map(ExtendedTemplateMode::getStaticContentType)
 				.distinct()
 				.map(staticContentType -> {
@@ -186,11 +184,9 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 					return templateSetInterface;
 				})
 				.collect(context.joining(System.lineSeparator() + System.lineSeparator()));
-			
-			return templateSetInterfaces;
 		}
 		else if(context.getMode() == IrtClassGenerationContext.GenerationMode.TEMPLATE_SET_CLASSES) {
-			StringBuilder templateSetClasses = Arrays.stream(context.getOptions().getModes())
+			return Arrays.stream(context.getOptions().getModes())
 				.map(mode -> {
 					StringBuilder templateSetModeClass = new StringBuilder();
 					if(mode == ExtendedTemplateMode.STREAM) {
@@ -230,8 +226,6 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 					return templateSetModeClass;
 				})
 				.collect(context.joining(System.lineSeparator() + System.lineSeparator()));
-			
-			return templateSetClasses;
 		}
 		else if(context.getMode() == IrtClassGenerationContext.GenerationMode.RENDERER_INTERFACE) {
 			StringBuilder templateSetInterface = new StringBuilder();
@@ -243,7 +237,7 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 			return templateSetInterface;
 		}
 		else if(context.getMode() == IrtClassGenerationContext.GenerationMode.IRT_RENDERER_METHODS) {
-			StringBuilder rendererMethods = Arrays.stream(context.getOptions().getModes()).map(mode -> {
+			return Arrays.stream(context.getOptions().getModes()).map(mode -> {
 				final IrtClassGenerationContext contextWithTemplateMode = context.withTemplateMode(mode);
 				
 				StringBuilder rendererMethod = new StringBuilder();
@@ -281,8 +275,6 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 				
 				return rendererMethod;
 			}).collect(context.joining(System.lineSeparator() + System.lineSeparator()));
-			
-			return rendererMethods;
 		}
 		return new StringBuilder();
 	}
@@ -341,7 +333,7 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 
 			if(info.getSelect().isPresent()) {
 				templateMethod.append(this.visit(info.getSelect().get(), contextWithTemplate.withIndentDepthAdd(1)));
-				templateMethod.append("(").append(info.getParameters().values().stream().map(formalParameterInfo -> formalParameterInfo.getName()).collect(Collectors.joining(", "))).append(");").append(System.lineSeparator());
+				templateMethod.append("(").append(info.getParameters().values().stream().map(ParameterInfo::getName).collect(Collectors.joining(", "))).append(");").append(System.lineSeparator());
 			}
 			else if(info.getStatements().isPresent()) {
 				StatementInfo[] statements = info.getStatements().get();
@@ -349,7 +341,7 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 				templateMethod.append(context.indent(1)).append("return ");
 				
 				templateMethod.append(TemplateSet.class.getCanonicalName()).append(".COMPLETED_FUTURE").append(System.lineSeparator());
-				templateMethod.append(Arrays.asList(statements).stream().filter(statementInfo -> !(statementInfo instanceof CommentInfo)).map(statementInfo -> new StringBuilder().append(context.indent(2)).append(".thenCompose(_").append(info.hashCode()).append(" -> ").append(this.visit(statementInfo, contextWithTemplate.withIndentDepthAdd(2))).append(")").append(this.visit((LocatableInfo)statementInfo, context))).collect(context.joining(System.lineSeparator())));
+				templateMethod.append(Arrays.stream(statements).filter(statementInfo -> !(statementInfo instanceof CommentInfo)).map(statementInfo -> new StringBuilder().append(context.indent(2)).append(".thenCompose(_").append(info.hashCode()).append(" -> ").append(this.visit(statementInfo, contextWithTemplate.withIndentDepthAdd(2))).append(")").append(this.visit((LocatableInfo)statementInfo, context))).collect(context.joining(System.lineSeparator())));
 				templateMethod.append(System.lineSeparator()).append(context.indent(2)).append(";").append(System.lineSeparator());
 			}
 			else {
@@ -386,7 +378,7 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 				
 				renderMethod.append(context.indent(1)).append("return tpl.template");
 				info.getName().ifPresent(templateName -> renderMethod.append("_").append(templateName));
-				renderMethod.append("(").append(info.getParameters().keySet().stream().collect(Collectors.joining(", "))).append(").thenApply(_").append(info.hashCode()).append(" -> tpl.getOutput());").append(System.lineSeparator());
+				renderMethod.append("(").append(String.join(", ", info.getParameters().keySet())).append(").thenApply(_").append(info.hashCode()).append(" -> tpl.getOutput());").append(System.lineSeparator());
 				renderMethod.append(context.indent(0)).append("}");
 			}
 			else if(context.getTemplateMode() == ExtendedTemplateMode.BYTEBUF) {
@@ -399,7 +391,7 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 				
 				renderMethod.append(context.indent(1)).append("return tpl.template");
 				info.getName().ifPresent(templateName -> renderMethod.append("_").append(templateName));
-				renderMethod.append("(").append(info.getParameters().keySet().stream().collect(Collectors.joining(", "))).append(").thenApply(_").append(info.hashCode()).append(" -> tpl.getOutput());").append(System.lineSeparator());
+				renderMethod.append("(").append(String.join(", ", info.getParameters().keySet())).append(").thenApply(_").append(info.hashCode()).append(" -> tpl.getOutput());").append(System.lineSeparator());
 				renderMethod.append(context.indent(0)).append("}");
 			}
 			else {
@@ -412,12 +404,12 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 				if(context.getTemplateMode() == ExtendedTemplateMode.PUBLISHER_STRING || context.getTemplateMode() == ExtendedTemplateMode.PUBLISHER_BYTEBUF) {
 					renderMethod.append(context.indent(1)).append("return tpl.getSink().asFlux().doOnSubscribe(_").append(info.hashCode()).append(" -> tpl.template");
 					info.getName().ifPresent(templateName -> renderMethod.append("_").append(templateName));
-					renderMethod.append("(").append(info.getParameters().keySet().stream().collect(Collectors.joining(", "))).append(").thenRun(tpl.getSink()::tryEmitComplete));").append(System.lineSeparator());
+					renderMethod.append("(").append(String.join(", ", info.getParameters().keySet())).append(").thenRun(tpl.getSink()::tryEmitComplete));").append(System.lineSeparator());
 				}
 				else {
 					renderMethod.append(context.indent(1)).append("return tpl.template");
 					info.getName().ifPresent(templateName -> renderMethod.append("_").append(templateName));
-					renderMethod.append("(").append(info.getParameters().keySet().stream().collect(Collectors.joining(", "))).append(").thenApply(_").append(info.hashCode()).append(" -> tpl.getOutput());").append(System.lineSeparator());
+					renderMethod.append("(").append(String.join(", ", info.getParameters().keySet())).append(").thenApply(_").append(info.hashCode()).append(" -> tpl.getOutput());").append(System.lineSeparator());
 				}
 				renderMethod.append(context.indent(0)).append("}");
 			}
@@ -433,7 +425,7 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 			StringBuilder result = new StringBuilder();
 			result.append(context.indent(0)).append("return ").append(info.getTemplateSetName().map(nameInfo -> this.visit(nameInfo, context).append(".").append(StringUtils.capitalize(context.getStaticContentType().toString().toLowerCase())).append("TemplateSet").append(".super")).orElse(new StringBuilder("this"))).append(".template");
 			info.getTemplateName().ifPresent(templateName -> result.append("_").append(templateName));
-			result.append("(").append(context.getTemplateInfo().getParameters().keySet().stream().collect(Collectors.joining(", "))).append(");").append(this.visit((LocatableInfo)info, context));
+			result.append("(").append(String.join(", ", context.getTemplateInfo().getParameters().keySet())).append(");").append(this.visit((LocatableInfo)info, context));
 			return result;
 		}
 		return new StringBuilder();
@@ -545,7 +537,7 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 				result.append(context.indent(1)).append("return ");
 				
 				result.append(TemplateSet.class.getCanonicalName()).append(".COMPLETED_FUTURE").append(System.lineSeparator());
-				result.append(Arrays.asList(statements).stream().filter(statementInfo -> !(statementInfo instanceof CommentInfo)).map(statementInfo -> new StringBuilder().append(context.indent(2)).append(".thenCompose(_").append(info.hashCode()).append(" -> ").append(this.visit(statementInfo, context.withIndentDepthAdd(2))).append(")").append(this.visit((LocatableInfo)statementInfo, context))).collect(context.joining(System.lineSeparator())));
+				result.append(Arrays.stream(statements).filter(statementInfo -> !(statementInfo instanceof CommentInfo)).map(statementInfo -> new StringBuilder().append(context.indent(2)).append(".thenCompose(_").append(info.hashCode()).append(" -> ").append(this.visit(statementInfo, context.withIndentDepthAdd(2))).append(")").append(this.visit((LocatableInfo)statementInfo, context))).collect(context.joining(System.lineSeparator())));
 				result.append(System.lineSeparator()).append(context.indent(2)).append(";").append(System.lineSeparator());
 			}
 			else {
@@ -751,7 +743,7 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 			StringBuilder result = new StringBuilder();
 			if(info.getName().isPresent()) {
 				// In this case the name is necessarily of the form Type.field.field.method: this is regular java unlike name in the value context
-				result.append(Arrays.stream(info.getName().get().getParts()).collect(Collectors.joining(".")));
+				result.append(String.join(".", info.getName().get().getParts()));
 				result.append("(");
 				info.getArguments().ifPresent(pipeArgs -> result.append(Arrays.stream(pipeArgs).map(pipeArgInfo -> this.visit(pipeArgInfo, context)).collect(context.joining(", "))));
 				result.append(")");
@@ -768,13 +760,13 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 	 * <p>
 	 * Visits locatable info.
 	 * </p>
-	 * 
-	 * @param info the info to visit
-	 * @param p    a visitor parameter
-	 * 
+	 *
+	 * @param info    the info to visit
+	 * @param context a visitor parameter
+	 *
 	 * @return a visitor result
 	 */
-	public StringBuilder visit(LocatableInfo info, IrtClassGenerationContext p) {
+	public StringBuilder visit(LocatableInfo info, IrtClassGenerationContext context) {
 		return new StringBuilder().append(" // ").append(info.toString());
 	}
 }

@@ -15,10 +15,9 @@
  */
 package io.inverno.mod.configuration.compiler.spi;
 
-import javax.lang.model.type.DeclaredType;
-
 import io.inverno.core.compiler.spi.BeanQualifiedName;
 import io.inverno.core.compiler.spi.Info;
+import javax.lang.model.type.DeclaredType;
 
 /**
  * <p>

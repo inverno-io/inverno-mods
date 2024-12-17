@@ -35,7 +35,7 @@ import java.util.Optional;
  * Http/1.x {@link Request} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.10
  */
 class Http1xRequest extends AbstractRequest<Http1xRequestHeaders, Http1xRequestBody> {
@@ -57,7 +57,7 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders, Http1xRequestB
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 * @param connection            the Http/1.x connection
-	 * @param request               the originating Http request
+	 * @param request               the originating HTTP request
 	 */
 	public Http1xRequest(
 			HeaderService headerService,

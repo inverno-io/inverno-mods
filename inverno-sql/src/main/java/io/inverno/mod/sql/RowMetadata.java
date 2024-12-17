@@ -41,7 +41,7 @@ public interface RowMetadata {
 	 * 
 	 * @return a list of column metadata
 	 */
-	Collection<ColumnMetadata> getColumnMetadatas();
+	Collection<ColumnMetadata> getColumnMetadata();
 	
 	/**
 	 * <p>
@@ -56,8 +56,7 @@ public interface RowMetadata {
 	
 	/**
 	 * <p>
-	 * Returns the column metadata of the column identified by the specified name in
-	 * the row.
+	 * Returns the column metadata of the column identified by the specified name in the row.
 	 * </p>
 	 * 
 	 * @param name the name of the column in the row

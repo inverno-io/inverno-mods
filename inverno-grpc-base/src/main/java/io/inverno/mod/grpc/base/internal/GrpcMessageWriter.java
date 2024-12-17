@@ -32,7 +32,7 @@ import reactor.core.publisher.Flux;
  * A gRPC message writer used to transform gRPC message publishers into raw data publishers.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  * 
  * @param <A> the message type

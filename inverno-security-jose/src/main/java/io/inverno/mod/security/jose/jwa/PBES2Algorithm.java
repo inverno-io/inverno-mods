@@ -110,9 +110,9 @@ public enum PBES2Algorithm implements JWAAlgorithm<PBES2JWK> {
 	 * @param cipherFactory     the JWA cipher factory
 	 * @param jcaAlg            the JCA algorithm
 	 * @param jcaEncryptionAlg  the JCA encryption algorithm
-	 * @param keyLength         the encryption key length in bytes
+	 * @param encKeyLength      the encryption key length in bytes
 	 */
-	private PBES2Algorithm(String alg, BiFunction<PBES2JWK, PBES2Algorithm, JWASigner> signerFactory, BiFunction<PBES2JWK, PBES2Algorithm, JWAKeyManager> keyManagerFactory, BiFunction<PBES2JWK, PBES2Algorithm, JWACipher> cipherFactory, String jcaAlg, String jcaEncryptionAlg, int encKeyLength) {
+	PBES2Algorithm(String alg, BiFunction<PBES2JWK, PBES2Algorithm, JWASigner> signerFactory, BiFunction<PBES2JWK, PBES2Algorithm, JWAKeyManager> keyManagerFactory, BiFunction<PBES2JWK, PBES2Algorithm, JWACipher> cipherFactory, String jcaAlg, String jcaEncryptionAlg, int encKeyLength) {
 		this.alg = alg;
 		this.signerFactory = signerFactory;
 		this.keyManagerFactory = keyManagerFactory;

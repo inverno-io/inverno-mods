@@ -35,7 +35,7 @@ import java.util.function.Supplier;
  * Generic {@link GrpcMessageCompressorService} bean.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 @Bean( name = "messageCompressorService")
@@ -123,7 +123,7 @@ public class GenericGrpcMessageCompressorService implements GrpcMessageCompresso
 	 * @see GenericGrpcMessageCompressorService
 	 */
 	@Bean( name = "messageCompressors" )
-	public static interface MessageCompressorsSocket extends Supplier<List<GrpcMessageCompressor>> {
+	public interface MessageCompressorsSocket extends Supplier<List<GrpcMessageCompressor>> {
 
 	}
 }

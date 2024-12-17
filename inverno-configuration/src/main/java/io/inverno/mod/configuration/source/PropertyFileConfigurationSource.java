@@ -32,7 +32,7 @@ import org.apache.logging.log4j.Logger;
 import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceException;
-import io.inverno.mod.configuration.AbstractHashConfigurationSource;
+import io.inverno.mod.configuration.internal.AbstractHashConfigurationSource;
 import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.DefaultingStrategy;
@@ -126,7 +126,7 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 		super(decoder);
 		this.propertyInput = propertyInput;
 	}
-	
+
 	/**
 	 * <p>
 	 * Creates a property file configuration source with the specified resource
@@ -153,24 +153,54 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 
 	/**
 	 * <p>
-	 * Creates a property file configuration source from the specified initial source and using the specified defaulting strategy.
+	 * Creates a property file configuration source from the specified original source which applies the specified default parameters and uses the specified defaulting strategy.
 	 * </p>
 	 *
-	 * @param initial            the initial configuration source.
+	 * @param original           the original configuration source
+	 * @param defaultParameters  the default parameters to apply
+	 */
+	private PropertyFileConfigurationSource(PropertyFileConfigurationSource original, List<ConfigurationKey.Parameter> defaultParameters) {
+		this(original, defaultParameters, original.defaultingStrategy);
+	}
+
+	/**
+	 * <p>
+	 * Creates a property file configuration source from the specified original source which applies the specified default parameters and uses the specified defaulting strategy.
+	 * </p>
+	 *
+	 * @param original           the original configuration source
 	 * @param defaultingStrategy a defaulting strategy
 	 */
-	private PropertyFileConfigurationSource(PropertyFileConfigurationSource initial, DefaultingStrategy defaultingStrategy) {
-		super(initial, defaultingStrategy);
-		this.propertyFile = initial.propertyFile;
-		this.propertyResource = initial.propertyResource;
-		this.propertyInput = initial.propertyInput;
-		this.propertiesTTL = initial.propertiesTTL;
-		this.properties = initial.properties;
+	private PropertyFileConfigurationSource(PropertyFileConfigurationSource original, DefaultingStrategy defaultingStrategy) {
+		this(original, original.defaultParameters, defaultingStrategy);
 	}
-	
+
+	/**
+	 * <p>
+	 * Creates a property file configuration source from the specified original source which applies the specified default parameters and uses the specified defaulting strategy.
+	 * </p>
+	 *
+	 * @param original           the original configuration source
+	 * @param defaultParameters  the default parameters to apply
+	 * @param defaultingStrategy a defaulting strategy
+	 */
+	private PropertyFileConfigurationSource(PropertyFileConfigurationSource original, List<ConfigurationKey.Parameter> defaultParameters, DefaultingStrategy defaultingStrategy) {
+		super(original, defaultParameters, defaultingStrategy);
+		this.propertyFile = original.propertyFile;
+		this.propertyResource = original.propertyResource;
+		this.propertyInput = original.propertyInput;
+		this.propertiesTTL = original.propertiesTTL;
+		this.properties = original.properties;
+	}
+
+	@Override
+	public PropertyFileConfigurationSource withParameters(List<ConfigurationKey.Parameter> parameters) throws IllegalArgumentException {
+		return new PropertyFileConfigurationSource(this, parameters);
+	}
+
 	@Override
 	public PropertyFileConfigurationSource withDefaultingStrategy(DefaultingStrategy defaultingStrategy) {
-		return new PropertyFileConfigurationSource(this.initial != null ? this.initial : this, defaultingStrategy);
+		return new PropertyFileConfigurationSource(this, defaultingStrategy);
 	}
 	
 	/**
@@ -236,7 +266,7 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 					return Mono.just(properties.entrySet().stream().map(entry -> {
 							try {
 								ConfigurationOptionParser<PropertyFileConfigurationSource> parser = new ConfigurationOptionParser<>(new StringProvider(entry.getKey().toString()));
-								return new GenericConfigurationProperty<ConfigurationKey, PropertyFileConfigurationSource, String>( parser.StartKey(), entry.getValue().toString(), this);
+								return new GenericConfigurationProperty<>( parser.StartKey(), entry.getValue().toString(), this);
 							} 
 							catch (ParseException e) {
 								LOGGER.warn(() -> "Ignoring property " + entry.getKey() + " after parsing error: " + e.getMessage());

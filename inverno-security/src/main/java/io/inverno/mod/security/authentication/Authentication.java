@@ -46,7 +46,7 @@ import java.util.Optional;
  * 
  * <p>
  * The {@link AccessController} used to control the access to protected services and resources for the authenticated entity can be resolved from the authentication using an
- * {@link AccessControllerResolver}. There is no guarantee that an access controller can be resolved for an authenticated entity based on the authentication, this bascially depends on the application
+ * {@link AccessControllerResolver}. There is no guarantee that an access controller can be resolved for an authenticated entity based on the authentication, this basically depends on the application
  * and more specifically on the chosen access control strategy.
  * </p>
  * 
@@ -96,7 +96,7 @@ public interface Authentication {
 	 * checking whether an entity has been authenticated should be avoided.
 	 * </p>
 	 * 
-	 * @return an granted authentication
+	 * @return a granted authentication
 	 */
 	static Authentication granted() {
 		return GenericAuthentication.GRANTED;
@@ -137,7 +137,7 @@ public interface Authentication {
 	 * exposed by {@link #getCause() }.
 	 * </p>
 	 * 
-	 * @return true if the the authentication is authenticated, false otherwise
+	 * @return true if the authentication is authenticated, false otherwise
 	 */
 	@JsonProperty( "authenticated" )
 	boolean isAuthenticated();
@@ -155,7 +155,7 @@ public interface Authentication {
 	 */
 	@JsonProperty( "anonymous" )
 	default boolean isAnonymous() {
-		return !this.isAuthenticated() && !this.getCause().isPresent();
+		return !this.isAuthenticated() && this.getCause().isEmpty();
 	}
 
 	/**

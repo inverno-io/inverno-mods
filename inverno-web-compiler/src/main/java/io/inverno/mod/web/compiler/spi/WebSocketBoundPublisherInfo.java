@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.web.compiler.spi;
 
+import io.inverno.core.compiler.spi.ReporterInfo;
 import io.netty.buffer.ByteBuf;
 import javax.lang.model.type.TypeMirror;
 import org.reactivestreams.Publisher;
@@ -29,7 +30,7 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public interface WebSocketBoundPublisherInfo {
+public interface WebSocketBoundPublisherInfo extends ReporterInfo {
 	
 	/**
 	 * <p>

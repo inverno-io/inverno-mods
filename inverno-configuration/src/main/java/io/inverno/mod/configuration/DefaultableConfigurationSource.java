@@ -29,13 +29,8 @@ package io.inverno.mod.configuration;
  * @since 1.5
  * 
  * @see DefaultingStrategy
- * 
- * @param <A> source specific query type
- * @param <B> source specific executable query type
- * @param <C> source specific list query type
- * @param <D> defaulting strategy type
  */
-public interface DefaultableConfigurationSource<A extends ConfigurationQuery<A, B>, B extends ExecutableConfigurationQuery<A, B>, C extends ListConfigurationQuery<C>, D extends DefaultableConfigurationSource<A, B, C, D>> extends ConfigurationSource<A, B, C> {
+public interface DefaultableConfigurationSource extends ConfigurationSource {
 	
 	/**
 	 * <p>
@@ -46,14 +41,5 @@ public interface DefaultableConfigurationSource<A extends ConfigurationQuery<A, 
 	 * 
 	 * @return a new defaultable configuration source
 	 */
-	D withDefaultingStrategy(DefaultingStrategy defaultingStrategy);
-	
-	/**
-	 * <p>
-	 * Returns the original configuration source.
-	 * </p>
-	 * 
-	 * @return a configuration source
-	 */
-	D unwrap();
+	DefaultableConfigurationSource withDefaultingStrategy(DefaultingStrategy defaultingStrategy);
 }

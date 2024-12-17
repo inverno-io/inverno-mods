@@ -38,7 +38,7 @@ import reactor.core.publisher.Flux;
 
 /**
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 public class MultipartFormDataBodyEncoderTest {
 

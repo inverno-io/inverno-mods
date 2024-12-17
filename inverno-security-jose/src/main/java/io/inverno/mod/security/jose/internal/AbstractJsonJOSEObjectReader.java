@@ -91,7 +91,7 @@ public abstract class AbstractJsonJOSEObjectReader<A, B extends JsonJOSEObject<A
 	 * @param jwkService            a JWK service
 	 * @param type                  the expected payload type
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public AbstractJsonJOSEObjectReader(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type) {
 		this.mapper = mapper;
 		this.dataConversionService = dataConversionService;

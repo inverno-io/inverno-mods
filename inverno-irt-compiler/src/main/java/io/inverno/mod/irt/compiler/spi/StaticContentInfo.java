@@ -17,17 +17,15 @@ package io.inverno.mod.irt.compiler.spi;
 
 /**
  * <p>
- * A static content info corresponds to a static content statement a template
- * declaration in a template set source file.
+ * A static content info corresponds to a static content statement a template declaration in a template set source file.
  * </p>
- * 
+ *
  * <p>
  * Static content specifies static content to render unprocessed.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- * 
  */
 public interface StaticContentInfo extends StatementInfo {
 
@@ -35,7 +33,7 @@ public interface StaticContentInfo extends StatementInfo {
 	 * <p>
 	 * Returns the static content.
 	 * </p>
-	 * 
+	 *
 	 * @return a string
 	 */
 	String getContent();

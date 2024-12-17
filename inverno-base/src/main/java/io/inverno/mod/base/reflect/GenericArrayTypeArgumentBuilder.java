@@ -37,21 +37,19 @@ import java.util.function.Consumer;
  */
 class GenericArrayTypeArgumentBuilder<A> implements ArrayTypeArgumentBuilder<A> {
 
-	private A parentBuilder;
+	private final A parentBuilder;
 
-	private Consumer<Type> typeInjector;
+	private final Consumer<Type> typeInjector;
 	
 	private Type componentType;
 	
 	/**
 	 * <p>
-	 * Creates a generic array type argument builder with the specified parent
-	 * builder and resulting type injector.
+	 * Creates a generic array type argument builder with the specified parent builder and resulting type injector.
 	 * </p>
 	 * 
 	 * @param parentBuilder the parent builder
-	 * @param typeInjector  the resulting type injector to invoke when the builder
-	 *                      is finalized.
+	 * @param typeInjector  the resulting type injector to invoke when the builder is finalized.
 	 */
 	public GenericArrayTypeArgumentBuilder(A parentBuilder, Consumer<Type> typeInjector) {
 		this.parentBuilder = parentBuilder;

@@ -31,7 +31,7 @@ import reactor.core.publisher.Sinks;
  * HTTP/2 {@link Exchange} implementation representing an upgraded H2C exchange.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @see Http1xUpgradingExchange
@@ -44,8 +44,9 @@ public class Http2UpgradedExchange<A extends ExchangeContext> extends AbstractHt
 	 * <p>
 	 * Creates an upgraded HTTP/2 exchange.
 	 * </p>
-	 * 
-	 * @param configuration      the HTTP client configurartion
+	 *
+	 * @param state              the state
+	 * @param configuration      the HTTP client configuration
 	 * @param sink               the exchange sink
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
@@ -54,6 +55,7 @@ public class Http2UpgradedExchange<A extends ExchangeContext> extends AbstractHt
 	 * @param request            the Http/2 request
 	 */
 	public Http2UpgradedExchange(
+			Object state,
 			HttpClientConfiguration configuration, 
 			Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink, 
 			HeaderService headerService, 
@@ -62,7 +64,7 @@ public class Http2UpgradedExchange<A extends ExchangeContext> extends AbstractHt
 			Http2ConnectionStream connectionStream, 
 			HttpConnectionRequest request
 		) {
-		super(configuration, sink, headerService, parameterConverter, context, connectionStream, request);
+		super(state, configuration, sink, headerService, parameterConverter, context, connectionStream, request);
 	}
 
 	@Override

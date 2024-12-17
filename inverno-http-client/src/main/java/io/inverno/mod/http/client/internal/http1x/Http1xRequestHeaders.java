@@ -24,6 +24,7 @@ import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import io.inverno.mod.http.client.internal.AbstractRequestHeaders;
 import io.inverno.mod.http.client.internal.EndpointRequestHeaders;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,7 +36,7 @@ import java.util.function.Consumer;
  * Http/1.x {@link OutboundRequestHeaders} implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 class Http1xRequestHeaders extends AbstractRequestHeaders<LinkedHttpHeaders> {
@@ -75,6 +76,22 @@ class Http1xRequestHeaders extends AbstractRequestHeaders<LinkedHttpHeaders> {
 	}
 
 	@Override
+	public OutboundRequestHeaders accept(String accept) {
+		this.endpointHeaders.accept(accept);
+		return this;
+	}
+
+	@Override
+	public String getAccept() {
+		return this.endpointHeaders.getAccept();
+	}
+
+	@Override
+	public Headers.Accept getAcceptHeader() {
+		return this.endpointHeaders.getAcceptHeader();
+	}
+
+	@Override
 	public Http1xRequestHeaders contentLength(long contentLength) {
 		this.endpointHeaders.contentLength(contentLength);
 		return this;
@@ -103,6 +120,18 @@ class Http1xRequestHeaders extends AbstractRequestHeaders<LinkedHttpHeaders> {
 	}
 
 	@Override
+	public <T> Http1xRequestHeaders addParameter(CharSequence name, T value) {
+		this.endpointHeaders.addParameter(name, value);
+		return this;
+	}
+
+	@Override
+	public <T> OutboundRequestHeaders addParameter(CharSequence name, T value, Type type) {
+		this.endpointHeaders.addParameter(name, value, type);
+		return this;
+	}
+
+	@Override
 	public Http1xRequestHeaders add(Header... headers) {
 		this.endpointHeaders.add(headers);
 		return this;
@@ -111,6 +140,18 @@ class Http1xRequestHeaders extends AbstractRequestHeaders<LinkedHttpHeaders> {
 	@Override
 	public Http1xRequestHeaders set(CharSequence name, CharSequence value) {
 		this.endpointHeaders.set(name, value);
+		return this;
+	}
+
+	@Override
+	public <T> Http1xRequestHeaders setParameter(CharSequence name, T value) {
+		this.endpointHeaders.setParameter(name, value);
+		return this;
+	}
+
+	@Override
+	public <T> OutboundRequestHeaders setParameter(CharSequence name, T value, Type type) {
+		this.endpointHeaders.setParameter(name, value, type);
 		return this;
 	}
 

@@ -31,7 +31,7 @@ import reactor.core.publisher.Mono;
  * It is basically used to buffer outbound data before sending them in order to avoid small data chunk and optimize network performances.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class OutboundDataSequencer implements Function<Flux<ByteBuf>, Flux<ByteBuf>> {
@@ -107,21 +107,18 @@ public class OutboundDataSequencer implements Function<Flux<ByteBuf>, Flux<ByteB
 				}
 				return buffer;
 			})
-			.concatWith(Flux.defer(() -> {
-				return Mono.justOrEmpty(this.retainedBuffer)
-					.flatMapIterable(buffer -> {
-						return (Iterable<ByteBuf>) () -> new Iterator<ByteBuf>() {
-							@Override
-							public boolean hasNext() {
-								return buffer.isReadable();
-							}
-							
-							@Override
-							public ByteBuf next() {
-								return buffer.readRetainedSlice(Math.min(buffer.readableBytes(), bufferCapacity));
-							}
-						};
-					});
-			}));
+			.concatWith(Flux.defer(() -> Mono.justOrEmpty(this.retainedBuffer)
+				.flatMapIterable(buffer -> () -> new Iterator<>() {
+					@Override
+					public boolean hasNext() {
+						return buffer.isReadable();
+					}
+
+					@Override
+					public ByteBuf next() {
+						return buffer.readRetainedSlice(Math.min(buffer.readableBytes(), bufferCapacity));
+					}
+				}))
+			);
 	}
 }

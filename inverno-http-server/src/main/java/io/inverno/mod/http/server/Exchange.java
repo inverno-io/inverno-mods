@@ -55,9 +55,9 @@ public interface Exchange<A extends ExchangeContext> extends BaseExchange<A, Req
 	 * underlying HTTP protocol does not support the upgrade operation. Currently only HTTP/1.1 can upgrade to the WebSocket protocol.
 	 * </p>
 	 *
-	 * @param subProtocols a list of supported subprotocols negotiated during the handshake
+	 * @param subprotocols a list of supported subprotocols negotiated during the handshake
 	 * 
 	 * @return an optional returning the WebSocket or an empty optional if the upgrade is not possible
 	 */
-	Optional<? extends WebSocket<A, ? extends WebSocketExchange<A>>> webSocket(String... subProtocols);
+	Optional<? extends WebSocket<A, ? extends WebSocketExchange<A>>> webSocket(String... subprotocols);
 }

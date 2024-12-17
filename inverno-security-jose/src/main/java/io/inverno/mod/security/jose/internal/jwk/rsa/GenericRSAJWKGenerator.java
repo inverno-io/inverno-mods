@@ -80,15 +80,11 @@ public class GenericRSAJWKGenerator extends AbstractX509JWKGenerator<RSAPublicKe
 	
 	@Override
 	protected void set(String field, Object value) throws JWKGenerateException {
-		switch(field) {
-			case "keySize": {
-				this.keySize((Integer)value);
-				break;
-			}
-			default: {
-				super.set(field, value);
-				break;
-			}
+		if(field.equals("keySize")) {
+			this.keySize((Integer) value);
+		}
+		else {
+			super.set(field, value);
 		}
 	}
 	

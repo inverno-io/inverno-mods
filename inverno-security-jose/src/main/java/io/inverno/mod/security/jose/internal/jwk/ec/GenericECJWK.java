@@ -75,7 +75,7 @@ public class GenericECJWK extends AbstractX509JWK<ECPublicKey, ECPrivateKey> imp
 	private ECAlgorithm ecAlg;
 
 	private ECPublicKey publicKey;
-	private Optional<ECPrivateKey> privateKey;
+	private ECPrivateKey privateKey;
 	
 	private JWASigner signer;
 	private Map<ECAlgorithm, JWAKeyManager> keyManagers;
@@ -179,7 +179,7 @@ public class GenericECJWK extends AbstractX509JWK<ECPublicKey, ECPrivateKey> imp
 		this.x = x;
 		this.y = y;
 		this.d = d;
-		this.privateKey = key != null ? Optional.of(key) : null;
+		this.privateKey = key;
 	}
 
 	/**
@@ -229,50 +229,48 @@ public class GenericECJWK extends AbstractX509JWK<ECPublicKey, ECPrivateKey> imp
 	@Override
 	public ECPublicKey toPublicKey() throws JWKProcessingException {
 		if(this.publicKey == null) {
-			this.publicKey = this.certificate
-				.map(cert -> (ECPublicKey)cert.getPublicKey())
-				.orElseGet(() -> {
-					try {
-						ECPublicKeySpec ecPublicKeySpec = new ECPublicKeySpec(
-							new ECPoint(
-								new BigInteger(1, Base64.getUrlDecoder().decode(this.x)), 
-								new BigInteger(1, Base64.getUrlDecoder().decode(this.y))
-							), 
-							this.curve.getParameterSpec()
-						);
-						return (ECPublicKey) KeyFactory.getInstance("EC").generatePublic(ecPublicKeySpec);
-					}
-					catch(NoSuchAlgorithmException | InvalidKeySpecException e) {
-						throw new JWKProcessingException("Error creating verifier", e);
-					}
-				});
+			if(this.certificate == null) {
+				try {
+					ECPublicKeySpec ecPublicKeySpec = new ECPublicKeySpec(
+						new ECPoint(
+							new BigInteger(1, Base64.getUrlDecoder().decode(this.x)),
+							new BigInteger(1, Base64.getUrlDecoder().decode(this.y))
+						),
+						this.curve.getParameterSpec()
+					);
+					this.publicKey = (ECPublicKey) KeyFactory.getInstance("EC").generatePublic(ecPublicKeySpec);
+				}
+				catch(NoSuchAlgorithmException | InvalidKeySpecException e) {
+					throw new JWKProcessingException("Error creating verifier", e);
+				}
+			}
+			else {
+				this.publicKey = (ECPublicKey)certificate.getPublicKey();
+			}
 		}
 		return this.publicKey;
 	}
 
 	@Override
 	public Optional<ECPrivateKey> toPrivateKey() throws JWKProcessingException {
-		if(this.privateKey == null) {
-			this.privateKey = Optional.ofNullable(this.d)
-				.map(pk -> {
-					try {
-						ECPrivateKeySpec ecPrivateKeySpec = new ECPrivateKeySpec(
-							new BigInteger(1, Base64.getUrlDecoder().decode(pk)), 
-							this.curve.getParameterSpec()
-						);
-						return (ECPrivateKey) KeyFactory.getInstance("EC").generatePrivate(ecPrivateKeySpec);
-					} 
-					catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-						throw new JWKProcessingException("Error creating signer", e);
-					}
-				});
+		if(this.privateKey == null && this.d != null) {
+			try {
+				ECPrivateKeySpec ecPrivateKeySpec = new ECPrivateKeySpec(
+					new BigInteger(1, Base64.getUrlDecoder().decode(this.d)),
+					this.curve.getParameterSpec()
+				);
+				this.privateKey = (ECPrivateKey) KeyFactory.getInstance("EC").generatePrivate(ecPrivateKeySpec);
+			}
+			catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+				throw new JWKProcessingException("Error creating signer", e);
+			}
 		}
-		return this.privateKey;
+		return Optional.ofNullable(this.privateKey);
 	}
 
 	@Override
 	public ECJWK toPublicJWK() {
-		GenericECJWK jwk = new GenericECJWK(this.curve, this.x, this.y, this.certificate.orElse(null));
+		GenericECJWK jwk = new GenericECJWK(this.curve, this.x, this.y, this.certificate);
 		jwk.publicKey = this.publicKey;
 		jwk.setPublicKeyUse(this.use);
 		jwk.setKeyOperations(this.key_ops);
@@ -288,7 +286,7 @@ public class GenericECJWK extends AbstractX509JWK<ECPublicKey, ECPrivateKey> imp
 	
 	@Override
 	public ECJWK minify() {
-		GenericECJWK jwk = new GenericECJWK(this.curve, this.x, this.y, this.d, (ECPrivateKey)this.key, this.certificate.orElse(null), this.trusted);
+		GenericECJWK jwk = new GenericECJWK(this.curve, this.x, this.y, this.d, (ECPrivateKey)this.key, this.certificate, this.trusted);
 		jwk.publicKey = this.publicKey;
 		
 		return jwk;
@@ -344,7 +342,7 @@ public class GenericECJWK extends AbstractX509JWK<ECPublicKey, ECPrivateKey> imp
 	@Override
 	public JWASigner signer() throws JWKProcessingException {
 		this.checkSignature(this.ecAlg);
-		// We know we can only have one signer since the JWK is defined for a single curve and we only support one signature algorithm per curve
+		// We know we can only have one signer since the JWK is defined for a single curve, and we only support one signature algorithm per curve
 		if(this.signer == null) {
 			this.signer = this.ecAlg.createSigner(this);
 		}
@@ -359,7 +357,7 @@ public class GenericECJWK extends AbstractX509JWK<ECPublicKey, ECPrivateKey> imp
 		ECAlgorithm algorithm = ECAlgorithm.fromAlgorithm(alg);
 		this.checkSignature(algorithm);
 		
-		// We know we can only have one signer since the JWK is defined for a single curve and we only support one signature algorithm per curve
+		// We know we can only have one signer since the JWK is defined for a single curve, and we only support one signature algorithm per curve
 		if(this.signer == null) {
 			this.signer = algorithm.createSigner(this);
 		}
@@ -407,9 +405,7 @@ public class GenericECJWK extends AbstractX509JWK<ECPublicKey, ECPrivateKey> imp
 		if(this.keyManagers == null) {
 			this.keyManagers = new HashMap<>();
 		}
-		return this.keyManagers.computeIfAbsent(algorithm, ign -> {
-			return algorithm.createKeyManager(this);
-		});
+		return this.keyManagers.computeIfAbsent(algorithm, ign -> algorithm.createKeyManager(this));
 	}
 
 	@Override

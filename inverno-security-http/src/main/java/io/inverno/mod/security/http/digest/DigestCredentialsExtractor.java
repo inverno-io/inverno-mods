@@ -185,7 +185,7 @@ public class DigestCredentialsExtractor implements CredentialsExtractor<DigestCr
 					nonce = value;
 					break;
 				case PARAMETER_USERHASH:
-					userhash = Boolean.valueOf(value);
+					userhash = Boolean.parseBoolean(value);
 					break;
 			}
 		}

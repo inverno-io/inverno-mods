@@ -24,7 +24,7 @@ import java.net.InetSocketAddress;
  * The endpoint WebSocket channel initializer used to initialize WebSocket connection.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class EndpointWebSocketChannelInitializer extends EndpointChannelInitializer {
@@ -48,7 +48,7 @@ public class EndpointWebSocketChannelInitializer extends EndpointChannelInitiali
 	}
 
 	@Override
-	protected void initChannel(SocketChannel ch) throws Exception {
+	protected void initChannel(SocketChannel ch) {
 		this.channelConfigurer.configureWebSocket(ch.pipeline(), this.configuration, this.sslContext, this.serverAddress);
 	}
 }

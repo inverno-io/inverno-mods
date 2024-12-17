@@ -110,7 +110,7 @@ public enum ECCurve {
 	 * @param jcaName the JCA name
 	 * @param fieldSize the field size in bits
 	 */
-	private ECCurve(String crv, String jcaName, int fieldSize) {
+	ECCurve(String crv, String jcaName, int fieldSize) {
 		this.crv = crv;
 		this.jcaName = jcaName;
 		this.fieldSize = fieldSize;

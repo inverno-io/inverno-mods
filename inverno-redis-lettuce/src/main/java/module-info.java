@@ -29,10 +29,10 @@
  * </p>
  *
  * <dl>
- * <dt>lettuceRedisClientConfiguration</dt>
+ * <dt><b>reactor</b></dt>
+ * <dd>the Inverno reactor</dd>
+ * <dt><b>configuration</b></dt>
  * <dd>the Lettuce Redis client module configuration</dd>
- * <dt>reactor</dt>
- * <dd>the Inverno reactor (required)</dd>
  * </dl>
  *
  * <p>
@@ -40,9 +40,9 @@
  * </p>
  *
  * <dl>
- * <dt>lettuceRedisClientConfiguration</dt>
+ * <dt><b>configuration</b></dt>
  * <dd>the Lettuce Redis client module configuration</dd>
- * <dt>lettuceRedisClient</dt>
+ * <dt><b>lettuceRedisClient</b></dt>
  * <dd>the Lettuce pool Redis client to execute Redis commands on a Redis datastore</dd>
  * </dl>
  *
@@ -53,15 +53,16 @@
 module io.inverno.mod.redis.lettuce {
 	requires io.inverno.core;
 	requires static io.inverno.core.annotation; // for javadoc...
+
 	requires io.inverno.mod.base;
 	requires transitive io.inverno.mod.configuration;
 	requires transitive io.inverno.mod.redis;
 	
-	requires org.apache.commons.lang3;
 	requires jdk.unsupported; // required by netty for low level API for accessing direct buffers
-	requires transitive reactor.core;
-	requires transitive org.reactivestreams;
 	requires lettuce.core;
-	
+	requires org.apache.commons.lang3;
+	requires transitive org.reactivestreams;
+	requires transitive reactor.core;
+
 	exports io.inverno.mod.redis.lettuce;
 }

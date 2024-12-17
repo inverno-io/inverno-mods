@@ -46,7 +46,7 @@ import reactor.core.publisher.Mono;
  * Http/1.x {@link Request} implementation
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
@@ -133,7 +133,7 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 	 * This method simply cancels any active subscription.
 	 * </p>
 	 * 
-	 * @param cause 
+	 * @param cause the error that caused the disposal or null if there was no error
 	 */
 	final void dispose(Throwable cause) {
 		if(this.disposable != null) {
@@ -175,7 +175,7 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 	 * The request body data publisher optimized for {@link Mono} publisher that writes a single request object to the connection.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.11
 	 */
 	private class MonoBodyDataSubscriber extends BaseSubscriber<ByteBuf> {
@@ -190,7 +190,7 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 		
 		@Override
 		protected void hookOnNext(ByteBuf value) {
-			Http1xRequest.this.transferedLength += value.readableBytes();
+			Http1xRequest.this.transferredLength += value.readableBytes();
 			this.data = value;
 		}
 
@@ -209,7 +209,7 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 					List<String> transferEncodings = Http1xRequest.this.headers.getAll((CharSequence)Headers.NAME_TRANSFER_ENCODING);
 					if(transferEncodings.isEmpty() || !transferEncodings.getLast().endsWith(Headers.VALUE_CHUNKED)) {
 						// set content length
-						Http1xRequest.this.headers.add((CharSequence)Headers.NAME_CONTENT_LENGTH, "" + Http1xRequest.this.transferedLength);
+						Http1xRequest.this.headers.add((CharSequence)Headers.NAME_CONTENT_LENGTH, "" + Http1xRequest.this.transferredLength);
 					}
 				}
 				if(this.data != null) {
@@ -234,7 +234,7 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 	 * The request body data subscriber that writes request objects to the connection.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.11
 	 */
 	private class BodyDataSubscriber extends BaseSubscriber<ByteBuf> {
@@ -247,7 +247,7 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 				List<String> transferEncodings = Http1xRequest.this.headers.getAll((CharSequence)Headers.NAME_TRANSFER_ENCODING);
 				if(!this.many && (transferEncodings.isEmpty() || !transferEncodings.getLast().endsWith(Headers.VALUE_CHUNKED))) {
 					// set content length
-					Http1xRequest.this.headers.add((CharSequence)Headers.NAME_CONTENT_LENGTH, "" + Http1xRequest.this.transferedLength);
+					Http1xRequest.this.headers.add((CharSequence)Headers.NAME_CONTENT_LENGTH, "" + Http1xRequest.this.transferredLength);
 				}
 				else if(transferEncodings.isEmpty()) {
 					Http1xRequest.this.headers.add((CharSequence)Headers.NAME_TRANSFER_ENCODING, (CharSequence)Headers.VALUE_CHUNKED);
@@ -263,7 +263,7 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 		
 		@Override
 		protected void hookOnNext(ByteBuf value) {
-			Http1xRequest.this.transferedLength += value.readableBytes();
+			Http1xRequest.this.transferredLength += value.readableBytes();
 			if(!this.many && this.singleChunk == null) {
 				this.singleChunk = value;
 				this.request(1);
@@ -279,7 +279,7 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 				
 				/*
 				 * In case of big request body, we can end up flooding the channel with WRITE operations, preventing READ to happen.
-				 * This is problematic and will result in connection erros when the server sends a response and terminates the exchange before the request has been entirely sent 
+				 * This is problematic and will result in connection errors when the server sends a response and terminates the exchange before the request has been entirely sent
 				 * (e.g. 413 REQUEST ENTITY TOO LARGE).
 				 * To fix this, we simply wait for the write operation to succeed before requesting the next chunk.
 				 */
@@ -299,10 +299,10 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 			else {
 				if(Http1xRequest.this.headers.isWritten()) {
 					if(this.singleChunk == null) {
-						Http1xRequest.this.connection.writeHttpObject(new DefaultLastHttpContent(this.singleChunk));
+						Http1xRequest.this.connection.writeHttpObject(LastHttpContent.EMPTY_LAST_CONTENT);
 					}
 					else {
-						Http1xRequest.this.connection.writeHttpObject(LastHttpContent.EMPTY_LAST_CONTENT);
+						Http1xRequest.this.connection.writeHttpObject(new DefaultLastHttpContent(this.singleChunk));
 					}
 				}
 				else {
@@ -327,7 +327,7 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 
 		@Override
 		protected void hookOnCancel() {
-			// Make sure the Http protocol flow is correct
+			// Make sure the HTTP protocol flow is correct
 			if(this.many) {
 				Http1xRequest.this.connection.writeHttpObject(LastHttpContent.EMPTY_LAST_CONTENT);
 			}
@@ -347,7 +347,7 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 
 		@Override
 		protected void hookOnNext(FileRegion value) {
-			Http1xRequest.this.transferedLength += value.count();
+			Http1xRequest.this.transferredLength += value.count();
 			Http1xRequest.this.connection.writeFileRegion(value, Http1xRequest.this.connection.newPromise().addListener(future -> {
 				if(future.isSuccess()) {
 					this.request(1);

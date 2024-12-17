@@ -35,7 +35,7 @@ public interface OCTJWK extends SymmetricJWK {
 	/**
 	 * Octet sequence key type (used to represent symmetric keys) as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7518#section-6.1">RFC7518 Section 6.1</a>.
 	 */
-	static final String KEY_TYPE = "oct";
+	String KEY_TYPE = "oct";
 	
 	/**
 	 * <p>

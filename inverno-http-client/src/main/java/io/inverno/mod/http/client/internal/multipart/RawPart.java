@@ -26,7 +26,7 @@ import org.reactivestreams.Publisher;
  * A {@link Part} implementation for representing part's with raw data.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class RawPart extends AbstractDataPart<ByteBuf> {
@@ -44,6 +44,7 @@ public class RawPart extends AbstractDataPart<ByteBuf> {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T extends ByteBuf> void stream(Publisher<T> value) throws IllegalStateException {
 		this.setData((Publisher<ByteBuf>)value);
 	}

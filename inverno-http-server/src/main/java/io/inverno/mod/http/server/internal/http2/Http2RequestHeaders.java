@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  * Http/2 {@link InboundRequestHeaders} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 class Http2RequestHeaders extends AbstractRequestHeaders {
@@ -50,7 +50,7 @@ class Http2RequestHeaders extends AbstractRequestHeaders {
 	 *
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
-	 * @param headers            the originating Http headers
+	 * @param headers            the originating HTTP headers
 	 */
 	public Http2RequestHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, Http2Headers headers) {
 		super(headerService, parameterConverter);
@@ -59,7 +59,7 @@ class Http2RequestHeaders extends AbstractRequestHeaders {
 	
 	/**
 	 * <p>
-	 * Returns the originating Http headers.
+	 * Returns the originating HTTP headers.
 	 * </p>
 	 * 
 	 * @return the wrapped headers
@@ -76,6 +76,16 @@ class Http2RequestHeaders extends AbstractRequestHeaders {
 	@Override
 	public Headers.ContentType getContentTypeHeader() {
 		return this.<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
+	}
+
+	@Override
+	public String getAccept() {
+		return this.get(Headers.NAME_ACCEPT).orElse(null);
+	}
+
+	@Override
+	public Headers.Accept getAcceptHeader() {
+		return Headers.Accept.merge(this.getAllHeader(Headers.NAME_ACCEPT)).orElse(null);
 	}
 
 	@Override
@@ -111,9 +121,7 @@ class Http2RequestHeaders extends AbstractRequestHeaders {
 	@Override
 	public List<Map.Entry<String, String>> getAll() {
 		List<Map.Entry<String, String>> result = new LinkedList<>();
-		this.headers.forEach(e -> {
-			result.add(Map.entry(e.getKey().toString(), e.getValue().toString()));
-		});
+		this.headers.forEach(e -> result.add(Map.entry(e.getKey().toString(), e.getValue().toString())));
 		return result;
 	}
 	
@@ -130,9 +138,7 @@ class Http2RequestHeaders extends AbstractRequestHeaders {
 	@Override
 	public List<Parameter> getAllParameter() {
 		List<Parameter> result = new LinkedList<>();
-		this.headers.forEach(e -> {
-			result.add(new GenericParameter(e.getValue().toString(), e.getValue().toString(), this.parameterConverter));
-		});
+		this.headers.forEach(e -> result.add(new GenericParameter(e.getValue().toString(), e.getValue().toString(), this.parameterConverter)));
 		return result;
 	}
 
@@ -149,9 +155,7 @@ class Http2RequestHeaders extends AbstractRequestHeaders {
 	@Override
 	public List<Header> getAllHeader() {
 		List<Header> result = new LinkedList<>();
-		this.headers.forEach(e -> {
-			result.add(this.headerService.<Header>decode(e.getKey().toString(), e.getValue().toString()));
-		});
+		this.headers.forEach(e -> result.add(this.headerService.decode(e.getKey().toString(), e.getValue().toString())));
 		return result;
 	}
 }

@@ -30,7 +30,7 @@ import reactor.core.publisher.Mono;
  * messages is received from the client.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  * 
  * @param <A> the request message type
@@ -42,7 +42,7 @@ public interface GrpcRequest<A extends Message> extends GrpcBaseRequest {
 	 * Represents a unary (single message) request.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 * 
 	 * @param <A> The request message type
@@ -64,7 +64,7 @@ public interface GrpcRequest<A extends Message> extends GrpcBaseRequest {
 	 * Represents a streaming (stream of messages) request.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 * 
 	 * @param <A> The request message type

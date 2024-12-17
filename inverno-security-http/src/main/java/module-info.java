@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-import io.inverno.mod.security.SecurityManager;
-import io.inverno.mod.security.http.AccessControlInterceptor;
-import io.inverno.mod.security.http.AuthenticationErrorInterceptor;
-import io.inverno.mod.security.http.SecurityInterceptor;
-
-
 /**
  * <p>
  * The Inverno framework HTTP security module provides support for securing access to HTTP endpoints.
@@ -32,16 +26,17 @@ import io.inverno.mod.security.http.SecurityInterceptor;
  * <ul>
  * <li>basic HTTP authentication (<a href="https://datatracker.ietf.org/doc/html/rfc7617">RFC 7617</a>)</li>
  * <li>digest HTTP authentication (<a href="https://datatracker.ietf.org/doc/html/rfc7616">RFC 7616</a>)</li>
- * <li>token based authetication</li>
+ * <li>token based authentication</li>
  * <li>Cross-origin resource sharing (CORS) as defined by <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">HTTP CORS protocol</a></li>
  * <li>Cross-site request forgery attack protection</li>
  * </ul>
  * 
  * <p>
- * HTTP endpoints are protected using combinations of security interceptors. More specifically, the {@link SecurityInterceptor} shall always be used on protected services or resources, just like the 
- * {@link SecurityManager}, its role is to authenticate the credentials provided in the request and creates the security context in the exchange context. An {@link AccessControlInterceptor} can then 
- * be used to control the access to the protected services or resources using the security context. An {@link AuthenticationErrorInterceptor} can be used to intercept {@code UNAUTHORIZED(401)} errors and  
- * request for authentication. For instance, such interceptor can send HTTP basic or digest challenges in the response or it can redirect the client to a login form.
+ * HTTP endpoints are protected using combinations of security interceptors. More specifically, the {@link io.inverno.mod.security.http.SecurityInterceptor} shall always be used on protected services
+ * or resources, just like the {@link io.inverno.mod.security.SecurityManager}, its role is to authenticate the credentials provided in the request and creates the security context in the exchange
+ * context. An {@link io.inverno.mod.security.http.AccessControlInterceptor} can then be used to control the access to the protected services or resources using the security context. An
+ * {@link io.inverno.mod.security.http.AuthenticationErrorInterceptor} can be used to intercept {@code UNAUTHORIZED(401)} errors and request for authentication. For instance, such interceptor can send
+ * HTTP basic or digest challenges in the response or it can redirect the client to a login form.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

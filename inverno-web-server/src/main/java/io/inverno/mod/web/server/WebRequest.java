@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2021 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  */
 package io.inverno.mod.web.server;
 
-import java.util.Optional;
-
 import io.inverno.mod.http.server.Request;
+import java.util.Optional;
 
 /**
  * <p>
@@ -35,11 +34,11 @@ public interface WebRequest extends Request {
 	 * <p>
 	 * Returns the request path parameters.
 	 * </p>
-	 * 
+	 *
 	 * @return the path parameters
 	 */
 	PathParameters pathParameters();
-	
+
 	@Override
 	Optional<WebRequestBody> body();
 }

@@ -15,17 +15,15 @@
  */
 package io.inverno.mod.configuration.compiler.internal;
 
-import java.util.Collections;
-import java.util.List;
-
-import javax.lang.model.type.DeclaredType;
-
+import io.inverno.core.compiler.spi.BeanQualifiedName;
+import io.inverno.core.compiler.spi.ReporterInfo;
 import io.inverno.core.compiler.spi.support.AbstractInfo;
 import io.inverno.mod.configuration.compiler.spi.ConfigurationInfo;
 import io.inverno.mod.configuration.compiler.spi.ConfigurationInfoVisitor;
 import io.inverno.mod.configuration.compiler.spi.ConfigurationPropertyInfo;
-import io.inverno.core.compiler.spi.BeanQualifiedName;
-import io.inverno.core.compiler.spi.ReporterInfo;
+import java.util.Collections;
+import java.util.List;
+import javax.lang.model.type.DeclaredType;
 
 /**
  * <p>
@@ -39,17 +37,17 @@ import io.inverno.core.compiler.spi.ReporterInfo;
  */
 class GenericConfigurationInfo extends AbstractInfo<BeanQualifiedName> implements ConfigurationInfo {
 
-	private List<? extends ConfigurationPropertyInfo> properties;
+	private final List<? extends ConfigurationPropertyInfo> properties;
+	private final DeclaredType type;
+	private final boolean generateBean;
+	private final boolean overridable;
 	
-	private DeclaredType type;
-	
-	private boolean generateBean;
-	
-	private boolean overridable;
-	
-	public GenericConfigurationInfo(BeanQualifiedName name, ReporterInfo reporter, 
+	public GenericConfigurationInfo(
+			BeanQualifiedName name,
+			ReporterInfo reporter,
 			DeclaredType type,
-			List<? extends ConfigurationPropertyInfo> properties) {
+			List<? extends ConfigurationPropertyInfo> properties
+		) {
 		this(name, reporter, type, properties, false, false);
 	}
 	
@@ -72,7 +70,7 @@ class GenericConfigurationInfo extends AbstractInfo<BeanQualifiedName> implement
 
 	@Override
 	public ConfigurationPropertyInfo[] getProperties() {
-		return this.properties.stream().toArray(ConfigurationPropertyInfo[]::new);
+		return this.properties.toArray(ConfigurationPropertyInfo[]::new);
 	}
 	
 	@Override

@@ -17,18 +17,15 @@ package io.inverno.mod.irt.compiler.spi;
 
 /**
  * <p>
- * An option info corresponds to an option statement in a template set source
- * file.
+ * An option info corresponds to an option statement in a template set source file.
  * </p>
- * 
+ *
  * <p>
- * An option statement allows to specify option to the template set compiler
- * such as the generation modes or the charset.
+ * An option statement allows to specify option to the template set compiler such as the generation modes or the charset.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public interface OptionInfo {
 
@@ -36,16 +33,16 @@ public interface OptionInfo {
 	 * <p>
 	 * Returns the option name.
 	 * </p>
-	 * 
+	 *
 	 * @return a name
 	 */
 	String getName();
-	
+
 	/**
 	 * <p>
 	 * Returns the option value.
 	 * </p>
-	 * 
+	 *
 	 * @return a value
 	 */
 	Object getValue();

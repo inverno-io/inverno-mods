@@ -37,14 +37,11 @@ import java.util.concurrent.ExecutorService;
  * </p>
  * 
  * <p>
- * This implementation basically makes it possible to integrate with Vert.x
- * services more efficiently by using the Vert.x event loop groups as reactor
- * core IO event loop group.
+ * This implementation basically makes it possible to integrate with Vert.x services more efficiently by using the Vert.x event loop groups as reactor core IO event loop group.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class GenericVertxReactor implements VertxReactor, InternalReactor {
 

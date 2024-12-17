@@ -18,7 +18,6 @@ package io.inverno.mod.security.jose.internal.jwk.ec;
 import io.inverno.mod.security.jose.JOSEConfiguration;
 import io.inverno.mod.security.jose.internal.JOSEUtils;
 import io.inverno.mod.security.jose.internal.jwk.AbstractX509JWKBuilder;
-import io.inverno.mod.security.jose.internal.jwk.SwitchableJWKURLResolver;
 import io.inverno.mod.security.jose.jwa.ECAlgorithm;
 import io.inverno.mod.security.jose.jwa.ECCurve;
 import io.inverno.mod.security.jose.jwk.JWK;
@@ -211,7 +210,7 @@ public class GenericECJWKBuilder extends AbstractX509JWKBuilder<ECPublicKey, ECP
 
 					if(tmpCert.getSigAlgName() != null) {
 						if(this.ecAlg != null && !this.ecAlg.getJcaAlgorithm().equals(tmpCert.getSigAlgName())) {
-							throw new JWKBuildException("Resolved X.509 certificate algorithm does not match JWK algoritm");
+							throw new JWKBuildException("Resolved X.509 certificate algorithm does not match JWK algorithm");
 						}
 						if(!SUPPORTED_SIG_JCA_ALGORITHMS.contains(tmpCert.getSigAlgName())) {
 							throw new JWKBuildException("Resolved X.509 certificate signature algorithm is not supported: " + tmpCert.getSigAlgName());

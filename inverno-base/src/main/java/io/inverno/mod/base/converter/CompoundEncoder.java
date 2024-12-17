@@ -19,8 +19,7 @@ import java.lang.reflect.Type;
 
 /**
  * <p>
- * A compound encoder is used in a {@link CompositeEncoder} to encode particular
- * types of objects.
+ * A compound encoder is used in a {@link CompositeEncoder} to encode particular types of objects.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -36,8 +35,7 @@ public interface CompoundEncoder<From, To> extends Encoder<From, To> {
 
 	/**
 	 * <p>
-	 * Determines whether the encoder can encode the type represented by the
-	 * specified class.
+	 * Determines whether the encoder can encode the type represented by the specified class.
 	 * </p>
 	 * 
 	 * @param <T>  the type of the object to encode

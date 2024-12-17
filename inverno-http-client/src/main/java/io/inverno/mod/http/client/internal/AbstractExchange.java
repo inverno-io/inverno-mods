@@ -28,7 +28,7 @@ import reactor.core.publisher.Sinks;
  * Base {@link HttpConnectionExchange} implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @param <A> the request type
@@ -39,9 +39,11 @@ import reactor.core.publisher.Sinks;
 public abstract class AbstractExchange<A extends ExchangeContext, B extends HttpConnectionRequest, C extends HttpConnectionResponse, D> implements HttpConnectionExchange<A, B, C> {
 
 	private static final HttpClientException EXCHANGE_DISPOSED_ERROR = new StacklessHttpClientException("Exchange was disposed");
-	
+
+	private final Object state;
+
 	/**
-	 * The Http client configuration.
+	 * The HTTP client configuration.
 	 */
 	protected final HttpClientConfiguration configuration;
 	private final Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink;
@@ -56,11 +58,11 @@ public abstract class AbstractExchange<A extends ExchangeContext, B extends Http
 	private final A context;
 	
 	/**
-	 * The Http request.
+	 * The HTTP request.
 	 */
 	protected final B request;
 	/**
-	 * The Http response.
+	 * The HTTP response.
 	 */
 	protected C response;
 	
@@ -70,21 +72,24 @@ public abstract class AbstractExchange<A extends ExchangeContext, B extends Http
 	 * <p>
 	 * Creates a base exchange.
 	 * </p>
-	 * 
-	 * @param configuration      the Http client configuration
+	 *
+	 * @param state              the state
+	 * @param configuration      the HTTP client configuration
 	 * @param sink               the exchange sink
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
 	 * @param context            the exchange context
-	 * @param request            the Http request
+	 * @param request            the HTTP request
 	 */
 	public AbstractExchange(
+			Object state,
 			HttpClientConfiguration configuration, 
 			Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink, 
 			HeaderService headerService, 
 			ObjectConverter<String> parameterConverter, 
 			A context,
 			B request) {
+		this.state = state;
 		this.configuration = configuration;
 		this.sink = sink;
 		this.headerService = headerService;
@@ -92,7 +97,18 @@ public abstract class AbstractExchange<A extends ExchangeContext, B extends Http
 		this.context = context;
 		this.request = request;
 	}
-	
+
+	/**
+	 * <p>
+	 * Returns the state to pass back when recycling the connection.
+	 * </p>
+	 *
+	 * @return the state
+	 */
+	public Object getState() {
+		return state;
+	}
+
 	/**
 	 * <p>
 	 * Starts the request timeout.
@@ -140,7 +156,7 @@ public abstract class AbstractExchange<A extends ExchangeContext, B extends Http
 	 * This is invoked by the connection when the exchange response is received, the request timeout is cancelled and the exchange is emitted on the exchange sink to subsequently emit the response.
 	 * </p>
 	 * 
-	 * @param response the Http response received on the connection
+	 * @param originatingResponse the HTTP response received on the connection
 	 */
 	public final void emitResponse(D originatingResponse) {
 		this.response = this.createResponse(originatingResponse);
@@ -154,12 +170,12 @@ public abstract class AbstractExchange<A extends ExchangeContext, B extends Http
 	
 	/**
 	 * <p>
-	 * Creates the Http response from the originating response.
+	 * Creates the HTTP response from the originating response.
 	 * </p>
 	 * 
-	 * @param originatingResponse the originatig response
+	 * @param originatingResponse the originating response
 	 * 
-	 * @return the Http response
+	 * @return the HTTP response
 	 */
 	protected abstract C createResponse(D originatingResponse);
 	

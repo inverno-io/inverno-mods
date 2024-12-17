@@ -16,19 +16,16 @@
 package io.inverno.mod.boot.internal.concurrent;
 
 import io.netty.util.concurrent.DefaultThreadFactory;
-import java.util.concurrent.ThreadFactory;
-import reactor.core.scheduler.NonBlocking;
 
 /**
  * <p>
- * {@link ThreadFactory} implementation that creates {@link NonBlocking} threads
- * in order to prevent blocking calls from the Reactor APIs.
+ * {@link java.util.concurrent.ThreadFactory ThreadFactory} implementation that creates {@link reactor.core.scheduler.NonBlocking NonBlocking} threads in order to prevent blocking calls from the Reactor APIs.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see NonBlocking
+ * @see reactor.core.scheduler.NonBlocking NonBlocking
  */
 class ReactorThreadFactory extends DefaultThreadFactory {
 

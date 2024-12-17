@@ -30,7 +30,7 @@ import reactor.core.publisher.Mono;
  * or open Web sockets.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @param <A> the exchange context type
@@ -54,6 +54,32 @@ public interface Endpoint<A extends ExchangeContext> {
 	 * @return a socket address
 	 */
 	SocketAddress getRemoteAddress();
+
+	/**
+	 * <p>
+	 * Returns the current number of active requests handled by this endpoint.
+	 * </p>
+	 *
+	 * <p>
+	 * The returned value includes all active connection requests: connecting, requesting, buffered...
+	 * </p>
+	 *
+	 * @return the number of active requests.
+	 */
+	long getActiveRequests();
+
+	/**
+	 * <p>
+	 * Returns the current load factor of the endpoint between 0 (not loaded) and 1 (loaded at maximum capacity and buffering requests).
+	 * </p>
+	 *
+	 * <p>
+	 * The returned value shall consider the max number of connections handled by the endpoint to properly represent its available capacity.
+	 * </p>
+	 *
+	 * @return the load factor between 0 and 1
+	 */
+	float getLoadFactor();
 	
 	/**
 	 * <p>
@@ -150,9 +176,11 @@ public interface Endpoint<A extends ExchangeContext> {
 	 * @param context       the exchange context
 	 * 
 	 * @return an HTTP exchange mono
+	 *
+	 * @throws IllegalArgumentException if the specified request target is invalid
 	 */
-	Mono<? extends Exchange<A>> exchange(Method method, String requestTarget, A context);
-	
+	Mono<? extends Exchange<A>> exchange(Method method, String requestTarget, A context) throws IllegalArgumentException;
+
 	/**
 	 * <p>
 	 * Shutdowns the endpoint right away.

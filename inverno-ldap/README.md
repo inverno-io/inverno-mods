@@ -12,10 +12,8 @@ This module requires an `ExecutorService` used to execute JDK blocking operation
 ```java
 @io.inverno.core.annotation.Module
 module io.inverno.example.app {
-    ...
     requires io.inverno.mod.boot;
     requires io.inverno.mod.ldap;
-    ...
 }
 ```
 
@@ -40,11 +38,9 @@ Using Maven:
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.inverno.mod:inverno-boot:${VERSION_INVERNO_MODS}'
 compile 'io.inverno.mod:inverno-ldap:${VERSION_INVERNO_MODS}'
-...
 ```
 
 ## Configuration
@@ -188,4 +184,4 @@ admin_dn="cn=admin,ou=users,dc=inverno,dc=io"
 admin_credentials="admin_password"
 ```
 
-> Since the JDK directory service interface uses blocking operations, the client also requires an `ExecutorService` to make it reactive by executing blocking operations in separate threads and make sure no blocking operation is ever run in a reactor I/O thread. The *boot* module typically provides a global worker pool that must be used in such situations but it is also possible to use a specific `ExecutorService` as well when this makes sense.
+> Since the JDK directory service interface uses blocking operations, the client also requires an `ExecutorService` to make it reactive by executing blocking operations in separate threads and make sure no blocking operation is ever run in a reactor I/O thread. The *boot* module typically provides a global worker pool that must be used in such situations, but it is also possible to use a specific `ExecutorService` as well when this makes sense.

@@ -17,8 +17,7 @@ package io.inverno.mod.base.reflect;
 
 /**
  * <p>
- * A wildcard type argument builder is used to specify the bounds of a
- * parameterized type variable.
+ * A wildcard type argument builder is used to specify the bounds of a parameterized type variable.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -44,8 +43,8 @@ public interface TypeVariableBuilder<A> {
 	 * </p>
 	 * 
 	 * @return the parent builder
-	 * @throws IllegalStateException if the builder is not in a proper state to
-	 *                               be finalized
+	 *
+	 * @throws IllegalStateException if the builder is not in a proper state to be finalized
 	 */
 	A and();
 }

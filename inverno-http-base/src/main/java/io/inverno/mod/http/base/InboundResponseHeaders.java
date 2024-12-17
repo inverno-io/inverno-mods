@@ -30,7 +30,7 @@ import io.inverno.mod.http.base.header.Headers;
  * An inbound response is received by a client in a client exchange.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public interface InboundResponseHeaders extends InboundHeaders {

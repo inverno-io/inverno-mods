@@ -34,7 +34,7 @@ import reactor.core.publisher.Mono;
  * Generic {@link GrpcResponse} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public class GenericGrpcResponse<A extends Message> implements GrpcResponse.Unary<A>, GrpcResponse.Streaming<A> {
@@ -101,14 +101,12 @@ public class GenericGrpcResponse<A extends Message> implements GrpcResponse.Unar
 	public Publisher<A> stream() {
 		return Flux.from(this.messageReader.apply(this.response.body().raw().stream()))
 			.onErrorMap(ResetStreamException.class, e -> {
-				GrpcStatus status = GrpcStatus.fromHttp2Code(((ResetStreamException)e).getErrorCode());
+				GrpcStatus status = GrpcStatus.fromHttp2Code(e.getErrorCode());
 				if(status != null) {
 					return new GrpcException(status, e);
 				}
 				return e;
 			})
-			.doOnError(t -> {
-				GenericGrpcExchange.LOGGER.error("gRPC response processing error", t);
-			});
+			.doOnError(t -> GenericGrpcExchange.LOGGER.error("gRPC response processing error", t));
 	}
 }

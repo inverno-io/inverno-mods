@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -79,10 +80,14 @@ public class TextStringMediaTypeConverter implements @Provide MediaTypeConverter
 
 	@Override
 	public <T> Mono<T> decodeOne(Publisher<String> value, Type type) {
-		// TODO make this more reactive: we basically don't know if there's a delimiter and what is it so we have no choice but to buffer and delegate to the stringConverter
-		return Flux.from(value)
+		return Flux.from(value).collect(Collectors.joining()).map(acc -> this.decode(acc, type));
+
+		// The text/plain converter should not alter the input payload: we can't assume someone is sending a comma separated list unless a Collection is explicitly requested
+		// for a Flux we just assume user wants to stream payload
+		// make this more reactive: we basically don't know if there's a delimiter and what is it so we have no choice but to buffer and delegate to the stringConverter
+		/*return Flux.from(value)
 			.reduceWith(() -> new StringBuilder(), (sb, chunk) -> sb. append(chunk))
-			.map(buf -> this.stringConverter.decode(buf.toString(), type));
+			.map(buf -> this.stringConverter.decode(buf.toString(), type));*/
 	}
 
 	@Override
@@ -91,16 +96,24 @@ public class TextStringMediaTypeConverter implements @Provide MediaTypeConverter
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T> Flux<T> decodeMany(Publisher<String> value, Type type) {
-		// TODO make this more reactive: we basically don't know if there's a delimiter and what is it so we have no choice but to buffer and delegate to the stringConverter
-		return Flux.from(value)
+		if(String.class.equals(type)) {
+			return (Flux<T>)Flux.from(value);
+		}
+		return this.<T>decodeOne(value, type).flux();
+
+		// The text/plain converter should not alter the input payload: we can't assume someone is sending a comma separated list unless a Collection is explicitly requested
+		// for a Flux we just assume user wants to stream payload
+		// make this more reactive: we basically don't know if there's a delimiter and what is it so we have no choice but to buffer and delegate to the stringConverter
+		/*return Flux.from(value)
 			.reduceWith(() -> new StringBuilder(), (sb, chunk) -> sb. append(chunk))
-			.flatMapIterable(buf -> this.stringConverter.decodeToList(buf.toString(), type));
+			.flatMapIterable(buf -> this.stringConverter.decodeToList(buf.toString(), type));*/
 	}
 
 	@Override
 	public <T> Publisher<String> encodeOne(Mono<T> value) {
-		return value.map(t -> this.encode(t));
+		return value.map(this::encode);
 	}
 
 	@Override
@@ -115,7 +128,7 @@ public class TextStringMediaTypeConverter implements @Provide MediaTypeConverter
 
 	@Override
 	public <T> Publisher<String> encodeMany(Flux<T> value) {
-		return value.map(t -> this.encode(t));
+		return value.map(this::encode);
 	}
 
 	@Override

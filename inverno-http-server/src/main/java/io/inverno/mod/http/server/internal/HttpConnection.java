@@ -27,7 +27,7 @@ import reactor.core.publisher.Mono;
  * Represents an HTTP server connection.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public interface HttpConnection {

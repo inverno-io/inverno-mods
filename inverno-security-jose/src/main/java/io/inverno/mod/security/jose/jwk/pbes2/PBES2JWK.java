@@ -35,7 +35,7 @@ public interface PBES2JWK extends SymmetricJWK {
 	/**
 	 * Password-based key type is the same as Octet sequence key type as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7518#section-6.1">RFC7518 Section 6.1</a>.
 	 */
-	static final String KEY_TYPE = "oct";
+	String KEY_TYPE = "oct";
 	
 	/**
 	 * <p>

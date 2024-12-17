@@ -28,41 +28,65 @@ public enum Method {
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.1">RFC 7231 Section 4.3.1</a>
 	 */
-	GET,
+	GET(false),
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.2">RFC 7231 Section 4.3.2</a>
 	 */
-	HEAD,
+	HEAD(false),
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc5789">RFC 5789</a>
 	 */
-	PATCH,
+	PATCH(true),
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.3">RFC 7231 Section 4.3.1</a>
 	 */
-	POST,
+	POST(true),
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.4">RFC 7231 Section 4.3.4</a>
 	 */
-	PUT,
+	PUT(true),
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.5">RFC 7231 Section 4.3.5</a>
 	 */
-	DELETE,
+	DELETE(true),
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.6">RFC 7231 Section 4.3.6</a>
 	 */
-	CONNECT,
+	CONNECT(false),
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.7">RFC 7231 Section 4.3.7</a>
 	 */
-	OPTIONS,
+	OPTIONS(false),
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.8">RFC 7231 Section 4.3.8</a>
 	 */
-	TRACE,
+	TRACE(false),
 	/**
 	 * Describes an unknown or unsupported HTTP method
 	 */
-	UNKNOWN;
+	UNKNOWN(false);
+
+	private final boolean bodyAllowed;
+
+	/**
+	 * <p>
+	 * Creates a method.
+	 * </p>
+	 *
+	 * @param bodyAllowed true to indicate that a body is allowed in the request, false otherwise
+	 */
+	Method(boolean bodyAllowed) {
+		this.bodyAllowed = bodyAllowed;
+	}
+
+	/**
+	 * <p>
+	 * Determines whether a body can be generated in the request as defined by <a href="https://datatracker.ietf.org/doc/html/rfc9110#name-method-definitions">RFC 91110 Section 9.3</a>.
+	 * </p>
+	 *
+	 * @return true if the method allows content in the request, false otherwise
+	 */
+	public boolean isBodyAllowed() {
+		return bodyAllowed;
+	}
 }

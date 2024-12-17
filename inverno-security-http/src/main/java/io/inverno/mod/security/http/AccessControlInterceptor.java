@@ -99,7 +99,7 @@ public class AccessControlInterceptor<A extends Identity, B extends AccessContro
 			if(!authentication.isAuthenticated()) {
 				throw authentication.getCause()
 					.map(UnauthorizedException::new)
-					.orElseGet(() -> new UnauthorizedException());
+					.orElseGet(UnauthorizedException::new);
 			}
 			return true;
 		}));

@@ -99,7 +99,7 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 	protected final Integer maxAge;
 
 	/**
-	 * Flag indicating whether private netword must be allowed.
+	 * Flag indicating whether private network must be allowed.
 	 */
 	protected final boolean allowPrivateNetwork;
 	
@@ -131,9 +131,9 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 		this.allowedOrigins = allowedOrigins != null ? Collections.unmodifiableSet(allowedOrigins) : Set.of();
 		this.allowedOriginsPattern = allowedOriginsPattern != null ? Collections.unmodifiableSet(allowedOriginsPattern) : Set.of();
 		this.allowCredentials = allowCredentials;
-		this.allowedHeaders = allowedHeaders != null ? allowedHeaders.stream().collect(Collectors.joining(",")) : null;
+		this.allowedHeaders = allowedHeaders != null ? String.join(",", allowedHeaders) : null;
 		this.allowedMethods = allowedMethods != null ? allowedMethods.stream().map(Method::toString).collect(Collectors.joining(",")) : null;
-		this.exposedHeaders = exposedHeaders != null ? exposedHeaders.stream().collect(Collectors.joining(",")) : null;
+		this.exposedHeaders = exposedHeaders != null ? String.join(",", exposedHeaders) : null;
 		this.maxAge = maxAge;
 		this.allowPrivateNetwork = allowPrivateNetwork;
 		
@@ -164,7 +164,7 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 	public Mono<? extends B> intercept(B exchange) {
 		// Determine whether this is a CORS request
 		Optional<String> originOpt = exchange.request().headers().get(Headers.NAME_ORIGIN);
-		if(!originOpt.isPresent()) {
+		if(originOpt.isEmpty()) {
 			// Not a CORS request
 			
 			// https://fetch.spec.whatwg.org/#cors-protocol-and-http-caches
@@ -176,7 +176,7 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 			else if(this.isWildcard) {
 				exchange.response().headers(headers -> headers.set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "*"));
 			}
-			else if(this.isStatic) {
+			else {
 				exchange.response().headers(headers -> headers.set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, this.allowedOrigins.iterator().next().toString()));
 			}
 			return Mono.just(exchange);
@@ -234,7 +234,7 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 
 				if(this.allowPrivateNetwork) {
 					exchange.request().headers().get(Headers.NAME_ACCESS_CONTROL_REQUEST_PRIVATE_NETWORK).ifPresent(value -> {
-						if(Boolean.valueOf(value)) {
+						if(Boolean.parseBoolean(value)) {
 							headers.set(Headers.NAME_ACCESS_CONTROL_ALLOW_PRIVATE_NETWORK, "true");
 						}
 					});
@@ -267,12 +267,8 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 	 */
 	private static void addVaryHeader(OutboundResponseHeaders responseHeaders, String headerName) {
 		responseHeaders.get(Headers.NAME_VARY).ifPresentOrElse(
-			vary -> {
-				responseHeaders.set(Headers.NAME_VARY, vary + "," + headerName);
-			},
-			() -> {
-				responseHeaders.set(Headers.NAME_VARY, headerName);
-			}
+			vary -> responseHeaders.set(Headers.NAME_VARY, vary + "," + headerName),
+			() -> responseHeaders.set(Headers.NAME_VARY, headerName)
 		);
 	}
 	
@@ -343,7 +339,7 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 			}
 		}
 		
-		throw new ForbiddenException("Rejected CORS: " + origin.toString() + " is not auhorized to access resources");
+		throw new ForbiddenException("Rejected CORS: " + origin.toString() + " is not authorized to access resources");
 	}
 	
 	
@@ -478,7 +474,7 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 		
 		/**
 		 * <p>
-		 * Sepcifies the allow credentials flag.
+		 * Specifies the allow credentials flag.
 		 * </p>
 		 * 
 		 * @param allowCredentials true to allow credentials, false otherwise

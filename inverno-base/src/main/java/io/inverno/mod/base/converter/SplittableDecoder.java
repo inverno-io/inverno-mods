@@ -36,8 +36,7 @@ public interface SplittableDecoder<From, To> extends Decoder<From, To> {
 
 	/**
 	 * <p>
-	 * Decodes the specified value whose type is represented by the specified class
-	 * to a list of decoded values.
+	 * Decodes the specified value whose type is represented by the specified class to a list of decoded values.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object
@@ -50,8 +49,7 @@ public interface SplittableDecoder<From, To> extends Decoder<From, To> {
 	
 	/**
 	 * <p>
-	 * Decodes the specified value whose type is the specified type to a list of
-	 * decoded values.
+	 * Decodes the specified value whose type is the specified type to a list of decoded values.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object
@@ -64,8 +62,7 @@ public interface SplittableDecoder<From, To> extends Decoder<From, To> {
 	
 	/**
 	 * <p>
-	 * Decodes the specified value whose type is represented by the specified class
-	 * to a set of decoded values.
+	 * Decodes the specified value whose type is represented by the specified class to a set of decoded values.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object
@@ -78,8 +75,7 @@ public interface SplittableDecoder<From, To> extends Decoder<From, To> {
 	
 	/**
 	 * <p>
-	 * Decodes the specified value whose type is the specified type to a set of
-	 * decoded values.
+	 * Decodes the specified value whose type is the specified type to a set of decoded values.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object
@@ -92,8 +88,7 @@ public interface SplittableDecoder<From, To> extends Decoder<From, To> {
 	
 	/**
 	 * <p>
-	 * Decodes the specified value whose type is represented by the specified class
-	 * to an array of decoded values.
+	 * Decodes the specified value whose type is represented by the specified class to an array of decoded values.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object
@@ -106,8 +101,7 @@ public interface SplittableDecoder<From, To> extends Decoder<From, To> {
 	
 	/**
 	 * <p>
-	 * Decodes the specified value whose type is the specified type to an array of
-	 * decoded values.
+	 * Decodes the specified value whose type is the specified type to an array of decoded values.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object

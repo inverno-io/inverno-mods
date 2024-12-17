@@ -18,7 +18,6 @@ package io.inverno.mod.configuration.source;
 import io.inverno.mod.base.converter.ConverterException;
 import io.inverno.mod.base.converter.JoinablePrimitiveEncoder;
 import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
-import io.inverno.mod.configuration.AbstractConfigurableConfigurationSource;
 import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.ConfigurationQuery;
@@ -30,6 +29,7 @@ import io.inverno.mod.configuration.DefaultingStrategy;
 import io.inverno.mod.configuration.ExecutableConfigurationQuery;
 import io.inverno.mod.configuration.ExecutableConfigurationUpdate;
 import io.inverno.mod.configuration.ListConfigurationQuery;
+import io.inverno.mod.configuration.internal.AbstractConfigurableConfigurationSource;
 import io.inverno.mod.configuration.internal.GenericConfigurationKey;
 import io.inverno.mod.configuration.internal.GenericConfigurationProperty;
 import io.inverno.mod.configuration.internal.GenericConfigurationQueryResult;
@@ -40,6 +40,7 @@ import io.inverno.mod.configuration.internal.parser.option.ParseException;
 import io.inverno.mod.configuration.internal.parser.option.StringProvider;
 import io.inverno.mod.redis.RedisClient;
 import io.inverno.mod.redis.operations.EntryOptional;
+import io.inverno.mod.redis.operations.RedisKeyReactiveOperations;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -47,7 +48,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
@@ -68,22 +68,20 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public class RedisConfigurationSource extends AbstractConfigurableConfigurationSource<RedisConfigurationSource.RedisConfigurationQuery, RedisConfigurationSource.RedisExecutableConfigurationQuery, RedisConfigurationSource.RedisListConfigurationQuery, RedisConfigurationSource.RedisConfigurationUpdate, RedisConfigurationSource.RedisExecutableConfigurationUpdate, String> implements DefaultableConfigurationSource<RedisConfigurationSource.RedisConfigurationQuery, RedisConfigurationSource.RedisExecutableConfigurationQuery, RedisConfigurationSource.RedisListConfigurationQuery, RedisConfigurationSource> {
+public class RedisConfigurationSource extends AbstractConfigurableConfigurationSource<RedisConfigurationSource.RedisConfigurationQuery, RedisConfigurationSource.RedisExecutableConfigurationQuery, RedisConfigurationSource.RedisListConfigurationQuery, RedisConfigurationSource.RedisConfigurationUpdate, RedisConfigurationSource.RedisExecutableConfigurationUpdate, String, RedisConfigurationSource> implements DefaultableConfigurationSource {
 	
 	/**
 	 * The default key prefix.
 	 */
 	public static final String DEFAULT_KEY_PREFIX = "CONF";
 	
-	private static final Logger LOGGER = LogManager.getLogger(VersionedRedisConfigurationSource.class);
+	private static final Logger LOGGER = LogManager.getLogger(RedisConfigurationSource.class);
 	
 	private final RedisClient<String, String> redisClient;
 	private final DefaultingStrategy defaultingStrategy;
 	
 	private String keyPrefix;
 	private String propertyKeyPrefix;
-	
-	private RedisConfigurationSource initial;
 	
 	/**
 	 * <p>
@@ -114,18 +112,42 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	
 	/**
 	 * <p>
-	 * Creates a redis configuration source from the specified initial source and using the specified defaulting strategy.
+	 * Creates a redis configuration source from the specified original source which applies the specified default parameters and uses the specified defaulting strategy.
 	 * </p>
 	 *
-	 * @param initial            the initial configuration source.
+	 * @param original          the original configuration source.
+	 * @param defaultParameters the default parameters to apply
+	 */
+	private RedisConfigurationSource(RedisConfigurationSource original, List<ConfigurationKey.Parameter> defaultParameters) {
+		this(original, defaultParameters, original.defaultingStrategy);
+	}
+
+	/**
+	 * <p>
+	 * Creates a redis configuration source from the specified original source which uses the specified defaulting strategy.
+	 * </p>
+	 *
+	 * @param original           the original configuration source.
 	 * @param defaultingStrategy a defaulting strategy
 	 */
-	private RedisConfigurationSource(RedisConfigurationSource initial, DefaultingStrategy defaultingStrategy) {
-		super(initial.encoder, initial.decoder);
-		this.initial = initial;
-		this.redisClient = initial.redisClient;
+	private RedisConfigurationSource(RedisConfigurationSource original, DefaultingStrategy defaultingStrategy) {
+		this(original, original.defaultParameters, defaultingStrategy);
+	}
+
+	/**
+	 * <p>
+	 * 	 * Creates a redis configuration source from the specified original source which applies the specified default parameters and uses the specified defaulting strategy.
+	 * 	 * </p>
+	 *
+	 * @param original           the original configuration source.
+	 * @param defaultParameters the default parameters to apply
+	 * @param defaultingStrategy a defaulting strategy
+	 */
+	private RedisConfigurationSource(RedisConfigurationSource original, List<ConfigurationKey.Parameter> defaultParameters, DefaultingStrategy defaultingStrategy) {
+		super(original, defaultParameters);
+		this.redisClient = original.redisClient;
 		this.defaultingStrategy = defaultingStrategy;
-		this.setKeyPrefix(initial.keyPrefix);
+		this.setKeyPrefix(original.keyPrefix);
 	}
 
 	/**
@@ -158,17 +180,26 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		this.keyPrefix = StringUtils.isNotBlank(keyPrefix) ? keyPrefix : DEFAULT_KEY_PREFIX;
 		this.propertyKeyPrefix = keyPrefix + ":PROP:";
 	}
-	
+
+	@Override
+	public RedisConfigurationSource withParameters(List<ConfigurationKey.Parameter> parameters) throws IllegalArgumentException {
+		return new RedisConfigurationSource(this, parameters);
+	}
+
 	@Override
 	public RedisConfigurationSource withDefaultingStrategy(DefaultingStrategy defaultingStrategy) {
-		return new RedisConfigurationSource(this.initial != null ? this.initial : this, defaultingStrategy);
+		return new RedisConfigurationSource(this, defaultingStrategy);
 	}
 
 	@Override
 	public RedisConfigurationSource unwrap() {
-		return this.initial != null ? this.initial : this;
+		RedisConfigurationSource current = this;
+		while(current.original != null) {
+			current = current.original;
+		}
+		return current;
 	}
-	
+
 	@Override
 	public RedisExecutableConfigurationQuery get(String... names) throws IllegalArgumentException {
 		return new RedisConfigurationSource.RedisExecutableConfigurationQuery(this).and().get(names);
@@ -200,12 +231,11 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		
 		private final List<String> names;
 		
-		private final LinkedList<ConfigurationKey.Parameter> parameters;
+		private List<ConfigurationKey.Parameter> parameters;
 		
 		private RedisConfigurationQuery(RedisConfigurationSource.RedisExecutableConfigurationQuery executableQuery) {
 			this.executableQuery = executableQuery;
 			this.names = new LinkedList<>();
-			this.parameters = new LinkedList<>();
 		}
 		
 		@Override
@@ -240,15 +270,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		}
 		
 		@Override
-		public RedisConfigurationQuery and() {
-			this.queries.add(new RedisConfigurationQuery(this));
-			return this.queries.peekLast();
-		}
-
-		@Override
 		public RedisExecutableConfigurationQuery withParameters(List<ConfigurationKey.Parameter> parameters) throws IllegalArgumentException {
 			RedisConfigurationSource.RedisConfigurationQuery currentQuery = this.queries.peekLast();
-			currentQuery.parameters.clear();
+			currentQuery.parameters = new LinkedList<>(this.source.defaultParameters);
 			if(parameters != null && !parameters.isEmpty()) {
 				Set<String> parameterKeys = new HashSet<>();
 				List<String> duplicateParameters = new LinkedList<>();
@@ -262,10 +286,18 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 					}
 				}
 				if(!duplicateParameters.isEmpty()) {
-					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
+					throw new IllegalArgumentException("The following parameters were specified more than once: " + String.join(", ", duplicateParameters));
 				}
 			}
 			return this;
+		}
+
+		@Override
+		public RedisConfigurationQuery and() {
+			RedisConfigurationQuery nextQuery = new RedisConfigurationQuery(this);
+			nextQuery.parameters = this.source.defaultParameters;
+			this.queries.add(nextQuery);
+			return nextQuery;
 		}
 		
 		@Override
@@ -298,14 +330,11 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 					ConfigurationKey queryKey = result.defaultingKeys.get(result.defaultingKeys.size() - remaining);
 					if(entry.getValue().isPresent()) {
 						try {
-							Optional<String> actualValue = new ConfigurationOptionParser<VersionedRedisConfigurationSource>(new StringProvider(entry.getValue().get())).StartValue();
-							if(actualValue != null) {
-								result.setResult(new GenericConfigurationProperty<>(queryKey, actualValue.orElse(null), this.source));
-							}
-							else {
-								// unset
-								result.setResult(new GenericConfigurationProperty<>(queryKey, this.source));
-							}
+							new ConfigurationOptionParser<RedisConfigurationSource>(new StringProvider(entry.getValue().get())).StartValue()
+								.ifSetOrElse(
+									actualValue -> result.setResult(new GenericConfigurationProperty<>(queryKey, actualValue, this.source)),
+									() -> result.setResult(new GenericConfigurationProperty<>(queryKey, this.source)) // unset
+								);
 						}
 						catch (ParseException e) {
 							result.setError(this.source, new IllegalStateException("Invalid value found for key " + queryKey.toString(), e));
@@ -336,7 +365,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		}
 		
 		private void setResult(ConfigurationProperty queryResult) {
-			this.queryResult = Optional.ofNullable(queryResult);
+			this.queryResult = queryResult;
 			this.resolved = true;
 		}
 		
@@ -363,12 +392,11 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		
 		private Map<String, Object> values;
 		
-		private final LinkedList<ConfigurationKey.Parameter> parameters;
+		private List<ConfigurationKey.Parameter> parameters;
 		
 		private RedisConfigurationUpdate(RedisExecutableConfigurationUpdate executableQuery) {
 			this.executableQuery = executableQuery;
 			this.values = Map.of();
-			this.parameters = new LinkedList<>();
 		}
 		
 		@Override
@@ -403,15 +431,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		}
 		
 		@Override
-		public RedisConfigurationUpdate and() {
-			this.updates.add(new RedisConfigurationSource.RedisConfigurationUpdate(this));
-			return this.updates.peekLast();
-		}
-		
-		@Override
 		public RedisExecutableConfigurationUpdate withParameters(List<ConfigurationKey.Parameter> parameters) throws IllegalArgumentException {
 			RedisConfigurationSource.RedisConfigurationUpdate currentQuery = this.updates.peekLast();
-			currentQuery.parameters.clear();
+			currentQuery.parameters = new LinkedList<>(this.source.defaultParameters);
 			if(parameters != null && !parameters.isEmpty()) {
 				Set<String> parameterKeys = new HashSet<>();
 				List<String> duplicateParameters = new LinkedList<>();
@@ -422,10 +444,18 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 					}
 				}
 				if(!duplicateParameters.isEmpty()) {
-					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
+					throw new IllegalArgumentException("The following parameters were specified more than once: " + String.join(", ", duplicateParameters));
 				}
 			}
 			return this;
+		}
+
+		@Override
+		public RedisConfigurationUpdate and() {
+			RedisConfigurationUpdate nextUpdate = new RedisConfigurationUpdate(this);
+			nextUpdate.parameters = this.source.defaultParameters;
+			this.updates.add(nextUpdate);
+			return nextUpdate;
 		}
 
 		@Override
@@ -447,7 +477,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 							return operations.set(redisKey, valueEntry.getValue().toString().toLowerCase())
 								.map(reply -> {
 									if(!reply.equalsIgnoreCase("OK")) {
-										return new GenericConfigurationUpdateResult(updateKey, this.source, new IllegalStateException("Error setting key " + updateKey.toString() + ": " + reply));
+										return new GenericConfigurationUpdateResult(updateKey, this.source, new IllegalStateException("Error setting key " + updateKey + ": " + reply));
 									}
 									return new GenericConfigurationUpdateResult(updateKey);
 								})
@@ -458,14 +488,14 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 								return operations.set(redisKey, "\"" + this.source.encoder.encode(valueEntry.getValue()) + "\"")
 									.map(reply -> {
 										if(!reply.equalsIgnoreCase("OK")) {
-											return new GenericConfigurationUpdateResult(updateKey, this.source, new IllegalStateException("Error setting key " + updateKey.toString() + ": " + reply));
+											return new GenericConfigurationUpdateResult(updateKey, this.source, new IllegalStateException("Error setting key " + updateKey + ": " + reply));
 										}
 										return new GenericConfigurationUpdateResult(updateKey);
 									})
 									.onErrorResume(error -> Mono.just(new GenericConfigurationUpdateResult(updateKey, this.source, error)));
 							}
 							catch (ConverterException e) {
-								return Mono.just(new GenericConfigurationUpdateResult(updateKey, this.source, new IllegalStateException("Error setting key " + updateKey.toString(), e)));
+								return Mono.just(new GenericConfigurationUpdateResult(updateKey, this.source, new IllegalStateException("Error setting key " + updateKey, e)));
 							}
 						}
 					})
@@ -488,23 +518,18 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		
 		private final String name;
 		
-		private final LinkedList<ConfigurationKey.Parameter> parameters;
-		
-		/**
-		 * 
-		 * @param source
-		 * @param name
-		 */
+		private List<ConfigurationKey.Parameter> parameters;
+
 		private RedisListConfigurationQuery(RedisConfigurationSource source, String name) {
 			this.source = source;
 			this.name = name;
-			this.parameters = new LinkedList<>();
+			this.parameters = this.source.defaultParameters;
 		}
 		
 		
 		@Override
 		public RedisListConfigurationQuery withParameters(List<ConfigurationKey.Parameter> parameters) throws IllegalArgumentException {
-			this.parameters.clear();
+			this.parameters = new LinkedList<>(this.source.defaultParameters);
 			if(parameters != null && !parameters.isEmpty()) {
 				Set<String> parameterKeys = new HashSet<>();
 				List<String> duplicateParameters = new LinkedList<>();
@@ -515,7 +540,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 					}
 				}
 				if(!duplicateParameters.isEmpty()) {
-					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
+					throw new IllegalArgumentException("The following parameters were specified more than once: " + String.join(", ", duplicateParameters));
 				}
 			}
 			return this;
@@ -530,12 +555,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		public Flux<ConfigurationProperty> executeAll() {
 			return this.execute(false);
 		}
-		
-		/**
-		 * 
-		 * @param exact
-		 * @return 
-		 */
+
 		private Flux<ConfigurationProperty> execute(boolean exact) {
 			String propertiesPattern = this.source.propertyKeyPrefix + this.name + "*";
 			List<ConfigurationKey> defaultingMatchingKeys = this.source.defaultingStrategy.getListDefaultingKeys(new GenericConfigurationKey(this.name, this.parameters));
@@ -553,7 +573,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 						.count(100)
 						.build(result.getCursor());
 				})
-				.flatMapIterable(result -> result.getKeys())
+				.flatMapIterable(RedisKeyReactiveOperations.KeyScanResult::getKeys)
 				.mapNotNull(rawKey -> {
 					try {
 						ConfigurationOptionParser<?> parser = new ConfigurationOptionParser<>(new StringProvider(rawKey.substring(10)));
@@ -567,8 +587,8 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 				})
 				.filter(key -> {
 					boolean currentExact = exact;
-					for(ConfigurationKey machingKey : defaultingMatchingKeys) {
-						if(key.matches(machingKey, currentExact)) {
+					for(ConfigurationKey matchingKey : defaultingMatchingKeys) {
+						if(key.matches(matchingKey, currentExact)) {
 							return true;
 						}
 						// we only want to include extra parameters for the query key
@@ -583,17 +603,12 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 					return result.getT1().getValue()
 						.map(value -> {
 							try {
-								Optional<String> actualValue = new ConfigurationOptionParser<VersionedRedisConfigurationSource>(new StringProvider(value)).StartValue();
-								if(actualValue != null) {
-									return new GenericConfigurationProperty<>(queryKey, actualValue.orElse(null), this.source);
-								}
-								else {
-									// unset
-									return new GenericConfigurationProperty<>(queryKey, this.source);
-								}
+								return new ConfigurationOptionParser<RedisConfigurationSource>(new StringProvider(value)).StartValue()
+									.map(actualValue -> new GenericConfigurationProperty<>(queryKey, actualValue, this.source))
+									.orElseGet(() -> new GenericConfigurationProperty<>(queryKey, this.source)); // unset
 							}
 							catch (ParseException e) {
-								LOGGER.warn(() -> "Ignoring invalid value found for key " + queryKey.toString(), e);
+								LOGGER.warn(() -> "Ignoring invalid value found for key " + queryKey, e);
 							}
 							return null;
 						})

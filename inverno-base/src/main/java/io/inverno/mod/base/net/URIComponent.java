@@ -19,13 +19,10 @@ import java.util.List;
 
 /**
  * <p>
- * A URI component is a part of a URI as defined by
- * <a href="https://tools.ietf.org/html/rfc3986#section-3">RFC 3986 Section
- * 3</a>.
+ * A URI component is a part of a URI as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3">RFC 3986 Section 3</a>.
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- *
  */
 interface URIComponent {
 
@@ -44,9 +41,7 @@ interface URIComponent {
 	 * </p>
 	 * 
 	 * <p>
-	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section
-	 * 2.1</a>.
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 * 
 	 * @return the component value

@@ -16,13 +16,14 @@
 package io.inverno.mod.http.base;
 
 import io.inverno.mod.http.base.header.Header;
+import java.lang.reflect.Type;
 
 /**
  * <p>
  * Represents mutable outbound HTTP headers.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @version 1.6
  * 
  * @param <A> the outbound headers type
@@ -56,6 +57,49 @@ public interface OutboundHeaders<A extends OutboundHeaders<A>> extends InboundHe
 
 	/**
 	 * <p>
+	 * Encodes and adds a header with the specified name and value
+	 * </p>
+	 *
+	 * @param <T>   the value type
+	 * @param name  the header name
+	 * @param value the header value
+	 *
+	 * @return the outbound headers
+	 */
+	<T> A addParameter(CharSequence name, T value);
+
+	/**
+	 * <p>
+	 * Encodes and adds a header with the specified name and value
+	 * </p>
+	 *
+	 * @param <T>   the value type
+	 * @param name  the header name
+	 * @param value the header value
+	 * @param type  the value type
+	 *
+	 * @return the outbound headers
+	 */
+	default <T> A addParameter(CharSequence name, T value, Class<T> type) {
+		return this.addParameter(name, value, (Type)type);
+	}
+
+	/**
+	 * <p>
+	 * Encodes and adds a header with the specified name and value
+	 * </p>
+	 *
+	 * @param <T>   the value type
+	 * @param name  the header name
+	 * @param value the header value
+	 * @param type  the value type
+	 *
+	 * @return the outbound headers
+	 */
+	<T> A addParameter(CharSequence name, T value, Type type);
+
+	/**
+	 * <p>
 	 * Adds the specified headers.
 	 * </p>
 	 * 
@@ -76,6 +120,49 @@ public interface OutboundHeaders<A extends OutboundHeaders<A>> extends InboundHe
 	 * @return the outbound headers
 	 */
 	A set(CharSequence name, CharSequence value);
+
+	/**
+	 * <p>
+	 * Encodes and sets the value of the header with the specified name.
+	 * </p>
+	 *
+	 * @param <T>   the value type
+	 * @param name  the header name
+	 * @param value the header value
+	 *
+	 * @return the outbound headers
+	 */
+	<T> A setParameter(CharSequence name, T value);
+
+	/**
+	 * <p>
+	 * Encodes and sets the value of the header with the specified name.
+	 * </p>
+	 *
+	 * @param <T>   the value type
+	 * @param name  the header name
+	 * @param value the header value
+	 * @param type  the value type
+	 *
+	 * @return the outbound headers
+	 */
+	default <T> A setParameter(CharSequence name, T value, Class<T> type) {
+		return this.setParameter(name, value, (Type)type);
+	}
+
+	/**
+	 * <p>
+	 * Encodes and sets the value of the header with the specified name.
+	 * </p>
+	 *
+	 * @param <T>   the value type
+	 * @param name  the header name
+	 * @param value the header value
+	 * @param type  the value type
+	 *
+	 * @return the outbound headers
+	 */
+	<T> A setParameter(CharSequence name, T value, Type type);
 
 	/**
 	 * <p>

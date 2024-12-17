@@ -52,7 +52,7 @@ import reactor.core.publisher.Mono;
  * @since 1.5
  * 
  * @param <A> the context type
- * @param <B> the error echange type
+ * @param <B> the error exchange type
  */
 public class FormAuthenticationErrorInterceptor<A extends ExchangeContext, B extends ErrorExchange<A>> extends AuthenticationErrorInterceptor<A, B> {
 

@@ -37,7 +37,7 @@ public interface ECJWK extends X509JWK<ECPublicKey, ECPrivateKey> {
 	/**
 	 * Elliptic Curve key type as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7518#section-6.1">RFC7518 Section 6.1</a>
 	 */
-	static final String KEY_TYPE = "EC";
+	String KEY_TYPE = "EC";
 	
 	/**
 	 * <p>

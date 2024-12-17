@@ -16,7 +16,9 @@
 package io.inverno.mod.base.converter;
 
 /**
- * <p>An object decoder which is splittable  with primitive decoding bindings.</p>
+ * <p>
+ * An object decoder which is splittable  with primitive decoding bindings.
+ * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

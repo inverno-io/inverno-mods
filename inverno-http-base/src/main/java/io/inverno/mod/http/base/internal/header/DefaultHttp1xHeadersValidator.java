@@ -23,10 +23,11 @@ import io.netty.handler.codec.http.HttpHeaderValidationUtil;
  * </p>
  * 
  * <p>
- * Name and value validation is borrowed from Netty's {@link DefaultHttpHeadersFactory#DEFAULT_NAME_VALIDATOR} and {@link DefaultHttpHeadersFactory#DEFAULT_NAME_VALIDATOR}.
+ * Name and value validation is borrowed from Netty's {@code io.netty.handler.codec.http.DefaultHttpHeadersFactory#DEFAULT_NAME_VALIDATOR} and
+ * {@code io.netty.handler.codec.http.DefaultHttpHeadersFactory#DEFAULT_NAME_VALIDATOR}.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 class DefaultHttp1xHeadersValidator implements HeadersValidator {
@@ -41,13 +42,13 @@ class DefaultHttp1xHeadersValidator implements HeadersValidator {
 
 	/**
 	 * <p>
-	 * Borrowed from {@link DefaultHttpHeadersFactory#DEFAULT_NAME_VALIDATOR}.
+	 * Borrowed from {@code io.netty.handler.codec.http.DefaultHttpHeadersFactory#DEFAULT_NAME_VALIDATOR}.
 	 * </p>
 	 * 
 	 * @param name the header name
 	 */
 	private static void validateName(CharSequence name) {
-		if (name == null || name.length() == 0) {
+		if (name == null || name.isEmpty()) {
 			throw new IllegalArgumentException("empty headers are not allowed [" + name + ']');
 		}
 		int index = HttpHeaderValidationUtil.validateToken(name);
@@ -59,10 +60,10 @@ class DefaultHttp1xHeadersValidator implements HeadersValidator {
 
 	/**
 	 * <p>
-	 * Borrowed from {@link DefaultHttpHeadersFactory#DEFAULT_NAME_VALIDATOR}.
+	 * Borrowed from {@code io.netty.handler.codec.http.DefaultHttpHeadersFactory#DEFAULT_NAME_VALIDATOR}.
 	 * </p>
 	 * 
-	 * @param name the header value
+	 * @param value the header value
 	 */
 	private void validateValue(CharSequence value) {
 		int index = HttpHeaderValidationUtil.validateValidHeaderValue(value);

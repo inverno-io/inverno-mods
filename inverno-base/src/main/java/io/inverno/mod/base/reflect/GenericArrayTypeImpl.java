@@ -20,7 +20,9 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 
 /**
- * <p>{@link GenericArrayType} implementation</p>
+ * <p>
+ * {@link GenericArrayType} implementation
+ * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
@@ -53,18 +55,16 @@ class GenericArrayTypeImpl implements GenericArrayType {
         return getGenericComponentType().getTypeName() + "[]";
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (o instanceof GenericArrayType) {
-            GenericArrayType that = (GenericArrayType) o;
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		GenericArrayTypeImpl that = (GenericArrayTypeImpl) o;
+		return Objects.equals(genericComponentType, that.genericComponentType);
+	}
 
-            return Objects.equals(this.genericComponentType, that.getGenericComponentType());
-        } else
-            return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(this.genericComponentType);
-    }
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(genericComponentType);
+	}
 }

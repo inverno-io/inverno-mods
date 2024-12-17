@@ -101,7 +101,7 @@ public abstract class AbstractJOSEObjectReader<A, B extends JOSEHeader, C extend
 	 * @param type                  the expected payload type
 	 * @param keys                  the keys to consider to verify or decrypt JOSE objects
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public AbstractJOSEObjectReader(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type, Publisher<? extends JWK> keys) {
 		this.mapper = mapper;
 		this.dataConversionService = dataConversionService;
@@ -216,7 +216,7 @@ public abstract class AbstractJOSEObjectReader<A, B extends JOSEHeader, C extend
 
 			remainingCrit.removeAll(header.getCustomParameters().keySet());
 			if(!remainingCrit.isEmpty()) {
-				throw new JOSEObjectReadException("Critical parameters must not include parameters not defined as custom parameters: " + remainingCrit.stream().collect(Collectors.joining(", ")));
+				throw new JOSEObjectReadException("Critical parameters must not include parameters not defined as custom parameters: " + String.join(", ", remainingCrit));
 			}
 		}
 	}
@@ -252,7 +252,7 @@ public abstract class AbstractJOSEObjectReader<A, B extends JOSEHeader, C extend
 				remainingParameters.removeAll(this.applicationProcessedParameters);
 			}
 			if(!remainingParameters.isEmpty()) {
-				throw new JOSEObjectReadException("Unsupported critical parameters: " + remainingParameters.stream().collect(Collectors.joining(", ")));
+				throw new JOSEObjectReadException("Unsupported critical parameters: " + String.join(", ", remainingParameters));
 			}
 		}
 	}

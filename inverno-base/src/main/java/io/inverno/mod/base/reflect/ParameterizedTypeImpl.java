@@ -30,7 +30,9 @@ import java.util.StringJoiner;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
 /**
- * <p>{@link ParameterizedType} implementation.</p>
+ * <p>
+ * {@link ParameterizedType} implementation.
+ * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
@@ -43,10 +45,18 @@ class ParameterizedTypeImpl implements ParameterizedType {
 	private final Class<?> rawType;
 	private final Type ownerType;
 
+	/**
+	 * <p>
+	 * Creates a parameterized type.
+	 * </p>
+	 *
+	 * @param rawType             the raw type
+	 * @param actualTypeArguments the type arguments
+	 * @param ownerType           the owner type
+	 */
 	public ParameterizedTypeImpl(Class<?> rawType, Type[] actualTypeArguments, Type ownerType) {
 		this.actualTypeArguments = actualTypeArguments;
 		this.rawType = rawType;
-//		this.ownerType = (ownerType != null) ? ownerType : rawType.getEnclosingClass();
 		if(rawType.getEnclosingClass() == null) {
 			if(ownerType != null) {
 				throw new MalformedParameterizedTypeException(/*"You can't specify an owner type on " + this.rawType*/);
@@ -80,24 +90,19 @@ class ParameterizedTypeImpl implements ParameterizedType {
 				}
 			}
 			
-			// check actuals against formals' bounds
+			// check actual against formal bounds
 			Map<TypeVariable<?>, Type> typeArguments = Map.of();
 			if(this.ownerType instanceof ParameterizedType) {
 				typeArguments = TypeUtils.getTypeArguments((ParameterizedType)this.ownerType);
 			}
 			
-			if(formals[i].getBounds().length > 0) {
-				// ? extends ...
-				for(Type formalBound : formals[i].getBounds()) {
-					Type actualBound = formalBound instanceof TypeVariable<?> ? typeArguments.get((TypeVariable<?>)formalBound) : formalBound;
-					if(this.actualTypeArguments[i] instanceof WildcardType) {
-						// Wildcard types don't allow for multiple bounds which is why we only consider the first bound
-						// see WildcardType comments...
-						if(this.actualTypeArguments[i].equals(WildcardTypeImpl.WILDCARD_ALL)) {
-							// ?
-							// this is ok
-						}
-						else if(((WildcardType)this.actualTypeArguments[i]).getLowerBounds().length > 0) {
+			for(Type formalBound : formals[i].getBounds()) {
+				Type actualBound = formalBound instanceof TypeVariable<?> ? typeArguments.get((TypeVariable<?>)formalBound) : formalBound;
+				if(this.actualTypeArguments[i] instanceof WildcardType) {
+					// Wildcard types don't allow for multiple bounds which is why we only consider the first bound
+					// see WildcardType comments...
+					if(!this.actualTypeArguments[i].equals(WildcardTypeImpl.WILDCARD_ALL)) {
+						if(((WildcardType)this.actualTypeArguments[i]).getLowerBounds().length > 0) {
 							// ? super ...
 							// we must check that the super bound is assignable to the formal bound
 							if(!Types.isAssignable(((WildcardType)this.actualTypeArguments[i]).getLowerBounds()[0], actualBound)) {
@@ -112,18 +117,18 @@ class ParameterizedTypeImpl implements ParameterizedType {
 							}
 						}
 					}
-					else if(this.actualTypeArguments[i] instanceof TypeVariable<?>) {
-						if(((TypeVariable<?>)this.actualTypeArguments[i]).getBounds().length > 0) {
-							// T extends ...
-							// we must check that the bound is assignable to the formal bound
-							if(!Types.isAssignable(((TypeVariable<?>)this.actualTypeArguments[i]).getBounds()[0], actualBound)) {
-								throw new MalformedParameterizedTypeException(/*"Type " + ((TypeVariable<?>)this.actualTypeArguments[i]).getBounds()[0] + " can't be assigned to type " + actualBound*/);
-							}
+				}
+				else if(this.actualTypeArguments[i] instanceof TypeVariable<?>) {
+					if(((TypeVariable<?>)this.actualTypeArguments[i]).getBounds().length > 0) {
+						// T extends ...
+						// we must check that the bound is assignable to the formal bound
+						if(!Types.isAssignable(((TypeVariable<?>)this.actualTypeArguments[i]).getBounds()[0], actualBound)) {
+							throw new MalformedParameterizedTypeException(/*"Type " + ((TypeVariable<?>)this.actualTypeArguments[i]).getBounds()[0] + " can't be assigned to type " + actualBound*/);
 						}
 					}
-					else if(!TypeUtils.isAssignable(this.actualTypeArguments[i], actualBound)) {
-						throw new MalformedParameterizedTypeException(/*"Type " + this.actualTypeArguments[i] + " can't be assigned to type " + actualBound*/);
-					}
+				}
+				else if(!TypeUtils.isAssignable(this.actualTypeArguments[i], actualBound)) {
+					throw new MalformedParameterizedTypeException(/*"Type " + this.actualTypeArguments[i] + " can't be assigned to type " + actualBound*/);
 				}
 			}
 		}
@@ -131,24 +136,17 @@ class ParameterizedTypeImpl implements ParameterizedType {
 
 	/**
 	 * <p>
-	 * Returns an array of {@code Type} objects representing the actual type
-	 * arguments to this type.
+	 * Returns an array of {@code Type} objects representing the actual type arguments to this type.
 	 * </p>
 	 *
 	 * <p>
-	 * Note that in some cases, the returned array be empty. This can occur if this
-	 * type represents a non-parameterized type nested within a parameterized type.
+	 * Note that in some cases, the returned array be empty. This can occur if this type represents a non-parameterized type nested within a parameterized type.
 	 * </p>
 	 *
-	 * @return an array of {@code Type} objects representing the actual type
-	 *         arguments to this type
-	 * @throws TypeNotPresentException             if any of the actual type
-	 *                                             arguments refers to a
-	 *                                             non-existent type declaration
-	 * @throws MalformedParameterizedTypeException if any of the actual type
-	 *                                             parameters refer to a
-	 *                                             parameterized type that cannot be
-	 *                                             instantiated for any reason
+	 * @return an array of {@code Type} objects representing the actual type arguments to this type
+	 *
+	 * @throws TypeNotPresentException             if any of the actual type arguments refers to a non-existent type declaration
+	 * @throws MalformedParameterizedTypeException if any of the actual type parameters refer to a parameterized type that cannot be instantiated for any reason
 	 */
 	@Override
 	public Type[] getActualTypeArguments() {
@@ -157,12 +155,10 @@ class ParameterizedTypeImpl implements ParameterizedType {
 
 	/**
 	 * <p>
-	 * Returns the {@code Type} object representing the class or interface that
-	 * declared this type.
+	 * Returns the {@code Type} object representing the class or interface that declared this type.
 	 * </p>
 	 *
-	 * @return the {@code Type} object representing the class or interface that
-	 *         declared this type
+	 * @return the {@code Type} object representing the class or interface that declared this type
 	 */
 	@Override
 	public Class<?> getRawType() {
@@ -171,23 +167,17 @@ class ParameterizedTypeImpl implements ParameterizedType {
 
 	/**
 	 * <p>
-	 * Returns a {@code Type} object representing the type that this type is a
-	 * member of. For example, if this type is {@code O<T>.I<S>}, return a
-	 * representation of {@code O<T>}.
+	 * Returns a {@code Type} object representing the type that this type is a member of. For example, if this type is {@code O<T>.I<S>}, return a representation of {@code O<T>}.
 	 * </p>
 	 * 
 	 * <p>
 	 * If this type is a top-level type, {@code null} is returned.
 	 * </p>
 	 *
-	 * @return a {@code Type} object representing the type that this type is a
-	 *         member of. If this type is a top-level type, {@code null} is returned
-	 * @throws TypeNotPresentException             if the owner type refers to a
-	 *                                             non-existent type declaration
-	 * @throws MalformedParameterizedTypeException if the owner type refers to a
-	 *                                             parameterized type that cannot be
-	 *                                             instantiated for any reason
+	 * @return a {@code Type} object representing the type that this type is a member of. If this type is a top-level type, {@code null} is returned
 	 *
+	 * @throws TypeNotPresentException             if the owner type refers to a non-existent type declaration
+	 * @throws MalformedParameterizedTypeException if the owner type refers to a parameterized type that cannot be instantiated for any reason
 	 */
 	@Override
 	public Type getOwnerType() {
@@ -195,33 +185,20 @@ class ParameterizedTypeImpl implements ParameterizedType {
 	}
 
 	/*
-	 * From the JavaDoc for java.lang.reflect.ParameterizedType "Instances of
-	 * classes that implement this interface must implement an equals() method that
-	 * equates any two instances that share the same generic type declaration and
-	 * have equal type parameters."
+	 * From the JavaDoc for java.lang.reflect.ParameterizedType "Instances of classes that implement this interface must implement an equals() method that equates any two instances that share the same
+	 * generic type declaration and have equal type parameters."
 	 */
 	@Override
 	public boolean equals(Object o) {
-		if (o instanceof ParameterizedType) {
-			// Check that information is equivalent
-			ParameterizedType that = (ParameterizedType) o;
-
-			if (this == that)
-				return true;
-
-			Type thatOwner = that.getOwnerType();
-			Type thatRawType = that.getRawType();
-
-			return Objects.equals(ownerType, thatOwner) && Objects.equals(rawType, thatRawType)
-					&& Arrays.equals(actualTypeArguments, // avoid clone
-							that.getActualTypeArguments());
-		} else
-			return false;
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		ParameterizedTypeImpl that = (ParameterizedTypeImpl) o;
+		return Objects.deepEquals(actualTypeArguments, that.actualTypeArguments) && Objects.equals(rawType, that.rawType) && Objects.equals(ownerType, that.ownerType);
 	}
 
 	@Override
 	public int hashCode() {
-		return Arrays.hashCode(actualTypeArguments) ^ Objects.hashCode(ownerType) ^ Objects.hashCode(rawType);
+		return Objects.hash(Arrays.hashCode(actualTypeArguments), rawType, ownerType);
 	}
 
 	@Override
@@ -248,9 +225,8 @@ class ParameterizedTypeImpl implements ParameterizedType {
 			for (Type t : actualTypeArguments) {
 				sj.add(t.getTypeName());
 			}
-			sb.append(sj.toString());
+			sb.append(sj);
 		}
-
 		return sb.toString();
 	}
 }

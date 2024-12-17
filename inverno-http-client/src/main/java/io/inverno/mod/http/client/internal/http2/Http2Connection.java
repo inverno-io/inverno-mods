@@ -19,6 +19,7 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.client.ConnectionTimeoutException;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.HttpClientException;
@@ -66,7 +67,7 @@ import reactor.core.scheduler.Schedulers;
  * Http/2 {@link HttpConnection} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class Http2Connection extends Http2ConnectionHandler implements Http2FrameListener, io.netty.handler.codec.http2.Http2Connection.Listener, HttpConnection {
@@ -104,7 +105,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	 * @param decoder            the HTTP/2 connection decoder
 	 * @param encoder            the HTTP/2 connection encoder
 	 * @param initialSettings    the HTTP/2 initial settings
-	 * @param configuration      the HTTP client configurartion
+	 * @param configuration      the HTTP client configuration
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
 	 */
@@ -209,11 +210,45 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	public void setHandler(HttpConnection.Handler handler) {
 		this.handler = handler;
 	}
-	
+
 	@Override
-	public <A extends ExchangeContext> Mono<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> send(EndpointExchange<A> endpointExchange) {
-		if(this.closed || this.closing) {
+	public <A extends ExchangeContext> Mono<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> send(EndpointExchange<A> endpointExchange, Object state) {
+		Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink = Sinks.one();
+		return Mono.fromSupplier(() -> {
+				if(this.closed || this.closing) {
+					throw new HttpClientException("Connection was closed");
+				}
+
+				if(this.configuration.send_user_agent()) {
+					endpointExchange.request().headers(headers -> headers.set(Headers.NAME_USER_AGENT, this.configuration.user_agent()));
+				}
+
+				Http2ConnectionStream clientStream = new Http2ConnectionStream(this, this.channelContext, this.connection().local());
+				clientStream.exchange = new Http2Exchange<>(
+					state,
+					this.configuration,
+					sink,
+					this.headerService,
+					this.parameterConverter,
+					endpointExchange.context(),
+					clientStream,
+					endpointExchange.request()
+				);
+				clientStream.exchange.init();
+				return clientStream;
+			})
+			.publishOn(this.scheduler)
+			.flatMap(clientStream -> {
+				clientStream.exchange.start();
+				return sink.asMono();
+			});
+
+		/*if(this.closed || this.closing) {
 			return Mono.error(new HttpClientException("Connection was closed"));
+		}
+
+		if(this.configuration.send_user_agent()) {
+			endpointExchange.request().headers(headers -> headers.set(Headers.NAME_USER_AGENT, this.configuration.user_agent()));
 		}
 		Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink = Sinks.one();
 		Http2ConnectionStream clientStream = new Http2ConnectionStream(this, this.channelContext, this.connection().local());
@@ -229,10 +264,8 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 		clientStream.exchange.init();
 		
 		return sink.asMono()
-			.doOnSubscribe(ign -> {
-				clientStream.exchange.start();
-			})
-			.subscribeOn(this.scheduler);
+			.doOnSubscribe(ign -> clientStream.exchange.start())
+			.subscribeOn(this.scheduler);*/
 	}
 
 	@Override
@@ -344,7 +377,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 		super.channelInactive(ctx);
 		this.closed = true;
-		// each stream should be closed individually so disposal whould be handled in #onStreamClosed()
+		// each stream should be closed individually so disposal would be handled in #onStreamClosed()
 	}
 	
 	@Override
@@ -366,7 +399,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 		super.onHttpClientUpgrade();
 		Http2ConnectionStream clientStream = new Http2ConnectionStream(this, this.channelContext, this.connection().stream(1));
 		this.clientStreams.put(1, clientStream);
-		clientStream.exchange = new Http2UpgradedExchange<>(this.configuration, upgradingExchange.getUpgradedSink(), this.headerService, this.parameterConverter, upgradingExchange.context(), clientStream, upgradingExchange.request());
+		clientStream.exchange = new Http2UpgradedExchange<>(upgradingExchange.getState(), this.configuration, upgradingExchange.getUpgradedSink(), this.headerService, this.parameterConverter, upgradingExchange.context(), clientStream, upgradingExchange.request());
 		clientStream.exchange.start();
 	}
 	
@@ -448,7 +481,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 			}
 			finally {
 				if(this.handler != null) {
-					this.handler.recycle();
+					this.handler.onRelease(clientStream.exchange.getState());
 				}
 			}
 		}
@@ -529,7 +562,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 			}
 			finally {
 				if(this.handler != null) {
-					this.handler.recycle();
+					this.handler.onRelease(clientStream.exchange.getState());
 				}
 			}
 		}
@@ -542,14 +575,14 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	@Override
 	public void onGoAwaySent(int lastStreamId, long errorCode, ByteBuf debugData) {
 		if(this.handler != null) {
-			this.handler.close();
+			this.handler.onClose();
 		}
 	}
 
 	@Override
 	public void onGoAwayReceived(int lastStreamId, long errorCode, ByteBuf debugData) {
 		if(this.handler != null) {
-			this.handler.close();
+			this.handler.onClose();
 		}
 		this.shutdownGracefully().subscribe();
 	}

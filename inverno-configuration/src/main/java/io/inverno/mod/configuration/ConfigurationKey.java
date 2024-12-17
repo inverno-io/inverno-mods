@@ -20,9 +20,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -60,7 +60,7 @@ public interface ConfigurationKey {
 		protected final String key;
 		
 		/**
-		 * The paramteter value.
+		 * The parameter value.
 		 */
 		protected final Object value;
 		
@@ -74,7 +74,7 @@ public interface ConfigurationKey {
 		 * @throws IllegalArgumentException if the key is null or empty
 		 */
 		private Parameter(String key) throws IllegalArgumentException {
-			if(key == null || key.equals("")) {
+			if(key == null || key.isEmpty()) {
 				throw new IllegalArgumentException("Parameter key can't be null or empty");
 			}
 			this.key = key;
@@ -92,7 +92,7 @@ public interface ConfigurationKey {
 		 * @throws IllegalArgumentException if the key is null or empty or if the value is null or not a string, nor a primitive
 		 */
 		private Parameter(String key, Object value) throws IllegalArgumentException {
-			if(key == null || key.equals("")) {
+			if(key == null || key.isEmpty()) {
 				throw new IllegalArgumentException("Parameter key can't be null or empty");
 			}
 			this.key = key;
@@ -194,38 +194,20 @@ public interface ConfigurationKey {
 		public static Parameter undefined(String key) throws IllegalArgumentException {
 			return new UndefinedParameter(key);
 		}
-		
+
 		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((key == null) ? 0 : key.hashCode());
-			result = prime * result + ((value == null) ? 0 : value.hashCode());
-			return result;
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			Parameter parameter = (Parameter) o;
+			return Objects.equals(key, parameter.key) && Objects.equals(value, parameter.value);
 		}
 
 		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			Parameter other = (Parameter) obj;
-			if (key == null) {
-				if (other.key != null)
-					return false;
-			} else if (!key.equals(other.key))
-				return false;
-			if (value == null) {
-				if (other.value != null)
-					return false;
-			} else if (!value.equals(other.value))
-				return false;
-			return true;
+		public int hashCode() {
+			return Objects.hash(key, value);
 		}
-		
+
 		@Override
 		public String toString() {
 			StringBuilder str = new StringBuilder();
@@ -254,7 +236,7 @@ public interface ConfigurationKey {
 	 * 
 	 * @see ListConfigurationQuery
 	 */
-	public static class WildcardParameter extends Parameter {
+	class WildcardParameter extends Parameter {
 		
 		/**
 		 * <p>
@@ -274,9 +256,7 @@ public interface ConfigurationKey {
 
 		@Override
 		public String toString() {
-			StringBuilder str = new StringBuilder();
-			str.append(this.key).append("=*");
-			return str.toString();
+			return this.key + "=*";
 		}
 	}
 	
@@ -290,7 +270,7 @@ public interface ConfigurationKey {
 	 * 
 	 * @see ListConfigurationQuery
 	 */
-	public static class UndefinedParameter extends Parameter {
+	class UndefinedParameter extends Parameter {
 		
 		/**
 		 * <p>
@@ -310,9 +290,7 @@ public interface ConfigurationKey {
 		
 		@Override
 		public String toString() {
-			StringBuilder str = new StringBuilder();
-			str.append(this.key).append("=undefined");
-			return str.toString();
+			return this.key + "=undefined";
 		}
 	}
 	
@@ -380,7 +358,7 @@ public interface ConfigurationKey {
 	 * 
 	 * @return a configuration key
 	 */
-	public static ConfigurationKey of(String name, Parameter... parameters) {
+	static ConfigurationKey of(String name, Parameter... parameters) {
 		if(parameters != null) {
 			Set<String> parameterKeys = new HashSet<>();
 			List<Parameter> parametersList = new LinkedList<>();
@@ -392,7 +370,7 @@ public interface ConfigurationKey {
 				}
 			}
 			if(!duplicateParameters.isEmpty()) {
-				throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
+				throw new IllegalArgumentException("The following parameters were specified more than once: " + String.join(", ", duplicateParameters));
 			}
 			return new GenericConfigurationKey(name, parametersList);
 		}
@@ -412,7 +390,7 @@ public interface ConfigurationKey {
 	 *
 	 * @return a configuration key
 	 */
-	public static ConfigurationKey of(String name, String k1, Object v1) {
+	static ConfigurationKey of(String name, String k1, Object v1) {
 		return of(name, Parameter.of(k1, v1));
 	}
 	
@@ -429,7 +407,7 @@ public interface ConfigurationKey {
 	 *
 	 * @return a configuration key
 	 */
-	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2) {
+	static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2) {
 		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2));
 	}
 	
@@ -448,7 +426,7 @@ public interface ConfigurationKey {
 	 * 
 	 * @return a configuration key
 	 */
-	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3) {
+	static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3) {
 		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3));
 	}
 	
@@ -469,7 +447,7 @@ public interface ConfigurationKey {
 	 * 
 	 * @return a configuration key
 	 */
-	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) {
+	static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) {
 		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4));
 	}
 	
@@ -492,7 +470,7 @@ public interface ConfigurationKey {
 	 * 
 	 * @return a configuration key
 	 */
-	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) {
+	static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) {
 		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5));
 	}
 	
@@ -517,7 +495,7 @@ public interface ConfigurationKey {
 	 * 
 	 * @return a configuration key
 	 */
-	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) {
+	static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) {
 		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6));
 	}
 	
@@ -544,7 +522,7 @@ public interface ConfigurationKey {
 	 * 
 	 * @return a configuration key
 	 */
-	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) {
+	static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) {
 		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6), Parameter.of(k7, v7));
 	}
 	
@@ -573,7 +551,7 @@ public interface ConfigurationKey {
 	 * 
 	 * @return a configuration key
 	 */
-	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) {
+	static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) {
 		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8));
 	}
 	
@@ -599,12 +577,12 @@ public interface ConfigurationKey {
 	 * @param v7   the seventh parameter value
 	 * @param k8   the eighth parameter name
 	 * @param v8   the eighth parameter value
-	 * @param k9   the nineth parameter name
-	 * @param v9   the nineth parameter value
+	 * @param k9   the ninth parameter name
+	 * @param v9   the ninth parameter value
 	 * 
 	 * @return a configuration key
 	 */
-	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) {
+	static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) {
 		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9));
 	}
 	
@@ -630,14 +608,14 @@ public interface ConfigurationKey {
 	 * @param v7   the seventh parameter value
 	 * @param k8   the eighth parameter name
 	 * @param v8   the eighth parameter value
-	 * @param k9   the nineth parameter name
-	 * @param v9   the nineth parameter value
+	 * @param k9   the ninth parameter name
+	 * @param v9   the ninth parameter value
 	 * @param k10  the tenth parameter name
 	 * @param v10  the tenth parameter value
 	 *
 	 * @return a configuration key
 	 */
-	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) {
+	static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) {
 		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9), Parameter.of(k10, v10));
 	}
 }

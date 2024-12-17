@@ -41,6 +41,7 @@ public interface TypeBuilder {
 	 * </p>
 	 * 
 	 * @param rawType an erased type
+	 *
 	 * @return a type argument builder with this builder as parent
 	 */
 	TypeArgumentBuilder<TypeBuilder> type(Class<?> rawType);
@@ -51,6 +52,7 @@ public interface TypeBuilder {
 	 * </p>
 	 * 
 	 * @param type a type
+	 *
 	 * @return this builder
 	 */
 	TypeBuilder type(Type type);
@@ -61,6 +63,7 @@ public interface TypeBuilder {
 	 * </p>
 	 * 
 	 * @param name The name of the variable
+	 *
 	 * @return a type variable builder with this builder as parent
 	 */
 	TypeVariableBuilder<TypeBuilder> variableType(String name);
@@ -89,6 +92,7 @@ public interface TypeBuilder {
 	 * </p>
 	 * 
 	 * @param rawType the erased type of the owner
+	 *
 	 * @return a type argument builder with this builder as parent
 	 */
 	TypeArgumentBuilder<TypeBuilder> ownerType(Class<?> rawType);
@@ -99,6 +103,7 @@ public interface TypeBuilder {
 	 * </p>
 	 * 
 	 * @param type the type of the owner
+	 *
 	 * @return this builder
 	 */
 	TypeBuilder ownerType(Type type);
@@ -107,8 +112,8 @@ public interface TypeBuilder {
 	 * <p>Builds the type.</p>
 	 * 
 	 * @return a parameterized type
-	 * @throws IllegalStateException if the builder is not in a proper state to
-	 *                               build a type
+	 *
+	 * @throws IllegalStateException if the builder is not in a proper state to build a type
 	 */
 	Type build();
 }

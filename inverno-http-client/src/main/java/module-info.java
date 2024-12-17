@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import io.inverno.mod.http.base.Parameter;
 
 /**
  * <p>
- * The Inverno framework HTTP client module provides a HTTP1.x and HTTP/2 client.
+ * The Inverno framework HTTP client module provides an HTTP1.x and HTTP/2 client.
  * </p>
  * 
  * <p>
@@ -25,20 +24,20 @@ import io.inverno.mod.http.base.Parameter;
  * </p>
  * 
  * <dl>
- * <dt><b>httpClientConfiguration</b></dt>
- * <dd>the HTTP client module configuration</dd>
  * <dt><b>netService (required)</b></dt>
  * <dd>the Net service used to create the HTTP client</dd>
- * <dt><b>resourceService (required)</b></dt>
- * <dd>the resource service used to load resources required by the HTTP client (eg. key store...)</dd>
  * <dt><b>reactor (required)</b></dt>
  * <dd>the reactor used in the connection pool</dd>
+ * <dt><b>resourceService (required)</b></dt>
+ * <dd>the resource service used to load resources required by the HTTP client (eg. key store...)</dd>
+ * <dt><b>configuration</b></dt>
+ * <dd>the HTTP client module configuration</dd>
  * <dt><b>headerCodecs</b></dt>
  * <dd>custom header codecs</dd>
  * <dt><b>parameterConverter</b></dt>
- * <dd>override the default parameter converter used in {@link Parameter} instances to convert their values</dd>
+ * <dd>override the default parameter converter used in {@link io.inverno.mod.http.base.Parameter} instances to convert their values</dd>
  * </dl>
- * 
+ *
  * <p>
  * It exposes the following beans:
  * </p>
@@ -55,9 +54,9 @@ import io.inverno.mod.http.base.Parameter;
  * </p>
  * 
  * <pre>{@code
- * NetService netService = null;
- * Reactor reactor = null;
- * ResourceService resourceService = null;
+ * NetService netService = ...;
+ * Reactor reactor = ...;
+ * ResourceService resourceService = ...;
  * 
  * Client client = Application.with(new Client.Builder(netService, reactor, resourceService)
  *	.configuration(HttpClientConfigurationLoader.load(conf -> conf.http_protocol_versions(Set.of(HttpVersion.HTTP_2_0))))
@@ -85,11 +84,7 @@ module io.inverno.mod.http.client {
 	requires io.inverno.mod.configuration;
 	requires transitive io.inverno.mod.http.base;
 	
-	requires org.apache.logging.log4j;
-	
-	requires jdk.unsupported; // required by netty for low level API for accessing direct buffers
-	requires transitive reactor.core;
-	requires transitive org.reactivestreams;
+	requires static com.aayushatharva.brotli4j;
 	requires transitive io.netty.buffer;
 	requires io.netty.common;
 	requires io.netty.codec;
@@ -98,9 +93,12 @@ module io.inverno.mod.http.client {
 	requires io.netty.handler;
 	requires io.netty.handler.proxy;
 	requires io.netty.resolver;
-	
-	requires static com.aayushatharva.brotli4j;
-	
+	requires jdk.unsupported; // required by netty for low level API for accessing direct buffers
+	requires org.apache.commons.lang3;
+	requires org.apache.logging.log4j;
+	requires transitive org.reactivestreams;
+	requires transitive reactor.core;
+
 	exports io.inverno.mod.http.client;
 	exports io.inverno.mod.http.client.ws;
 }

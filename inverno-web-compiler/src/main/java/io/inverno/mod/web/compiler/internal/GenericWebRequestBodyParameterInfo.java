@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.web.compiler.internal;
 
+import io.inverno.mod.web.compiler.spi.RequestBodyKind;
+import io.inverno.mod.web.compiler.spi.RequestBodyReactiveKind;
 import java.util.Objects;
 
 import javax.lang.model.element.VariableElement;
@@ -34,7 +36,7 @@ import io.inverno.mod.web.compiler.spi.WebRequestBodyParameterInfo;
  * 
  * @see AbstractWebParameterInfo
  */
-class GenericWebRequestBodyParameterInfo extends AbstractWebParameterInfo implements WebRequestBodyParameterInfo {
+public class GenericWebRequestBodyParameterInfo extends AbstractWebParameterInfo implements WebRequestBodyParameterInfo {
 
 	private final RequestBodyKind requestBodyKind;
 	
@@ -42,7 +44,7 @@ class GenericWebRequestBodyParameterInfo extends AbstractWebParameterInfo implem
 	
 	/**
 	 * <p>
-	 * Creates a generic web request body parameter info.
+	 * Creates a generic Web request body parameter info.
 	 * </p>
 	 * 
 	 * @param name                    the parameter qualified name
@@ -53,7 +55,7 @@ class GenericWebRequestBodyParameterInfo extends AbstractWebParameterInfo implem
 	 * @param requestBodyReactiveKind the request body reactive kind
 	 */
 	public GenericWebRequestBodyParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, TypeMirror requestBodyType, RequestBodyKind requestBodyKind, RequestBodyReactiveKind requestBodyReactiveKind) {
-		super(name, reporter, parameterElement, requestBodyType, false);
+		super(name, reporter, parameterElement, requestBodyType, true);
 		this.requestBodyKind = Objects.requireNonNull(requestBodyKind);
 		this.requestBodyReactiveKind = Objects.requireNonNull(requestBodyReactiveKind);
 	}

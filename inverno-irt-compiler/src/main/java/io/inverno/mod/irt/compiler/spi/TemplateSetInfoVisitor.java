@@ -19,35 +19,35 @@ package io.inverno.mod.irt.compiler.spi;
  * <p>
  * A template set info visitor is used to process a template set info.
  * </p>
- * 
- * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.2
  *
  * @param <R> the visitor result type
  * @param <P> the visitor parameter type
+ *
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.2
  */
 public interface TemplateSetInfoVisitor<R, P> {
-	
+
 	/**
 	 * <p>
 	 * Visits template set info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(TemplateSetInfo info, P p);
-	
+
 	/**
 	 * <p>
 	 * Visits package info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(PackageInfo info, P p);
@@ -56,10 +56,10 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits import info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(ImportInfo info, P p);
@@ -68,10 +68,10 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits include info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(IncludeInfo info, P p);
@@ -80,10 +80,10 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits option info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(OptionInfo info, P p);
@@ -92,10 +92,10 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits template info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(TemplateInfo info, P p);
@@ -104,10 +104,10 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits template select info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(TemplateInfo.SelectInfo info, P p);
@@ -116,10 +116,10 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits statement info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(StatementInfo info, P p);
@@ -128,10 +128,10 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits comment statement info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(CommentInfo info, P p);
@@ -140,10 +140,10 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits static content statement info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(StaticContentInfo info, P p);
@@ -152,10 +152,10 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits value statement info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(ValueInfo info, P p);
@@ -164,10 +164,10 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits if statement info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(IfInfo info, P p);
@@ -176,10 +176,10 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits if case info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(IfInfo.CaseInfo info, P p);
@@ -188,10 +188,10 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits apply statement info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(ApplyInfo info, P p);
@@ -200,10 +200,10 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits apply target parameter info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(ApplyInfo.TargetParameterInfo info, P p);
@@ -212,10 +212,10 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits apply target info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(ApplyInfo.TargetInfo info, P p);
@@ -224,10 +224,10 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits apply argument info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(ApplyInfo.ArgumentInfo info, P p);
@@ -236,10 +236,10 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits name info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(NameInfo info, P p);
@@ -248,22 +248,22 @@ public interface TemplateSetInfoVisitor<R, P> {
 	 * <p>
 	 * Visits parameter info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(ParameterInfo info, P p);
-	
+
 	/**
 	 * <p>
 	 * Visits pipe info.
 	 * </p>
-	 * 
+	 *
 	 * @param info the info to visit
 	 * @param p    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(PipeInfo info, P p);

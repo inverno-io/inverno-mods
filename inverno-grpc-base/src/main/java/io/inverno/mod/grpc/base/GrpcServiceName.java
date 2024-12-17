@@ -26,7 +26,7 @@ import io.inverno.mod.grpc.base.internal.GenericGrpcServiceName;
  * A gRPC service is uniquely identified by its fully qualified name composed of a package and a service name: {@code <package>.<service_name>}.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public interface GrpcServiceName {

@@ -45,7 +45,7 @@ public interface WebSocketMessage {
 		/**
 		 * Indicates a {@code BINARY} message.
 		 */
-		BINARY;
+		BINARY
 	}
 	
 	/**
@@ -145,70 +145,70 @@ public interface WebSocketMessage {
 	 * </p>
 	 * 
 	 * <p>
-	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@link #binary() }, {@link #reducedBinary() }, {@link #text() } or {@link #reducedText() }.
+	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@code frames() }, {@link #raw() }, {@link #rawReduced() }, {@link #string() } or {@link #stringReduced() }.
 	 * </p>
 	 * 
-	 * @return a WebSocker frames publisher
+	 * @return a WebSocket frames publisher
 	 */
 	Publisher<WebSocketFrame> frames();
 	
 	/**
 	 * <p>
-	 * Returns the message payload binary data stream.
+	 * Returns the message payload raw data stream.
 	 * </p>
 	 * 
 	 * <p>
-	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@link #binary() }, {@link #reducedBinary() }, {@link #text() } or {@link #reducedText() }.
+	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@code raw() }, {@link #rawReduced() }, {@link #string() } or {@link #stringReduced() }.
 	 * </p>
 	 * 
 	 * @return a data publisher
 	 */
-	Publisher<ByteBuf> binary();
+	Publisher<ByteBuf> raw();
 	
 	/**
 	 * <p>
-	 * Returns the message payload binary data.
+	 * Returns the message payload reduced raw data.
 	 * </p>
 	 * 
 	 * <p>
-	 * This method basically reduces the result of {@link #binary() }.
+	 * This method basically reduces the result of {@link #raw() }.
 	 * </p>
 	 * 
 	 * <p>
-	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@link #binary() }, {@link #reducedBinary() }, {@link #text() } or {@link #reducedText() }.
+	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@link #raw() }, {@code rawReduced() }, {@link #string() } or {@link #stringReduced() }.
 	 * </p>
 	 * 
 	 * @return a mono emitting the binary payload
 	 */
-	Mono<ByteBuf> reducedBinary();
+	Mono<ByteBuf> rawReduced();
 	
 	/**
 	 * <p>
-	 * Returns the message payload text data stream.
+	 * Returns the message payload string data stream.
 	 * </p>
 	 * 
 	 * <p>
-	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@link #binary() }, {@link #reducedBinary() }, {@link #text() } or {@link #reducedText() }.
+	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@link #raw() }, {@link #rawReduced() }, {@code string() } or {@link #stringReduced() }.
 	 * </p>
 	 * 
 	 * @return a text publisher
 	 */
-	Publisher<String> text();
+	Publisher<String> string();
 	
 	/**
 	 * <p>
-	 * Returns the message payload text data stream.
+	 * Returns the message payload reduced string data stream.
 	 * </p>
 	 * 
 	 * <p>
-	 * This method basically reduces the result of {@link #text() }.
+	 * This method basically reduces the result of {@link #string() }.
 	 * </p>
 	 * 
 	 * <p>
-	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@link #binary() }, {@link #reducedBinary() }, {@link #text() } or {@link #reducedText() }.
+	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@link #raw() }, {@link #rawReduced() }, {@link #string() } or {@code stringReduced() }.
 	 * </p>
 	 * 
 	 * @return a mono emitting the text payload
 	 */
-	Mono<String> reducedText();
+	Mono<String> stringReduced();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2021 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,68 +15,81 @@
  */
 package io.inverno.mod.web.server.internal;
 
+import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.web.server.ErrorWebExchange;
-import io.inverno.mod.web.server.WebRequest;
-import io.inverno.mod.web.server.WebResponse;
 import java.util.Optional;
 
 /**
  * <p>
  * Generic {@link ErrorWebExchange} implementation.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
- * @see WebResponse
  */
-class GenericErrorWebExchange implements ErrorWebExchange<ExchangeContext> {
+public class GenericErrorWebExchange<A extends ExchangeContext> implements ErrorWebExchange<A> {
 
-	private final ErrorExchange<ExchangeContext> errorExchange;
-	private final GenericWebRequest request;
+	private final ServerDataConversionService dataConversionService;
+	private final ObjectConverter<String> parameterConverter;
+	private final ErrorExchange<A> exchange;
 	private final GenericWebResponse response;
-	
-	public GenericErrorWebExchange(ErrorExchange<ExchangeContext> errorExchange, GenericWebRequest request, GenericWebResponse response) {
-		this.errorExchange = errorExchange;
-		this.request = request;
-		this.response = response;
+
+	private GenericWebRequest request;
+
+	/**
+	 * <p>
+	 * Creates a generic error Web exchange.
+	 * </p>
+	 *
+	 * @param dataConversionService the data conversion service
+	 * @param parameterConverter    the parameter converter
+	 * @param exchange              the original error exchange
+	 */
+	public GenericErrorWebExchange(ServerDataConversionService dataConversionService, ObjectConverter<String> parameterConverter, ErrorExchange<A> exchange) {
+		this.dataConversionService = dataConversionService;
+		this.parameterConverter = parameterConverter;
+		this.exchange = exchange;
+		this.response = new GenericWebResponse(dataConversionService, exchange.response());
 	}
 
 	@Override
 	public HttpVersion getProtocol() {
-		return this.errorExchange.getProtocol();
+		return this.exchange.getProtocol();
 	}
-	
+
 	@Override
-	public ExchangeContext context() {
-		return this.errorExchange.context();
+	public A context() {
+		return this.exchange.context();
 	}
-	
+
 	@Override
-	public WebRequest request() {
+	public GenericWebRequest request() {
+		if(this.request == null) {
+			this.request = new GenericWebRequest(this.dataConversionService, this.parameterConverter, this.exchange.request());
+		}
 		return this.request;
 	}
-	
+
 	@Override
-	public WebResponse response() {
+	public GenericWebResponse response() {
 		return this.response;
 	}
 
 	@Override
 	public void reset(long code) {
-		this.errorExchange.reset(code);
+		this.exchange.reset(code);
 	}
 
 	@Override
 	public Optional<Throwable> getCancelCause() {
-		return this.errorExchange.getCancelCause();
+		return this.exchange.getCancelCause();
 	}
-	
+
 	@Override
 	public Throwable getError() {
-		return this.errorExchange.getError();
+		return this.exchange.getError();
 	}
 }

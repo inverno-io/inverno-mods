@@ -17,18 +17,15 @@ package io.inverno.mod.irt.compiler.spi;
 
 /**
  * <p>
- * A statement info corresponds to a statement in a template declaration in a
- * template set source file.
+ * A statement info corresponds to a statement in a template declaration in a template set source file.
  * </p>
- * 
+ *
  * <p>
- * This is the base statement interface for all types of statements in a
- * template declaration's body.
+ * This is the base statement interface for all types of statements in a template declaration's body.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- * 
  */
 public interface StatementInfo {
 

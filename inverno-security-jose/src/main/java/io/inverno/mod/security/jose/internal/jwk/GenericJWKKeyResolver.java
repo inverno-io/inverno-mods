@@ -43,7 +43,7 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * This is an overridable bean which can be overriden by injecting a custom {@link JWKKeyResolver} instance when building the JOSE module.
+ * This is an overridable bean which can be overridden by injecting a custom {@link JWKKeyResolver} instance when building the JOSE module.
  * </p>
  * 
  * <p>
@@ -57,7 +57,7 @@ import reactor.core.publisher.Mono;
  * 
  * <p>
  * Key resolution will be disabled if the key store is missing which happens when no explicit key store has been specified, no key store could be loaded from configuration because of missing
- * parameters or when the optional resource service used to load the configuraiton key store is missing.
+ * parameters or when the optional resource service used to load the configuration key store is missing.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -109,9 +109,7 @@ public class GenericJWKKeyResolver implements @Provide JWKKeyResolver {
 								throw new JWKProcessingException("Error loading JWK keystore", e);
 							}
 						})
-						.orElseThrow(() -> {
-							throw new JWKProcessingException("Error loading JWK keystore, resource does not exist or is not readable: " + this.configuration.key_store());
-						});
+						.orElseThrow(() -> new JWKProcessingException("Error loading JWK keystore, resource does not exist or is not readable: " + this.configuration.key_store()));
 				}
 			}
 		}

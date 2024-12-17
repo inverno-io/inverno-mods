@@ -33,7 +33,7 @@ import reactor.core.publisher.Flux;
  * A {@link #context() context} is also attached to every exchange to provide contextual data and operation during during the processing of the exchange.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @see ExchangeContext
@@ -42,7 +42,7 @@ import reactor.core.publisher.Flux;
  * @param <B> The request type
  * @param <C> The response type
  */
-public interface BaseExchange<A extends ExchangeContext, B, C> {
+public interface BaseExchange<A extends ExchangeContext, B extends BaseRequest, C> {
 
 	/**
 	 * <p>
@@ -85,7 +85,7 @@ public interface BaseExchange<A extends ExchangeContext, B, C> {
 	 * Resets the exchange with a {@code CANCEL(0x8)} code.
 	 * </p>
 	 * 
-	 * @see #reset(int) 
+	 * @see #reset(long)
 	 */
 	default void reset() {
 		this.reset(Http2Error.CANCEL.code());
@@ -116,7 +116,7 @@ public interface BaseExchange<A extends ExchangeContext, B, C> {
 	 * </p>
 	 *
 	 * <p>
-	 * Exchange disposal resulting or not from an error is usually catched in the request data publisher which can be bound to the response data publisher in which case, errors can be catched by
+	 * Exchange disposal resulting or not from an error is usually caught in the request data publisher which can be bound to the response data publisher in which case, errors can be caught by
 	 * defining {@link Flux#doOnError(java.util.function.Consumer) } on the response data publisher. When the request data publisher is not consumed, terminated or not bound to the response data
 	 * publisher, the response data publisher can be disposed without error, this method gives access to the error when intercepting the exchange disposal by defining 
 	 * {@link Flux#doOnCancel(java.lang.Runnable) } on the response data publisher.

@@ -15,6 +15,22 @@
  */
 package io.inverno.mod.configuration.internal;
 
+import java.io.File;
+import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.util.Currency;
+import java.util.List;
+import java.util.Locale;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import io.inverno.mod.configuration.ConfigurationProperty;
@@ -22,6 +38,10 @@ import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.ConfigurationQueryResult;
 import io.inverno.mod.configuration.ConfigurationSource;
 import io.inverno.mod.configuration.ConfigurationSourceException;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 /**
  * <p>
@@ -36,9 +56,9 @@ import io.inverno.mod.configuration.ConfigurationSourceException;
 public class GenericConfigurationQueryResult implements ConfigurationQueryResult {
 
 	protected ConfigurationKey queryKey;
-	protected Optional<ConfigurationProperty> queryResult;
+	protected ConfigurationProperty queryResult;
 	protected Throwable error;
-	protected ConfigurationSource<?,?,?> errorSource;
+	protected ConfigurationSource errorSource;
 	
 	/**
 	 * <p>
@@ -50,7 +70,7 @@ public class GenericConfigurationQueryResult implements ConfigurationQueryResult
 	 */
 	public GenericConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationProperty queryResult) {
 		this.queryKey = queryKey;
-		this.queryResult = Optional.ofNullable(queryResult);
+		this.queryResult = queryResult;
 	}
 	
 	/**
@@ -62,7 +82,7 @@ public class GenericConfigurationQueryResult implements ConfigurationQueryResult
 	 * @param source   the configuration source
 	 * @param error    the error
 	 */
-	public GenericConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationSource<?,?,?> source, Throwable error) {
+	public GenericConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationSource source, Throwable error) {
 		this.queryKey = queryKey;
 		this.errorSource = source;
 		this.error = error;
@@ -74,10 +94,224 @@ public class GenericConfigurationQueryResult implements ConfigurationQueryResult
 	}
 
 	@Override
-	public Optional<ConfigurationProperty> getResult() throws ConfigurationSourceException {
+	public boolean isPresent() {
+		return this.queryResult != null;
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return this.queryResult == null;
+	}
+
+	@Override
+	public void ifPresent(Consumer<? super ConfigurationProperty> action) {
+		if(this.queryResult != null) {
+			action.accept(this.queryResult);
+		}
+	}
+
+	@Override
+	public void ifPresentOrElse(Consumer<? super ConfigurationProperty> action, Runnable emptyAction) {
+		if(this.queryResult != null) {
+			action.accept(this.queryResult);
+		}
+		else {
+			emptyAction.run();
+		}
+	}
+
+	@Override
+	public ConfigurationProperty orElseThrow() throws NoSuchElementException {
+		if(this.queryResult == null) {
+			throw new NoSuchElementException("Query " + this.queryKey + " returned no result");
+		}
+		return this.queryResult;
+	}
+
+	@Override
+	public <X extends Throwable> ConfigurationProperty orElseThrow(Supplier<? extends X> exceptionSupplier) throws X {
+		if(this.queryResult == null) {
+			throw exceptionSupplier.get();
+		}
+		return this.queryResult;
+	}
+
+	@Override
+	public ConfigurationProperty get() throws ConfigurationSourceException, NoSuchElementException {
 		if(this.error != null) {
 			throw new ConfigurationSourceException(this.errorSource, this.error);
 		}
+		if(this.queryResult == null) {
+			throw new NoSuchElementException("Query " + this.queryKey + " returned no result");
+		}
 		return this.queryResult;
+	}
+
+	@Override
+	public Optional<ConfigurationProperty> toOptional() throws ConfigurationSourceException {
+		if(this.error != null) {
+			throw new ConfigurationSourceException(this.errorSource, this.error);
+		}
+		return Optional.ofNullable(this.queryResult);
+	}
+
+	@Override
+	public <T> T as(Class<T> type, T defaultValue) {
+		return this.queryResult != null ? this.queryResult.as(type, defaultValue) : defaultValue;
+	}
+
+	@Override
+	public <T> T as(Type type, T defaultValue) {
+		return this.queryResult != null ? this.queryResult.as(type, defaultValue) : defaultValue;
+	}
+
+	@Override
+	public <T> T[] asArrayOf(Class<T> type, T[] defaultValue) {
+		return this.queryResult != null ? this.queryResult.asArrayOf(type, defaultValue) : defaultValue;
+	}
+
+	@Override
+	public <T> T[] asArrayOf(Type type, T[] defaultValue) {
+		return this.queryResult != null ? this.queryResult.asArrayOf(type, defaultValue) : defaultValue;
+	}
+
+	@Override
+	public <T> List<T> asListOf(Class<T> type, List<T> defaultValue) {
+		return this.queryResult != null ? this.queryResult.asListOf(type, defaultValue) : defaultValue;
+	}
+
+	@Override
+	public <T> List<T> asListOf(Type type, List<T> defaultValue) {
+		return this.queryResult != null ? this.queryResult.asListOf(type, defaultValue) : defaultValue;
+	}
+
+	@Override
+	public <T> Set<T> asSetOf(Class<T> type, Set<T> defaultValue) {
+		return this.queryResult != null ? this.queryResult.asSetOf(type, defaultValue) : defaultValue;
+	}
+
+	@Override
+	public <T> Set<T> asSetOf(Type type, Set<T> defaultValue) {
+		return this.queryResult != null ? this.queryResult.asSetOf(type, defaultValue) : defaultValue;
+	}
+
+	@Override
+	public byte asByte(byte defaultValue) {
+		return this.queryResult != null ? this.queryResult.asByte(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public short asShort(short defaultValue) {
+		return this.queryResult != null ? this.queryResult.asShort(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public int asInteger(int defaultValue) {
+		return this.queryResult != null ? this.queryResult.asInteger(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public long asLong(long defaultValue) {
+		return this.queryResult != null ? this.queryResult.asLong(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public float asFloat(float defaultValue) {
+		return this.queryResult != null ? this.queryResult.asFloat(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public double asDouble(double defaultValue) {
+		return this.queryResult != null ? this.queryResult.asDouble(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public char asCharacter(char defaultValue) {
+		return this.queryResult != null ? this.queryResult.asCharacter(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public String asString(String defaultValue) {
+		return this.queryResult != null ? this.queryResult.asString(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public boolean asBoolean(boolean defaultValue) {
+		return this.queryResult != null ? this.queryResult.asBoolean(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public BigInteger asBigInteger(BigInteger defaultValue) {
+		return this.queryResult != null ? this.queryResult.asBigInteger(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public BigDecimal asBigDecimal(BigDecimal defaultValue) {
+		return this.queryResult != null ? this.queryResult.asBigDecimal(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public LocalDate asLocalDate(LocalDate defaultValue) {
+		return this.queryResult != null ? this.queryResult.asLocalDate(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public LocalDateTime asLocalDateTime(LocalDateTime defaultValue) {
+		return this.queryResult != null ? this.queryResult.asLocalDateTime(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public ZonedDateTime asZonedDateTime(ZonedDateTime defaultValue) {
+		return this.queryResult != null ? this.queryResult.asZonedDateTime(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public Currency asCurrency(Currency defaultValue) {
+		return this.queryResult != null ? this.queryResult.asCurrency(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public Locale asLocale(Locale defaultValue) {
+		return this.queryResult != null ? this.queryResult.asLocale(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public File asFile(File defaultValue) {
+		return this.queryResult != null ? this.queryResult.asFile(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public Path asPath(Path defaultValue) {
+		return this.queryResult != null ? this.queryResult.asPath(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public URI asURI(URI defaultValue) {
+		return this.queryResult != null ? this.queryResult.asURI(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public URL asURL(URL defaultValue) {
+		return this.queryResult != null ? this.queryResult.asURL(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public Pattern asPattern(Pattern defaultValue) {
+		return this.queryResult != null ? this.queryResult.asPattern(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public InetAddress asInetAddress(InetAddress defaultValue) {
+		return this.queryResult != null ? this.queryResult.asInetAddress(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public InetSocketAddress asInetSocketAddress(InetSocketAddress defaultValue) {
+		return this.queryResult != null ? this.queryResult.asInetSocketAddress(defaultValue) : defaultValue;
+	}
+
+	@Override
+	public <T> Class<T> asClass(Class<T> defaultValue) {
+		return this.queryResult != null ? this.queryResult.asClass(defaultValue) : defaultValue;
 	}
 }

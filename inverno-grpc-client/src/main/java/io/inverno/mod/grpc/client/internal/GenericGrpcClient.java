@@ -42,7 +42,7 @@ import reactor.core.publisher.Mono;
  * Generic {@link GrpcClient} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 @Bean( name = "grpcClient" )
@@ -77,21 +77,25 @@ public class GenericGrpcClient implements GrpcClient {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <A extends ExchangeContext, B extends Exchange<A>, C extends Message, D extends Message, E extends GrpcExchange.Unary<A, C, D>> E unary(B exchange, GrpcServiceName serviceName, String methodName, C defaultRequestInstance, D defaultResponseInstance) {
 		return (E)new GenericGrpcExchange.GenericUnary<>(exchange, () -> this.createRequest(exchange, defaultRequestInstance, serviceName, methodName), () -> this.createResponse(exchange, defaultResponseInstance), serviceName, methodName);
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <A extends ExchangeContext, B extends Exchange<A>, C extends Message, D extends Message, E extends GrpcExchange.ClientStreaming<A, C, D>> E clientStreaming(B exchange, GrpcServiceName serviceName, String methodName, C defaultRequestInstance, D defaultResponseInstance) {
 		return (E)new GenericGrpcExchange.GenericClientStreaming<>(exchange, () -> this.createRequest(exchange, defaultRequestInstance, serviceName, methodName), () -> this.createResponse(exchange, defaultResponseInstance), serviceName, methodName);
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <A extends ExchangeContext, B extends Exchange<A>, C extends Message, D extends Message, E extends GrpcExchange.ServerStreaming<A, C, D>> E serverStreaming(B exchange, GrpcServiceName serviceName, String methodName, C defaultRequestInstance, D defaultResponseInstance) {
 		return (E)new GenericGrpcExchange.GenericServerStreaming<>(exchange, () -> this.createRequest(exchange, defaultRequestInstance, serviceName, methodName), () -> this.createResponse(exchange, defaultResponseInstance), serviceName, methodName);
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <A extends ExchangeContext, B extends Exchange<A>, C extends Message, D extends Message, E extends GrpcExchange.BidirectionalStreaming<A, C, D>> E bidirectionalStreaming(B exchange, GrpcServiceName serviceName, String methodName, C defaultRequestInstance, D defaultResponseInstance) {
 		return (E)new GenericGrpcExchange.GenericBidirectionalStreaming<>(exchange, () -> this.createRequest(exchange, defaultRequestInstance, serviceName, methodName), () -> this.createResponse(exchange, defaultResponseInstance), serviceName, methodName);
 	}
@@ -112,6 +116,7 @@ public class GenericGrpcClient implements GrpcClient {
 	 *
 	 * @return a new gRPC client request
 	 */
+	@SuppressWarnings("unchecked")
 	private <A extends ExchangeContext, B extends Exchange<A>, C extends Message, D extends GrpcRequest<C>> D createRequest(B exchange, C defaultRequestInstance, GrpcServiceName serviceName, String methodName) {
 		return (D)new GenericGrpcRequest<>(exchange.request(), () -> this.createMessageWriter(exchange), this.extensionRegistry, serviceName, methodName, () -> exchange.reset(Http2Error.CANCEL.code()));
 	}
@@ -137,6 +142,7 @@ public class GenericGrpcClient implements GrpcClient {
 	 * 
 	 * @throws GrpcException if the message encoding specified in the response is not supported
 	 */
+	@SuppressWarnings("unchecked")
 	private <A extends ExchangeContext, B extends Exchange<A>, C extends Message, D extends GrpcResponse<C>> Mono<D> createResponse(B exchange, C defaultResponseInstance) throws GrpcException {
 		return exchange.response().map(response -> {
 			GrpcMessageCompressor messageCompressor = response.headers().get(GrpcHeaders.NAME_GRPC_MESSAGE_ENCODING)

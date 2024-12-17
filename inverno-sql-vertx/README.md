@@ -12,10 +12,9 @@ It provides multiple `SqlClient` implementations that wrap Vert.x SQL pooled cli
 In order to use the Inverno *Vert.x SQL client* module, we need to declare a dependency in the module descriptor:
 
 ```java
+@io.inverno.core.annotation.Module
 module io.inverno.example.app {
-    ...
     requires io.inverno.mod.sql.vertx;
-    ...
 }
 ```
 
@@ -40,11 +39,9 @@ Using Maven:
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.inverno.mod:inverno-sql-vertx:${VERSION_INVERNO_MODS}'
 compile 'io.vertx:vertx-pg-client:4.1.2'
-...
 ```
 
 ## Configuration

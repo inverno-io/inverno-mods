@@ -139,7 +139,7 @@ public interface DefaultingStrategy {
 	 * 
 	 * <p>
 	 * Note that in case of a {@link ListConfigurationQuery#executeAll()} operation, the source shall only include properties with extra parameters that only match the first key so as to exclude
-	 * properties inconsistent with the orignal query.
+	 * properties inconsistent with the original query.
 	 * </p>
 	 * 
 	 * @param queryKey the original query

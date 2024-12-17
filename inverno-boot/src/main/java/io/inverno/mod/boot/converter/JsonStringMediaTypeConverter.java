@@ -144,7 +144,7 @@ public class JsonStringMediaTypeConverter implements @Provide MediaTypeConverter
 		@Override
 		public Iterator<String> iterator() {
 			
-			return new Iterator<String>() {
+			return new Iterator<>() {
 				
 				private String current = "";
 

@@ -37,7 +37,7 @@ import reactor.core.publisher.Mono;
  * Once the response has been sent to the client it is no longer possible to modify it resulting in {@link IllegalStateException} on such operations.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  * 
  * @param <A> the response message type
@@ -75,7 +75,7 @@ public interface GrpcResponse<A extends Message> extends GrpcBaseResponse {
 	 * Represents a unary (single message) response.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 * 
 	 * @param <A> The response message type
@@ -83,10 +83,10 @@ public interface GrpcResponse<A extends Message> extends GrpcBaseResponse {
 	interface Unary<A extends Message> extends GrpcResponse<A> {
 
 		@Override
-		public GrpcResponse.Unary<A> metadata(Consumer<GrpcOutboundResponseMetadata> metadataConfigurer) throws IllegalStateException;
+		GrpcResponse.Unary<A> metadata(Consumer<GrpcOutboundResponseMetadata> metadataConfigurer) throws IllegalStateException;
 
 		@Override
-		public GrpcResponse.Unary<A> trailersMetadata(Consumer<GrpcOutboundResponseTrailersMetadata> metadataConfigurer) throws IllegalStateException;
+		GrpcResponse.Unary<A> trailersMetadata(Consumer<GrpcOutboundResponseTrailersMetadata> metadataConfigurer) throws IllegalStateException;
 		
 		/**
 		 * <p>
@@ -114,7 +114,7 @@ public interface GrpcResponse<A extends Message> extends GrpcBaseResponse {
 	 * Represents a streaming (stream of messages) response.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 * 
 	 * @param <A> The response message type
@@ -122,10 +122,10 @@ public interface GrpcResponse<A extends Message> extends GrpcBaseResponse {
 	interface Streaming<A extends Message> extends GrpcResponse<A> {
 		
 		@Override
-		public GrpcResponse.Streaming<A> metadata(Consumer<GrpcOutboundResponseMetadata> metadataConfigurer) throws IllegalStateException;
+		GrpcResponse.Streaming<A> metadata(Consumer<GrpcOutboundResponseMetadata> metadataConfigurer) throws IllegalStateException;
 
 		@Override
-		public GrpcResponse.Streaming<A> trailersMetadata(Consumer<GrpcOutboundResponseTrailersMetadata> metadataConfigurer) throws IllegalStateException;
+		GrpcResponse.Streaming<A> trailersMetadata(Consumer<GrpcOutboundResponseTrailersMetadata> metadataConfigurer) throws IllegalStateException;
 
 		/**
 		 * <p>

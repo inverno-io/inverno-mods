@@ -180,7 +180,7 @@ public interface HeaderCodec<A extends Header> {
 	 * Returns a list of header names supported by the codec.
 	 * </p>
 	 * 
-	 * @return a list of header names
+	 * @return a set of header names
 	 */
 	Set<String> getSupportedHeaderNames();
 }

@@ -20,7 +20,6 @@ import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.mod.http.base.header.HeaderBuilder;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
-import static io.inverno.mod.http.base.header.Headers.SetCookie.HTTPONLY;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Set;
@@ -78,7 +77,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 
 	/**
 	 * <p>
-	 * {@link Headers.SetCookie} header implemetation.
+	 * {@link Headers.SetCookie} header implementation.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

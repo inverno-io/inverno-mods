@@ -123,7 +123,7 @@ public enum RSAAlgorithm implements JWAAlgorithm<RSAJWK> {
 	 * @param cipherFactory     the JWA cipher factory
 	 * @param jcaAlg            the JCA algorithm
 	 */
-	private RSAAlgorithm(String alg, BiFunction<RSAJWK, RSAAlgorithm, JWASigner> signerFactory, BiFunction<RSAJWK, RSAAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<RSAJWK, RSAAlgorithm, JWACipher> cipherFactory, String jcaAlg) {
+	RSAAlgorithm(String alg, BiFunction<RSAJWK, RSAAlgorithm, JWASigner> signerFactory, BiFunction<RSAJWK, RSAAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<RSAJWK, RSAAlgorithm, JWACipher> cipherFactory, String jcaAlg) {
 		this(alg, signerFactory, keyManagerFactory, cipherFactory, jcaAlg, null);
 	}
 	
@@ -139,7 +139,7 @@ public enum RSAAlgorithm implements JWAAlgorithm<RSAJWK> {
 	 * @param jcaAlg            the JCA algorithm
 	 * @param signatureParams   the signature algorithm parameters
 	 */
-	private RSAAlgorithm(String alg, BiFunction<RSAJWK, RSAAlgorithm, JWASigner> signerFactory, BiFunction<RSAJWK, RSAAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<RSAJWK, RSAAlgorithm, JWACipher> cipherFactory, String jcaAlg, AlgorithmParameterSpec signatureParams) {
+	RSAAlgorithm(String alg, BiFunction<RSAJWK, RSAAlgorithm, JWASigner> signerFactory, BiFunction<RSAJWK, RSAAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<RSAJWK, RSAAlgorithm, JWACipher> cipherFactory, String jcaAlg, AlgorithmParameterSpec signatureParams) {
 		this.alg = alg;
 		this.jcaAlg = jcaAlg;
 		this.signerFactory = signerFactory;
@@ -227,7 +227,7 @@ public enum RSAAlgorithm implements JWAAlgorithm<RSAJWK> {
 	 * 
 	 * @return a RSA algorithm
 	 * 
-	 * @throws IllegalArgumentException if the specified algorithm is not a RSA algorithm.
+	 * @throws IllegalArgumentException if the specified algorithm is not an RSA algorithm.
 	 */
 	public static RSAAlgorithm fromAlgorithm(String alg) {
 		switch(alg) {
@@ -311,8 +311,8 @@ public enum RSAAlgorithm implements JWAAlgorithm<RSAJWK> {
 	 * Creates a RSA key manager.
 	 * </p>
 	 *
-	 * @param jwk       a RSA key
-	 * @param algorithm a RSA key management algorithm
+	 * @param jwk       an RSA key
+	 * @param algorithm an RSA key management algorithm
 	 *
 	 * @return a RSA key manager
 	 *

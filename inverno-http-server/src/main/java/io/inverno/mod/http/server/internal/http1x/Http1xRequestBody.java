@@ -26,7 +26,7 @@ import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
  * Http/1.x {@link RequestBody} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.10
  */
 class Http1xRequestBody extends AbstractRequestBody<Http1xRequestHeaders> {

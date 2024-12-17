@@ -28,8 +28,7 @@ import org.apache.commons.text.StringEscapeUtils;
 
 /**
  * <p>
- * A collection of pipes used to transform basic values including: strings
- * transformation, date formatting, number formatting, escaping...
+ * A collection of pipes used to transform basic values including: strings transformation, date formatting, number formatting, escaping...
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -76,8 +75,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a temporal object (date, time, date-time...) using
-	 * the specified formatter.
+	 * Returns a pipe which formats a temporal object (date, time, date-time...) using the specified formatter.
 	 * </p>
 	 * 
 	 * @param formatter a date time formatter
@@ -90,8 +88,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a temporal object (date, time, date-time...) as
-	 * a date using the specified format style.
+	 * Returns a pipe which formats a temporal object (date, time, date-time...) as a date using the specified format style.
 	 * </p>
 	 * 
 	 * @param dateStyle a date format style
@@ -105,8 +102,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a temporal object (date, time, date-time...) as
-	 * a date using the specified format style and locale.
+	 * Returns a pipe which formats a temporal object (date, time, date-time...) as a date using the specified format style and locale.
 	 * </p>
 	 * 
 	 * @param dateStyle a date format style
@@ -120,8 +116,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a temporal object (date, time, date-time...) as
-	 * a date-time using the specified format style.
+	 * Returns a pipe which formats a temporal object (date, time, date-time...) as a date-time using the specified format style.
 	 * </p>
 	 * 
 	 * @param dateTimeStyle a date-time format style
@@ -134,8 +129,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a temporal object (date, time, date-time...) as
-	 * a date-time using the specified format style and zone.
+	 * Returns a pipe which formats a temporal object (date, time, date-time...) as a date-time using the specified format style and zone.
 	 * </p>
 	 * 
 	 * @param dateTimeStyle a date-time format style
@@ -149,8 +143,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a temporal object (date, time, date-time...) as
-	 * a date-time using the specified format style and locale.
+	 * Returns a pipe which formats a temporal object (date, time, date-time...) as a date-time using the specified format style and locale.
 	 * </p>
 	 * 
 	 * @param dateTimeStyle a date-time format style
@@ -164,8 +157,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a temporal object (date, time, date-time...) as
-	 * a date-time using the specified format style, zone and locale.
+	 * Returns a pipe which formats a temporal object (date, time, date-time...) as a date-time using the specified format style, zone and locale.
 	 * </p>
 	 * 
 	 * @param dateTimeStyle a date-time format style
@@ -180,8 +172,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a temporal object (date, time, date-time...) as
-	 * a date-time using the specified pattern.
+	 * Returns a pipe which formats a temporal object (date, time, date-time...) as a date-time using the specified pattern.
 	 * </p>
 	 * 
 	 * @param pattern a date-time pattern
@@ -194,8 +185,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a temporal object (date, time, date-time...) as
-	 * a date-time using the specified pattern and zone.
+	 * Returns a pipe which formats a temporal object (date, time, date-time...) as a date-time using the specified pattern and zone.
 	 * </p>
 	 * 
 	 * @param pattern a date-time pattern
@@ -209,8 +199,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a temporal object (date, time, date-time...) as
-	 * a date-time using the specified pattern and locale.
+	 * Returns a pipe which formats a temporal object (date, time, date-time...) as a date-time using the specified pattern and locale.
 	 * </p>
 	 * 
 	 * @param pattern a date-time pattern
@@ -224,8 +213,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a temporal object (date, time, date-time...) as
-	 * a date-time using the specified pattern, zone and locale.
+	 * Returns a pipe which formats a temporal object (date, time, date-time...) as a date-time using the specified pattern, zone and locale.
 	 * </p>
 	 * 
 	 * @param pattern a date-time pattern
@@ -283,12 +271,9 @@ public final class Pipes {
 	 * Returns a pipe which formats a number according to the specified limits.
 	 * </p>
 	 * 
-	 * @param minIntegerDigits  the minimum number of digits allowed in the integer
-	 *                          portion
-	 * @param minFractionDigits the minimum number of digits allowed in the fraction
-	 *                          portion
-	 * @param maxFractionDigits the maximum number of digits allowed in the fraction
-	 *                          portion
+	 * @param minIntegerDigits  the minimum number of digits allowed in the integer portion
+	 * @param minFractionDigits the minimum number of digits allowed in the fraction portion
+	 * @param maxFractionDigits the maximum number of digits allowed in the fraction portion
 	 * 
 	 * @return a pipe
 	 */
@@ -302,16 +287,12 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number for the specified locale according to
-	 * the specified limits.
+	 * Returns a pipe which formats a number for the specified locale according to the specified limits.
 	 * </p>
 	 * 
-	 * @param minIntegerDigits  the minimum number of digits allowed in the integer
-	 *                          portion
-	 * @param minFractionDigits the minimum number of digits allowed in the fraction
-	 *                          portion
-	 * @param maxFractionDigits the maximum number of digits allowed in the fraction
-	 *                          portion
+	 * @param minIntegerDigits  the minimum number of digits allowed in the integer portion
+	 * @param minFractionDigits the minimum number of digits allowed in the fraction portion
+	 * @param maxFractionDigits the maximum number of digits allowed in the fraction portion
 	 * @param locale            a locale
 	 * 
 	 * @return a pipe
@@ -352,8 +333,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number as an amount in the default locale
-	 * currency.
+	 * Returns a pipe which formats a number as an amount in the default locale currency.
 	 * </p>
 	 * 
 	 * @return a pipe
@@ -364,8 +344,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number as an amount in the specified locale
-	 * currency.
+	 * Returns a pipe which formats a number as an amount in the specified locale currency.
 	 * </p>
 	 * 
 	 * @param locale a locale
@@ -378,16 +357,12 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number as an amount in the default locale
-	 * currency according to the specified limits.
+	 * Returns a pipe which formats a number as an amount in the default locale currency according to the specified limits.
 	 * </p>
 	 * 
-	 * @param minIntegerDigits  the minimum number of digits allowed in the integer
-	 *                          portion
-	 * @param minFractionDigits the minimum number of digits allowed in the fraction
-	 *                          portion
-	 * @param maxFractionDigits the maximum number of digits allowed in the fraction
-	 *                          portion
+	 * @param minIntegerDigits  the minimum number of digits allowed in the integer portion
+	 * @param minFractionDigits the minimum number of digits allowed in the fraction portion
+	 * @param maxFractionDigits the maximum number of digits allowed in the fraction portion
 	 * 
 	 * @return a pipe
 	 */
@@ -401,16 +376,12 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number as an amount in the specified locale
-	 * currency according to the specified limits.
+	 * Returns a pipe which formats a number as an amount in the specified locale currency according to the specified limits.
 	 * </p>
 	 * 
-	 * @param minIntegerDigits  the minimum number of digits allowed in the integer
-	 *                          portion
-	 * @param minFractionDigits the minimum number of digits allowed in the fraction
-	 *                          portion
-	 * @param maxFractionDigits the maximum number of digits allowed in the fraction
-	 *                          portion
+	 * @param minIntegerDigits  the minimum number of digits allowed in the integer portion
+	 * @param minFractionDigits the minimum number of digits allowed in the fraction portion
+	 * @param maxFractionDigits the maximum number of digits allowed in the fraction portion
 	 * @param locale            a locale
 	 * 
 	 * @return a pipe
@@ -425,8 +396,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number as an amount in the specified currency
-	 * using default locale format.
+	 * Returns a pipe which formats a number as an amount in the specified currency using default locale format.
 	 * </p>
 	 * 
 	 * @param currencyCode a currency code
@@ -442,17 +412,13 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number as an amount in the specified currency
-	 * using default locale format according to the specified limits.
+	 * Returns a pipe which formats a number as an amount in the specified currency using default locale format according to the specified limits.
 	 * </p>
 	 * 
 	 * @param currencyCode      a currency code
-	 * @param minIntegerDigits  the minimum number of digits allowed in the integer
-	 *                          portion
-	 * @param minFractionDigits the minimum number of digits allowed in the fraction
-	 *                          portion
-	 * @param maxFractionDigits the maximum number of digits allowed in the fraction
-	 *                          portion
+	 * @param minIntegerDigits  the minimum number of digits allowed in the integer portion
+	 * @param minFractionDigits the minimum number of digits allowed in the fraction portion
+	 * @param maxFractionDigits the maximum number of digits allowed in the fraction portion
 	 * 
 	 * @return a pipe
 	 */
@@ -467,8 +433,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number as an amount in the specified currency
-	 * using specified locale format.
+	 * Returns a pipe which formats a number as an amount in the specified currency using specified locale format.
 	 * </p>
 	 * 
 	 * @param currencyCode a currency code
@@ -485,17 +450,13 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number as an amount in the specified currency
-	 * using the specified locale format according to the specified limits.
+	 * Returns a pipe which formats a number as an amount in the specified currency using the specified locale format according to the specified limits.
 	 * </p>
 	 * 
 	 * @param currencyCode      a currency code
-	 * @param minIntegerDigits  the minimum number of digits allowed in the integer
-	 *                          portion
-	 * @param minFractionDigits the minimum number of digits allowed in the fraction
-	 *                          portion
-	 * @param maxFractionDigits the maximum number of digits allowed in the fraction
-	 *                          portion
+	 * @param minIntegerDigits  the minimum number of digits allowed in the integer portion
+	 * @param minFractionDigits the minimum number of digits allowed in the fraction portion
+	 * @param maxFractionDigits the maximum number of digits allowed in the fraction portion
 	 * @param locale            a locale
 	 * 
 	 * @return a pipe
@@ -511,8 +472,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number as an amount in the specified currency
-	 * using default locale format.
+	 * Returns a pipe which formats a number as an amount in the specified currency using default locale format.
 	 * </p>
 	 * 
 	 * @param currency a currency
@@ -527,17 +487,13 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number as an amount in the specified currency
-	 * using default locale format according to the specified limits.
+	 * Returns a pipe which formats a number as an amount in the specified currency using default locale format according to the specified limits.
 	 * </p>
 	 * 
 	 * @param currency          a currency
-	 * @param minIntegerDigits  the minimum number of digits allowed in the integer
-	 *                          portion
-	 * @param minFractionDigits the minimum number of digits allowed in the fraction
-	 *                          portion
-	 * @param maxFractionDigits the maximum number of digits allowed in the fraction
-	 *                          portion
+	 * @param minIntegerDigits  the minimum number of digits allowed in the integer portion
+	 * @param minFractionDigits the minimum number of digits allowed in the fraction portion
+	 * @param maxFractionDigits the maximum number of digits allowed in the fraction portion
 	 * 
 	 * @return a pipe
 	 */
@@ -552,8 +508,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number as an amount in the specified currency
-	 * using the specified locale format.
+	 * Returns a pipe which formats a number as an amount in the specified currency using the specified locale format.
 	 * </p>
 	 * 
 	 * @param currency a currency
@@ -569,17 +524,13 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number as an amount in the specified currency
-	 * using the specified locale format according to the specified limits.
+	 * Returns a pipe which formats a number as an amount in the specified currency using the specified locale format according to the specified limits.
 	 * </p>
 	 * 
 	 * @param currency          a currency
-	 * @param minIntegerDigits  the minimum number of digits allowed in the integer
-	 *                          portion
-	 * @param minFractionDigits the minimum number of digits allowed in the fraction
-	 *                          portion
-	 * @param maxFractionDigits the maximum number of digits allowed in the fraction
-	 *                          portion
+	 * @param minIntegerDigits  the minimum number of digits allowed in the integer portion
+	 * @param minFractionDigits the minimum number of digits allowed in the fraction portion
+	 * @param maxFractionDigits the maximum number of digits allowed in the fraction portion
 	 * @param locale            a locale
 	 * 
 	 * @return a pipe
@@ -597,8 +548,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number as a percentage using default locale
-	 * format.
+	 * Returns a pipe which formats a number as a percentage using default locale format.
 	 * </p>
 	 * 
 	 * @return a pipe
@@ -609,8 +559,7 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number as a percentage using the specified
-	 * locale format.
+	 * Returns a pipe which formats a number as a percentage using the specified locale format.
 	 * </p>
 	 * 
 	 * @param locale a locale
@@ -623,16 +572,12 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number as a percentage using default locale
-	 * format according to the specified limits.
+	 * Returns a pipe which formats a number as a percentage using default locale format according to the specified limits.
 	 * </p>
 	 * 
-	 * @param minIntegerDigits  the minimum number of digits allowed in the integer
-	 *                          portion
-	 * @param minFractionDigits the minimum number of digits allowed in the fraction
-	 *                          portion
-	 * @param maxFractionDigits the maximum number of digits allowed in the fraction
-	 *                          portion
+	 * @param minIntegerDigits  the minimum number of digits allowed in the integer portion
+	 * @param minFractionDigits the minimum number of digits allowed in the fraction portion
+	 * @param maxFractionDigits the maximum number of digits allowed in the fraction portion
 	 * 
 	 * @return a pipe
 	 */
@@ -646,16 +591,12 @@ public final class Pipes {
 	
 	/**
 	 * <p>
-	 * Returns a pipe which formats a number as a percentage using the specified
-	 * locale format according to the specified limits.
+	 * Returns a pipe which formats a number as a percentage using the specified locale format according to the specified limits.
 	 * </p>
 	 * 
-	 * @param minIntegerDigits  the minimum number of digits allowed in the integer
-	 *                          portion
-	 * @param minFractionDigits the minimum number of digits allowed in the fraction
-	 *                          portion
-	 * @param maxFractionDigits the maximum number of digits allowed in the fraction
-	 *                          portion
+	 * @param minIntegerDigits  the minimum number of digits allowed in the integer portion
+	 * @param minFractionDigits the minimum number of digits allowed in the fraction portion
+	 * @param maxFractionDigits the maximum number of digits allowed in the fraction portion
 	 * @param locale            a locale
 	 * 
 	 * @return a pipe

@@ -1,12 +1,3 @@
-import java.util.List;
-
-import io.netty.buffer.ByteBuf;
-import io.inverno.core.v1.Application;
-import io.inverno.mod.base.converter.MediaTypeConverter;
-import io.inverno.mod.base.resource.MediaTypes;
-import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.base.Parameter;
-
 /*
  * Copyright 2020 Jeremy KUHN
  *
@@ -22,41 +13,35 @@ import io.inverno.mod.http.base.Parameter;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 /**
  * <p>
- * The Inverno framework Web server module provides a Web enabled HTTP1.x and
- * HTTP/2 server
+ * The Inverno framework Web server module provides a Web enabled HTTP1.x and HTTP/2 server.
  * </p>
  * 
  * <p>
- * It defines a complete APIs for request routing and the creation of REST APIs
- * using a collection of annotations.
+ * It defines a complete APIs for request routing and the creation of REST APIs using a collection of annotations.
  * </p>
  * 
  * <p>
  * It defines the following sockets:
  * </p>
- * 
+ *
  * <dl>
- * <dt>configuration</dt>
- * <dd>the web server module configuration</dd>
- * <dt>netService (required)</dt>
+ * <dt><b>mediaTypeConverters (required)</b></dt>
+ * <dd>the media type converters used to encode and decode payloads based on the content type of the request or the response</dd>
+ * <dt><b>netService (required)</b></dt>
  * <dd>the net service used to create the HTTP server</dd>
- * <dt>reactor (required)</dt>
- * <dd>the reactor</dd>
- * <dt>resourceService (required)</dt>
- * <dd>the resource service used to load resources.</dd>
- * <dt>mediaTypeConverters (required)</dt>
- * <dd>the media type converters used to encode and decode payloads based on the
- * content type of a request or a response</dd>
- * <dt>webRouterConfigurer</dt>
- * <dd>the configurer used to specify the resources exposed by the server</dd>
- * <dt>errorRouterConfigurer</dt>
- * <dd>the configurer used to specify how errors are processed and returned to
- * a client</dd>
- * <dt>parameterConverter</dt>
- * <dd>override the default parameter converter used in {@link Parameter}
- * instances to convert their values</dd>
+ * <dt><b>reactor (required)</b></dt>
+ * <dd>the reactor providing the event loops processing the requests</dd>
+ * <dt><b>resourceService (required)</b></dt>
+ * <dd>the resource service used to load static resources</dd>
+ * <dt><b>configuration</b></dt>
+ * <dd>the Web server module configuration</dd>
+ * <dt><b>headerCodecs</b></dt>
+ * <dd>custom header codecs used to decode specific headers</dd>
+ * <dt><b>parameterConverter</b></dt>
+ * <dd>a parameter converter used in {@link io.inverno.mod.http.base.Parameter} instances to convert their values</dd>
  * </dl>
  * 
  * <p>
@@ -64,53 +49,75 @@ import io.inverno.mod.http.base.Parameter;
  * </p>
  * 
  * <dl>
- * <dt>webConfiguration</dt>
+ * <dt><b>configuration</b></dt>
  * <dd>the Web server module configuration</dd>
- * <dt>webRouter</dt>
- * <dd>the router used to route a request to the right handler</dd>
- * <dt>errorHandler</dt>
- * <dd>the router used to route a failed request to the right handler</dd>
+ * <dt><b>webServerBoot</b></dt>
+ * <dd>the Web server boot used to initialize the Web server</dd>
  * </dl>
  * 
  * <p>
- * A Web server can then be started as follows:
+ * A basic Web server exposing two routes with white labels error handlers can be started as follows:
  * </p>
  * 
  * <pre>{@code
- * NetService netService = ...
- * Reactor reactor = ...
- * ResourceService resourceService = ...
- * List<MediaTypeConverter<ByteBuf>> mediaTypeConverters = ...
+ * List<MediaTypeConverter<ByteBuf>> mediaTypeConverters = null;
+ * NetService netService = null;
+ * Reactor reactor = null;
+ * ResourceService resourceService = null;
  *
- * Application.with(new Web.Builder(mediaTypeConverters, netService, reactor, resourceService)
- *     .setConfiguration(WebServerConfigurationLoader.load(conf -> conf.web(http_conf -> http_conf.server_port(8080))))
- *     .setWebRouterConfigurer(router -> router
- *         .route()
- *             .path("/path/to/resource1")
- *             .method(Method.GET)
- *             .produces(MediaTypes.APPLICATION_JSON)
- *             .produces(MediaTypes.TEXT_PLAIN)
- *             .handler(exchange -> exchange
- *                 .response()
- *                 .body()
- *                 .encoder()
- *                 .value("Resource 1")
- *             )
- *         .route()
- *             .path("/path/to/resource2")
- *             .method(Method.GET)
- *             .produces(MediaTypes.APPLICATION_JSON)
- *             .produces(MediaTypes.TEXT_PLAIN)
- *             .handler(exchange -> exchange
- *                 .response()
- *                 .body()
- *                 .encoder()
- *                 .value("Resource 2")
- *             )
- *     )
- * ).run();
+ * Application.run(new Server.Builder(mediaTypeConverters, netService, reactor, resourceService)
+ *     .setConfiguration(WebServerConfigurationLoader.load(conf -> conf.http_server(http_conf -> http_conf.server_port(8080))))
+ * )
+ * .webServerBoot().webServer()                                                           // Initialize the Web server with an empty context factory
+ *     .intercept().interceptor(new HttpAccessLogsInterceptor<>())                        // log 2xx HTTP requests
+ *     .route()                                                                           // route /path/to/resource1 requests to "Resource 1"
+ *         .path("/path/to/resource1")
+ *         .method(Method.GET)
+ *         .produce(MediaTypes.APPLICATION_JSON)
+ *         .produce(MediaTypes.TEXT_PLAIN)
+ *         .handler(exchange -> exchange.response().body().encoder().value("Resource 1"))
+ *     .route()                                                                           // route /path/to/resource2 requests to "Resource 2"
+ *         .path("/path/to/resource2")
+ *         .method(Method.GET)
+ *         .produce(MediaTypes.APPLICATION_JSON)
+ *         .produce(MediaTypes.TEXT_PLAIN)
+ *         .handler(exchange -> exchange.response().body().encoder().value("Resource 2"))
+ *     .interceptError().interceptor(new HttpAccessLogsInterceptor<>())                   // log 4xx, 5xx HTTP requests
+ *     .configureErrorRoutes(new WhiteLabelErrorRoutesConfigurer<>());                    // White label error routes
  * }</pre>
- * 
+ *
+ * <p>
+ * Web routes can also be declared in a declarative way using the {@link io.inverno.mod.web.server.annotation.WebController @WebController} as follows:
+ * </p>
+ *
+ * <pre>{@code
+ * @WebController( path = "/book" )
+ * @Bean( visibility = Bean.Visibility.PRIVATE )
+ * public class BookController {
+ *
+ *     @WebRoute(method = Method.POST, consumes = MediaTypes.APPLICATION_JSON)
+ *     void create(@Body Book book) {
+ *         ...
+ *     }
+ *
+ *     @WebRoute(path = "/{id}", method = Method.PUT, consumes = MediaTypes.APPLICATION_JSON)
+ *     void update(@PathParam String id, @Body Book book);
+ *
+ *     @WebRoute(method = Method.GET, produces = MediaTypes.APPLICATION_JSON)
+ *     Flux<Book> list();
+ *
+ *     @WebRoute(path = "/{id}", method = Method.GET, produces = MediaTypes.APPLICATION_JSON)
+ *     Mono<Book> get(@PathParam String id);
+ *
+ *     @WebRoute(path = "/{id}", method = Method.DELETE)
+ *     void delete(@PathParam String id);
+ * }
+ * }</pre>
+ *
+ * <p>
+ * The Web compiler will generate corresponding route configurers at compile time.
+ * </p>
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
@@ -122,13 +129,14 @@ module io.inverno.mod.web.server {
 	requires transitive io.inverno.mod.base;
 	requires io.inverno.mod.configuration;
 	requires transitive io.inverno.mod.http.server;
+	requires transitive io.inverno.mod.web.base;
 
 	requires org.apache.commons.text;
 	requires org.apache.logging.log4j;
-	requires reactor.core;
 	requires org.reactivestreams;
+	requires reactor.core;
 	
 	exports io.inverno.mod.web.server;
-	exports io.inverno.mod.web.server.spi;
 	exports io.inverno.mod.web.server.annotation;
+	exports io.inverno.mod.web.server.ws;
 }

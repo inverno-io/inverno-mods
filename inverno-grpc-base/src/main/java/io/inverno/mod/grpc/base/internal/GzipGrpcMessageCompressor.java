@@ -33,7 +33,7 @@ import io.netty.handler.codec.compression.ZlibWrapper;
  * Gzip {@link GrpcMessageCompressor} bean.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 @Bean(visibility = Bean.Visibility.PRIVATE)

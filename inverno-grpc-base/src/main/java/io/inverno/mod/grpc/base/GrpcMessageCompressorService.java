@@ -28,7 +28,7 @@ import java.util.Set;
  * or uncompress messages based on {@link GrpcHeaders#NAME_GRPC_ACCEPT_MESSAGE_ENCODING} or {@link GrpcHeaders#NAME_GRPC_MESSAGE_ENCODING} headers.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public interface GrpcMessageCompressorService {

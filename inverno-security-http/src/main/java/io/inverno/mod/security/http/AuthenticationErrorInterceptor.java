@@ -24,7 +24,7 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * Base implemenation for authentication error interceptors.
+ * Base implementation for authentication error interceptors.
  * </p>
  * 
  * <p>
@@ -36,7 +36,7 @@ import reactor.core.publisher.Mono;
  * @since 1.5
  * 
  * @param <A> the context type
- * @param <B> the error echange type
+ * @param <B> the error exchange type
  */
 public abstract class AuthenticationErrorInterceptor<A extends ExchangeContext, B extends ErrorExchange<A>> implements ExchangeInterceptor<A, B> {
 

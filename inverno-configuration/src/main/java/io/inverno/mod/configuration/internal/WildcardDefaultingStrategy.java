@@ -62,18 +62,17 @@ public class WildcardDefaultingStrategy implements DefaultingStrategy {
 		
 		List<LinkedList<List<ConfigurationKey.Parameter>>> queryParametersByCard = new ArrayList<>();
 		queryParametersByCard.add(new LinkedList<>());
-		queryParametersByCard.get(0).add(List.of());
+		queryParametersByCard.getFirst().add(List.of());
 		for(int i = queryParameters.size() - 1;i >= 0;i--) {
 			queryParametersByCard.add(new LinkedList<>());
 			
 			for(int j = queryParametersByCard.size() - 2;j >= 0;j--) {
 				LinkedList<List<ConfigurationKey.Parameter>> currentCardQueries = queryParametersByCard.get(j);
-				int currentCardQueriesLength = currentCardQueries.size();
-				for(int k = 0; k < currentCardQueriesLength;k++) {
+				for(List<ConfigurationKey.Parameter> currentCardQuery : currentCardQueries) {
 					List<ConfigurationKey.Parameter> query = new LinkedList<>();
 					query.add(queryParameters.get(i));
-					query.addAll(currentCardQueries.get(k));
-					
+					query.addAll(currentCardQuery);
+
 					queryParametersByCard.get(query.size()).add(query);
 				}
 			}
@@ -82,9 +81,7 @@ public class WildcardDefaultingStrategy implements DefaultingStrategy {
 		return queryParametersByCard.stream().reduce(
 			new LinkedList<>(), 
 			(result, element) -> {
-				element.forEach(parameters -> {
-					result.addFirst(ConfigurationKey.of(queryKey.getName(), parameters.toArray(ConfigurationKey.Parameter[]::new)));
-				});
+				element.forEach(parameters -> result.addFirst(ConfigurationKey.of(queryKey.getName(), parameters.toArray(ConfigurationKey.Parameter[]::new))));
 				return result;
 			},
 			(r1, r2) -> {
@@ -101,18 +98,17 @@ public class WildcardDefaultingStrategy implements DefaultingStrategy {
 		
 		List<LinkedList<List<Integer>>> queryParameterIndicesByCard = new ArrayList<>();
 		queryParameterIndicesByCard.add(new LinkedList<>());
-		queryParameterIndicesByCard.get(0).add(List.of());
+		queryParameterIndicesByCard.getFirst().add(List.of());
 		for(int i = keyLength - 1;i >= 0;i--) {
 			queryParameterIndicesByCard.add(new LinkedList<>());
 			
 			for(int j = queryParameterIndicesByCard.size() - 2;j >= 0;j--) {
 				LinkedList<List<Integer>> currentCardQueries = queryParameterIndicesByCard.get(j);
-				int currentCardQueriesLength = currentCardQueries.size();
-				for(int k = 0; k < currentCardQueriesLength;k++) {
+				for(List<Integer> currentCardQuery : currentCardQueries) {
 					List<Integer> query = new LinkedList<>();
 					query.add(i);
-					query.addAll(currentCardQueries.get(k));
-					
+					query.addAll(currentCardQuery);
+
 					queryParameterIndicesByCard.get(query.size()).add(query);
 				}
 			}

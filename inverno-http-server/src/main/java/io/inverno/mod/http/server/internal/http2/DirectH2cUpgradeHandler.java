@@ -32,7 +32,7 @@ import java.util.function.Supplier;
  * Handle direct HTTP/2 connection over clear text.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.7
  */
 public class DirectH2cUpgradeHandler extends ByteToMessageDecoder {

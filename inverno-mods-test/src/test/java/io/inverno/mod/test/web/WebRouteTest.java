@@ -18,15 +18,14 @@ package io.inverno.mod.test.web;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.inverno.mod.test.AbstractInvernoModTest;
+import io.inverno.mod.test.ModsTestUtils;
 import io.inverno.mod.test.configuration.ConfigurationInvocationHandler;
 import io.inverno.test.InvernoCompilationException;
 import io.inverno.test.InvernoModuleLoader;
 import io.inverno.test.InvernoModuleProxy;
 import io.inverno.test.InvernoTestCompiler;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.lang.reflect.Proxy;
-import java.net.ServerSocket;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -82,7 +81,7 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		
 		InvernoModuleLoader moduleLoader = invernoCompiler.compile(MODULE_WEBROUTE);
 		
-		testServerPort = getFreePort();
+		testServerPort = ModsTestUtils.getFreePort();
 		
 		Class<?> httpConfigClass = moduleLoader.loadClass(MODULE_WEBROUTE, "io.inverno.mod.http.server.HttpServerConfiguration");
 		ConfigurationInvocationHandler httpConfigHandler = new ConfigurationInvocationHandler(httpConfigClass, Map.of("server_port", testServerPort, "h2_enabled", true));
@@ -115,16 +114,7 @@ public class WebRouteTest extends AbstractInvernoModTest {
 			testServerModuleProxy.stop();
 		}
 	}
-	
-	public static int getFreePort() {
-		try (ServerSocket serverSocket = new ServerSocket(0)) {
-			return serverSocket.getLocalPort();
-		} 
-		catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-	}
-	
+
 	public static Stream<Arguments> provideHttpVersion() {
 		return Stream.of(
 			Arguments.of(HttpClient.Version.HTTP_1_1),
@@ -3790,8 +3780,8 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		);
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("text/plain", response.headers().firstValue("content-type").orElse(null));
-		Assertions.assertEquals(25, response.headers().firstValue("content-length").map(Integer::parseInt).orElse(-1));
-		Assertions.assertEquals("post_encoded_pub: a, b, c", response.body());
+		Assertions.assertEquals(23, response.headers().firstValue("content-length").map(Integer::parseInt).orElse(-1));
+		Assertions.assertEquals("post_encoded_pub: a,b,c", response.body());
 	}
 	
 	@ParameterizedTest
@@ -3828,8 +3818,8 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		);
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("text/plain", response.headers().firstValue("content-type").orElse(null));
-		Assertions.assertEquals(26, response.headers().firstValue("content-length").map(Integer::parseInt).orElse(-1));
-		Assertions.assertEquals("post_encoded_flux: a, b, c", response.body());
+		Assertions.assertEquals(24, response.headers().firstValue("content-length").map(Integer::parseInt).orElse(-1));
+		Assertions.assertEquals("post_encoded_flux: a,b,c", response.body());
 	}
 	
 	@ParameterizedTest

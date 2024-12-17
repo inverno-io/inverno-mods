@@ -47,12 +47,12 @@ public interface Response extends BaseResponse {
 	
 	/**
 	 * <p>
-	 * Returns the number of bytes transfered as part of the response body.
+	 * Returns the number of bytes transferred as part of the response body.
 	 * </p>
 	 * 
-	 * @return the transfered length
+	 * @return the transferred length
 	 */
-	int getTransferedLength();
+	int getTransferredLength();
 	
 	/**
 	 * <p>

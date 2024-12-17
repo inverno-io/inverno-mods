@@ -16,7 +16,6 @@
 package io.inverno.mod.base.net;
 
 import java.io.ByteArrayOutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.Objects;
@@ -60,7 +59,7 @@ import io.inverno.mod.base.Charsets;
  * }</pre>
  *
  * <p>
- * URI templates can be created by enabling the {@link Option#PARAMETERIZED} option and specifying parameters of the form <code>{{@literal <name>[:<pattern>]}}</code> in the URI components:
+ * URI templates can be created by enabling the {@link Option#PARAMETERIZED} option and specifying parameters of the form {@code {<name>[:<pattern>]}} in the URI components:
  * </p>
  *
  * <pre>{@code
@@ -78,11 +77,11 @@ import io.inverno.mod.base.Charsets;
  * 
  * <p>
  * URI matchers can be created by enabling the {@link Option#PARAMETERIZED} and/or {@link Option#PATH_PATTERN} options and specifying unnamed parameters of the form
- * <code>{{@literal [:<pattern>]}}</code> and/or path patterns using {@code ?}, {@code *} and {@code **} in the URI components:
+ * {@code {[:<pattern>]}} and/or path patterns using {@code ?}, {@code *} and {@code **} in the URI components:
  * </p>
  * 
  * <pre>{@code
- * URIBuilder uriBuilder = URIs.uri("/static/{@literal **}/*.png", URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
+ * URIBuilder uriBuilder = URIs.uri("/static/**" + "/*.png", URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
  * URIPattern uriPattern = uriBuilder.buildPathPattern(false);
  * 
  * // true
@@ -107,7 +106,7 @@ public final class URIs {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	public static enum Option {
+	public enum Option {
 		/**
 		 * <p>
 		 * Normalizes the URI
@@ -132,7 +131,7 @@ public final class URIs {
 		 * </ul>
 		 * 
 		 * <p>
-		 * <code>{@literal **}/*</code> is a terminal combinaison which means that no more path segment can be added after.
+		 * <code>**&#47;*</code> is a terminal combination which means that no more path segment can be added after.
 		 * </p>
 		 * 
 		 */
@@ -147,25 +146,26 @@ public final class URIs {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.3
 	 */
-	public static enum RequestTargetForm {
+	public enum RequestTargetForm {
 		/**
 		 * <p>
-		 * Designates an absolute request target as defined by <a href="https://tools.ietf.org/html/rfc7230#section-5.3.2">RFC 7230 Section 5.3.2</a>.
+		 * Designates an absolute path request target (i.e. {@code absolute-path}) as defined by <a href="https://tools.ietf.org/html/rfc7230">RFC 7230</a>
 		 * </p>
 		 */
-		ABSOLUTE,
+		PATH,
 		/**
 		 * <p>
-		 * Designates an origin request target as defined by <a href="https://tools.ietf.org/html/rfc7230#section-5.3.1">RFC 7230 Section 5.3.1</a>.
+		 * Designates an absolute path request target with query (i.e. {@code absolute-path [ "?" query ]}) as defined by <a href="https://tools.ietf.org/html/rfc7230">RFC 7230</a>
 		 * </p>
 		 */
-		ORIGIN,
+		PATH_QUERY,
 		/**
 		 * <p>
-		 * Designates an origin request target as defined by <a href="https://tools.ietf.org/html/rfc7230#section-5.3.2">RFC 7230 Section 5.3.2</a> with the addition of the fragment component.
+		 * Designates an absolute path request target with query and fragment (i.e. {@code absolute-path [ "?" query ] [ "#" fragment ]}) as defined by
+		 * <a href="https://tools.ietf.org/html/rfc7230">RFC 7230</a>.
 		 * </p>
 		 */
-		ORIGIN_EXTENDED,
+		PATH_QUERY_FRAGMENT,
 	}
 
 	/**
@@ -183,7 +183,7 @@ public final class URIs {
 
 	/**
 	 * <p>
-	 * Creates a URI builder from the specified {@link URIs.RequestTargetForm#ORIGIN_EXTENDED} request-target ignoring trailing slash with the specified options and default charset.
+	 * Creates a URI builder from the specified {@link URIs.RequestTargetForm#PATH_QUERY_FRAGMENT} request-target ignoring trailing slash with the specified options and default charset.
 	 * </p>
 	 *
 	 * <p>
@@ -208,7 +208,7 @@ public final class URIs {
 	 * @throws URIBuilderException if option {@link URIs.Option#PATH_PATTERN} is specified which is incompatible with origin-form request
 	 */
 	public static URIBuilder uri(String requestTarget, URIs.Option... options) throws URIBuilderException {
-		return new GenericURIBuilder(requestTarget, URIs.RequestTargetForm.ORIGIN_EXTENDED, true, Charsets.DEFAULT, options);
+		return new GenericURIBuilder(requestTarget, URIs.RequestTargetForm.PATH_QUERY_FRAGMENT, true, Charsets.DEFAULT, options);
 	}
 	
 	/**
@@ -242,7 +242,7 @@ public final class URIs {
 
 	/**
 	 * <p>
-	 * Creates a URI builder from the specified {@link URIs.RequestTargetForm#ORIGIN_EXTENDED} request-target ignoring or not trailing slash with the specified options and default charset.
+	 * Creates a URI builder from the specified {@link URIs.RequestTargetForm#PATH_QUERY_FRAGMENT} request-target ignoring or not trailing slash with the specified options and default charset.
 	 * </p>
 	 *
 	 * <p>
@@ -268,7 +268,7 @@ public final class URIs {
 	 * @throws URIBuilderException if option {@link URIs.Option#PATH_PATTERN} is specified which is incompatible with origin-form request
 	 */
 	public static URIBuilder uri(String requestTarget, boolean ignoreTrailingSlash, URIs.Option... options) throws URIBuilderException {
-		return new GenericURIBuilder(requestTarget, URIs.RequestTargetForm.ORIGIN_EXTENDED, ignoreTrailingSlash, Charsets.DEFAULT, options);
+		return new GenericURIBuilder(requestTarget, URIs.RequestTargetForm.PATH_QUERY_FRAGMENT, ignoreTrailingSlash, Charsets.DEFAULT, options);
 	}
 	
 	/**
@@ -303,7 +303,7 @@ public final class URIs {
 
 	/**
 	 * <p>
-	 * Creates a URI builder from the specified {@link URIs.RequestTargetForm#ORIGIN_EXTENDED} request-target ignoring or not trailing slash with the specified options and default charset.
+	 * Creates a URI builder from the specified {@link URIs.RequestTargetForm#PATH_QUERY_FRAGMENT} request-target ignoring or not trailing slash with the specified options and default charset.
 	 * </p>
 	 *
 	 * <p>
@@ -330,12 +330,12 @@ public final class URIs {
 	 * @throws URIBuilderException if option {@link URIs.Option#PATH_PATTERN} is specified which is incompatible with origin-form request
 	 */
 	public static URIBuilder uri(String requestTarget, boolean ignoreTrailingSlash, Charset charset, URIs.Option... options) throws URIBuilderException {
-		return new GenericURIBuilder(requestTarget, URIs.RequestTargetForm.ORIGIN_EXTENDED, ignoreTrailingSlash, charset, options);
+		return new GenericURIBuilder(requestTarget, URIs.RequestTargetForm.PATH_QUERY_FRAGMENT, ignoreTrailingSlash, charset, options);
 	}
 	
 	/**
 	 * <p>
-	 * Creates a URI builder from the specified {@link URIs.RequestTargetForm#ORIGIN_EXTENDED} request-target ignoring or not trailing slash with the specified options and default charset.
+	 * Creates a URI builder from the specified {@link URIs.RequestTargetForm#PATH_QUERY_FRAGMENT} request-target ignoring or not trailing slash with the specified options and default charset.
 	 * </p>
 	 *
 	 * <p>
@@ -433,12 +433,9 @@ public final class URIs {
 			char nextByte = component.charAt(i);
 			if (nextByte == '%') {
 				try {
-					byte[] bytes = null;
+					byte[] bytes = new byte[(numChars - i) / 3];
 					// (numChars-i)/3 is an upper bound for the number
 					// of remaining bytes
-					if (bytes == null) {
-						bytes = new byte[(numChars - i) / 3];
-					}
 					int pos = 0;
 
 					while (i + 2 < numChars && nextByte == '%') {
@@ -479,32 +476,32 @@ public final class URIs {
 	 * </p>
 	 *
 	 * @param component         the URI component to decode
-	 * @param escapedCharacters an escaped characters pedicate
+	 * @param escapedCharacters an escaped characters predicate
 	 * @param charset           a charset
 	 *
-	 * @return an encoded URI component if there was an error endoding the component
+	 * @return an encoded URI component if there was an error encoding the component
 	 */
 	static String encodeURIComponent(String component, Predicate<Integer> escapedCharacters, Charset charset) throws URIBuilderException {
-		if (escapedCharacters == null) {
+		if(escapedCharacters == null) {
 			return component;
 		}
 		Objects.requireNonNull(charset, "charset");
-		if (StringUtils.isEmpty(component)) {
+		if(StringUtils.isEmpty(component)) {
 			return component;
 		}
 		byte[] bytes = component.getBytes(charset);
 		ByteArrayOutputStream encodedOutput = null;
 
-		for (int i = 0; i < bytes.length; i++) {
+		for(int i = 0; i < bytes.length; i++) {
 			byte b = bytes[i];
 
-			if (!escapedCharacters.test((int) b)) {
+			if(!escapedCharacters.test((int) b)) {
 				if (encodedOutput != null) {
 					encodedOutput.write(b);
 				}
 			} 
 			else {
-				if (encodedOutput == null) {
+				if(encodedOutput == null) {
 					encodedOutput = new ByteArrayOutputStream(bytes.length);
 					encodedOutput.write(bytes, 0, i);
 				}
@@ -516,21 +513,15 @@ public final class URIs {
 			}
 		}
 
-		if (encodedOutput != null) {
-			try {
-				return encodedOutput.toString(charset.name());
-			}
-			catch (UnsupportedEncodingException e) {
-				throw new URIBuilderException(e);
-			}
+		if(encodedOutput != null) {
+			return encodedOutput.toString(charset);
 		}
 		return component;
 	}
 	
 	/**
 	 * <p>
-	 * Percent encodes a query parameter as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a> escaping non-query characters as defined by
+	 * Percent encodes a query parameter as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a> escaping non-query characters as defined by
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.4">RFC 3986 Section 3.4</a>.
 	 * </p>
 	 *
@@ -546,8 +537,7 @@ public final class URIs {
 	
 	/**
 	 * <p>
-	 * Percent encodes a query string as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a> escaping non-query characters as defined by
+	 * Percent encodes a query string as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a> escaping non-query characters as defined by
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.4">RFC 3986 Section 3.4</a>.
 	 * </p>
 	 *
@@ -590,13 +580,13 @@ public final class URIs {
 	 * @throws URIBuilderException if the component is invalid
 	 */
 	static String checkURIComponent(String component, Predicate<Integer> allowedCharacters, Charset charset) throws URIBuilderException {
-		if (allowedCharacters == null) {
+		if(allowedCharacters == null) {
 			return component;
 		}
 		Objects.requireNonNull(charset, "charset");
 		byte[] bytes = component.getBytes(charset);
-		for (byte b : bytes) {
-			if (!allowedCharacters.test((int) b)) {
+		for(byte b : bytes) {
+			if(!allowedCharacters.test((int) b)) {
 				throw new URIBuilderException("Invalid character " + (char) b + " found in URI component");
 			}
 		}
@@ -644,8 +634,8 @@ public final class URIs {
 			
 			byte[] valueBytes = component.getBytes(charset);
 			byte status = STATUS_DEFAULT;
-			Integer parameterIndex = null;
-			Integer parameterPatternIndex = null;
+			int parameterIndex = -1;
+			int parameterPatternIndex = -1;
 			loop:
 			for(int i=0;i<valueBytes.length;i++) {
 				byte nextByte = valueBytes[i];
@@ -660,7 +650,7 @@ public final class URIs {
 						if(nextByte == '}') {
 							String parameterName = new String(valueBytes, parameterIndex + 1, i - (parameterIndex + 1));
 							parameterHandler.accept(new URIParameter(parameterIndex, i - parameterIndex + 1, parameterName, allowedCharacters, charset));
-							parameterIndex = parameterPatternIndex = null;
+							parameterIndex = parameterPatternIndex = -1;
 							status = STATUS_DEFAULT;
 						}
 						else if(nextByte == ':') {
@@ -683,7 +673,7 @@ public final class URIs {
 									String parameterName = new String(valueBytes, parameterIndex + 1, parameterPatternIndex - (parameterIndex + 1));
 									String parameterPattern = new String(valueBytes, parameterPatternIndex + 1, i - (parameterPatternIndex + 1));
 									parameterHandler.accept(new URIParameter(parameterIndex, i - parameterIndex + 1, parameterName, parameterPattern, allowedCharacters, charset));
-									parameterIndex = parameterPatternIndex = null;
+									parameterIndex = parameterPatternIndex = -1;
 									status = STATUS_DEFAULT;
 								}
 								else {

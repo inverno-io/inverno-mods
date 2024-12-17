@@ -32,8 +32,7 @@ public interface Decoder<From, To> {
 
 	/**
 	 * <p>
-	 * Decodes the specified value to an object whose type is represented by the
-	 * specified class.
+	 * Decodes the specified value to an object whose type is represented by the specified class.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object
@@ -41,6 +40,7 @@ public interface Decoder<From, To> {
 	 * @param type  the class of the decoded object
 	 * 
 	 * @return a decoded object
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	<T extends To> T decode(From value, Class<T> type) throws ConverterException;
@@ -55,6 +55,7 @@ public interface Decoder<From, To> {
 	 * @param type  the type of the decoded object
 	 * 
 	 * @return a decoded object
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	<T extends To> T decode(From value, Type type) throws ConverterException;

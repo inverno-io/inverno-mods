@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * Base {@link GrpcInboundMetadata} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public abstract class AbstractGrpcMetadata<A extends InboundHeaders> implements GrpcInboundMetadata {
@@ -103,6 +103,7 @@ public abstract class AbstractGrpcMetadata<A extends InboundHeaders> implements 
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T extends MessageLite> Optional<T> getBinary(CharSequence name, T defaultMessageInstance) throws IllegalArgumentException {
 		return this.headers.get(name + "-bin")
 			.map(value -> {
@@ -116,6 +117,7 @@ public abstract class AbstractGrpcMetadata<A extends InboundHeaders> implements 
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T extends MessageLite> List<T> getAllBinary(CharSequence name, T defaultMessageInstance) throws IllegalArgumentException {
 		return this.headers.getAll(name + "-bin").stream()
 			.map(value -> {

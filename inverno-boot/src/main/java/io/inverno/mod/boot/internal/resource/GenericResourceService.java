@@ -15,16 +15,6 @@
  */
 package io.inverno.mod.boot.internal.resource;
 
-import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
-
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Provide;
 import io.inverno.mod.base.resource.AsyncResource;
@@ -33,6 +23,14 @@ import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceException;
 import io.inverno.mod.base.resource.ResourceProvider;
 import io.inverno.mod.base.resource.ResourceService;
+import java.net.URI;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -70,7 +68,7 @@ public class GenericResourceService implements @Provide ResourceService {
 				// - this is a bit tricky as for selector when it comes to the injection of list along with single values 
 				ResourceProvider<?> previousProvider = providersMap.put(supportedScheme, provider);
 				if(previousProvider != null) {
-					throw new IllegalStateException("Multiple providers found for scheme " + supportedScheme + ": " + previousProvider.toString() + ", " + provider.toString());
+					throw new IllegalStateException("Multiple providers found for scheme " + supportedScheme + ": " + previousProvider + ", " + provider);
 				}
 			}
 		}
@@ -106,30 +104,14 @@ public class GenericResourceService implements @Provide ResourceService {
 		String scheme = uri.getScheme();
 		ResourceProvider<?> provider = this.providers.get(scheme);
 		if(provider != null) {
-			return (Stream<Resource>) provider.getResources(uri).map(resource -> {
+			return (Stream<Resource>) provider.getResources(uri).peek(resource -> {
 				if(resource instanceof AsyncResource) {
 					((AsyncResource) resource).setExecutor(this.executor);
 				}
-				return resource;
 			});
 		}
 		else {
 			throw new IllegalArgumentException("Unsupported scheme: " + scheme);
 		}
-	}
-	
-	/**
-	 * <p>
-	 * Resource providers socket.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
-	 * 
-	 * @see GenericresourceService
-	 */
-	@Bean( name = "resourceProviders" )
-	public static interface ResourceProvidersSocket extends Supplier<ResourceProvider<?>> {
-		
 	}
 }

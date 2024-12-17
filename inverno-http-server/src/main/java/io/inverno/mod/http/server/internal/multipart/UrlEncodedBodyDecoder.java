@@ -15,13 +15,6 @@
  */
 package io.inverno.mod.http.server.internal.multipart;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.nio.charset.Charset;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.handler.codec.http.HttpConstants;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.mod.base.Charsets;
@@ -30,6 +23,11 @@ import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.header.Headers.ContentType;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.HttpConstants;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -37,7 +35,8 @@ import reactor.core.publisher.SignalType;
 
 /**
  * <p>
- * An application/x-www-form-urlencoded payload decoder implementation as defined by <a href="https://url.spec.whatwg.org/#application/x-www-form-urlencoded">application/x-www-form-urlencoded</a>.
+ * An {@code application/x-www-form-urlencoded} payload decoder implementation as defined by
+ * <a href="https://url.spec.whatwg.org/#application/x-www-form-urlencoded">application/x-www-form-urlencoded</a>.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -46,14 +45,14 @@ import reactor.core.publisher.SignalType;
 @Bean(visibility = Visibility.PRIVATE)
 public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 
-	private ObjectConverter<String> parameterConverter;
+	private final ObjectConverter<String> parameterConverter;
 
 	/**
 	 * <p>
-	 * Creates an application/x-www-form-urlencoded body decoder.
+	 * Creates an {@code application/x-www-form-urlencoded} body decoder.
 	 * </p>
 	 * 
-	 * @param parameterConverter a string object converter
+	 * @param parameterConverter the parameter converter
 	 */
 	public UrlEncodedBodyDecoder(ObjectConverter<String> parameterConverter) {
 		this.parameterConverter = parameterConverter;
@@ -64,14 +63,11 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 		if(contentType == null || !contentType.getMediaType().equalsIgnoreCase(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED)) {
 			throw new IllegalArgumentException("Content type is not " + MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED);
 		}
-		
-		return Flux.create(emitter -> {
-			data.subscribe(new BodyDataSubscriber(contentType, emitter));
-		});
+		return Flux.create(emitter -> data.subscribe(new BodyDataSubscriber(contentType, emitter)));
 	}
 
 	private UrlEncodedParameter readParameter(ByteBuf buffer, Charset charset) throws MalformedBodyException {
-		if (charset == null) {
+		if(charset == null) {
 			charset = HttpConstants.DEFAULT_CHARSET;
 		}
 		int readerIndex = buffer.readerIndex();
@@ -83,12 +79,12 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 			byte nextByte = buffer.readByte();
 			if (nextByte == HttpConstants.CR) {
 				if(buffer.isReadable()) {
-					if (buffer.readByte() == HttpConstants.LF) {
+					if(buffer.readByte() == HttpConstants.LF) {
 						endIndex = buffer.readerIndex() - 2;
-						if (parameterName != null) {
+						if(parameterName != null) {
 							return new UrlEncodedParameter(this.parameterConverter, this.decodeComponent(parameterName, charset), this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), false, true);
 						} 
-						else if (startIndex != null) {
+						else if(startIndex != null) {
 							return new UrlEncodedParameter(this.parameterConverter, this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), "", false, true);
 						}
 						return new UrlEncodedParameter(this.parameterConverter, "", "", true, true);
@@ -99,28 +95,27 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 					}
 				}
 			} 
-			else if (nextByte == HttpConstants.LF) {
+			else if(nextByte == HttpConstants.LF) {
 				endIndex = buffer.readerIndex() - 1;
-				if (parameterName != null) {
+				if(parameterName != null) {
 					return new UrlEncodedParameter(this.parameterConverter, this.decodeComponent(parameterName, charset), this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), false, true);
 				} 
-				else if (startIndex != null) {
+				else if(startIndex != null) {
 					return new UrlEncodedParameter(this.parameterConverter, this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), "", false, true);
 				}
 				return new UrlEncodedParameter(this.parameterConverter, "", "", true, true);
 			}
 			else {
-				if (parameterName == null) {
-					if (startIndex == null) {
-						startIndex = buffer.readerIndex() - 1;
-					}
-	
-					if (nextByte == '=') {
+				if(startIndex == null) {
+					startIndex = buffer.readerIndex() - 1;
+				}
+				if(parameterName == null) {
+					if(nextByte == '=') {
 						endIndex = buffer.readerIndex() - 1;
 						parameterName = buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString();
 						startIndex = endIndex = null;
 					}
-					else if (nextByte == '&') {
+					else if(nextByte == '&') {
 						if(startIndex < buffer.readerIndex() - 1) {
 							endIndex = buffer.readerIndex() - 1;
 							return new UrlEncodedParameter(this.parameterConverter, this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), "", false, false);
@@ -131,10 +126,7 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 					}
 				}
 				else {
-					if (startIndex == null) {
-						startIndex = buffer.readerIndex() - 1;
-					}
-					if (nextByte == '&') {
+					if(nextByte == '&') {
 						endIndex = buffer.readerIndex() - 1;
 						return new UrlEncodedParameter(this.parameterConverter, this.decodeComponent(parameterName, charset), this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), false, false);
 					}
@@ -169,9 +161,9 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 	
 	private String decodeComponent(String value, Charset charset) throws MalformedBodyException {
 		try {
-			return URLDecoder.decode(value, charset.toString()); // RFC-3986 2
+			return URLDecoder.decode(value, charset); // RFC-3986 2
 		} 
-		catch (IllegalArgumentException | UnsupportedEncodingException e) {
+		catch (IllegalArgumentException e) {
 			throw new MalformedBodyException(e);
 		}
 	}
@@ -226,7 +218,7 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 			}
 
 			try {
-				UrlEncodedParameter nextParameter = null;
+				UrlEncodedParameter nextParameter;
 				while( (nextParameter = UrlEncodedBodyDecoder.this.readParameter(buffer, this.charset)) != null && !this.isDisposed()) {
 					if(nextParameter.isLast()) {
 						if(!nextParameter.isPartial()) {

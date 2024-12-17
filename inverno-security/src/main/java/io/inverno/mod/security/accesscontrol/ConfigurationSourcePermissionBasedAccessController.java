@@ -58,7 +58,7 @@ import reactor.core.publisher.Mono;
  * 
  * <p>
  * This implementation can also uses user roles when applicable. In that context a role is used to group permissions by role which are then assigned to users in order to facilitate access control
- * management. When evaluating a permission the controller first tries to evaluate it in the context of the user which basically overrides permissions defined by role, in case the evalutation was
+ * management. When evaluating a permission the controller first tries to evaluate it in the context of the user which basically overrides permissions defined by role, in case the evaluation was
  * unsuccessful it then tries in the context of each role, using the role instead of the username as configuration key, the process stops when the evaluated permission is found or when all roles have
  * been scanned without success.
  * </p>
@@ -76,7 +76,7 @@ public class ConfigurationSourcePermissionBasedAccessController implements Permi
 	 */
 	public static final String DEFAULT_ROLE_PREFIX = "ROLE_";
 	
-	private final ConfigurationSource<?, ?, ?> configurationSource;
+	private final ConfigurationSource configurationSource;
 	private final String username;
 	private final Set<String> roles;
 	private final String rolePrefix;
@@ -89,7 +89,7 @@ public class ConfigurationSourcePermissionBasedAccessController implements Permi
 	 * @param configurationSource a configuration source
 	 * @param username            the username
 	 */
-	public ConfigurationSourcePermissionBasedAccessController(ConfigurationSource<?, ?, ?> configurationSource, String username) {
+	public ConfigurationSourcePermissionBasedAccessController(ConfigurationSource configurationSource, String username) {
 		this(configurationSource, username, null, DEFAULT_ROLE_PREFIX);
 	}
 	
@@ -102,7 +102,7 @@ public class ConfigurationSourcePermissionBasedAccessController implements Permi
 	 * @param username            a username
 	 * @param roles               a set of roles
 	 */
-	public ConfigurationSourcePermissionBasedAccessController(ConfigurationSource<?, ?, ?> configurationSource, String username, Set<String> roles) {
+	public ConfigurationSourcePermissionBasedAccessController(ConfigurationSource configurationSource, String username, Set<String> roles) {
 		this(configurationSource, username, roles, DEFAULT_ROLE_PREFIX);
 	}
 
@@ -116,7 +116,7 @@ public class ConfigurationSourcePermissionBasedAccessController implements Permi
 	 * @param roles               a set of roles
 	 * @param rolePrefix          the prefix to prepend to a role when resolving role permissions
 	 */
-	public ConfigurationSourcePermissionBasedAccessController(ConfigurationSource<?, ?, ?> configurationSource, String username, Set<String> roles, String rolePrefix) {
+	public ConfigurationSourcePermissionBasedAccessController(ConfigurationSource configurationSource, String username, Set<String> roles, String rolePrefix) {
 		Objects.requireNonNull(configurationSource);
 		Objects.requireNonNull(username);
 		this.configurationSource = configurationSource;
@@ -205,7 +205,7 @@ public class ConfigurationSourcePermissionBasedAccessController implements Permi
 			.get(usernameOrRole).withParameters(parameters.stream().map(parameter -> ConfigurationKey.Parameter.of(parameter.getKey(), parameter.getValue())).collect(Collectors.toList()))
 			.execute()
 			.single()
-			.mapNotNull(result -> result.getResult().flatMap(property -> property.asSetOf(String.class)).orElse(null));
+			.mapNotNull(result -> result.asSetOf(String.class, null));
 	}
 	
 	@Override

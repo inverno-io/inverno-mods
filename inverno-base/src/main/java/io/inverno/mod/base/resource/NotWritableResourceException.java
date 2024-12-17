@@ -20,7 +20,7 @@ package io.inverno.mod.base.resource;
  * Thrown when trying to write to a resource that is not writable.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.8
  */
 public class NotWritableResourceException extends ResourceException {

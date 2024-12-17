@@ -22,7 +22,9 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 
 /**
- * <p>A generic URI matcher implementation.</p>
+ * <p>
+ * A generic URI matcher implementation.
+ * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
@@ -72,11 +74,11 @@ class GenericURIMatcher implements URIMatcher {
 	public Map<String, String> getParameters() {
 		if(this.parameters == null) {
 			this.parameters = new LinkedHashMap<>();
-		}
-		for(int i=1;i<=this.matcher.groupCount();i++) {
-			String parameterName = this.groupNames.get(i-1);
-			if(parameterName != null) {
-				this.parameters.put(parameterName, this.matcher.group(i));
+			for(int i=1;i<=this.matcher.groupCount();i++) {
+				String parameterName = this.groupNames.get(i-1);
+				if(parameterName != null) {
+					this.parameters.put(parameterName, this.matcher.group(i));
+				}
 			}
 		}
 		return this.parameters;

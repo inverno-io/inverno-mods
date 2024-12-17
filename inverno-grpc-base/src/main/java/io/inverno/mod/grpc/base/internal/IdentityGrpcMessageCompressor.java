@@ -29,7 +29,7 @@ import io.netty.buffer.ByteBuf;
  * This is basically a Noop compressor.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public final class IdentityGrpcMessageCompressor implements GrpcMessageCompressor {

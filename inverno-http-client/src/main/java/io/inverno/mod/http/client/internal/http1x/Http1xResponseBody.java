@@ -23,7 +23,7 @@ import io.inverno.mod.http.client.internal.AbstractResponseBody;
  * Http/1.x {@link ResponseBody} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.11
  */
 class Http1xResponseBody extends AbstractResponseBody {

@@ -17,13 +17,11 @@ package io.inverno.mod.irt.compiler.internal;
 
 /**
  * <p>
- * A locatable info exposes the range in the IRT source file where the info is
- * defined.
+ * A locatable info exposes the range in the IRT source file where the info is defined.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public interface LocatableInfo {
 

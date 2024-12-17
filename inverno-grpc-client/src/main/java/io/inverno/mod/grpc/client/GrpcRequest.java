@@ -36,7 +36,7 @@ import reactor.core.publisher.Mono;
  * Once the request has been sent to the endpoint it is no longer possible to modify it resulting in {@link IllegalStateException} on such operations.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  * 
  * @param <A> the request message type
@@ -61,7 +61,7 @@ public interface GrpcRequest<A extends Message> extends GrpcBaseRequest {
 	 * Represents a unary (single message) request.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 * 
 	 * @param <A> The request message type
@@ -69,7 +69,7 @@ public interface GrpcRequest<A extends Message> extends GrpcBaseRequest {
 	interface Unary<A extends Message> extends GrpcRequest<A> {
 
 		@Override
-		public GrpcRequest.Unary<A> metadata(Consumer<GrpcOutboundRequestMetadata> metadataConfigurer) throws IllegalStateException;
+		GrpcRequest.Unary<A> metadata(Consumer<GrpcOutboundRequestMetadata> metadataConfigurer) throws IllegalStateException;
 
 		/**
 		 * <p>
@@ -97,7 +97,7 @@ public interface GrpcRequest<A extends Message> extends GrpcBaseRequest {
 	 * Represents a streaming (stream of messages) request.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 * 
 	 * @param <A> The request message type
@@ -105,7 +105,7 @@ public interface GrpcRequest<A extends Message> extends GrpcBaseRequest {
 	interface Streaming<A extends Message> extends GrpcRequest<A> {
 
 		@Override
-		public GrpcRequest.Streaming<A> metadata(Consumer<GrpcOutboundRequestMetadata> metadataConfigurer) throws IllegalStateException;
+		GrpcRequest.Streaming<A> metadata(Consumer<GrpcOutboundRequestMetadata> metadataConfigurer) throws IllegalStateException;
 		
 		/**
 		 * <p>

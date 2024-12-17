@@ -21,61 +21,75 @@ import io.inverno.mod.base.net.NetService;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.resolver.AddressResolverGroup;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.List;
+import reactor.core.publisher.Mono;
 
 /**
- * <p>
- * 
- * </p>
- * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 public class DummyNetService implements NetService {
 
 	@Override
 	public TransportType getTransportType() {
-		throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
 	@Override
 	public Bootstrap createClient(SocketAddress socketAddress) {
-		throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
 	@Override
 	public Bootstrap createClient(SocketAddress socketAddress, NetClientConfiguration clientConfiguration) {
-		throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
 	@Override
 	public Bootstrap createClient(SocketAddress socketAddress, int nThreads) throws IllegalArgumentException {
-		throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
 	@Override
 	public Bootstrap createClient(SocketAddress socketAddress, NetClientConfiguration clientConfiguration, int nThreads) throws IllegalArgumentException {
-		throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
 	@Override
 	public ServerBootstrap createServer(SocketAddress socketAddress) {
-		throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
 	@Override
 	public ServerBootstrap createServer(SocketAddress socketAddress, NetServerConfiguration serverConfiguration) {
-		throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
 	@Override
 	public ServerBootstrap createServer(SocketAddress socketAddress, int nThreads) throws IllegalArgumentException {
-		throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
 	@Override
 	public ServerBootstrap createServer(SocketAddress socketAddress, NetServerConfiguration serverConfiguration, int nThreads) throws IllegalArgumentException {
-		throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+		throw new UnsupportedOperationException("Not supported yet.");
+	}
+
+	@Override
+	public Mono<InetSocketAddress> resolve(InetSocketAddress socketAddress) {
+		throw new UnsupportedOperationException("Not supported yet.");
+	}
+
+	@Override
+	public Mono<List<InetSocketAddress>> resolveAll(InetSocketAddress socketAddress) {
+		throw new UnsupportedOperationException("Not supported yet.");
+	}
+
+	@Override
+	public AddressResolverGroup<InetSocketAddress> getResolver() {
+		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
 	@Override
@@ -85,6 +99,6 @@ public class DummyNetService implements NetService {
 
 	@Override
 	public ByteBufAllocator getDirectByteBufAllocator() {
-		throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+		throw new UnsupportedOperationException("Not supported yet.");
 	}
 }

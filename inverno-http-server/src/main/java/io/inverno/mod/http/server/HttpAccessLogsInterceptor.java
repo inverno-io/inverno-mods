@@ -32,7 +32,7 @@ import reactor.core.publisher.SignalType;
  * Intercepts exchanges or error exchanges and logs HTTP access.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.10
  * 
  * @param <A> the type of the exchange context
@@ -80,7 +80,7 @@ public class HttpAccessLogsInterceptor<A extends ExchangeContext, B extends Exch
 		private final String remoteAddress;
 		private final String request;
 		private final int statusCode;
-		private final int transferedLength;
+		private final int transferredLength;
 		private final String referer;
 		private final String userAgent;
 		
@@ -95,7 +95,7 @@ public class HttpAccessLogsInterceptor<A extends ExchangeContext, B extends Exch
 			this.remoteAddress = ((InetSocketAddress)exchange.request().getRemoteAddress()).getAddress().getHostAddress();
 			this.request = new StringBuilder().append(exchange.request().getMethod().name()).append(" ").append(exchange.request().getPath()).toString();
 			this.statusCode = exchange.response().headers().getStatusCode();
-			this.transferedLength = exchange.response().getTransferedLength();
+			this.transferredLength = exchange.response().getTransferredLength();
 			this.referer = exchange.request().headers().get(Headers.NAME_REFERER).orElse("");
 			this.userAgent = exchange.request().headers().get(Headers.NAME_USER_AGENT).orElse("");
 		}
@@ -111,7 +111,7 @@ public class HttpAccessLogsInterceptor<A extends ExchangeContext, B extends Exch
 				this.remoteAddress,
 				this.request,
 				this.statusCode,
-				this.transferedLength,
+				this.transferredLength,
 				this.referer,
 				this.userAgent
 			};
@@ -147,7 +147,7 @@ public class HttpAccessLogsInterceptor<A extends ExchangeContext, B extends Exch
 			message.append(this.remoteAddress).append(" ");
 			message.append("\"").append(this.request).append("\" ");
 			message.append(this.statusCode).append(" ");
-			message.append(this.transferedLength).append(" ");
+			message.append(this.transferredLength).append(" ");
 			message.append("\"").append(this.referer).append("\" ");
 			message.append("\"").append(this.userAgent).append("\" ");
 			
@@ -160,7 +160,7 @@ public class HttpAccessLogsInterceptor<A extends ExchangeContext, B extends Exch
 			message.append("\"remoteAddress\":\"").append(this.remoteAddress).append("\",");
 			message.append("\"request\":\"").append(StringEscapeUtils.escapeJson(this.request)).append("\",");
 			message.append("\"status\":").append(this.statusCode).append(",");
-			message.append("\"bytes\":").append(this.transferedLength).append(",");
+			message.append("\"bytes\":").append(this.transferredLength).append(",");
 			message.append("\"referer\":\"").append(StringEscapeUtils.escapeJson(this.referer)).append("\",");
 			message.append("\"userAgent\":\"").append(StringEscapeUtils.escapeJson(this.userAgent)).append("\"");
 			message.append("}");

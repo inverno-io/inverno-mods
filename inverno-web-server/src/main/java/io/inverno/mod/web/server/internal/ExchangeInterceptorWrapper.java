@@ -23,22 +23,39 @@ import io.inverno.mod.http.server.ExchangeInterceptor;
  * <p>
  * An exchange interceptor wrapper.
  * </p>
- * 
- * 
+ *
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.3
  * 
  * @param <A> the type of the exchange context
  * @param <B> the type of exchange handled by the handler
  */
-abstract class ExchangeInterceptorWrapper<A extends ExchangeContext, B extends Exchange<A>> implements ExchangeInterceptor<A, B> {
-	
+public abstract class ExchangeInterceptorWrapper<A extends ExchangeContext, B extends Exchange<A>> implements ExchangeInterceptor<A, B> {
+
+	/**
+	 * The wrapped exchange interceptor.
+	 */
 	protected final ExchangeInterceptor<A, B> wrappedInterceptor;
-	
+
+	/**
+	 * <p>
+	 * Creates an exchange interceptor wrapper.
+	 * </p>
+	 *
+	 * @param interceptor the exchange interceptor to wrap
+	 */
 	public ExchangeInterceptorWrapper(ExchangeInterceptor<A, B> interceptor) {
 		this.wrappedInterceptor = interceptor;
 	}
-		
+
+	/**
+	 * <p>
+	 * Returns the wrapped instance.
+	 * </p>
+	 *
+	 * @return the wrapped exchange interceptor
+	 */
 	public ExchangeInterceptor<A, B> unwrap() {
 		return this.wrappedInterceptor;
 	}

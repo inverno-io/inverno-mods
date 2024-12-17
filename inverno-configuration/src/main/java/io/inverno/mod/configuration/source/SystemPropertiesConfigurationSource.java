@@ -16,8 +16,10 @@
 package io.inverno.mod.configuration.source;
 
 import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
-import io.inverno.mod.configuration.AbstractPropertiesConfigurationSource;
+import io.inverno.mod.configuration.internal.AbstractPropertiesConfigurationSource;
+import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.internal.JavaStringConverter;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -56,6 +58,20 @@ public class SystemPropertiesConfigurationSource extends AbstractPropertiesConfi
 	 */
 	public SystemPropertiesConfigurationSource(SplittablePrimitiveDecoder<String> decoder) {
 		super(decoder);
+	}
+
+	private SystemPropertiesConfigurationSource(SystemPropertiesConfigurationSource original, List<ConfigurationKey.Parameter> defaultParameters) {
+		super(original, defaultParameters);
+	}
+
+	/**
+	 * <p>
+	 * The system properties source doesn't support parameterized queries, regardless of the parameters specified in a query, only the configuration key name is considered when resolving a value.
+	 * </p>
+	 */
+	@Override
+	public SystemPropertiesConfigurationSource withParameters(List<ConfigurationKey.Parameter> parameters) throws IllegalArgumentException {
+		return new SystemPropertiesConfigurationSource(this, parameters);
 	}
 
 	@Override

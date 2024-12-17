@@ -32,11 +32,11 @@ import io.inverno.mod.web.compiler.spi.WebParameterQualifiedName;
  * 
  * @see AbstractWebParameterInfo
  */
-class GenericWebFormParameterInfo extends AbstractWebParameterInfo implements WebFormParameterInfo {
+public class GenericWebFormParameterInfo extends AbstractWebParameterInfo implements WebFormParameterInfo {
 
 	/**
 	 * <p>
-	 * Creates a generic web form parameter info.
+	 * Creates a generic Web form parameter info.
 	 * </p>
 	 *
 	 * @param name             the parameter qualified name

@@ -46,7 +46,7 @@ import reactor.core.publisher.Mono;
  * The client exchange terminates when the response message publisher terminates, gRPC metadata are then received by the client with final {@link GrpcStatus}.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  * 
  * @param <A> The exchange context type 
@@ -62,7 +62,7 @@ public interface GrpcExchange<A extends ExchangeContext, B extends Message, C ex
 	 * Represents a unary (request/response) client gRPC exchange.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 * 
 	 * @param <A> The exchange context type 
@@ -78,7 +78,7 @@ public interface GrpcExchange<A extends ExchangeContext, B extends Message, C ex
 	 * Represents a client streaming (stream/response) client gRPC exchange.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 * 
 	 * @param <A> The exchange context type 
@@ -94,7 +94,7 @@ public interface GrpcExchange<A extends ExchangeContext, B extends Message, C ex
 	 * Represents a server streaming (request/stream) client gRPC exchange.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 * 
 	 * @param <A> The exchange context type 
@@ -110,7 +110,7 @@ public interface GrpcExchange<A extends ExchangeContext, B extends Message, C ex
 	 * Represents a bidirectional streaming (stream/stream) client gRPC exchange.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 * 
 	 * @param <A> The exchange context type 

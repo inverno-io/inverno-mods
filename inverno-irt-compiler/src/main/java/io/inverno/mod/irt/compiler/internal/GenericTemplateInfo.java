@@ -34,7 +34,6 @@ import io.inverno.mod.irt.compiler.spi.TemplateInfo;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class GenericTemplateInfo extends BaseInfo implements TemplateInfo {
 
@@ -58,7 +57,7 @@ public class GenericTemplateInfo extends BaseInfo implements TemplateInfo {
 		super(range);
 		this.name = Optional.ofNullable(name);
 		this.parameters = parameters.stream().collect(Collectors.toMap(ParameterInfo::getName, Function.identity(), (p1,p2) -> p1, LinkedHashMap::new));
-		this.statements = Optional.ofNullable(statements).map(l -> l.stream().toArray(StatementInfo[]::new)).filter(arr -> arr.length > 0);
+		this.statements = Optional.ofNullable(statements).map(l -> l.toArray(StatementInfo[]::new)).filter(arr -> arr.length > 0);
 		this.select = Optional.ofNullable(select);
 	}
 

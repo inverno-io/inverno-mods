@@ -20,8 +20,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * <p>
- * A {@link TemplateSet} base implementation template sets which renders data in
- * a {@link StringBuilder}
+ * A {@link TemplateSet} base implementation template sets which renders data in a {@link StringBuilder}
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

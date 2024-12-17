@@ -53,14 +53,13 @@ import java.util.TreeSet;
  */
 public class LinkedHttpHeaders extends HttpHeaders {
 
-	private HeadersValidator validator;
-	
+	private final HeaderNode[] buckets;
+	private final HeaderNode tail;
+
 	private HeaderNode head;
-	
-	private HeaderNode tail;
-	
-	private HeaderNode[] buckets = new HeaderNode[16];
-	
+
+	private HeadersValidator validator;
+
 	/**
 	 * <p>
 	 * Creates linked HTTP headers with no headers validation.
@@ -78,8 +77,10 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	 * @param validator a headers validator
 	 */
 	public LinkedHttpHeaders(HeadersValidator validator) {
-		this.validator = validator;
+		this.buckets = new HeaderNode[16];
 		this.head = this.tail = new HeaderNode();
+
+		this.validator = validator;
 	}
 
 	/**
@@ -708,8 +709,9 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	public int size() {
 		int size = 0;
 		HeaderNode current = this.head;
-		while(current != null) {
+		while(current.next != null) {
 			size++;
+			current = current.next;
 		}
 		return size;
 	}
@@ -717,7 +719,7 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	@Override
 	@Deprecated
 	public Iterator<Entry<String, String>> iterator() {
-		return new Iterator<Map.Entry<String, String>>() {
+		return new Iterator<>() {
 			HeaderNode current = tail;
 
 			@Override
@@ -739,7 +741,7 @@ public class LinkedHttpHeaders extends HttpHeaders {
 
 	@Override
 	public Iterator<Entry<CharSequence, CharSequence>> iteratorCharSequence() {
-		return new Iterator<Map.Entry<CharSequence, CharSequence>>() {
+		return new Iterator<>() {
 			HeaderNode current = tail;
 
 			@Override
@@ -764,7 +766,7 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	 * Encodes the headers into the specified buffer.
 	 * </p>
 	 * 
-	 * @param buf the traget buffer
+	 * @param buf the target buffer
 	 */
 	public void encode(ByteBuf buf) {
 		HeaderNode current = this.tail.previous;
@@ -829,7 +831,7 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	private final class HeaderNode implements Map.Entry<CharSequence, CharSequence> {
+	private static final class HeaderNode implements Map.Entry<CharSequence, CharSequence> {
 
 		final CharSequence key;
 		final int hashCode;

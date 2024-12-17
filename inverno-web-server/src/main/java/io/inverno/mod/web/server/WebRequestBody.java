@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2021 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ package io.inverno.mod.web.server;
 
 import io.inverno.mod.base.converter.MediaTypeConverter;
 import io.inverno.mod.http.server.RequestBody;
+import io.inverno.mod.web.base.InboundDataDecoder;
 import io.netty.buffer.ByteBuf;
-import org.reactivestreams.Publisher;
-
 import java.lang.reflect.Type;
 import java.util.function.Function;
+import org.reactivestreams.Publisher;
 
 /**
  * <p>
@@ -54,7 +54,7 @@ public interface WebRequestBody extends RequestBody {
 	 * @return a decoder
 	 */
 	<A> InboundDataDecoder<A> decoder(Class<A> type);
-	
+
 	/**
 	 * <p>
 	 * Returns a decoder to decode the payload to the specified type based on the content type of the request.
@@ -66,20 +66,7 @@ public interface WebRequestBody extends RequestBody {
 	 * @return a decoder
 	 */
 	<A> InboundDataDecoder<A> decoder(Type type);
-	
+
 	@Override
-	Multipart<? extends WebPart> multipart() throws IllegalStateException;
-	
-	/**
-	 * <p>
-	 * A multipart/form-data consumer with payload decoding support.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
-	 * 
-	 * @see WebPart
-	 */
-	public static interface WebMultipart extends Multipart<WebPart> {
-	}
+	Multipart<WebPart> multipart() throws IllegalStateException;
 }

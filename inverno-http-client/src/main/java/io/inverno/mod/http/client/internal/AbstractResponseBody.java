@@ -31,7 +31,7 @@ import reactor.core.publisher.Sinks;
  * Base {@link ResponseBody} implementation representing the body received from the connected remote endpoint.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.11
  */
 public abstract class AbstractResponseBody implements ResponseBody {
@@ -49,7 +49,7 @@ public abstract class AbstractResponseBody implements ResponseBody {
 
 	/**
 	 * <p>
-	 * Creates an Http response body.
+	 * Creates an HTTP response body.
 	 * </p>
 	 */
 	public AbstractResponseBody() {
@@ -68,17 +68,13 @@ public abstract class AbstractResponseBody implements ResponseBody {
 	 * <p>
 	 * Returns the response body data sink.
 	 * </p>
-	 * 
-	 * <p>
-	 * This is used by an {@link Http1xConnection} to emit response data.
-	 * </p>
-	 * 
+	 *
 	 * @return the response body data sink
 	 */
 	public final Sinks.Many<ByteBuf> getDataSink() {
 		return this.dataSink;
 	}
-	
+
 	/**
 	 * <p>
 	 * Disposes the response body.
@@ -147,7 +143,7 @@ public abstract class AbstractResponseBody implements ResponseBody {
 	 * Generic raw {@link InboundData} implementation.
 	 * </p>
 	 *
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.11
 	 */
 	private class RawInboundData implements InboundData<ByteBuf> {
@@ -163,7 +159,7 @@ public abstract class AbstractResponseBody implements ResponseBody {
 	 * Generic string {@link InboundData} implementation.
 	 * </p>
 	 *
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.11
 	 */
 	private class StringInboundData implements InboundData<CharSequence> {

@@ -80,7 +80,7 @@ public class AuthorizationCodec implements HeaderCodec<AuthorizationCodec.Author
 		
 		String authScheme = value.substring(0, spaceIndex).toLowerCase();
 		if(this.tokenCodecs.containsKey(authScheme) || this.tokenExpectedSchemes.contains(authScheme)) {
-			return this.tokenCodecs.computeIfAbsent(authScheme, scheme -> new TokenHeaderCodec(scheme)).decode(name, value.substring(spaceIndex));
+			return this.tokenCodecs.computeIfAbsent(authScheme, TokenHeaderCodec::new).decode(name, value.substring(spaceIndex));
 		}
 		else {
 			return this.parametersCodecs.computeIfAbsent(authScheme, scheme -> new ParameterizedHeaderCodec<>(() -> new Authorization.ParametersBuilder(scheme), SUPPORTED_HEADER_NAMES, ' ', ',', ',', true, true, false, false, true, false)).decode(name, value.substring(spaceIndex));
@@ -113,7 +113,7 @@ public class AuthorizationCodec implements HeaderCodec<AuthorizationCodec.Author
 		}
 		
 		if(this.tokenCodecs.containsKey(authScheme) || this.tokenExpectedSchemes.contains(authScheme)) {
-			return this.tokenCodecs.computeIfAbsent(authScheme, scheme -> new TokenHeaderCodec(scheme)).decode(name, buffer, charset);
+			return this.tokenCodecs.computeIfAbsent(authScheme, TokenHeaderCodec::new).decode(name, buffer, charset);
 		}
 		else {
 			return this.parametersCodecs.computeIfAbsent(authScheme, scheme -> new ParameterizedHeaderCodec<>(() -> new Authorization.ParametersBuilder(scheme), SUPPORTED_HEADER_NAMES, ' ', ',', ',', true, true, false, false, true, false)).decode(name, buffer, charset);

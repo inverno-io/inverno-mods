@@ -63,9 +63,9 @@ public interface UserRepository<A extends Identity, B extends User<A>> extends C
 	 * 
 	 * @param username a username
 	 * 
-	 * @return a mono emittin the user or an empty mono if no user exists with the specified name
+	 * @return a mono emitting the user or an empty mono if no user exists with the specified name
 	 * 
-	 * @throws UserRepositoryException if there was an error fetchin the user
+	 * @throws UserRepositoryException if there was an error fetching the user
 	 */
 	Mono<B> getUser(String username) throws UserRepositoryException;
 	
@@ -105,7 +105,7 @@ public interface UserRepository<A extends Identity, B extends User<A>> extends C
 	 * </p>
 	 *
 	 * <p>
-	 * Implementors must make sure the provided credentials are valid before actually updating the password. Whether a full authentiation is performed or a simple password match is implementation
+	 * Implementors must make sure the provided credentials are valid before actually updating the password. Whether a full authentication is performed or a simple password match is implementation
 	 * specific.
 	 * </p>
 	 *

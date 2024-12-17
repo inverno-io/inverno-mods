@@ -31,7 +31,7 @@ public interface LDAPOperations {
 	
 	/**
 	 * <p>
-	 * Represents the serach scope as defined by <a href="https://datatracker.ietf.org/doc/html/rfc4511#section-4.5.1.2">RFC4511 Section 4.5.1.2</a>.
+	 * Represents the search scope as defined by <a href="https://datatracker.ietf.org/doc/html/rfc4511#section-4.5.1.2">RFC4511 Section 4.5.1.2</a>.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

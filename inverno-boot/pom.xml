@@ -48,16 +48,20 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-api</artifactId>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-text</artifactId>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jdk8</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>io.projectreactor</groupId>
-			<artifactId>reactor-core</artifactId>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.module</groupId>
+			<artifactId>jackson-module-afterburner</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>io.netty</groupId>
@@ -70,6 +74,10 @@
 		<dependency>
 			<groupId>io.netty</groupId>
 			<artifactId>netty-transport</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-resolver-dns</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>io.netty</groupId>
@@ -87,6 +95,10 @@
 			<optional>true</optional>
 		</dependency>
 		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-core</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-core</artifactId>
 			<optional>true</optional>
@@ -102,16 +114,12 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.fasterxml.jackson.datatype</groupId>
-			<artifactId>jackson-datatype-jsr310</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.module</groupId>
-			<artifactId>jackson-module-afterburner</artifactId>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-text</artifactId>
 		</dependency>
 
 		<dependency>

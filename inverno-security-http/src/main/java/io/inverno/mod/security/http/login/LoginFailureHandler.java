@@ -56,9 +56,7 @@ public interface LoginFailureHandler<A extends ExchangeContext, B extends Exchan
 	 * @return a composed login failure handler that invokes in sequence this handler followed by the specified handler
 	 */
 	default LoginFailureHandler<A, B> andThen(LoginFailureHandler<? super A, ? super B> after) {
-		return (exchange, authentication) -> {
-			return this.handleLoginFailure(exchange, authentication).then(after.handleLoginFailure(exchange, authentication));
-		};
+		return (exchange, authentication) -> this.handleLoginFailure(exchange, authentication).then(after.handleLoginFailure(exchange, authentication));
 	}
 	
 	/**
@@ -71,9 +69,7 @@ public interface LoginFailureHandler<A extends ExchangeContext, B extends Exchan
 	 * @return a composed login failure handler that invokes in sequence the specified handler followed by this handler
 	 */
 	default LoginFailureHandler<A, B> compose(LoginFailureHandler<? super A, ? super B> before) {
-		return (exchange, authentication) -> {
-			return before.handleLoginFailure(exchange, authentication).then(this.handleLoginFailure(exchange, authentication));
-		};
+		return (exchange, authentication) -> before.handleLoginFailure(exchange, authentication).then(this.handleLoginFailure(exchange, authentication));
 	}
 	
 	/**

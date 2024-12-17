@@ -145,7 +145,7 @@ public class Readme {
 		accessControllerResolver2.resolveAccessController(auth);
 		
 		// Configuration source defining permissions by user
-		ConfigurationSource<?,?,?> configurationSource = null;
+		ConfigurationSource configurationSource = null;
 		
 		ConfigurationSourcePermissionBasedAccessControllerResolver accessControllerResolver3 = new ConfigurationSourcePermissionBasedAccessControllerResolver(configurationSource);
 	}

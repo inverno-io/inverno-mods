@@ -18,7 +18,6 @@ package io.inverno.mod.http.client;
 import io.inverno.mod.http.base.BaseRequest;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.OutboundRequestHeaders;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -30,7 +29,7 @@ import java.util.function.Consumer;
  * Once the request has been sent to the endpoint it is no longer possible to modify it resulting in {@link IllegalStateException} on such operations.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @see Exchange
@@ -112,9 +111,9 @@ public interface Request extends BaseRequest {
 	 * Returns the request body when the request method allows it.
 	 * </p>
 	 * 
-	 * @return an optional returning the request body when the method allows it (i.e. {@code POST} {@code PUT}...) or an empty optional (i.e. {@code GET}...).
+	 * @return the request body when the method allows it (i.e. {@code POST} {@code PUT}...)
 	 * 
-	 * @throws IllegalStateException if the request has already been sent to the endpoint
+	 * @throws IllegalStateException if the method does not allow a body in the request (i.e. {@code GET}...) or if the request has already been sent to the endpoint
 	 */
-	Optional<? extends RequestBody> body() throws IllegalStateException;
+	RequestBody body() throws IllegalStateException;
 }

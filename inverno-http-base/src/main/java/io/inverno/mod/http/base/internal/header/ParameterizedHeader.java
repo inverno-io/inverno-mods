@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * <p>
@@ -43,7 +44,7 @@ public class ParameterizedHeader extends GenericHeader {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 *
 	 * @param <A> the parameterized header type
-	 * @param <B> the parmeterized header builder
+	 * @param <B> the parameterized header builder
 	 */
 	public static abstract class AbstractBuilder<A extends ParameterizedHeader, B extends AbstractBuilder<A, B>> extends AbstractHeaderBuilder<A, B> {
 		
@@ -94,7 +95,7 @@ public class ParameterizedHeader extends GenericHeader {
 	
 	/**
 	 * <p>
-	 * Generic parmeterized {@link HeaderBuilder} implementation.
+	 * Generic parameterized {@link HeaderBuilder} implementation.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -162,33 +163,16 @@ public class ParameterizedHeader extends GenericHeader {
 	}
 
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((parameterizedValue == null) ? 0 : parameterizedValue.hashCode());
-		result = prime * result + ((parameters == null) ? 0 : parameters.hashCode());
-		return result;
+	public boolean equals(Object o) {
+		if(this == o) return true;
+		if(o == null || getClass() != o.getClass()) return false;
+		if(!super.equals(o)) return false;
+		ParameterizedHeader that = (ParameterizedHeader) o;
+		return Objects.equals(parameters, that.parameters) && Objects.equals(parameterizedValue, that.parameterizedValue);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (!super.equals(obj))
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		ParameterizedHeader other = (ParameterizedHeader) obj;
-		if (parameterizedValue == null) {
-			if (other.parameterizedValue != null)
-				return false;
-		} else if (!parameterizedValue.equals(other.parameterizedValue))
-			return false;
-		if (parameters == null) {
-			if (other.parameters != null)
-				return false;
-		} else if (!parameters.equals(other.parameters))
-			return false;
-		return true;
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), parameters, parameterizedValue);
 	}
 }

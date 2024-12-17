@@ -26,7 +26,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 /**
  * <p>
@@ -151,43 +150,11 @@ public class GenericDataConversionService implements DataConversionService {
 					break;
 				}
 			}
-			
-//			if(result == null) {
-//				if(MediaTypes.APPLICATION_JOSE.equals(mediaType)) {
-//					result = new JOSEStringMediaTypeConverter(this.jwsService, this.jweService);
-//				}
-//				else if(MediaTypes.APPLICATION_JOSE_JSON.endsWith(mediaType)) {
-//					result = new JOSEJsonStringMediaTypeConverter(this.jwsService, this.jweService);
-//				}
-//				else if(MediaTypes.APPLICATION_JWT.equals(normalizedMediaType)) {
-//					result = this.jwtService != null ? new JWTStringMediaTypeConverter(this.jwtService) : null;
-//				}
-//				else if(MediaTypes.APPLICATION_JWK_JSON.equals(normalizedMediaType)) {
-//					result = this.jwkService != null ? new JWKJsonMediaTypeConverter(this.jwkService, this.mapper) : null;
-//				}
-//				else if(MediaTypes.APPLICATION_JWK_SET_JSON.equals(normalizedMediaType)) {
-//					result = this.jwkService != null ? new JWKSetJsonMediaTypeConverter(this.jwkService, this.mapper) : null;
-//				}
-//			}
-			
+
 			if (result == null) {
 				this.convertersCache.put(normalizedMediaType, null);
 			}
 		}
 		return Optional.ofNullable(result);
-	}
-	
-	/**
-	 * <p>
-	 * Media type converters socket used to inject media type converters when building the JOSE module.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
-	 * 
-	 * @see GenericDataConversionService
-	 */
-	@Bean(name = "mediaTypeConverters")
-	public static interface MediaTypeConvertersSocket extends Supplier<List<MediaTypeConverter<String>>> {
 	}
 }

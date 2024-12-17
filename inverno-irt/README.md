@@ -22,9 +22,7 @@ In order to use the Inverno *irt* module, we need to declare a dependency in the
 
 ```java
 module io.inverno.example.app {
-    ...
     requires io.inverno.mod.irt;
-    ...
 }
 ```
 
@@ -45,24 +43,20 @@ Using Maven:
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.inverno.mod:inverno-irt:${VERSION_INVERNO_MODS}'
-...
 ```
 
 Dependencies to `io.netty.common` and `io.netty.buffer` are also required when using `BYTEBUF` or `PUBLISHER_BYTEBUF` [modes](#modes) which require Netty's `ByteBuf`. They are defined as optional in the *irt* module and won't be included by default. In order to use `ByteBuf` based generation modes, the following dependencies must be declared as well in the module descriptor:
 
 ```java
 module io.inverno.example.app {
-    ...
     requires io.netty.common;
     requires transitive io.netty.buffer;
-    ...
 }
 ```
 
-And the corresponding dependency to `io.netty:netty-buffer` must be declared in the the build descriptor:
+And the corresponding dependency to `io.netty:netty-buffer` must be declared in the build descriptor:
 
 Using Maven:
 
@@ -80,10 +74,8 @@ Using Maven:
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.netty:netty-buffer:4.1.79.Final'
-...
 ```
 
 ## Creates an .irt template
@@ -185,7 +177,7 @@ option modes = {"STRING", "STREAM", "PUBLISHER_STRING"};
 
 ### Templates
 
-Templates are specified last. A template is a function that defines how a particular input must be rendered, a template can have a name in which case it is referred as a named template. In a template set, there can't be two templates with the same signature (ie. defining the same input parameters) unless they have different names.
+Templates are specified last. A template is a function that defines how a particular input must be rendered, a template can have a name in which case it is referred as a named template. In a template set, there can't be two templates with the same signature (i.e. defining the same input parameters) unless they have different names.
 
 A template is declared as follows:
 
@@ -269,7 +261,7 @@ The message is: {@message.message}
 }
 ```
 
-In the preceding example, we used a syntactic sugar to navigate into the message object hierarchy and access the `message` properties but it is also possible to evaluate a raw Java expression specified between `(` and `)` to get the same result:
+In the preceding example, we used a syntactic sugar to navigate into the message object hierarchy and access the `message` properties, but it is also possible to evaluate a raw Java expression specified between `(` and `)` to get the same result:
 
 ```plaintext
 (Message message) -> {
@@ -285,7 +277,7 @@ The message is: {@(5+8)}
 }
 ```
 
-> Note that this can be dangerous when you the origin of a template set can't be trusted.
+> Note that this may pose a security threat when the origin of a template set can't be trusted.
 
 ### If
 
@@ -319,7 +311,7 @@ The message is: {message.message}
 }
 ```
 
-Unlike the value of statement which renders data synchronously, applying a template can be an asynchronous operation depending on the type of data to render. Indeed when the data to render is an an array, an `Iterable`, a `Stream` or a `Publisher`, the template is applied on each element and in the case of a `Publisher` the operation is reactive, non-blocking and therefore asynchronous.
+Unlike the value of statement which renders data synchronously, applying a template can be an asynchronous operation depending on the type of data to render. Indeed, when the data to render is an array, an `Iterable`, a `Stream` or a `Publisher`, the template is applied on each element and in the case of a `Publisher` the operation is reactive, non-blocking and therefore asynchronous.
 
 For instance, a list of messages can be rendered synchronously as follows:
 
@@ -347,7 +339,7 @@ message 5
 
 Now if we consider a `Publisher`, a message is rendered to the output when it is emitted by the publisher following reactive principles.
 
-As you can see the apply template statement is extremely powerful, it is used to render data based on their types which facilitates composition but it can also be used as a for loop statement to render a list of elements.
+As you can see the apply template statement is extremely powerful, it is used to render data based on their types which facilitates composition, but it can also be used as a for loop statement to render a list of elements.
 
 By default, an apply template statement will select the unnamed template within the template set matching the type of data to render, but it is also possible to select a named templates as follows:
 
@@ -488,7 +480,7 @@ The message is: {@message.message|((String content) -> content.toUpperCase())}
 }
 ```
 
-Lambdas are handy when there's a need for very specific pipes, however the recommended way to create pipes is to define them in Java as static methods returning the `Pipe` implementation in order to keep the template readable. Above pipe can be defined in a Java class as follows:
+Lambdas are handy when there's a need for very specific pipes. However, the recommended way to create pipes is to define them in Java as static methods returning the `Pipe` implementation in order to keep the template readable. Above pipe can be defined in a Java class as follows:
 
 ```java
 package io.inverno.example.app_irt.pipes;
@@ -514,7 +506,7 @@ The message is: {@message.message|uppercase}
 }
 ```
 
-Several built-in pipes are provided in the module in the `Pipes`, `StreamPipes` and `PublisherPipes` classes. The `Pipes` class provides pipes used to tranform simple data object before rendering such as strings, dates and numbers. The `StreamPipes` and `PublisherPipes` provide pipes used to transformed streams and publishers typically in an apply template statement.
+Several built-in pipes are provided in the module in the `Pipes`, `StreamPipes` and `PublisherPipes` classes. The `Pipes` class provides pipes used to transform simple data object before rendering such as strings, dates and numbers. The `StreamPipes` and `PublisherPipes` provide pipes used to transformed streams and publishers typically in an apply template statement.
 
 For instance the following example sort a list of items and map them to their datetime before applying templates:
 
@@ -575,7 +567,7 @@ ByteArrayOutputStream result = Simple.stream(() -> new ByteArrayOutputStream()).
 
 ### PUBLISHER_*
 
-Finally the **PUBLISHER_STRING** and **PUBLISHER_BYTEBUF** modes are used to generate fully reactive rendering methods which return `Publisher<String>` and `Publisher<ByteBuf>` respectively. Unlike previous modes, the rendering process starts when a subscription is made on the returned `Publisher` which can emits partial rendering result whenever a partial data is rendered.
+Finally, the **PUBLISHER_STRING** and **PUBLISHER_BYTEBUF** modes are used to generate fully reactive rendering methods which return `Publisher<String>` and `Publisher<ByteBuf>` respectively. Unlike previous modes, the rendering process starts when a subscription is made on the returned `Publisher` which can emits partial rendering result whenever a partial data is rendered.
 
 ```java
 String result = Flux.from(Simple.publisherString().render(new Message("some important message", true))).collect(Collectors.joining()).block();

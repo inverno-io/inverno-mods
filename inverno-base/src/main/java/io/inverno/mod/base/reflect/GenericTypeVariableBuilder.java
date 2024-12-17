@@ -54,8 +54,7 @@ public class GenericTypeVariableBuilder<A> implements TypeVariableBuilder<A> {
 	 * @param parentBuilder   the parent builder
 	 * @param rawTypeVariable the underlying type variable
 	 * @param name            the name of the type variable
-	 * @param typeInjector    the resulting type injector to invoke when the builder
-	 *                        is finalized.
+	 * @param typeInjector    the resulting type injector to invoke when the builder is finalized.
 	 */
 	public GenericTypeVariableBuilder(A parentBuilder, TypeVariable<?> rawTypeVariable, String name, Consumer<Type> typeInjector) {
 		this.parentBuilder = parentBuilder;
@@ -92,7 +91,7 @@ public class GenericTypeVariableBuilder<A> implements TypeVariableBuilder<A> {
 	
 	@Override
 	public A and() {
-		this.typeInjector.accept(new TypeVariableWrapper<>(this.rawTypeVariable, this.name, this.boundTypes != null ? this.boundTypes.toArray(new Type[this.boundTypes.size()]) : new Type[0]));
+		this.typeInjector.accept(new TypeVariableWrapper<>(this.rawTypeVariable, this.name, this.boundTypes != null ? this.boundTypes.toArray(Type[]::new) : new Type[0]));
 		return this.parentBuilder;
 	}
 }

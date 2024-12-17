@@ -31,22 +31,22 @@ import io.netty.handler.codec.http2.Http2Headers;
  * Base Http/2 {@link Exchange} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.10
  */
 abstract class AbstractHttp2Exchange extends AbstractExchange<Http2Request, Http2Response, Http2ErrorExchange> {
 	
 	protected final Http2ConnectionStream connectionStream;
-	
+
 	/**
 	 * <p>
 	 * Creates an Http/2 exchange.
 	 * </p>
-	 * 
-	 * @param configuration the server configuration
-	 * @param controller    the server controller
-	 * @param connection    the Http/2 connection
-	 * @param headers       the originating Http headers
+	 *
+	 * @param configuration    the server configuration
+	 * @param controller       the server controller
+	 * @param connectionStream the Http/2 connection stream
+	 * @param headers          the originating HTTP headers
 	 */
 	public AbstractHttp2Exchange(
 			HttpServerConfiguration configuration, 
@@ -54,7 +54,7 @@ abstract class AbstractHttp2Exchange extends AbstractExchange<Http2Request, Http
 			Http2ConnectionStream connectionStream, 
 			Http2Headers headers
 		) {
-		super(configuration, controller, Method.HEAD.name().equals(headers.get(Headers.NAME_PSEUDO_METHOD)));
+		super(configuration, controller, Method.HEAD.name().equals(headers.get(Headers.NAME_PSEUDO_METHOD).toString()));
 		this.connectionStream = connectionStream;
 	}
 	

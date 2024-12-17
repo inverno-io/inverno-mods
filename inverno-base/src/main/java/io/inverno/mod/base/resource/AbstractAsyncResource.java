@@ -54,7 +54,7 @@ public abstract class AbstractAsyncResource extends AbstractResource implements 
 	
 	/**
 	 * <p>
-	 * Creates an asnc resource.
+	 * Creates an async resource.
 	 * </p>
 	 */
 	public AbstractAsyncResource() {
@@ -86,7 +86,7 @@ public abstract class AbstractAsyncResource extends AbstractResource implements 
 		if(defaultExecutor == null) {
 			// TODO using such thread pool might be dangerous since there are no thread limit...
 			defaultExecutor = Executors.newCachedThreadPool();
-			
+
 			/*defaultExecutor = new ThreadPoolExecutor(0, 20,
                     60L, TimeUnit.SECONDS,
                     new SynchronousQueue<Runnable>());*/
@@ -134,7 +134,7 @@ public abstract class AbstractAsyncResource extends AbstractResource implements 
 							throw new EndOfFileException();
 						}
 					}
-					catch (IOException e) {
+					catch(IOException e) {
 						throw Exceptions.propagate(e);
 					}
 					data.flip();
@@ -142,10 +142,11 @@ public abstract class AbstractAsyncResource extends AbstractResource implements 
 				})
 				.onErrorResume(EndOfFileException.class, ex -> Mono.empty())
 				.doOnTerminate(() -> {
+					//noinspection CatchMayIgnoreException
 					try {
 						channel.close();
 					}
-					catch (IOException e) {
+					catch(IOException e) {
 					}
 				})
 				.subscribeOn(Schedulers.fromExecutor(this.getExecutor()))
@@ -162,7 +163,7 @@ public abstract class AbstractAsyncResource extends AbstractResource implements 
 						try {
 							sink.success(channel.write(chunk.nioBuffer()));
 						} 
-						catch (IOException e) {
+						catch(IOException e) {
 							sink.error(e);
 						}
 						finally {
@@ -172,6 +173,7 @@ public abstract class AbstractAsyncResource extends AbstractResource implements 
 					.subscribeOn(Schedulers.fromExecutor(this.getExecutor()))
 				)
 				.doOnTerminate(() -> {
+					//noinspection CatchMayIgnoreException
 					try {
 						channel.close();
 					}

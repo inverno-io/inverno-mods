@@ -91,7 +91,7 @@ public class H2cUpgradeHandler extends ChannelInboundHandlerAdapter {
 
 			// look for connection, settings...
 			String connection = requestHeaders.get(Headers.NAME_CONNECTION);
-			if(connection != null && connection.length() > 0) {
+			if(connection != null && !connection.isEmpty()) {
 				int connectionIndex = 0;
 				int length = connection.length();
 				String currentHeader = null;
@@ -134,13 +134,13 @@ public class H2cUpgradeHandler extends ChannelInboundHandlerAdapter {
 
 				// Connection: upgrade, http2-settings
 				List<String> http2SettingsHeader = requestHeaders.getAll(Headers.NAME_HTTP2_SETTINGS);
-				if(http2SettingsHeader.isEmpty() || http2SettingsHeader.size() > 1) {
+				if(http2SettingsHeader.size() != 1) {
 					// request MUST include exactly one HTTP2-Settings (Section 3.2.1) header field.
 					this.sendBadRequest(request.protocolVersion(), ctx);
 				}
 				// parse the settings
 				try {
-					Http2Settings requestHttp2Settings = this.decodeSettingsHeader(http2SettingsHeader.get(0));
+					Http2Settings requestHttp2Settings = this.decodeSettingsHeader(http2SettingsHeader.getFirst());
 
 					this.sendAcceptUpgrade(request.protocolVersion(), ctx);
 					this.http2Connection = this.configurer.startHttp2Upgrade(ctx.pipeline());

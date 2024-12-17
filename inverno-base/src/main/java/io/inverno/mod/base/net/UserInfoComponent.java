@@ -20,9 +20,7 @@ import java.util.function.Predicate;
 
 /**
  * <p>
- * A URI component representing the user information part of an URI as defined
- * by <a href="https://tools.ietf.org/html/rfc3986#section-3.2.1">RFC 3986
- * Section 3.2.1</a>.
+ * A URI component representing the user information part of an URI as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.2.1">RFC 3986 Section 3.2.1</a>.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -32,14 +30,11 @@ import java.util.function.Predicate;
  */
 class UserInfoComponent extends AbstractParameterizedURIComponent {
 	
-	private static final Predicate<Integer> ESCAPED_CHARACTERS =  b -> {
-		return !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '&' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == '=' || b == ':');
-	};
-	
+	private static final Predicate<Integer> ESCAPED_CHARACTERS =  b -> !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '&' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == '=' || b == ':');
+
 	/**
 	 * <p>
-	 * Creates a user information component with the specified flags, charset and
-	 * raw value.
+	 * Creates a user information component with the specified flags, charset and raw value.
 	 * </p>
 	 * 
 	 * @param flags    URI flags

@@ -40,7 +40,7 @@ import reactor.core.publisher.BaseSubscriber;
  * Http/2 {@link Exchange} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 class Http2Exchange extends AbstractHttp2Exchange {
@@ -67,7 +67,7 @@ class Http2Exchange extends AbstractHttp2Exchange {
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 * @param connectionStream      the connection stream
-	 * @param headers               the originating Http headers
+	 * @param headers               the originating HTTP headers
 	 */
 	public Http2Exchange(
 			HttpServerConfiguration configuration, 
@@ -148,7 +148,7 @@ class Http2Exchange extends AbstractHttp2Exchange {
 	}
 	
 	@Override
-	public Optional<? extends WebSocket<ExchangeContext, ? extends WebSocketExchange<ExchangeContext>>> webSocket(String... subProtocols) {
+	public Optional<? extends WebSocket<ExchangeContext, ? extends WebSocketExchange<ExchangeContext>>> webSocket(String... subprotocols) {
 		return Optional.empty();
 	}
 
@@ -157,7 +157,7 @@ class Http2Exchange extends AbstractHttp2Exchange {
 	 * The subscriber used to subscribe to the mono returned by the exchange handler and that sends the response on complete.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.10
 	 */
 	private class ExchangeHandlerSubscriber extends BaseSubscriber<Void> {

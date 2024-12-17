@@ -44,8 +44,7 @@ public class SqlConnection extends AbstractSqlOperations {
 	 * </p>
 	 *
 	 * <p>
-	 * If the connection was retrieved from a pool, this simply returns the
-	 * connection to the pool.
+	 * If the connection was retrieved from a pool, this simply returns the connection to the pool.
 	 * </p>
 	 * 
 	 * @return a Mono that completes when the connection is closed

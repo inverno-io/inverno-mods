@@ -35,10 +35,10 @@ import java.util.List;
 
 /**
  * <p>
- * HTTP/1.x {@link HttpRequestEncoder} implemenation.
+ * HTTP/1.x {@link HttpRequestEncoder} implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class Http1xRequestEncoder extends HttpRequestEncoder {
@@ -52,7 +52,7 @@ public class Http1xRequestEncoder extends HttpRequestEncoder {
 	 * Creates an HTTP/1.x request encoder.
 	 * </p>
 	 * 
-	 * @param byteBufAllocator 
+	 * @param byteBufAllocator the {@code ByteBuf} allocator
 	 */
 	public Http1xRequestEncoder(ByteBufAllocator byteBufAllocator) {
 		this.byteBufAllocator = byteBufAllocator;
@@ -84,7 +84,7 @@ public class Http1xRequestEncoder extends HttpRequestEncoder {
 	 * Channel handler context proxy.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 */
 	private final class ChannelHandlerContextProxy implements ChannelHandlerContext {

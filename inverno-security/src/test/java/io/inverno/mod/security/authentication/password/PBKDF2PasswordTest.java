@@ -18,7 +18,6 @@ package io.inverno.mod.security.authentication.password;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.security.SecureRandom;
-import java.text.MessageFormat;
 import java.util.Base64;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

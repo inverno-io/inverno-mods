@@ -42,12 +42,13 @@ import org.apache.commons.lang3.reflect.TypeUtils;
  * </p>
  * 
  * <p>
- * {@link Type} allows to represent parameterized type at runtime which is not
- * possible with a regular {@link Class} due to type erasure. This can be useful
- * especially when one needs to perform reflective operation at runtime.
+ * {@link Type} allows to represent parameterized type at runtime which is not possible with a regular {@link Class} due to type erasure. This can be useful especially when one needs to perform
+ * reflective operation at runtime.
  * </p>
  * 
- * <p>A {@link TypeBuilder} makes it easy to create types, for instance:</p>
+ * <p>
+ * A {@link TypeBuilder} makes it easy to create types, for instance:
+ * </p>
  * 
  * <pre>{@code
  * Type listOfStringType = Types.type(List.class).type(String.class).and().build();
@@ -69,8 +70,7 @@ public final class Types {
 	 * @param type a primitive type
 	 *
 	 * @return a boxed type
-	 * @throws IllegalArgumentException if the specified type is not a primitive
-	 *                                  type
+	 * @throws IllegalArgumentException if the specified type is not a primitive type
 	 */
 	public static Class<?> boxType(Class<?> type) throws IllegalArgumentException {
 		if(!type.isPrimitive()) {
@@ -115,6 +115,7 @@ public final class Types {
 	 * @param type a boxed type
 	 * 
 	 * @return a primitive type
+	 *
 	 * @throws IllegalArgumentException if the specified type is not a boxed type
 	 */
 	public static Class<?> unboxType(Class<?> type) throws IllegalArgumentException {
@@ -180,8 +181,8 @@ public final class Types {
 	 * @param type a type
 	 * 
 	 * @return a raw type
-	 * @throws IllegalArgumentException if it is not possible to determine a raw
-	 *                                  type from the specified type
+	 *
+	 * @throws IllegalArgumentException if it is not possible to determine a raw type from the specified type
 	 */
 	public static Class<?> toClass(Type type) throws IllegalArgumentException {
 		if(type instanceof GenericArrayType) {
@@ -217,9 +218,7 @@ public final class Types {
 	
 	/**
 	 * <p>
-	 * Determines the actual argument type of a method type variable based on a map
-	 * of type arguments extracted from an enclosing type and a set of method
-	 * parameters.
+	 * Determines the actual argument type of a method type variable based on a map of type arguments extracted from an enclosing type and a set of method parameters.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -250,7 +249,7 @@ public final class Types {
 			if(typeArg != null) {
 				return typeArg;
 			}
-			else if(typeArg == null && methodTypeParameters.remove(typeVar)) {
+			else if(methodTypeParameters.remove(typeVar)) {
 				// Let's look for this one
 				if(typeVar.getBounds().length > 1) {
 					// Let's only consider first bound for now, the API doesn't support this anyway
@@ -268,17 +267,15 @@ public final class Types {
 	
 	/**
 	 * <p>
-	 * Returns the type of an accessible object when viewed as a member of, or
-	 * otherwise directly contained by, a given type.
+	 * Returns the type of an accessible object when viewed as a member of, or otherwise directly contained by, a given type.
 	 * </p>
 	 * 
 	 * @param containing the containing type
 	 * @param accessor   the accessible object
 	 * 
 	 * @return a type
-	 * @throws IllegalArgumentException if the specified accessor is neither a field
-	 *                                  nor a method or if there are missing type
-	 *                                  arguments in the containing type
+	 *
+	 * @throws IllegalArgumentException if the specified accessor is neither a field nor a method or if there are missing type arguments in the containing type
 	 */
 	public static Type typeAsMemberOf(Type containing, AccessibleObject accessor) throws IllegalArgumentException {
 		if(accessor instanceof Field) {
@@ -294,16 +291,15 @@ public final class Types {
 	
 	/**
 	 * <p>
-	 * Returns the type of a generic method return type when viewed as a member of,
-	 * or otherwise directly contained by, a given type.
+	 * Returns the type of a generic method return type when viewed as a member of, or otherwise directly contained by, a given type.
 	 * </p>
 	 * 
 	 * @param containing the containing type
 	 * @param method     the method
 	 * 
 	 * @return a type
-	 * @throws IllegalArgumentException if there are missing type arguments in the
-	 *                                  containing type
+	 *
+	 * @throws IllegalArgumentException if there are missing type arguments in the containing type
 	 */
 	public static Type typeAsMemberOf(Type containing, Method method) {
 		Type genericType = method.getGenericReturnType();
@@ -332,16 +328,15 @@ public final class Types {
 	
 	/**
 	 * <p>
-	 * Returns the type of a field when viewed as a member of, or otherwise directly
-	 * contained by, a given type.
+	 * Returns the type of a field when viewed as a member of, or otherwise directly contained by, a given type.
 	 * </p>
 	 * 
 	 * @param containing the containing type
 	 * @param field      the field
 	 * 
 	 * @return a type
-	 * @throws IllegalArgumentException if there are missing type arguments in the
-	 *                                  containing type
+	 *
+	 * @throws IllegalArgumentException if there are missing type arguments in the containing type
 	 */
 	public static Type typeAsMemberOf(Type containing, Field field) {
 		Type genericType = field.getGenericType();
@@ -356,20 +351,18 @@ public final class Types {
 			return typeArg;
 		});
 	}
-	
+
 	/**
 	 * <p>
-	 * Returns the raw type of a containing type and checks that the specified
-	 * member is actually a member of that class.
+	 * Returns the raw type of a containing type and checks that the specified member is actually a member of that class.
 	 * </p>
-	 * 
+	 *
 	 * @param containing the containing type
 	 * @param member     a member
-	 * 
+	 *
 	 * @return a raw type
-	 * @throws IllegalArgumentException if the specified member is not a member of
-	 *                                  the containing type or the containing type
-	 *                                  is not an actual type
+	 *
+	 * @throws IllegalArgumentException if the specified member is not a member of the containing type or the containing type is not an actual type
 	 */
 	private static Class<?> extractContainingClass(Type containing, Member member) throws IllegalArgumentException {
 		Class<?> memberDeclaringClass = member.getDeclaringClass();
@@ -392,13 +385,14 @@ public final class Types {
 		}
 		return containingRawType;
 	}
-	
+
 	/**
 	 * <p>
 	 * Returns the raw type of the specified parameterized type.
 	 * </p>
-	 * 
+	 *
 	 * @param type a parameterized type
+	 *
 	 * @return a raw type
 	 */
 	private static Class<?> getRawType(ParameterizedType type) {
@@ -416,6 +410,7 @@ public final class Types {
 	 * 
 	 * @param genericType a generic type
 	 * @param typeArgumentSupplier a type arguments supplier
+	 *
 	 * @return a type
 	 */
 	private static Type parameterizeType(Type genericType, Function<TypeVariable<?>, Type> typeArgumentSupplier) {
@@ -424,13 +419,13 @@ public final class Types {
 	
 	/**
 	 * <p>
-	 * Returns a type with the specified owner type parameterized using the
-	 * specified supplier of type arguments.
+	 * Returns a type with the specified owner type parameterized using the specified supplier of type arguments.
 	 * </p>
 	 * 
 	 * @param genericType          a generic type
-	 * @param ownerType            a owner type
+	 * @param ownerType            an owner type
 	 * @param typeArgumentSupplier a type arguments supplier
+	 *
 	 * @return a type
 	 */
 	private static Type parameterizeType(Type genericType, Type ownerType, Function<TypeVariable<?>, Type> typeArgumentSupplier) {
@@ -498,12 +493,12 @@ public final class Types {
 	
 	/**
 	 * <p>
-	 * Returns the owner type of the specified raw type parameterized using the
-	 * specified supplier of type arguments.
+	 * Returns the owner type of the specified raw type parameterized using the specified supplier of type arguments.
 	 * </p>
 	 * 
 	 * @param rawType              a raw type
 	 * @param typeArgumentSupplier a type arguments supplier
+	 *
 	 * @return a type
 	 */
 	private static Type extractOwnerType(Class<?> rawType, Function<TypeVariable<?>, Type> typeArgumentSupplier) {
@@ -520,10 +515,13 @@ public final class Types {
 	 * Determines whether a type can be assignable to another.
 	 * </p>
 	 * 
-	 * <p>When a type is assignable to another, it can be implicitly casted to the other one following the Java generics rules.</p>
+	 * <p>
+	 * When a type is assignable to another, it can be implicitly casted to the other one following the Java generics rules.
+	 * </p>
 	 * 
 	 * @param source a source type
 	 * @param target a target type
+	 *
 	 * @return true if the source type is assignable to the target type
 	 */
 	public static boolean isAssignable(Type source, Type target) {

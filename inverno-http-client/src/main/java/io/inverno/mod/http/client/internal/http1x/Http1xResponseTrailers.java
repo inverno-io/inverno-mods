@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  * Http/1.x {@link InboundHeaders} implementation to represent HTTP trailers.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 class Http1xResponseTrailers implements InboundHeaders {
@@ -49,7 +49,7 @@ class Http1xResponseTrailers implements InboundHeaders {
 	 * 
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
-	 * @param trailers           the originating Http trailers
+	 * @param trailers           the originating HTTP trailers
 	 */
 	public Http1xResponseTrailers(HeaderService headerService, ObjectConverter<String> parameterConverter, LinkedHttpHeaders trailers) {
 		this.headerService = headerService;
@@ -104,7 +104,7 @@ class Http1xResponseTrailers implements InboundHeaders {
 
 	@Override
 	public <T extends Header> Optional<T> getHeader(CharSequence name) {
-		return this.get(name).map(value -> this.headerService.<T>decode(name.toString(), value));
+		return this.get(name).map(value -> this.headerService.decode(name.toString(), value));
 	}
 
 	@Override

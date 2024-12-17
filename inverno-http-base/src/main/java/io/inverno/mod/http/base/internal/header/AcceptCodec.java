@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -74,9 +75,7 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 			
 			Map<String, String> parameters = range.getParameters();
 			if(!parameters.isEmpty()) {
-				parameters.entrySet().stream().forEach(e -> {
-					result.append(this.parameterDelimiter).append(e.getKey()).append("=").append(e.getValue());
-				});
+				parameters.forEach((k, v) -> result.append(this.parameterDelimiter).append(k).append("=").append(v));
 			}
 			return result.toString();
 		}).collect(Collectors.joining(Character.toString(this.parameterValueDelimiter)));
@@ -94,7 +93,7 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 	 */
 	public static final class Accept extends ParameterizedHeader implements Headers.Accept {
 
-		private List<Headers.Accept.MediaRange> ranges;
+		private final List<Headers.Accept.MediaRange> ranges;
 		
 		/**
 		 * <p>
@@ -241,37 +240,16 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 			}
 
 			@Override
-			public int hashCode() {
-				final int prime = 31;
-				int result = 1;
-				result = prime * result + ((mediaType == null) ? 0 : mediaType.hashCode());
-				result = prime * result + ((parameters == null) ? 0 : parameters.hashCode());
-				result = prime * result + Float.floatToIntBits(weight);
-				return result;
+			public boolean equals(Object o) {
+				if(this == o) return true;
+				if(o == null || getClass() != o.getClass()) return false;
+				MediaRange that = (MediaRange) o;
+				return Float.compare(weight, that.weight) == 0 && Objects.equals(mediaType, that.mediaType) && Objects.equals(parameters, that.parameters);
 			}
 
 			@Override
-			public boolean equals(Object obj) {
-				if (this == obj)
-					return true;
-				if (obj == null)
-					return false;
-				if (getClass() != obj.getClass())
-					return false;
-				MediaRange other = (MediaRange) obj;
-				if (mediaType == null) {
-					if (other.mediaType != null)
-						return false;
-				} else if (!mediaType.equals(other.mediaType))
-					return false;
-				if (parameters == null) {
-					if (other.parameters != null)
-						return false;
-				} else if (!parameters.equals(other.parameters))
-					return false;
-				if (Float.floatToIntBits(weight) != Float.floatToIntBits(other.weight))
-					return false;
-				return true;
+			public int hashCode() {
+				return Objects.hash(mediaType, weight, parameters);
 			}
 		}
 		

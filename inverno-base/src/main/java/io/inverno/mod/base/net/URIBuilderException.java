@@ -73,15 +73,13 @@ public class URIBuilderException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a URI builder exception with the specified message, cause,
-	 * suppression enabled or disabled and writable stack trace enabled or disabled.
+	 * Creates a URI builder exception with the specified message, cause, suppression enabled or disabled and writable stack trace enabled or disabled.
 	 * </p>
 	 * 
 	 * @param message            the message
 	 * @param cause              the cause
 	 * @param enableSuppression  true to enable suppression, false otherwise
-	 * @param writableStackTrace true to make the stack trace writable, false
-	 *                           otherwise
+	 * @param writableStackTrace true to make the stack trace writable, false otherwise
 	 */
 	public URIBuilderException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);

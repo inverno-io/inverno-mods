@@ -24,28 +24,20 @@ import org.reactivestreams.Publisher;
 
 /**
  * <p>
- * Template set definition which specifies the methods used in a generated
- * template set implementation to render objects in a procedural or reactive
- * way.
+ * Template set definition which specifies the methods used in a generated template set implementation to render objects in a procedural or reactive way.
  * </p>
  * 
  * <p>
- * This interface is intended to be implemented by a template compiler
- * generating an implementation based on a template set file following an
- * appropriate grammar.
+ * This interface is intended to be implemented by a template compiler generating an implementation based on a template set file following an appropriate grammar.
  * </p>
  * 
  * <p>
- * Such implementation must define template methods accepting zero or more
- * parameters and returning a {@link CompletableFuture} which completes once
- * input arguments are fully rendered to the output which is done using the
- * generic methods specified in this interface.
+ * Such implementation must define template methods accepting zero or more parameters and returning a {@link CompletableFuture} which completes once input arguments are fully rendered to the output
+ * which is done using the generic methods specified in this interface.
  * </p>
  * 
  * <p>
- * As a result, depending on the implementation, data can be rendered in
- * different ways as a string, an output stream or a stream of data which emits
- * events each time new rendered data are generated.
+ * As a result, depending on the implementation, data can be rendered in different ways as a string, an output stream or a stream of data which emits events each time new rendered data are generated.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -58,7 +50,7 @@ public interface TemplateSet {
 	/**
 	 * An empty completed future which returns immediately.
 	 */
-	static final CompletableFuture<Void> COMPLETED_FUTURE = CompletableFuture.completedFuture(null);
+	CompletableFuture<Void> COMPLETED_FUTURE = CompletableFuture.completedFuture(null);
 	
 	/**
 	 * <p>
@@ -66,9 +58,7 @@ public interface TemplateSet {
 	 * </p>
 	 * 
 	 * <p>
-	 * This method might invoke specialized methods based on the actual type of the
-	 * object. If no specific method is found the string representation of the
-	 * object must be rendered.
+	 * This method might invoke specialized methods based on the actual type of the object. If no specific method is found the string representation of the object must be rendered.
 	 * </p>
 	 * 
 	 * @param value the object to render
@@ -101,22 +91,19 @@ public interface TemplateSet {
 	
 	/**
 	 * <p>
-	 * Invokes a template defined in the template set implementation on the
-	 * specified object.
+	 * Invokes a template defined in the template set implementation on the specified object.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the object
 	 * @param value the value onto which template should be applied
 	 * 
-	 * @return a renderable object which can invoke the template method matching the
-	 *         object type
+	 * @return a renderable object which can invoke the template method matching the object type
 	 */
 	<T> Renderable<T> applyTemplate(T value);
 
 	/**
 	 * <p>
-	 * Invokes a template defined in the template set implementation on each element
-	 * of the specified array.
+	 * Invokes a template defined in the template set implementation on each element of the specified array.
 	 * </p>
 	 * 
 	 * <p>
@@ -126,15 +113,13 @@ public interface TemplateSet {
 	 * @param <T>   the type of the object
 	 * @param array the array of elements onto which template should be applied
 	 * 
-	 * @return an indexable renderable object which can invoke the template method
-	 *         matching the object type
+	 * @return an indexable renderable object which can invoke the template method matching the object type
 	 */
 	<T> IndexableRenderable<T> applyTemplate(T[] array);
 	
 	/**
 	 * <p>
-	 * Invokes a template defined in the template set implementation on each element
-	 * of the specified iterable.
+	 * Invokes a template defined in the template set implementation on each element of the specified iterable.
 	 * </p>
 	 * 
 	 * <p>
@@ -142,18 +127,15 @@ public interface TemplateSet {
 	 * </p>
 	 * 
 	 * @param <T>      the type of the object
-	 * @param iterable the iterable providing the elements onto which template
-	 *                 should be applied
+	 * @param iterable the iterable providing the elements onto which template should be applied
 	 * 
-	 * @return an indexable renderable object which can invoke the template method
-	 *         matching the object type
+	 * @return an indexable renderable object which can invoke the template method matching the object type
 	 */
 	<T> IndexableRenderable<T> applyTemplate(Iterable<T> iterable);
 	
 	/**
 	 * <p>
-	 * Invokes a template defined in the template set implementation on each element
-	 * of the specified stream.
+	 * Invokes a template defined in the template set implementation on each element of the specified stream.
 	 * </p>
 	 * 
 	 * <p>
@@ -163,15 +145,13 @@ public interface TemplateSet {
 	 * @param <T>    the type of the object
 	 * @param stream the stream of elements onto which template should be applied
 	 * 
-	 * @return an indexable renderable object which can invoke the template method
-	 *         matching the object type
+	 * @return an indexable renderable object which can invoke the template method matching the object type
 	 */
 	<T> IndexableRenderable<T> applyTemplate(Stream<T> stream);
 	
 	/**
 	 * <p>
-	 * Invokes a template defined in the template set implementation on each element
-	 * emitted in the specified publisher until the publisher completes.
+	 * Invokes a template defined in the template set implementation on each element emitted in the specified publisher until the publisher completes.
 	 * </p>
 	 * 
 	 * <p>
@@ -181,15 +161,13 @@ public interface TemplateSet {
 	 * @param <T>       the type of the object
 	 * @param publisher the stream of elements onto which template should be applied
 	 * 
-	 * @return an indexable renderable object which can invoke the template method
-	 *         matching the object type
+	 * @return an indexable renderable object which can invoke the template method matching the object type
 	 */
 	<T> IndexableRenderable<T> applyTemplate(Publisher<T> publisher);
 	
 	/**
 	 * <p>
-	 * The root template method which basically invokes the {@link #render(Object)}
-	 * method.
+	 * The root template method which basically invokes the {@link #render(Object)} method.
 	 * </p>
 	 * 
 	 * @param value the value onto which the template is applied
@@ -202,15 +180,12 @@ public interface TemplateSet {
 	
 	/**
 	 * <p>
-	 * A renderable is used to render a value with a particular type of object
-	 * typically by invoking the corresponding template in a TemplateSet
-	 * implementation.
+	 * A renderable is used to render a value with a particular type of object typically by invoking the corresponding template in a {@code TemplateSet} implementation.
 	 * </p>
 	 * 
 	 * <p>
-	 * This interface enables the compiler to select the template method based on
-	 * the actual type of object to render. It especially allows to transform an
-	 * object to render using {@link Pipe} before it is submitted to a template
+	 * This interface enables the compiler to select the template method based on the actual type of object to render. It especially allows to transform an object to render using {@link Pipe} before
+	 * it is submitted to a template
 	 * method.
 	 * </p>
 	 * 
@@ -219,7 +194,7 @@ public interface TemplateSet {
 	 *
 	 * @param <T> The type of the value to render
 	 */
-	static interface Renderable<T> {
+	interface Renderable<T> {
 		
 		/**
 		 * <p>
@@ -235,9 +210,7 @@ public interface TemplateSet {
 	
 	/**
 	 * <p>
-	 * A particular {@link Renderable} with the ability to expose the index of the
-	 * value in a group of elements to the renderer (eg. an array, an iterable, a
-	 * stream, a publisher...).
+	 * A particular {@link Renderable} with the ability to expose the index of the value in a group of elements to the renderer (eg. an array, an iterable, a stream, a publisher...).
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -245,7 +218,7 @@ public interface TemplateSet {
 	 * 
 	 * @param <T> the type of the value to render
 	 */
-	static interface IndexableRenderable<T> extends Renderable<T> {
+	interface IndexableRenderable<T> extends Renderable<T> {
 		
 		/**
 		 * <p>

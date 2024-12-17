@@ -227,11 +227,11 @@ public class JavaStringConverter implements ObjectConverter<String> {
 		throw new ConverterException("Can't encode " + type.getTypeName() + " to " + String.class.getCanonicalName());
 	}
 	
-	private <T extends Object> String encodeCollection(Collection<T> value) {
+	private <T> String encodeCollection(Collection<T> value) {
 		return value != null ?value.stream().map(this::encode).collect(Collectors.joining(String.valueOf(this.arrayListSeparator))) : null;
 	}
 	
-	private <T extends Object> String encodeCollection(Collection<T> value, Type type) {
+	private <T> String encodeCollection(Collection<T> value, Type type) {
 		return value != null ? value.stream().map(element -> this.encode(element, type)).collect(Collectors.joining(String.valueOf(this.arrayListSeparator))) : null;
 	}
 	
@@ -342,7 +342,7 @@ public class JavaStringConverter implements ObjectConverter<String> {
 
 	@Override
 	public String encode(String value) throws ConverterException {
-		return value != null ? StringEscapeUtils.escapeJava(value.toString()) : null;
+		return value != null ? StringEscapeUtils.escapeJava(value) : null;
 	}
 
 	@Override
@@ -377,7 +377,7 @@ public class JavaStringConverter implements ObjectConverter<String> {
 
 	@Override
 	public String encode(Locale value) throws ConverterException {
-		return value != null ? StringEscapeUtils.escapeJava(value.toString()) : null;
+		return value != null ? StringEscapeUtils.escapeJava(value.toLanguageTag()) : null;
 	}
 
 	@Override
@@ -748,11 +748,7 @@ public class JavaStringConverter implements ObjectConverter<String> {
 		if(value == null) {
 			return null;
 		}
-		String[] elements = StringEscapeUtils.unescapeJava(value).split("_");
-		if (elements.length >= 1 && (elements[0].length() == 2 || elements[0].length() == 0)) {
-			return new Locale(elements[0], elements.length >= 2 ? elements[1] : "",	elements.length >= 3 ? elements[2] : "");
-		}
-		throw new ConverterException(value + " can't be decoded to the requested type");
+		return Locale.forLanguageTag(StringEscapeUtils.unescapeJava(value));
 	}
 
 	@Override
@@ -782,9 +778,9 @@ public class JavaStringConverter implements ObjectConverter<String> {
 	@Override
 	public URL decodeURL(String value) throws ConverterException {
 		try {
-			return value != null ? new URL(StringEscapeUtils.unescapeJava(value)) : null;
+			return value != null ? URI.create(StringEscapeUtils.unescapeJava(value)).toURL() : null;
 		} 
-		catch (MalformedURLException e) {
+		catch (IllegalArgumentException | MalformedURLException e) {
 			throw new ConverterException(value + " can't be decoded to the requested type", e);
 		}
 	}
@@ -831,9 +827,10 @@ public class JavaStringConverter implements ObjectConverter<String> {
 	}
 	
 	@Override
-	public Class<?> decodeClass(String value) throws ConverterException {
+	@SuppressWarnings("unchecked")
+	public <T> Class<T> decodeClass(String value) throws ConverterException {
 		try {
-			return value != null ? Class.forName(StringEscapeUtils.unescapeJava(value)) : null;
+			return value != null ? (Class<T>)Class.forName(StringEscapeUtils.unescapeJava(value)) : null;
 		} 
 		catch (ClassNotFoundException e) {
 			throw new ConverterException(value + " can't be decoded to the requested type", e);

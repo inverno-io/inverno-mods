@@ -68,15 +68,11 @@ public abstract class AbstractOKPJWKGenerator<A extends PublicKey, B extends Pri
 	
 	@Override
 	protected void set(String field, Object value) throws JWKGenerateException {
-		switch(field) {
-			case "crv": {
-				this.curve((String)value);
-				break;
-			}
-			default: {
-				super.set(field, value);
-				break;
-			}
+		if(field.equals("crv")) {
+			this.curve((String) value);
+		}
+		else {
+			super.set(field, value);
 		}
 	}
 

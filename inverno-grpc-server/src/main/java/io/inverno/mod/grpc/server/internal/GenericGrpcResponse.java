@@ -40,7 +40,7 @@ import reactor.core.publisher.SignalType;
  * Generic {@link GrpcResponse} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public class GenericGrpcResponse<A extends Message> implements GrpcResponse.Unary<A>, GrpcResponse.Streaming<A> {
@@ -79,7 +79,7 @@ public class GenericGrpcResponse<A extends Message> implements GrpcResponse.Unar
 	 * @param response              the server HTTP response
 	 * @param messageWriterSupplier the gRPC message writer supplier
 	 * @param extensionRegistry     the Protocol buffer extension registry
-	 * @param canceExchange         the cancel exchange function
+	 * @param cancelExchange        the cancel exchange function
 	 */
 	public GenericGrpcResponse(Response response, Supplier<GrpcMessageWriter<A>> messageWriterSupplier, ExtensionRegistry extensionRegistry, Runnable cancelExchange) {
 		this.response = response;
@@ -92,9 +92,7 @@ public class GenericGrpcResponse<A extends Message> implements GrpcResponse.Unar
 	public GenericGrpcResponse<A> metadata(Consumer<GrpcOutboundResponseMetadata> metadataConfigurer) throws IllegalStateException {
 		if(metadataConfigurer != null) {
 			if(this.metadata == null) {
-				this.response.headers(headers -> {
-					this.metadata = new GenericGrpcResponseMetadata(headers, this.extensionRegistry);
-				});
+				this.response.headers(headers -> this.metadata = new GenericGrpcResponseMetadata(headers, this.extensionRegistry));
 			}
 			metadataConfigurer.accept(this.metadata);
 		}
@@ -105,9 +103,7 @@ public class GenericGrpcResponse<A extends Message> implements GrpcResponse.Unar
 	public GenericGrpcResponse<A> trailersMetadata(Consumer<GrpcOutboundResponseTrailersMetadata> metadataConfigurer) throws IllegalStateException {
 		if(metadataConfigurer != null) {
 			if(this.trailersMetadata == null) {
-				this.response.trailers(trailers -> {
-					this.trailersMetadata = new GenericGrpcResponseTrailersMetadata(trailers, this.extensionRegistry);
-				});
+				this.response.trailers(trailers -> this.trailersMetadata = new GenericGrpcResponseTrailersMetadata(trailers, this.extensionRegistry));
 			}
 			metadataConfigurer.accept(this.trailersMetadata);
 		}
@@ -117,9 +113,7 @@ public class GenericGrpcResponse<A extends Message> implements GrpcResponse.Unar
 	@Override
 	public GrpcInboundResponseMetadata metadata() {
 		if(this.metadata == null) {
-			this.response.headers(headers -> {
-				this.metadata = new GenericGrpcResponseMetadata(headers, this.extensionRegistry);
-			});
+			this.response.headers(headers -> this.metadata = new GenericGrpcResponseMetadata(headers, this.extensionRegistry));
 		}
 		return this.metadata;
 	}
@@ -127,9 +121,7 @@ public class GenericGrpcResponse<A extends Message> implements GrpcResponse.Unar
 	@Override
 	public GrpcInboundResponseTrailersMetadata trailersMetadata() {
 		if(this.trailersMetadata == null) {
-			this.response.trailers(trailers -> {
-				this.trailersMetadata = new GenericGrpcResponseTrailersMetadata(trailers, this.extensionRegistry);
-			});
+			this.response.trailers(trailers -> this.trailersMetadata = new GenericGrpcResponseTrailersMetadata(trailers, this.extensionRegistry));
 		}
 		return this.trailersMetadata;
 	}
@@ -140,6 +132,7 @@ public class GenericGrpcResponse<A extends Message> implements GrpcResponse.Unar
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T extends A> void stream(Publisher<T> value) throws IllegalStateException {
 		this.response.body().raw().stream(Flux.concat(
 			Mono.just(Unpooled.EMPTY_BUFFER),

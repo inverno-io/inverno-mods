@@ -16,15 +16,14 @@
 package io.inverno.mod.test.web;
 
 import io.inverno.mod.test.AbstractInvernoModTest;
+import io.inverno.mod.test.ModsTestUtils;
 import io.inverno.mod.test.configuration.ConfigurationInvocationHandler;
 import io.inverno.test.InvernoCompilationException;
 import io.inverno.test.InvernoModuleLoader;
 import io.inverno.test.InvernoModuleProxy;
 import io.inverno.test.InvernoTestCompiler;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.lang.reflect.Proxy;
-import java.net.ServerSocket;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
@@ -76,7 +75,7 @@ public class WebSocketTest extends AbstractInvernoModTest {
 		
 		InvernoModuleLoader moduleLoader = invernoCompiler.compile(MODULE_WEBSOCKET);
 		
-		testServerPort = getFreePort();
+		testServerPort = ModsTestUtils.getFreePort();
 		
 		Class<?> httpConfigClass = moduleLoader.loadClass(MODULE_WEBSOCKET, "io.inverno.mod.http.server.HttpServerConfiguration");
 		ConfigurationInvocationHandler httpConfigHandler = new ConfigurationInvocationHandler(httpConfigClass, Map.of("server_port", testServerPort));
@@ -110,16 +109,7 @@ public class WebSocketTest extends AbstractInvernoModTest {
 			testServerModuleProxy.stop();
 		}
 	}
-	
-	private static int getFreePort() {
-		try (ServerSocket serverSocket = new ServerSocket(0)) {
-			return serverSocket.getLocalPort();
-		} 
-		catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-	}
-	
+
 	public static String getStringField(Object testServerWebSocketController, String name) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
 		return (String)testServerWebSocketController.getClass().getField(name).get(testServerWebSocketController);
 	}
@@ -133,14 +123,14 @@ public class WebSocketTest extends AbstractInvernoModTest {
 		return (boolean)testServerWebSocketController.getClass().getField(name).get(testServerWebSocketController);
 	}
 	
-	public static CompletableFuture<TestWebSocket> openWebSocket(HttpClient client, URI uri, String... subprotocols) {
+	public static CompletableFuture<TestWebSocket> openWebSocket(HttpClient client, URI uri, String... subProtocols) {
 		java.net.http.WebSocket.Builder webSocketBuilder = client.newWebSocketBuilder();
-		if(subprotocols != null && subprotocols.length > 0) {
-			if(subprotocols.length == 1) {
-				webSocketBuilder.subprotocols(subprotocols[0]);
+		if(subProtocols != null && subProtocols.length > 0) {
+			if(subProtocols.length == 1) {
+				webSocketBuilder.subprotocols(subProtocols[0]);
 			}
 			else {
-				webSocketBuilder.subprotocols(subprotocols[0], Arrays.copyOfRange(subprotocols, 1, subprotocols.length));
+				webSocketBuilder.subprotocols(subProtocols[0], Arrays.copyOfRange(subProtocols, 1, subProtocols.length));
 			}
 		}
 		

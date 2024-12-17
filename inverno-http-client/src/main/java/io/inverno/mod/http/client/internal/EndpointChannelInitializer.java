@@ -27,7 +27,7 @@ import java.net.InetSocketAddress;
  * The endpoint channel initializer used to initialize HTTP/1.x and HTTP/2 connection.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @version 1.6
  * 
  * @see EndpointChannelConfigurer
@@ -59,7 +59,6 @@ public class EndpointChannelInitializer extends ChannelInitializer<SocketChannel
 		this.channelConfigurer = channelConfigurer;
 		this.configuration = configuration;
 		this.serverAddress = serverAddress;
-		
 		this.sslContext = configuration.tls_enabled() ? sslContextProvider.create(configuration) : null;
 	}
 	

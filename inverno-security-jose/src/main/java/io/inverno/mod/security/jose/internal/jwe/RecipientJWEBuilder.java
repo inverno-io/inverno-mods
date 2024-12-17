@@ -75,7 +75,7 @@ public class RecipientJWEBuilder<A> extends GenericJWEBuilder<A> {
 	 * @param jwePayload            the JSON JWE payload
 	 * @param aad                   the additional authentication data
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public RecipientJWEBuilder(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type, Publisher<? extends JWK> keys, List<JWEZip> zips, GenericJWEHeader protectedJWEHeader, GenericJWEHeader recipientJWEHeader, GenericJWEHeader jweHeader, GenericJWEPayload<A> jwePayload, byte[] aad) {
 		this(mapper, dataConversionService, jwkService, type, keys, zips, protectedJWEHeader, recipientJWEHeader, jweHeader, jwePayload, aad, null, null);
 	}
@@ -99,7 +99,7 @@ public class RecipientJWEBuilder<A> extends GenericJWEBuilder<A> {
 	 * @param cek                    the JSON JWE Content Encryption key
 	 * @param zipAndEncryptedPayload the encrypted payload
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public RecipientJWEBuilder(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type, Publisher<? extends JWK> keys, List<JWEZip> zips, GenericJWEHeader protectedJWEHeader, GenericJWEHeader recipientJWEHeader, GenericJWEHeader jweHeader, GenericJWEPayload<A> jwePayload, byte[] aad, JWK cek, JWACipher.EncryptedData zipAndEncryptedPayload) {
 		super(mapper, dataConversionService, jwkService, type, keys, zips);
 		this.protectedJWEHeader = protectedJWEHeader;
@@ -148,7 +148,7 @@ public class RecipientJWEBuilder<A> extends GenericJWEBuilder<A> {
 	@Override
 	protected void amendJWEHeader(GenericJWEHeader header, Map<String, Object> moreHeaderParameters, Set<String> processedParameters) throws JWEBuildException, JOSEObjectBuildException, JOSEProcessingException {
 		if(moreHeaderParameters != null && this.recipientJWEHeader != null) {
-			moreHeaderParameters.forEach((k, v) -> this.recipientJWEHeader.addCustomParameter(k, v));
+			moreHeaderParameters.forEach(this.recipientJWEHeader::addCustomParameter);
 		}
 		super.amendJWEHeader(header, moreHeaderParameters, processedParameters);
 	}

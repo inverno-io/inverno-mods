@@ -15,26 +15,7 @@
  */
 package io.inverno.mod.configuration.compiler.internal;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.ModuleElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
-
 import io.inverno.core.compiler.spi.BeanQualifiedName;
-import io.inverno.core.compiler.spi.ModuleQualifiedName;
 import io.inverno.core.compiler.spi.QualifiedNameFormatException;
 import io.inverno.core.compiler.spi.ReporterInfo;
 import io.inverno.core.compiler.spi.plugin.CompilerPlugin;
@@ -47,12 +28,26 @@ import io.inverno.mod.configuration.compiler.internal.ConfigurationLoaderClassGe
 import io.inverno.mod.configuration.compiler.spi.ConfigurationInfo;
 import io.inverno.mod.configuration.compiler.spi.ConfigurationPropertyInfo;
 import io.inverno.mod.configuration.compiler.spi.PropertyQualifiedName;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.ModuleElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * <p>
- * The configuration Inverno compiler plugin generates a
- * {@link ConfigurationLoader} implementation for each
- * {@link Configuration @Configuration} annotated types in a module.
+ * The configuration Inverno compiler plugin generates a {@link ConfigurationLoader} implementation for each {@link Configuration @Configuration} annotated types in a module.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -101,10 +96,6 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 	@Override
 	public void execute(PluginExecution execution) throws PluginExecutionException {
 		for(TypeElement element : execution.<TypeElement>getElementsAnnotatedWith(Configuration.class)) {
-			if(!TypeElement.class.isAssignableFrom(element.getClass())) {
-				throw new PluginExecutionException("The specified element must be a TypeElement");
-			}
-			
 			DeclaredType configurationType = (DeclaredType)element.asType();
 			
 			AnnotationMirror configurationAnnotation = null;
@@ -137,15 +128,15 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 				switch(value.getKey().getSimpleName().toString()) {
 					case "name" : name = (String)value.getValue().getValue();
 						break;
-					case "generateBean" : generateBean = Boolean.valueOf(value.getValue().getValue().toString());
+					case "generateBean" : generateBean = Boolean.parseBoolean(value.getValue().getValue().toString());
 						break;
-					case "overridable" : overridable = Boolean.valueOf(value.getValue().getValue().toString());
+					case "overridable" : overridable = Boolean.parseBoolean(value.getValue().getValue().toString());
 						break;
 				}
 			}
 			
 			// Bean qualified name
-			if(name == null || name.equals("")) {
+			if(name == null || name.isEmpty()) {
 				name = element.getSimpleName().toString();
 				name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
 			}
@@ -167,8 +158,8 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 					PropertyQualifiedName propertyQName = new PropertyQualifiedName(configurationQName, propertyMethod.getSimpleName().toString());
 					ReporterInfo propertyReporter = execution.getReporter(propertyMethod);
 					boolean invalid = false;
-					if(propertyMethod.getParameters().size() > 0) {
-						execution.getReporter(propertyMethod.getParameters().get(0)).error("Configuration property must be declared as a no-argument method");
+					if(!propertyMethod.getParameters().isEmpty()) {
+						execution.getReporter(propertyMethod.getParameters().getFirst()).error("Configuration property must be declared as a no-argument method");
 						invalid = true;
 					}
 					if(propertyMethod.getReturnType().getKind().equals(TypeKind.VOID)) {
@@ -179,7 +170,7 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 						return null;
 					}
 					
-					if(this.isNestedConfiguration(propertyMethod, execution.getModuleQualifiedName())) {
+					if(this.isNestedConfiguration(propertyMethod)) {
 						return new GenericNestedConfigurationProperty(propertyQName, propertyReporter, propertyMethod, this.extractNestedConfigurationInfo(propertyReporter, propertyQName, (TypeElement)this.pluginContext.getTypeUtils().asElement(propertyMethod.getReturnType())));
 					}
 					else {
@@ -192,10 +183,8 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 			ConfigurationInfo configurationInfo = new GenericConfigurationInfo(configurationQName, beanReporter, configurationType, configurationProperties, generateBean, overridable);
 			
 			try {
-				execution.createSourceFile(configurationInfo.getType().toString() + "Loader", new Element[] {element}, () -> {
-					return configurationInfo.accept(this.configurationLoaderClassGenerator, new ConfigurationLoaderClassGenerationContext(this.pluginContext.getTypeUtils(), this.pluginContext.getElementUtils(), GenerationMode.CONFIGURATION_LOADER_CLASS)).toString();
-				});
-			} 
+				execution.createSourceFile(configurationInfo.getType().toString() + "Loader", new Element[] {element}, () -> configurationInfo.accept(this.configurationLoaderClassGenerator, new ConfigurationLoaderClassGenerationContext(this.pluginContext.getTypeUtils(), this.pluginContext.getElementUtils(), GenerationMode.CONFIGURATION_LOADER_CLASS)).toString());
+			}
 			catch (IOException e) {
 				throw new PluginExecutionException("Unable to generate configuration loader class " + configurationInfo.getType().toString() + "Loader", e);
 			}
@@ -210,7 +199,7 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 				PropertyQualifiedName propertyQName = new PropertyQualifiedName(nestedPropertyName, propertyMethod.getSimpleName().toString());
 				
 				boolean invalid = false;
-				if(propertyMethod.getParameters().size() > 0) {
+				if(!propertyMethod.getParameters().isEmpty()) {
 					rootPropertyReporter.warning("Ignoring invalid nested property " + propertyQName.getBeanName() + " which should be defined as a no-argument method");
 					invalid = true;
 				}
@@ -222,7 +211,7 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 					return null;
 				}
 				
-				if(this.isNestedConfiguration(propertyMethod, nestedPropertyName.getModuleQName())) {
+				if(this.isNestedConfiguration(propertyMethod)) {
 					return new GenericNestedConfigurationProperty(propertyQName, rootPropertyReporter, propertyMethod, this.extractNestedConfigurationInfo(rootPropertyReporter, propertyQName, (TypeElement)this.pluginContext.getTypeUtils().asElement(propertyMethod.getReturnType())));
 				}
 				else {
@@ -235,7 +224,7 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 		return new GenericConfigurationInfo(nestedPropertyName, rootPropertyReporter, (DeclaredType)nestedTypeElement.asType(), configurationProperties);
 	}
 	
-	private boolean isNestedConfiguration(ExecutableElement propertyMethod, ModuleQualifiedName module) {
+	private boolean isNestedConfiguration(ExecutableElement propertyMethod) {
 		TypeMirror type = propertyMethod.getReturnType();
 		if(type.getKind().equals(TypeKind.DECLARED)) {
 			TypeElement typeElement = (TypeElement)this.pluginContext.getTypeUtils().asElement(type);

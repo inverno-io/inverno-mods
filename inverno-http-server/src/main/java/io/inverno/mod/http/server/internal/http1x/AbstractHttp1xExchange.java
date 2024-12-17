@@ -40,10 +40,10 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  * </p>
  * 
  * <p>
- * Http pipelining is implemented with a link list: the exchange has a {@link #next} exchange which is started by the connection on completion.
+ * HTTP pipelining is implemented with a link list: the exchange has a {@link #next} exchange which is started by the connection on completion.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.10
  */
 abstract class AbstractHttp1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Http1xErrorExchange> {
@@ -53,7 +53,7 @@ abstract class AbstractHttp1xExchange extends AbstractExchange<Http1xRequest, Ht
 	 */
 	protected final Http1xConnection connection;
 	/**
-	 * The Http version.
+	 * The HTTP version.
 	 */
 	protected final io.netty.handler.codec.http.HttpVersion version;
 	/**
@@ -76,7 +76,7 @@ abstract class AbstractHttp1xExchange extends AbstractExchange<Http1xRequest, Ht
 	 * @param configuration the server configuration
 	 * @param controller    the server controller
 	 * @param connection    the Http/1.x connection
-	 * @param request       the originating Http request
+	 * @param request       the originating HTTP request
 	 */
 	public AbstractHttp1xExchange(
 			HttpServerConfiguration configuration, 

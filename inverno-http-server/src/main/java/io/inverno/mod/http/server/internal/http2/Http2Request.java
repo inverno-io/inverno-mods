@@ -34,7 +34,7 @@ import java.util.Optional;
  * Http/2 {@link Request} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.10
  */
 class Http2Request extends AbstractRequest<Http2RequestHeaders, Http2RequestBody> {
@@ -56,7 +56,7 @@ class Http2Request extends AbstractRequest<Http2RequestHeaders, Http2RequestBody
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 * @param connectionStream      the connection stream
-	 * @param headers               the originating Http headers
+	 * @param headers               the originating HTTP headers
 	 */
 	public Http2Request(
 			HeaderService headerService,

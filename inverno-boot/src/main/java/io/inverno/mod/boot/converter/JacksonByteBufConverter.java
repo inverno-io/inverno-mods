@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.deser.DefaultDeserializationContext;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Provide;
-import io.inverno.mod.base.converter.Converter;
 import io.inverno.mod.base.converter.ConverterException;
 import io.inverno.mod.base.converter.JoinableEncoder;
 import io.inverno.mod.base.converter.ReactiveConverter;
@@ -51,13 +50,13 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * JSON Bytebuf to Object converter backed by an {@link ObjectMapper}.
+ * JSON {@code ByteBuf} to Object converter backed by an {@link ObjectMapper}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see Converter
+ * @see io.inverno.mod.base.converter.Converter Converter
  * @see ReactiveConverter
  * @see ObjectMapper
  */
@@ -72,7 +71,7 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 
 	/**
 	 * <p>
-	 * Creates a JSON ByteBuf converter.
+	 * Creates a JSON {@code ByteBuf} converter.
 	 * </p>
 	 * 
 	 * @param mapper a Jackson object mapper
@@ -82,8 +81,8 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 	}
 	
 	@Override
-	public <T extends Object> Publisher<ByteBuf> encodeOne(Mono<T> value) {
-		return value.map(t -> this.encode(t));
+	public <T> Publisher<ByteBuf> encodeOne(Mono<T> value) {
+		return value.map(this::encode);
 	}
 	
 	@Override
@@ -97,8 +96,8 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 	}
 	
 	@Override
-	public <T extends Object> Publisher<ByteBuf> encodeMany(Flux<T> value) {
-		return value.map(t -> this.encode(t));
+	public <T> Publisher<ByteBuf> encodeMany(Flux<T> value) {
+		return value.map(this::encode);
 	}
 	
 	@Override
@@ -137,7 +136,7 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 	}
 
 	@Override
-	public <T extends Object> ByteBuf encodeList(List<T> value) {
+	public <T> ByteBuf encodeList(List<T> value) {
 		return this.encode(value);
 	}
 
@@ -152,7 +151,7 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 	}
 	
 	@Override
-	public <T extends Object> ByteBuf encodeSet(Set<T> value) {
+	public <T> ByteBuf encodeSet(Set<T> value) {
 		return this.encode(value);
 	}
 	
@@ -167,7 +166,7 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 	}
 
 	@Override
-	public <T extends Object> ByteBuf encodeArray(T[] value) {
+	public <T> ByteBuf encodeArray(T[] value) {
 		return this.encode(value);
 	}
 	
@@ -333,10 +332,18 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 			throw new ConverterException("Can't decode " + String.class.getCanonicalName() + " to array of " + type.getTypeName());
 		}
 	}
-	
+
+	/**
+	 * <p>
+	 * Object scanner used to decode objects from a stream of {@code ByteBufs}.
+	 * </p>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 *
+	 * @param <T> the object type
+	 */
 	private static class ObjectScanner<T> {
-		
-		private final Type type;
 		
 		private final ObjectMapper mapper;
 		private final ObjectReader reader;
@@ -352,9 +359,8 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 		private TokenBuffer tokenBuffer;
 		
 		public ObjectScanner(Type type, ObjectMapper mapper, boolean scanRootArray) throws IOException {
-			this.type = type;
 			this.mapper = mapper;
-			this.reader = this.mapper.readerFor(this.mapper.constructType(this.type));
+			this.reader = this.mapper.readerFor(this.mapper.constructType(type));
 			this.scanRootArray = scanRootArray;
 			this.parser = this.mapper.getFactory().createNonBlockingByteArrayParser();
 			this.feeder = (ByteArrayFeeder)this.parser.getNonBlockingInputFeeder();

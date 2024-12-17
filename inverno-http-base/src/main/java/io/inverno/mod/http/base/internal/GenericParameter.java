@@ -29,6 +29,7 @@ import java.time.ZonedDateTime;
 import java.util.Currency;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -90,6 +91,36 @@ public class GenericParameter implements Parameter {
 		this.parameterConverter = parameterConverter;
 		this.name = name;
 		this.value = parameterConverter.encode(value);
+	}
+
+	/**
+	 * <p>
+	 * Creates a generic parameter with the specified parameter name, parameter value and parameter value converter.
+	 * </p>
+	 *
+	 * @param name               a parameter name
+	 * @param value              a parameter value
+	 * @param parameterConverter a string object converter
+	 * @param type               the value type
+	 */
+	public GenericParameter(String name, Object value, ObjectConverter<String> parameterConverter, Class<?> type) {
+		this(name, value, parameterConverter, (Type)type);
+	}
+
+	/**
+	 * <p>
+	 * Creates a generic parameter with the specified parameter name, parameter value and parameter value converter.
+	 * </p>
+	 *
+	 * @param name               a parameter name
+	 * @param value              a parameter value
+	 * @param parameterConverter a string object converter
+	 * @param type               the value type
+	 */
+	public GenericParameter(String name, Object value, ObjectConverter<String> parameterConverter, Type type) {
+		this.parameterConverter = parameterConverter;
+		this.name = name;
+		this.value = parameterConverter.encode(value, type);
 	}
 
 	@Override
@@ -258,33 +289,15 @@ public class GenericParameter implements Parameter {
 	}
 
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((value == null) ? 0 : value.hashCode());
-		return result;
+	public boolean equals(Object o) {
+		if(this == o) return true;
+		if(o == null || getClass() != o.getClass()) return false;
+		GenericParameter that = (GenericParameter) o;
+		return Objects.equals(name, that.name) && Objects.equals(value, that.value);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		GenericParameter other = (GenericParameter) obj;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		if (value == null) {
-			if (other.value != null)
-				return false;
-		} else if (!value.equals(other.value))
-			return false;
-		return true;
+	public int hashCode() {
+		return Objects.hash(name, value);
 	}
 }

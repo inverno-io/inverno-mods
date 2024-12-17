@@ -139,7 +139,7 @@ public interface SecurityManager<A extends Credentials, B extends Identity, C ex
 	 * </p>
 	 * 
 	 * <p>
-	 * This method authenticates the credentials, then resolve the identiy and the access controller and finally create the resulting security context which can be:
+	 * This method authenticates the credentials, then resolve the identity and the access controller and finally create the resulting security context which can be:
 	 * </p>
 	 * 
 	 * <ul>

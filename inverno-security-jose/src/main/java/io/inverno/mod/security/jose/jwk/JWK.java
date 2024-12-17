@@ -44,44 +44,44 @@ public interface JWK {
 	/**
 	 * Signature public key use as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7517#section-4.1">RFC7517 Section 4.2</a>.
 	 */
-	static final String USE_SIG = "sig";
+	String USE_SIG = "sig";
 	/**
 	 * Encryption public key use as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7517#section-4.1">RFC7517 Section 4.2</a>.
 	 */
-	static final String USE_ENC = "enc";
+	String USE_ENC = "enc";
 	
 	/**
 	 * Compute digital signature or MAC operation as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7517#section-4.3">RFC7517 Section 4.3</a>.
 	 */
-	static final String KEY_OP_SIGN = "sign";
+	String KEY_OP_SIGN = "sign";
 	/**
 	 * Verify digital signature or MAC operation as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7517#section-4.3">RFC7517 Section 4.3</a>.
 	 */
-	static final String KEY_OP_VERIFY = "verify";
+	String KEY_OP_VERIFY = "verify";
 	/**
 	 * Encrypt content operation as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7517#section-4.3">RFC7517 Section 4.3</a>.
 	 */
-	static final String KEY_OP_ENCRYPT = "encrypt";
+	String KEY_OP_ENCRYPT = "encrypt";
 	/**
 	 * Decrypt content and validate decryption operation as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7517#section-4.3">RFC7517 Section 4.3</a>.
 	 */
-	static final String KEY_OP_DECRYPT = "decrypt";
+	String KEY_OP_DECRYPT = "decrypt";
 	/**
 	 * Encrypt key operation as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7517#section-4.3">RFC7517 Section 4.3</a>.
 	 */
-	static final String KEY_OP_WRAP_KEY = "wrapKey";
+	String KEY_OP_WRAP_KEY = "wrapKey";
 	/**
 	 * Decrypt key and validate decryption operation as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7517#section-4.3">RFC7517 Section 4.3</a>.
 	 */
-	static final String KEY_OP_UNWRAP_KEY = "unwrapKey";
+	String KEY_OP_UNWRAP_KEY = "unwrapKey";
 	/**
 	 * Derive key operation as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7517#section-4.3">RFC7517 Section 4.3</a>.
 	 */
-	static final String KEY_OP_DERIVE_KEY = "deriveKey";
+	String KEY_OP_DERIVE_KEY = "deriveKey";
 	/**
 	 * Derive bits not to be used as a key operation as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7517#section-4.3">RFC7517 Section 4.3</a>.
 	 */
-	static final String KEY_OP_DERIVE_BITS = "deriveBits";
+	String KEY_OP_DERIVE_BITS = "deriveBits";
 
 	/**
 	 * <p>
@@ -189,7 +189,7 @@ public interface JWK {
 	
 	/**
 	 * <p>
-	 * Generates and returns the JWK thumbprint using the defaul digest.
+	 * Generates and returns the JWK thumbprint using the default digest.
 	 * </p>
 	 * 
 	 * @return the JWK thumbprint

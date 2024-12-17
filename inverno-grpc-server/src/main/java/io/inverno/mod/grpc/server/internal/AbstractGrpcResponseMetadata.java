@@ -26,7 +26,7 @@ import java.util.Base64;
  * Base {@link GrpcOutboundMetadata} metadata.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public abstract class AbstractGrpcResponseMetadata<A extends GrpcOutboundMetadata<A>> extends AbstractGrpcMetadata<OutboundHeaders<?>> implements GrpcOutboundMetadata<A> {
@@ -49,36 +49,42 @@ public abstract class AbstractGrpcResponseMetadata<A extends GrpcOutboundMetadat
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public A add(CharSequence name, CharSequence value) {
 		this.headers.add(name, value);
 		return (A)this;
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public A set(CharSequence name, CharSequence value) {
 		this.headers.set(name, value);
 		return (A)this;
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public A remove(CharSequence... names) {
 		this.headers.remove(names);
 		return (A)this;
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T extends MessageLite> A addBinary(CharSequence name, T value) {
 		this.headers.add(name + "-bin", Base64.getEncoder().encodeToString(value.toByteArray()));
 		return (A)this;
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T extends MessageLite> A setBinary(CharSequence name, T value) {
 		this.headers.set(name + "-bin", Base64.getEncoder().encodeToString(value.toByteArray()));
 		return (A)this;
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public A removeBinary(CharSequence... names) {
 		for(CharSequence name : names) {
 			this.headers.remove(name + "-bin");

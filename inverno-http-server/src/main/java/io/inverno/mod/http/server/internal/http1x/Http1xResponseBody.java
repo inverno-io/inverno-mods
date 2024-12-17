@@ -35,7 +35,7 @@ import reactor.core.publisher.Flux;
  * Http/1.x {@link ResponseBody} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 class Http1xResponseBody extends AbstractResponseBody<Http1xResponseHeaders, Http1xResponseBody> {
@@ -111,32 +111,36 @@ class Http1xResponseBody extends AbstractResponseBody<Http1xResponseHeaders, Htt
 				// It seems FileRegion does not support Zip files, I saw different behavior between JDK<15 and above
 				if(Http1xResponseBody.this.supportsFileRegion && resource.isFile().orElse(false) && !(resource instanceof ZipResource)) {
 					Http1xResponseBody.this.setData(Flux.empty());
-					
-					// We need to create the file region and then send an empty response
-					// The Http1xServerExchange should then complete and check whether there is a file region or not
-					FileChannel fileChannel = (FileChannel)resource.openReadableByteChannel().orElseThrow(() -> new InternalServerErrorException("Resource is not readable: " + resource.getURI()));
-					
-					long size = resource.size().get();
-					int count = (int)Math.ceil((float)size / (float)MAX_FILE_REGION_SIZE);
-					
-					// We need to add an extra element in order to control when the flux terminates so we can properly close the file channel
-					Http1xResponseBody.this.fileRegionData = Flux.range(0, count + 1) 
-						.filter(index -> index < count)
-						.map(index -> {
-							long position = index * MAX_FILE_REGION_SIZE;
-							FileRegion region = new DefaultFileRegion(fileChannel, position, Math.min(size - position, MAX_FILE_REGION_SIZE));
-							region.retain();
-							return region;
-						})
-						.doOnDiscard(FileRegion.class, FileRegion::release)
-						.doFinally(sgn -> {
-							try {
-								fileChannel.close();
-							} 
-							catch (IOException e) {
-								throw Exceptions.propagate(e);
-							}
-						});
+
+					Http1xResponseBody.this.fileRegionData = Flux.defer(() -> {
+						// We need to create the file region and then send an empty response
+						// The Http1xServerExchange should then complete and check whether there is a file region or not
+						@SuppressWarnings("resource") // the file channel is eventually closed in the returned flux
+						FileChannel fileChannel = (FileChannel)resource.openReadableByteChannel().orElseThrow(() -> new InternalServerErrorException("Resource is not readable: " + resource.getURI()));
+
+						@SuppressWarnings("OptionalGetWithoutIsPresent") // We know this is a file so we'll have a size
+						long size = resource.size().get();
+						int count = (int)Math.ceil((float)size / (float)MAX_FILE_REGION_SIZE);
+
+						// We need to add an extra element in order to control when the flux terminates so we can properly close the file channel
+						return Flux.range(0, count + 1)
+							.filter(index -> index < count)
+							.map(index -> {
+								long position = index * MAX_FILE_REGION_SIZE;
+								FileRegion region = new DefaultFileRegion(fileChannel, position, Math.min(size - position, MAX_FILE_REGION_SIZE));
+								region.retain();
+								return region;
+							})
+							.doOnDiscard(FileRegion.class, FileRegion::release)
+							.doFinally(sgn -> {
+								try {
+									fileChannel.close();
+								}
+								catch (IOException e) {
+									throw Exceptions.propagate(e);
+								}
+							});
+					});
 				}
 				else {
 					Http1xResponseBody.this.setData(resource.read());

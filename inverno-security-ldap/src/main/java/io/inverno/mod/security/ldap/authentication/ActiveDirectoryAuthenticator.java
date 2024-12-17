@@ -259,7 +259,7 @@ public class ActiveDirectoryAuthenticator implements Authenticator<LoginCredenti
 				))
 				.onErrorMap(LDAPException.class, e -> {
 					if(e.getErrorCode() != null) {
-						String message = "LDAP " + (((LDAPException)e).getErrorCode() != null ? " (" + ((LDAPException)e).getErrorCode() + "): " : ": ") + this.mapErrorDescription(e.getErrorDescription());
+						String message = "LDAP " + (e.getErrorCode() != null ? " (" + e.getErrorCode() + "): " : ": ") + this.mapErrorDescription(e.getErrorDescription());
 						switch(e.getErrorCode()) {
 							case LDAPClient.CODE_INVALID_CREDENTIALS: 
 								return new InvalidCredentialsException(message, e);
@@ -329,7 +329,7 @@ public class ActiveDirectoryAuthenticator implements Authenticator<LoginCredenti
 	 * 
 	 * @return a base DN
 	 * 
-	 * @throws InvalidCredentialsException if the bind operation DN is invalid (i.e. it does not provides a domain)
+	 * @throws InvalidCredentialsException if the bind operation DN is invalid (i.e. it does not provide a domain)
 	 */
 	protected String boundDNToBaseDN(String boundDN) throws InvalidCredentialsException {
 		int domainIndex = boundDN.lastIndexOf('@');
@@ -355,7 +355,7 @@ public class ActiveDirectoryAuthenticator implements Authenticator<LoginCredenti
 			LDAPException e = (LDAPException)t;
 			
 			if(e.getErrorCode() != null) {
-				String message = "LDAP " + (((LDAPException)e).getErrorCode() != null ? " (" + ((LDAPException)e).getErrorCode() + "): " : ": ") + this.mapErrorDescription(e.getErrorDescription());
+				String message = "LDAP " + (e.getErrorCode() != null ? " (" + e.getErrorCode() + "): " : ": ") + this.mapErrorDescription(e.getErrorDescription());
 				switch(e.getErrorCode()) {
 					case LDAPClient.CODE_INVALID_CREDENTIALS: 
 						return new InvalidCredentialsException(message, e);
@@ -395,9 +395,9 @@ public class ActiveDirectoryAuthenticator implements Authenticator<LoginCredenti
 			return "";
 		}
 		Matcher matcher = HEX_ERROR_CODE_PATTERN.matcher(errorDescription);
-		if (matcher.matches()) {
+		if(matcher.matches()) {
 			int errorCode = Integer.parseInt(matcher.group(1), 16);
-			switch (errorCode) {
+			switch(errorCode) {
 				case CODE_LDAP_NO_SUCH_OBJECT:
 					return "User not found";
 				case CODE_LOGON_FAILURE:

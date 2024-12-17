@@ -22,19 +22,15 @@ import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * A {@link TemplateSet} base implementation template sets which renders data in
- * a reactive way using a String sink.
+ * A {@link TemplateSet} base implementation template sets which renders data in a reactive way using a String sink.
  * </p>
  * 
  * <p>
- * This implementation allows to process rendered data without waiting for the
- * whole data set to be rendered or even available following reactive
- * programming principles.
+ * This implementation allows to process rendered data without waiting for the whole data set to be rendered or even available following reactive programming principles.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public abstract class AbstractStringPublisherTemplateSet extends AbstractTemplateSet implements PublisherTemplateSet<String> {
 

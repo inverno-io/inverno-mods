@@ -138,7 +138,7 @@ class GenericTypeBuilder implements TypeBuilder {
 			return this.rawType;
 		}
 		else {
-			return new ParameterizedTypeImpl(this.rawType, this.typeArguments.toArray(new Type[this.typeArguments.size()]), this.ownerType);
+			return new ParameterizedTypeImpl(this.rawType, this.typeArguments.toArray(Type[]::new), this.ownerType);
 		}
 	}
 

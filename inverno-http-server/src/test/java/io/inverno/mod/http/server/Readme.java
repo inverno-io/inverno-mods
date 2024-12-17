@@ -43,9 +43,8 @@ import reactor.core.publisher.Mono;
 public class Readme {
 	
 	private static final Logger LOGGER = LogManager.getLogger(Readme.class);
-	
+
 	public void doc() {
-		
 		ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
 			exchange.response().body().string().value("Hello, world!");
 		};

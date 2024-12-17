@@ -185,48 +185,46 @@ public class GenericXECJWK extends AbstractOKPJWK<XECPublicKey, XECPrivateKey> i
 	@Override
 	public XECPublicKey toPublicKey() throws JWKProcessingException {
 		if(this.publicKey == null) {
-			this.publicKey = this.certificate
-				.map(cert -> (XECPublicKey)cert.getPublicKey())
-				.orElseGet(() -> {
-					try {
-						byte[] encodedPoint = Base64.getUrlDecoder().decode(this.x);
-						if(this.curve.equals(OKPCurve.X25519)) {
-							encodedPoint[encodedPoint.length - 1] &= (byte) 0x7F;
-						}
-						reverse(encodedPoint);
-						BigInteger u = new BigInteger(1, encodedPoint);
-						
-						XECPublicKeySpec xecPublicKeySpec = new XECPublicKeySpec(new NamedParameterSpec(this.curve.getJCAName()), u);
-						return (XECPublicKey) KeyFactory.getInstance(this.curve.getJCAName()).generatePublic(xecPublicKeySpec);
-					} 
-					catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-						throw new JWKProcessingException("Error converting JWK to public key", e);
+			if(this.certificate == null) {
+				try {
+					byte[] encodedPoint = Base64.getUrlDecoder().decode(this.x);
+					if(this.curve.equals(OKPCurve.X25519)) {
+						encodedPoint[encodedPoint.length - 1] &= (byte) 0x7F;
 					}
-				});
+					reverse(encodedPoint);
+					BigInteger u = new BigInteger(1, encodedPoint);
+
+					XECPublicKeySpec xecPublicKeySpec = new XECPublicKeySpec(new NamedParameterSpec(this.curve.getJCAName()), u);
+					this.publicKey = (XECPublicKey) KeyFactory.getInstance(this.curve.getJCAName()).generatePublic(xecPublicKeySpec);
+				}
+				catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+					throw new JWKProcessingException("Error converting JWK to public key", e);
+				}
+			}
+			else {
+				this.publicKey = (XECPublicKey)this.certificate.getPublicKey();
+			}
 		}
 		return this.publicKey;
 	}
 
 	@Override
 	public Optional<XECPrivateKey> toPrivateKey() throws JWKProcessingException {
-		if(this.privateKey == null) {
-			this.privateKey = Optional.ofNullable(this.d)
-				.map(pk -> {
-					try {
-						XECPrivateKeySpec xecPrivateKeySpec = new XECPrivateKeySpec(new NamedParameterSpec(this.curve.getJCAName()), Base64.getUrlDecoder().decode(pk));
-						return (XECPrivateKey) KeyFactory.getInstance(this.curve.getJCAName()).generatePrivate(xecPrivateKeySpec);
-					} 
-					catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-						throw new JWKProcessingException("Error converting JWK to private key", e);
-					}
-				});
+		if(this.privateKey == null && this.d != null) {
+			try {
+				XECPrivateKeySpec xecPrivateKeySpec = new XECPrivateKeySpec(new NamedParameterSpec(this.curve.getJCAName()), Base64.getUrlDecoder().decode(this.d));
+				this.privateKey = (XECPrivateKey) KeyFactory.getInstance(this.curve.getJCAName()).generatePrivate(xecPrivateKeySpec);
+			}
+			catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+				throw new JWKProcessingException("Error converting JWK to private key", e);
+			}
 		}
-		return this.privateKey;
+		return Optional.ofNullable(this.privateKey);
 	}
 
 	@Override
 	public XECJWK toPublicJWK() {
-		GenericXECJWK jwk = new GenericXECJWK(this.curve, this.x, this.certificate.orElse(null));
+		GenericXECJWK jwk = new GenericXECJWK(this.curve, this.x, this.certificate);
 		jwk.publicKey = this.publicKey;
 		jwk.setPublicKeyUse(this.use);
 		jwk.setKeyOperations(this.key_ops);
@@ -242,7 +240,7 @@ public class GenericXECJWK extends AbstractOKPJWK<XECPublicKey, XECPrivateKey> i
 
 	@Override
 	public XECJWK minify() {
-		GenericXECJWK jwk = new GenericXECJWK(this.curve, this.x, this.d, (XECPrivateKey)this.key, this.certificate.orElse(null), this.trusted);
+		GenericXECJWK jwk = new GenericXECJWK(this.curve, this.x, this.d, (XECPrivateKey)this.key, this.certificate, this.trusted);
 		jwk.publicKey = this.publicKey;
 		
 		return jwk;
@@ -292,8 +290,6 @@ public class GenericXECJWK extends AbstractOKPJWK<XECPublicKey, XECPrivateKey> i
 		if(this.keyManagers == null) {
 			this.keyManagers = new HashMap<>();
 		}
-		return this.keyManagers.computeIfAbsent(algorithm, ign -> {
-			return algorithm.createKeyManager(this);
-		});
+		return this.keyManagers.computeIfAbsent(algorithm, ign -> algorithm.createKeyManager(this));
 	}
 }

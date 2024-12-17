@@ -17,18 +17,15 @@ package io.inverno.mod.irt.compiler.spi;
 
 /**
  * <p>
- * A package info specifies the java package declared in a template set source
- * file.
+ * A package info specifies the java package declared in a template set source file.
  * </p>
- * 
+ *
  * <p>
- * The declared package must match the expected package (ie. the source file
- * directory structure).
+ * The declared package must match the expected package (ie. the source file directory structure).
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public interface PackageInfo {
 
@@ -36,7 +33,7 @@ public interface PackageInfo {
 	 * <p>
 	 * Returns the name of the declared package.
 	 * </p>
-	 * 
+	 *
 	 * @return a name info
 	 */
 	NameInfo getName();

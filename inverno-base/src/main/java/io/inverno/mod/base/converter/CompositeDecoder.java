@@ -22,14 +22,11 @@ import java.util.Map;
 
 /**
  * <p>
- * A composite decoder relies on multiple {@link CompoundDecoder} to decode
- * objects.
+ * A composite decoder relies on multiple {@link CompoundDecoder} to decode objects.
  * </p>
  * 
  * <p>
- * Such implementation makes it possible to create extensible decoder able to
- * decode various type of objects by composition of many specific compound
- * decoders.
+ * Such implementation makes it possible to create extensible decoder able to decode various type of objects by composition of many specific compound decoders.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -68,8 +65,7 @@ public class CompositeDecoder<From> implements Decoder<From, Object> {
 	
 	/**
 	 * <p>
-	 * Sets a default decoder to use when no compound decoder is able to decode an
-	 * object.
+	 * Sets a default decoder to use when no compound decoder is able to decode an object.
 	 * </p>
 	 * 
 	 * @param defaultDecoder the default decoder
@@ -87,6 +83,7 @@ public class CompositeDecoder<From> implements Decoder<From, Object> {
 	 * @param type the type to decode
 	 * 
 	 * @return a compound decoder
+	 *
 	 * @throws DecoderNotFoundException if no decoder can decode the specified type
 	 */
 	@SuppressWarnings("unchecked")

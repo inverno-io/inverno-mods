@@ -25,7 +25,7 @@ import io.inverno.mod.http.base.BadRequestException;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-// TODO this extends BadRequestException, in case of http client we might also have malformed headers in the response as a result this might not be appropriate
+// TODO this extends BadRequestException, in case of HTTP client we might also have malformed headers in the response as a result this might not be appropriate
 public class MalformedHeaderException extends BadRequestException {
 
 	private static final long serialVersionUID = 1780534837387915981L;

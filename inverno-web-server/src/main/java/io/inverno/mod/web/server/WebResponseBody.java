@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2021 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ package io.inverno.mod.web.server;
 
 import io.inverno.mod.base.converter.MediaTypeConverter;
 import io.inverno.mod.http.server.ResponseBody;
+import io.inverno.mod.web.base.OutboundDataEncoder;
 import io.netty.buffer.ByteBuf;
-import org.reactivestreams.Publisher;
-
 import java.lang.reflect.Type;
 import java.util.function.Function;
+import org.reactivestreams.Publisher;
 
 /**
  * <p>
@@ -58,7 +58,7 @@ public interface WebResponseBody extends ResponseBody {
 	 * @return an encoder
 	 */
 	<T> OutboundDataEncoder<T> encoder();
-	
+
 	/**
 	 * <p>
 	 * Returns an encoder to encode a payload of the specified type based on the content type of the request.
@@ -70,7 +70,7 @@ public interface WebResponseBody extends ResponseBody {
 	 * @return an encoder
 	 */
 	<T> OutboundDataEncoder<T> encoder(Class<T> type);
-	
+
 	/**
 	 * <p>
 	 * Returns an encoder to encode a payload of the specified type based on the content type of the request.
@@ -94,7 +94,7 @@ public interface WebResponseBody extends ResponseBody {
 	 * @return a SSE encoder
 	 */
 	<T> WebResponseBody.SseEncoder<T> sseEncoder(String mediaType);
-	
+
 	/**
 	 * <p>
 	 * Returns a server-sent events encoder to encode event's data of the specified type in the specified media type.
@@ -107,7 +107,7 @@ public interface WebResponseBody extends ResponseBody {
 	 * @return a SSE encoder
 	 */
 	<T> WebResponseBody.SseEncoder<T> sseEncoder(String mediaType, Class<T> type);
-	
+
 	/**
 	 * <p>
 	 * Returns a server-sent events encoder to encode event's data of the specified type in the specified media type.
@@ -120,7 +120,7 @@ public interface WebResponseBody extends ResponseBody {
 	 * @return a SSE encoder
 	 */
 	<T> WebResponseBody.SseEncoder<T> sseEncoder(String mediaType, Type type);
-	
+
 	/**
 	 * <p>
 	 * A server-sent events data producer used to encode data from a single object or many objects.
@@ -137,26 +137,26 @@ public interface WebResponseBody extends ResponseBody {
 	 *
 	 * @param <A> the type of data to encode
 	 */
-	public interface SseEncoder<A> extends ResponseBody.Sse<A, WebResponseBody.SseEncoder.Event<A>, WebResponseBody.SseEncoder.EventFactory<A>> {
-		
+	interface SseEncoder<A> extends ResponseBody.Sse<A, WebResponseBody.SseEncoder.Event<A>, WebResponseBody.SseEncoder.EventFactory<A>> {
+
 		/**
 		 * <p>
 		 * A server-sent event with data encoding support.
 		 * </p>
-		 * 
+		 *
 		 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 		 * @since 1.0
 		 *
 		 * @param <A> the type of data to encode
 		 */
-		public static interface Event<A> extends ResponseBody.Sse.Event<A>, OutboundDataEncoder<A> {
+		interface Event<A> extends ResponseBody.Sse.Event<A>, OutboundDataEncoder<A> {
 
 			@Override
 			WebResponseBody.SseEncoder.Event<A> id(String id);
-			
+
 			@Override
 			WebResponseBody.SseEncoder.Event<A> comment(String comment);
-			
+
 			@Override
 			WebResponseBody.SseEncoder.Event<A> event(String event);
 		}
@@ -165,13 +165,13 @@ public interface WebResponseBody extends ResponseBody {
 		 * <p>
 		 * A server-sent events factory with data encoding support.
 		 * </p>
-		 * 
+		 *
 		 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 		 *
 		 * @param <A> the type of data to encode
 		 */
-		public static interface EventFactory<A> extends ResponseBody.Sse.EventFactory<A, WebResponseBody.SseEncoder.Event<A>> {
-			
+		interface EventFactory<A> extends ResponseBody.Sse.EventFactory<A, WebResponseBody.SseEncoder.Event<A>> {
+
 		}
 	}
 }

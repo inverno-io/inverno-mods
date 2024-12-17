@@ -17,10 +17,10 @@ package io.inverno.mod.security.jose.jwa;
 
 /**
  * <p>
- * A JSON Web Algorithm for Key Management when performing JSON Web Encrption as specified by <a href="https://datatracker.ietf.org/doc/html/rfc7518#section-4">RFC7518 Section 4</a>.
+ * A JSON Web Algorithm for Key Management when performing JSON Web Encryption as specified by <a href="https://datatracker.ietf.org/doc/html/rfc7518#section-4">RFC7518 Section 4</a>.
  * </p>
  * 
- * <p>We can differenciate three kinds of Key Management algorithm:</p>
+ * <p>We can differentiate three kinds of Key Management algorithm:</p>
  * 
  * <ul>
  * <li><em>Encrypting</em> where a Content Encryption Key (or CEK) is encrypted.</li>

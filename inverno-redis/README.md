@@ -1,3 +1,5 @@
+[inverno-javadoc]: https://inverno.io/docs/release/api/index.html
+
 [redis]: https://redis.io/
 [redis_commands]: https://redis.io/commands
 [redis_transactions]: https://redis.io/topics/transactions
@@ -11,11 +13,10 @@ This module only exposes the API and a proper implementation module must be cons
 In order to use the Inverno *Redis client* module, we need to declare a dependency to the API and at least one implementation in the module descriptor:
 
 ```java
+@io.inverno.core.annotation.Module
 module io.inverno.example.app {
-    ...
     requires io.inverno.mod.redis; // this is actually optional since implementations should already define a transitive dependency
     requires io.inverno.mod.redis.lettuce; // Lettuce implementation
-    ...
 }
 ```
 
@@ -40,22 +41,20 @@ Using Maven:
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.inverno.mod:inverno-redis:${VERSION_INVERNO_MODS}'
 compile 'io.inverno.mod:inverno-redis-vertx:${VERSION_INVERNO_MODS}'
-...
 ```
 
 ## Redis Client API
 
 The Redis client API defines the `RedisClient` and `RedisTransactionalClient` interfaces which provide reactive methods to create and execute [Redis commands][redis_commands].
 
-The `RedisTransactionalClient` interface extends the `RedisClient` interface with Redis transactional support (ie. `MULTI`, `DISCARD`, `EXEC`...).
+The `RedisTransactionalClient` interface extends the `RedisClient` interface with Redis transactional support (i.e. `MULTI`, `DISCARD`, `EXEC`...).
 
 ### Redis Operations
 
-The API exposes mutiple `*Operations` interfaces which are all extended by the `RedisCLient` and which allows to fluently send commands to a Redis data store.
+The API exposes multiple `*Operations` interfaces which are all extended by the `RedisCLient` and which allows to fluently send commands to a Redis data store.
 
 There are currently ten such interfaces that exposes the >200 commands supported in Redis:
 
@@ -70,7 +69,7 @@ There are currently ten such interfaces that exposes the >200 commands supported
 - `RedisSetReactiveOperations`
 - `RedisStreamReactiveOperations`
 
-The API is pretty straighfoward and provides guidance on how to create and send commands to the Redis data store. For instance a simple string value can be queried as follows:
+The API is pretty straightforward and provides guidance on how to create and send commands to the Redis data store. For instance a simple string value can be queried as follows:
 
 ```java
 RedisClient<String, String> client = ...
@@ -98,13 +97,13 @@ zrangeWithScores.subscribe(...);
 
 ### Keys and Values codecs
 
-The `RedisClient` supports encoding and decoding of Redis keys and values, as a result the `RedisClient` client is a generic type which allows to specified the types of key and values.
+The `RedisClient` supports encoding and decoding of Redis keys and values, as a result the `RedisClient` client is a generic type which allows to specify the types of key and values.
 
 The actual encoding/decoding logic is implementation specific.
 
 ### Connections
 
-Commands can be executed directly on the client instance in which case a connection is obtained each time an operation method is invoked on the client and released once the resulting publisher terminates. This might not be an issue when a single command is issued or when using an implementation based on a single connection, However if there's a need to exectute multiuple commands or when using an implementation backed by a connection pool, it is often better to execute multiple SQL statements on a single connection released once the resulting publisher terminates (the connection can be either closed or returned to the pool).
+Commands can be executed directly on the client instance in which case a connection is obtained each time an operation method is invoked on the client and released once the resulting publisher terminates. This might not be an issue when a single command is issued or when using an implementation based on a single connection. However, if there is a need to execute multiple commands or when using an implementation backed by a connection pool, it is often better to execute multiple SQL statements on a single connection released once the resulting publisher terminates (the connection can be either closed or returned to the pool).
 
 Multiple commands can be executed on a single connection as follows:
 
@@ -119,7 +118,7 @@ Flux<String> results = Flux.from(client.connection(operations ->
     )
 ));
 
-// Commands are sent sent on subscribe following reactive principles
+// Commands are sent on subscribe following reactive principles
 results.subscribe(...);
 ```
 
@@ -146,7 +145,7 @@ results.subscribe(...);
 
 ### Transactions
 
-Redis supports transactions through `MULTI`, `EXEC` and `DISCARD` commands which is a bit different than traditional begin/commit/rollback we can find in RDBMS. Please have a look at [Redis trasnactions documentation][redis_transactions] to have a proper understanding on how transactions work in Redis.
+Redis supports transactions through `MULTI`, `EXEC` and `DISCARD` commands which is a bit different from traditional begin/commit/rollback we can find in RDBMS. Please have a look at [Redis transactions documentation][redis_transactions] to have a proper understanding on how transactions work in Redis.
 
 Commands can be executed within a transaction using a `RedisTransactionalClient`, a transaction can be managed implicitly or explicitly by obtaining a `RedisTransactionalOperations` and explicitly invoke `exec()` or `rollback()`.
 

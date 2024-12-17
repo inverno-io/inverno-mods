@@ -70,7 +70,7 @@ public interface ConfigurationProperty {
 	 *
 	 * @return a configuration source.
 	 */
-	ConfigurationSource<?,?,?> getSource();
+	ConfigurationSource getSource();
 	
 	/**
 	 * <p>
@@ -102,7 +102,7 @@ public interface ConfigurationProperty {
 	 * @return true if the property value is null, false otherwise
 	 */
 	boolean isEmpty();
-	
+
 	/**
 	 * <p>
 	 * Converts the property value to the specified type.
@@ -114,7 +114,20 @@ public interface ConfigurationProperty {
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	<T> Optional<T> as(Class<T> type);
-	
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param <T>          the target type
+	 * @param type         a class of type T
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	<T> T as(Class<T> type, T defaultValue);
+
 	/**
 	 * <p>
 	 * Converts the property value to the specified type.
@@ -126,6 +139,19 @@ public interface ConfigurationProperty {
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	<T> Optional<T> as(Type type);
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param <T>          the target type
+	 * @param type         a class of type T
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	<T> T as(Type type, T defaultValue);
 	
 	/**
 	 * <p>
@@ -138,7 +164,20 @@ public interface ConfigurationProperty {
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	<T> Optional<T[]> asArrayOf(Class<T> type);
-	
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default array.
+	 * </p>
+	 *
+	 * @param <T>          the target component type
+	 * @param type         the target component type
+	 * @param defaultValue a default array
+	 *
+	 * @return the converted value or the default array
+	 */
+	<T> T[] asArrayOf(Class<T> type, T[] defaultValue);
+
 	/**
 	 * <p>
 	 * Converts the property value to an array of the specified type.
@@ -150,6 +189,19 @@ public interface ConfigurationProperty {
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	<T> Optional<T[]> asArrayOf(Type type);
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default array.
+	 * </p>
+	 *
+	 * @param <T>          the target component type
+	 * @param type         the target component type
+	 * @param defaultValue a default array
+	 *
+	 * @return the converted value or the default array
+	 */
+	<T> T[] asArrayOf(Type type, T[] defaultValue);
 	
 	/**
 	 * <p>
@@ -162,7 +214,20 @@ public interface ConfigurationProperty {
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	<T> Optional<List<T>> asListOf(Class<T> type);
-	
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default list.
+	 * </p>
+	 *
+	 * @param <T>          the target list argument type
+	 * @param type         the target list argument type
+	 * @param defaultValue a default list
+	 *
+	 * @return the converted value or the default list
+	 */
+	<T> List<T> asListOf(Class<T> type, List<T> defaultValue);
+
 	/**
 	 * <p>
 	 * Converts the property value to a list of the specified type.
@@ -174,6 +239,19 @@ public interface ConfigurationProperty {
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	<T> Optional<List<T>> asListOf(Type type);
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default list.
+	 * </p>
+	 *
+	 * @param <T>          the target list argument type
+	 * @param type         the target list argument type
+	 * @param defaultValue a default list
+	 *
+	 * @return the converted value or the default list
+	 */
+	<T> List<T> asListOf(Type type, List<T> defaultValue);
 	
 	/**
 	 * <p>
@@ -186,7 +264,20 @@ public interface ConfigurationProperty {
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	<T> Optional<Set<T>> asSetOf(Class<T> type);
-	
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default set.
+	 * </p>
+	 *
+	 * @param <T>          the target set argument type
+	 * @param type         the target set argument type
+	 * @param defaultValue a default set
+	 *
+	 * @return the converted value or the default set
+	 */
+	<T> Set<T> asSetOf(Class<T> type, Set<T> defaultValue);
+
 	/**
 	 * <p>
 	 * Converts the property value to a set of the specified type.
@@ -198,6 +289,19 @@ public interface ConfigurationProperty {
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	<T> Optional<Set<T>> asSetOf(Type type);
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default set.
+	 * </p>
+	 *
+	 * @param <T>          the target set argument type
+	 * @param type         the target set argument type
+	 * @param defaultValue a default set
+	 *
+	 * @return the converted value or the default set
+	 */
+	<T> Set<T> asSetOf(Type type, Set<T> defaultValue);
 	
 	/**
 	 * <p>
@@ -210,12 +314,34 @@ public interface ConfigurationProperty {
 
 	/**
 	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	byte asByte(byte defaultValue);
+
+	/**
+	 * <p>
 	 * Converts the property value to a short.
 	 * </p>
 	 *
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Short> asShort();
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	short asShort(short defaultValue);
 
 	/**
 	 * <p>
@@ -228,12 +354,34 @@ public interface ConfigurationProperty {
 
 	/**
 	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	int asInteger(int defaultValue);
+
+	/**
+	 * <p>
 	 * Converts the property value to a long.
 	 * </p>
 	 *
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Long> asLong();
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	long asLong(long defaultValue);
 
 	/**
 	 * <p>
@@ -246,12 +394,34 @@ public interface ConfigurationProperty {
 
 	/**
 	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	float asFloat(float defaultValue);
+
+	/**
+	 * <p>
 	 * Converts the property value to a double.
 	 * </p>
 	 *
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Double> asDouble();
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	double asDouble(double defaultValue);
 
 	/**
 	 * <p>
@@ -264,12 +434,34 @@ public interface ConfigurationProperty {
 
 	/**
 	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	char asCharacter(char defaultValue);
+
+	/**
+	 * <p>
 	 * Converts the property value to a string.
 	 * </p>
 	 *
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<String> asString();
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	String asString(String defaultValue);
 
 	/**
 	 * <p>
@@ -282,12 +474,34 @@ public interface ConfigurationProperty {
 
 	/**
 	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	boolean asBoolean(boolean defaultValue);
+
+	/**
+	 * <p>
 	 * Converts the property value to a big integer.
 	 * </p>
 	 *
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<BigInteger> asBigInteger();
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	BigInteger asBigInteger(BigInteger defaultValue);
 
 	/**
 	 * <p>
@@ -300,12 +514,34 @@ public interface ConfigurationProperty {
 
 	/**
 	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	BigDecimal asBigDecimal(BigDecimal defaultValue);
+
+	/**
+	 * <p>
 	 * Converts the property value to a local date.
 	 * </p>
 	 *
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<LocalDate> asLocalDate();
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	LocalDate asLocalDate(LocalDate defaultValue);
 
 	/**
 	 * <p>
@@ -318,12 +554,34 @@ public interface ConfigurationProperty {
 
 	/**
 	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	LocalDateTime asLocalDateTime(LocalDateTime defaultValue);
+
+	/**
+	 * <p>
 	 * Converts the property value to a zoned date time.
 	 * </p>
 	 *
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<ZonedDateTime> asZonedDateTime();
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	ZonedDateTime asZonedDateTime(ZonedDateTime defaultValue);
 
 	/**
 	 * <p>
@@ -336,12 +594,34 @@ public interface ConfigurationProperty {
 
 	/**
 	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	Currency asCurrency(Currency defaultValue);
+
+	/**
+	 * <p>
 	 * Converts the property value to a locale.
 	 * </p>
 	 *
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Locale> asLocale();
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	Locale asLocale(Locale defaultValue);
 
 	/**
 	 * <p>
@@ -354,12 +634,34 @@ public interface ConfigurationProperty {
 
 	/**
 	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	File asFile(File defaultValue);
+
+	/**
+	 * <p>
 	 * Converts the property value to a path.
 	 * </p>
 	 *
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Path> asPath();
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	Path asPath(Path defaultValue);
 
 	/**
 	 * <p>
@@ -372,12 +674,34 @@ public interface ConfigurationProperty {
 
 	/**
 	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	URI asURI(URI defaultValue);
+
+	/**
+	 * <p>
 	 * Converts the property value to a URL.
 	 * </p>
 	 *
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<URL> asURL();
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	URL asURL(URL defaultValue);
 
 	/**
 	 * <p>
@@ -390,6 +714,17 @@ public interface ConfigurationProperty {
 
 	/**
 	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	Pattern asPattern(Pattern defaultValue);
+
+	/**
+	 * <p>
 	 * Converts the property value to an inet address.
 	 * </p>
 	 *
@@ -399,19 +734,54 @@ public interface ConfigurationProperty {
 
 	/**
 	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	InetAddress asInetAddress(InetAddress defaultValue);
+
+	/**
+	 * <p>
 	 * Converts the property value to an inet socket address.
 	 * </p>
 	 *
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<InetSocketAddress> asInetSocketAddress();
-	
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	InetSocketAddress asInetSocketAddress(InetSocketAddress defaultValue);
+
 	/**
 	 * <p>
 	 * Converts the property value to a class.
 	 * </p>
 	 *
+	 * @param <T> the target type
+	 *
 	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
-	Optional<Class<?>> asClass();
+	<T> Optional<Class<T>> asClass();
+
+	/**
+	 * <p>
+	 * Returns the converted value or the specified default value.
+	 * </p>
+	 *
+	 * @param defaultValue a default value
+	 *
+	 * @return the converted value or the default value
+	 */
+	<T> Class<T> asClass(Class<T> defaultValue);
 }

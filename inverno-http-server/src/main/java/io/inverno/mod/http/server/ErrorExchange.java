@@ -54,11 +54,13 @@ public interface ErrorExchange<A extends ExchangeContext> extends Exchange<A> {
 	 * <p>
 	 * Returns an empty optional since an error exchange does not support WebSocket upgrade.
 	 * </p>
+	 *
+	 * @param subprotocols a list of supported subprotocols negotiated during the handshake
 	 * 
 	 * @return an empty optional
 	 */
 	@Override
-	default Optional<? extends WebSocket<A, ? extends WebSocketExchange<A>>> webSocket(String... subProtocols) {
+	default Optional<? extends WebSocket<A, ? extends WebSocketExchange<A>>> webSocket(String... subprotocols) {
 		return Optional.empty();
 	}
 	
@@ -73,7 +75,7 @@ public interface ErrorExchange<A extends ExchangeContext> extends Exchange<A> {
 	 */
 	default ErrorExchange<A> mapError(Function<? super Throwable, ? extends Throwable> errorMapper) {
 		ErrorExchange<A> thisExchange = this;
-		return new ErrorExchange<A>() {
+		return new ErrorExchange<>() {
 			
 			@Override
 			public HttpVersion getProtocol() {

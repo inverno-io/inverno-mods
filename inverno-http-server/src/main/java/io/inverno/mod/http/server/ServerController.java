@@ -135,7 +135,7 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 	 */
 	static <U extends ExchangeContext, V extends Exchange<U>, W extends ErrorExchange<U>> ServerController<U, V, W> from(ReactiveExchangeHandler<U, V> handler) {
 		Objects.requireNonNull(handler);
-		return new ServerController<U, V, W>() {
+		return new ServerController<>() {
 
 			@Override
 			public Mono<Void> defer(V exchange) throws HttpException {
@@ -175,7 +175,7 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 	 */
 	static <U extends ExchangeContext, V extends Exchange<U>, W extends ErrorExchange<U>> ServerController<U, V, W> from(ExchangeHandler<U, V> handler) {
 		Objects.requireNonNull(handler);
-		return new ServerController<U, V, W>() {
+		return new ServerController<>() {
 
 			@Override
 			public Mono<Void> defer(V exchange) throws HttpException {
@@ -217,7 +217,7 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 	static <U extends ExchangeContext, V extends Exchange<U>, W extends ErrorExchange<U>> ServerController<U, V, W> from(ReactiveExchangeHandler<U, V> handler, ReactiveExchangeHandler<U, W> errorHandler) {
 		Objects.requireNonNull(handler);
 		Objects.requireNonNull(errorHandler);
-		return new ServerController<U, V, W>() {
+		return new ServerController<>() {
 
 			@Override
 			public Mono<Void> defer(V exchange) throws HttpException {
@@ -257,7 +257,7 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 	static <U extends ExchangeContext, V extends Exchange<U>, W extends ErrorExchange<U>> ServerController<U, V, W> from(ExchangeHandler<U, V> handler, ExchangeHandler<U, W> errorHandler) {
 		Objects.requireNonNull(handler);
 		Objects.requireNonNull(errorHandler);
-		return new ServerController<U, V, W>() {
+		return new ServerController<>() {
 
 			@Override
 			public Mono<Void> defer(V exchange) throws HttpException {
@@ -299,7 +299,7 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 		Objects.requireNonNull(handler);
 		Objects.requireNonNull(errorHandler);
 		Objects.requireNonNull(contextSupplier);
-		return new ServerController<U, V, W>() {
+		return new ServerController<>() {
 
 			@Override
 			public Mono<Void> defer(V exchange) throws HttpException {
@@ -346,7 +346,7 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 		Objects.requireNonNull(handler);
 		Objects.requireNonNull(errorHandler);
 		Objects.requireNonNull(contextSupplier);
-		return new ServerController<U, V, W>() {
+		return new ServerController<>() {
 
 			@Override
 			public Mono<Void> defer(V exchange) throws HttpException {

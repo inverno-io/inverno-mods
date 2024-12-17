@@ -123,7 +123,7 @@ public class GenericOCTJWKGenerator extends AbstractJWKGenerator<GenericOCTJWK, 
 					throw new JWKGenerateException("Key size must be at least " + MINIMUM_KEY_SIZE);
 				}
 				int macKeyLength = this.octAlg.getMacKeyLength() != null ? this.octAlg.getMacKeyLength() : 0;
-				if(this.octAlg != null && this.keySize != this.octAlg.getEncryptionKeyLength() + macKeyLength) {
+				if(this.keySize != this.octAlg.getEncryptionKeyLength() + macKeyLength) {
 					throw new JWKGenerateException("Key size " + this.keySize + " is inconsistent with algorithm " + this.octAlg.getAlgorithm() + " which requires " + (this.octAlg.getEncryptionKeyLength() + macKeyLength));
 				}
 			}

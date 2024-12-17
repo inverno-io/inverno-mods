@@ -21,8 +21,7 @@ package io.inverno.mod.base.converter;
  * </p>
  * 
  * <p>
- * A typical implementation would convert objects from/to serialized data
- * formatted according to a given media type.
+ * A typical implementation would convert objects from/to serialized data formatted according to a given media type.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

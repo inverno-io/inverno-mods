@@ -22,10 +22,10 @@ import io.inverno.mod.http.base.OutboundRequestHeaders;
  * Base {@link OutboundRequestHeaders} implementation representing the headers to send to the connected remote endpoint.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.11
  * 
- * @param <A> the type of the headers sent by the connection as part of the Http request
+ * @param <A> the type of the headers sent by the connection as part of the HTTP request
  */
 public abstract class AbstractRequestHeaders<A> implements OutboundRequestHeaders {
 
@@ -33,7 +33,7 @@ public abstract class AbstractRequestHeaders<A> implements OutboundRequestHeader
 
 	/**
 	 * <p>
-	 * Returns the headers to send as part of the Http request.
+	 * Returns the headers to send as part of the HTTP request.
 	 * </p>
 	 * 
 	 * @return the wrapped headers

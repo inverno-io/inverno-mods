@@ -32,8 +32,7 @@ import java.util.regex.Pattern;
 
 /**
  * <p>
- * An object decoder providing primitive bindings to decode to primitive and
- * common types.
+ * An object decoder providing primitive bindings to decode to primitive and common types.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -53,6 +52,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	Byte decodeByte(From value) throws ConverterException;
@@ -65,6 +65,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	Short decodeShort(From value) throws ConverterException;
@@ -77,6 +78,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	Integer decodeInteger(From value) throws ConverterException;
@@ -89,6 +91,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	Long decodeLong(From value) throws ConverterException;
@@ -101,6 +104,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	Float decodeFloat(From value) throws ConverterException;
@@ -113,6 +117,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	Double decodeDouble(From value) throws ConverterException;
@@ -125,6 +130,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	Character decodeCharacter(From value) throws ConverterException;
@@ -137,6 +143,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	Boolean decodeBoolean(From value) throws ConverterException;
@@ -149,6 +156,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	String decodeString(From value) throws ConverterException;
@@ -161,6 +169,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	BigInteger decodeBigInteger(From value) throws ConverterException;
@@ -173,6 +182,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	BigDecimal decodeBigDecimal(From value) throws ConverterException;
@@ -185,6 +195,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	LocalDate decodeLocalDate(From value) throws ConverterException;
@@ -197,6 +208,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	LocalDateTime decodeLocalDateTime(From value) throws ConverterException;
@@ -209,6 +221,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	ZonedDateTime decodeZonedDateTime(From value) throws ConverterException;
@@ -221,6 +234,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	Currency decodeCurrency(From value) throws ConverterException;
@@ -233,6 +247,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	Locale decodeLocale(From value) throws ConverterException;
@@ -245,6 +260,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	File decodeFile(From value) throws ConverterException;
@@ -257,6 +273,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	Path decodePath(From value) throws ConverterException;
@@ -269,6 +286,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	URI decodeURI(From value) throws ConverterException;
@@ -281,6 +299,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	URL decodeURL(From value) throws ConverterException;
@@ -293,6 +312,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	Pattern decodePattern(From value) throws ConverterException;
@@ -305,6 +325,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	InetAddress decodeInetAddress(From value) throws ConverterException;
@@ -317,6 +338,7 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	InetSocketAddress decodeInetSocketAddress(From value) throws ConverterException;
@@ -325,11 +347,13 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * <p>
 	 * Decodes to class.
 	 * </p>
-	 * 
+	 *
+	 * @param <T>   the target class type
 	 * @param value the encoded value to decode
 	 * 
 	 * @return a decoded value
+	 *
 	 * @throws ConverterException if there was an error decoding the value
 	 */
-	Class<?> decodeClass(From value) throws ConverterException;
+	<T> Class<T> decodeClass(From value) throws ConverterException;
 }

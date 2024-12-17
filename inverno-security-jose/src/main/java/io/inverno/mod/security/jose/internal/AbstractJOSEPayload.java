@@ -87,7 +87,7 @@ public abstract class AbstractJOSEPayload<A> {
 	 * Returns the serialized raw representation.
 	 * </p>
 	 * 
-	 * @return the serialiazed payload
+	 * @return the serialized payload
 	 */
 	public String getRaw() {
 		return raw;

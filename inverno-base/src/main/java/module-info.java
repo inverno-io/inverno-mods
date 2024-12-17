@@ -23,22 +23,20 @@
  * @since 1.0
  */
 module io.inverno.mod.base {
-	requires org.apache.commons.text;
-	requires org.apache.commons.lang3;
-	
-	requires transitive reactor.core;
-	requires transitive org.reactivestreams;
-	
 	requires io.netty.common;
 	requires transitive io.netty.buffer;
+	requires io.netty.resolver;
 	requires transitive io.netty.transport;
-	
 	requires static io.vertx.core;
-	
+	requires org.apache.commons.text;
+	requires org.apache.commons.lang3;
+	requires transitive org.reactivestreams;
+	requires transitive reactor.core;
+
 	exports io.inverno.mod.base;
 	exports io.inverno.mod.base.concurrent;
+	exports io.inverno.mod.base.converter;
 	exports io.inverno.mod.base.net;
 	exports io.inverno.mod.base.reflect;
 	exports io.inverno.mod.base.resource;
-	exports io.inverno.mod.base.converter;
 }

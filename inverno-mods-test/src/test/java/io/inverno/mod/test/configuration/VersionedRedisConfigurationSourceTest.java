@@ -86,19 +86,19 @@ public class VersionedRedisConfigurationSourceTest {
 			
 			ConfigurationQueryResult current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop1", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
-			Assertions.assertEquals("abc", current.getResult().get().asString().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop1", current.get().getKey().getName());
+			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().isEmpty());
+			Assertions.assertEquals("abc", current.get().asString().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop2", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
-			Assertions.assertEquals(42, current.getResult().get().asInteger().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop2", current.get().getKey().getName());
+			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
+			Assertions.assertEquals(42, current.get().asInteger().get());
 			
 			source.activate().block();
 			
@@ -115,20 +115,20 @@ public class VersionedRedisConfigurationSourceTest {
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(1, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop1", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
-			Assertions.assertEquals("abc", current.getResult().get().asString().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop1", current.get().getKey().getName());
+			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().isEmpty());
+			Assertions.assertEquals("abc", current.get().asString().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(1, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop2", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
-			Assertions.assertEquals(42, current.getResult().get().asInteger().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop2", current.get().getKey().getName());
+			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
+			Assertions.assertEquals(42, current.get().asInteger().get());
 			
 			source.set("prop3", new URI("https://localhost:8443"))
 				.and().set("prop2", 84).withParameters("env", "production", "customer", "cust1", "application", "app")
@@ -150,25 +150,25 @@ public class VersionedRedisConfigurationSourceTest {
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(1, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop1", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
-			Assertions.assertEquals("abc", current.getResult().get().asString().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop1", current.get().getKey().getName());
+			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().isEmpty());
+			Assertions.assertEquals("abc", current.get().asString().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(1, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertFalse(current.getResult().isPresent());
+			Assertions.assertFalse(current.isPresent());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(1, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop2", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
-			Assertions.assertEquals(42, current.getResult().get().asInteger().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop2", current.get().getKey().getName());
+			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
+			Assertions.assertEquals(42, current.get().asInteger().get());
 			
 			result = source.get("prop3").atRevision(2)
 				.execute()
@@ -182,11 +182,11 @@ public class VersionedRedisConfigurationSourceTest {
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(2, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop3", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
-			Assertions.assertEquals(new URI("https://localhost:8443"), current.getResult().get().asURI().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop3", current.get().getKey().getName());
+			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().isEmpty());
+			Assertions.assertEquals(new URI("https://localhost:8443"), current.get().asURI().get());
 			
 			source.activate(2).block();
 			
@@ -204,29 +204,29 @@ public class VersionedRedisConfigurationSourceTest {
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(2, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop1", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
-			Assertions.assertEquals("abc", current.getResult().get().asString().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop1", current.get().getKey().getName());
+			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().isEmpty());
+			Assertions.assertEquals("abc", current.get().asString().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(2, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop3", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
-			Assertions.assertEquals(new URI("https://localhost:8443"), current.getResult().get().asURI().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop3", current.get().getKey().getName());
+			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().isEmpty());
+			Assertions.assertEquals(new URI("https://localhost:8443"), current.get().asURI().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(2, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop2", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
-			Assertions.assertEquals(84, current.getResult().get().asInteger().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop2", current.get().getKey().getName());
+			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
+			Assertions.assertEquals(84, current.get().asInteger().get());
 			
 			source.set("prop4", "Foo Bar").withParameters("env", "production", "customer", "cust1", "application", "app")
 				.execute()
@@ -245,7 +245,7 @@ public class VersionedRedisConfigurationSourceTest {
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(2, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertFalse(current.getResult().isPresent());
+			Assertions.assertFalse(current.isPresent());
 			
 			source.activate(3, "env", "production", "customer", "cust1").block();
 			
@@ -263,38 +263,38 @@ public class VersionedRedisConfigurationSourceTest {
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(2, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop1", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
-			Assertions.assertEquals("abc", current.getResult().get().asString().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop1", current.get().getKey().getName());
+			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().isEmpty());
+			Assertions.assertEquals("abc", current.get().asString().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(2, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop3", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
-			Assertions.assertEquals(new URI("https://localhost:8443"), current.getResult().get().asURI().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop3", current.get().getKey().getName());
+			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().isEmpty());
+			Assertions.assertEquals(new URI("https://localhost:8443"), current.get().asURI().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(3, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop2", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
-			Assertions.assertEquals(84, current.getResult().get().asInteger().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop2", current.get().getKey().getName());
+			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
+			Assertions.assertEquals(84, current.get().asInteger().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(3, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop4", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(3, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
-			Assertions.assertEquals("Foo Bar", current.getResult().get().asString().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop4", current.get().getKey().getName());
+			Assertions.assertEquals(3, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
+			Assertions.assertEquals("Foo Bar", current.get().asString().get());
 			
 			source.set("prop1", "abcdef")
 				.and().set("prop2", 126).withParameters("env", "production", "customer", "cust1", "application", "app")
@@ -316,38 +316,38 @@ public class VersionedRedisConfigurationSourceTest {
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(2, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop1", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
-			Assertions.assertEquals("abc", current.getResult().get().asString().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop1", current.get().getKey().getName());
+			Assertions.assertEquals(1, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().isEmpty());
+			Assertions.assertEquals("abc", current.get().asString().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(2, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop3", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
-			Assertions.assertEquals(new URI("https://localhost:8443"), current.getResult().get().asURI().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop3", current.get().getKey().getName());
+			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().isEmpty());
+			Assertions.assertEquals(new URI("https://localhost:8443"), current.get().asURI().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(3, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop2", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
-			Assertions.assertEquals(84, current.getResult().get().asInteger().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop2", current.get().getKey().getName());
+			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
+			Assertions.assertEquals(84, current.get().asInteger().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(3, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop4", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(3, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
-			Assertions.assertEquals("Foo Bar", current.getResult().get().asString().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop4", current.get().getKey().getName());
+			Assertions.assertEquals(3, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
+			Assertions.assertEquals("Foo Bar", current.get().asString().get());
 			
 			source.activate().block();
 			
@@ -365,38 +365,38 @@ public class VersionedRedisConfigurationSourceTest {
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(3, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop1", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(3, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
-			Assertions.assertEquals("abcdef", current.getResult().get().asString().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop1", current.get().getKey().getName());
+			Assertions.assertEquals(3, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().isEmpty());
+			Assertions.assertEquals("abcdef", current.get().asString().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(3, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop3", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
-			Assertions.assertEquals(new URI("https://localhost:8443"), current.getResult().get().asURI().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop3", current.get().getKey().getName());
+			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().isEmpty());
+			Assertions.assertEquals(new URI("https://localhost:8443"), current.get().asURI().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(3, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop2", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
-			Assertions.assertEquals(84, current.getResult().get().asInteger().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop2", current.get().getKey().getName());
+			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
+			Assertions.assertEquals(84, current.get().asInteger().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(3, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop4", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(3, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
-			Assertions.assertEquals("Foo Bar", current.getResult().get().asString().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop4", current.get().getKey().getName());
+			Assertions.assertEquals(3, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
+			Assertions.assertEquals("Foo Bar", current.get().asString().get());
 			
 			source.activate("env", "production", "customer", "cust1", "application", "app").block();
 			
@@ -414,38 +414,38 @@ public class VersionedRedisConfigurationSourceTest {
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(3, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop1", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(3, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
-			Assertions.assertEquals("abcdef", current.getResult().get().asString().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop1", current.get().getKey().getName());
+			Assertions.assertEquals(3, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().isEmpty());
+			Assertions.assertEquals("abcdef", current.get().asString().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(3, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop3", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
-			Assertions.assertEquals(new URI("https://localhost:8443"), current.getResult().get().asURI().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop3", current.get().getKey().getName());
+			Assertions.assertEquals(2, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().isEmpty());
+			Assertions.assertEquals(new URI("https://localhost:8443"), current.get().asURI().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(4, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop2", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(4, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
-			Assertions.assertEquals(126, current.getResult().get().asInteger().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("prop2", current.get().getKey().getName());
+			Assertions.assertEquals(4, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
+			Assertions.assertEquals(126, current.get().asInteger().get());
 			
 			current = resultIterator.next();
 			Assertions.assertFalse(((VersionedRedisConfigurationQueryResult)current).getQueryKey().getRevision().isPresent());
 //			Assertions.assertEquals(4, ((VersionedRedisConfigurationQueryResult)current).getQueryKey().getMetaData().get().getActiveRevision().get());
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("prop4", current.getResult().get().getKey().getName());
-			Assertions.assertEquals(3, ((VersionedRedisConfigurationKey)current.getResult().get().getKey()).getRevision().get());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
-			Assertions.assertEquals("Foo Bar", current.getResult().get().asString().get());
+			Assertions.assertTrue(current.get().isPresent());
+			Assertions.assertEquals("prop4", current.get().getKey().getName());
+			Assertions.assertEquals(3, ((VersionedRedisConfigurationKey)current.get().getKey()).getRevision().get());
+			Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app"))));
+			Assertions.assertEquals("Foo Bar", current.get().asString().get());
 			
 			Assertions.assertEquals(4, source.getMetaData().block().getWorkingRevision().get());
 			Assertions.assertEquals(3, source.getMetaData().block().getActiveRevision().get());
@@ -521,7 +521,7 @@ public class VersionedRedisConfigurationSourceTest {
 			ConfigurationQueryResult result = source.get("prop1")
 				.execute().blockLast();
 			
-			Assertions.assertTrue(result.getResult().get().isUnset());
+			Assertions.assertTrue(result.get().isUnset());
 		}
 		finally {
 			client.close().block();
@@ -544,7 +544,7 @@ public class VersionedRedisConfigurationSourceTest {
 			ConfigurationQueryResult result = source.get("prop1")
 				.execute().blockLast();
 			
-			Assertions.assertFalse(result.getResult().get().isPresent());
+			Assertions.assertFalse(result.get().isPresent());
 		}
 		finally {
 			client.close().block();
@@ -646,32 +646,32 @@ public class VersionedRedisConfigurationSourceTest {
 			ConfigurationQueryResult result = resultsIterator.next();
 			Assertions.assertEquals("log.level", result.getQueryKey().getName());
 			Assertions.assertEquals(List.of(Parameter.of("environment", "prod"), Parameter.of("name", "test1")), new ArrayList<>(result.getQueryKey().getParameters()));
-			Assertions.assertEquals("ERROR", result.getResult().get().asString().get());
+			Assertions.assertEquals("ERROR", result.get().asString().get());
 
 			result = resultsIterator.next();
 			Assertions.assertEquals("log.level", result.getQueryKey().getName());
 			Assertions.assertEquals(List.of(Parameter.of("environment", "prod"), Parameter.of("name", "test2")), new ArrayList<>(result.getQueryKey().getParameters()));
-			Assertions.assertEquals("WARN", result.getResult().get().asString().get());
+			Assertions.assertEquals("WARN", result.get().asString().get());
 
 			result = resultsIterator.next();
 			Assertions.assertEquals("log.level", result.getQueryKey().getName());
 			Assertions.assertEquals(List.of(Parameter.of("environment", "dev"), Parameter.of("name", "test1")), new ArrayList<>(result.getQueryKey().getParameters()));
-			Assertions.assertEquals("INFO", result.getResult().get().asString().get());
+			Assertions.assertEquals("INFO", result.get().asString().get());
 
 			result = resultsIterator.next();
 			Assertions.assertEquals("log.level", result.getQueryKey().getName());
 			Assertions.assertEquals(List.of(Parameter.of("environment", "prod")), new ArrayList<>(result.getQueryKey().getParameters()));
-			Assertions.assertEquals("WARN", result.getResult().get().asString().get());
+			Assertions.assertEquals("WARN", result.get().asString().get());
 
 			result = resultsIterator.next();
 			Assertions.assertEquals("log.level", result.getQueryKey().getName());
 			Assertions.assertEquals(List.of(Parameter.of("environment", "dev")), new ArrayList<>(result.getQueryKey().getParameters()));
-			Assertions.assertEquals("INFO", result.getResult().get().asString().get());
+			Assertions.assertEquals("INFO", result.get().asString().get());
 
 			result = resultsIterator.next();
 			Assertions.assertEquals("log.level", result.getQueryKey().getName());
 			Assertions.assertTrue(result.getQueryKey().getParameters().isEmpty());
-			Assertions.assertEquals("INFO", result.getResult().get().asString().get());
+			Assertions.assertEquals("INFO", result.get().asString().get());
 		}
 		finally {
 			client.close().block();
@@ -691,7 +691,7 @@ public class VersionedRedisConfigurationSourceTest {
 			int total = 0;
 			for(int i = 0;i < count+1;i++) {
 				long t0 = System.nanoTime();
-				source.get("prop1").execute().blockLast().getResult().get().asString().get();
+				source.get("prop1").execute().blockLast().get().asString().get();
 				if(i > 0) {
 					// Let's ignore warmup
 					total += System.nanoTime() - t0;

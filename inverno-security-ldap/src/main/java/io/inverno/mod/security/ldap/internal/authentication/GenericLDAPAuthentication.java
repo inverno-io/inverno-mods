@@ -63,7 +63,7 @@ public class GenericLDAPAuthentication implements LDAPAuthentication {
 	 * The authentication error.
 	 */
 	@JsonIgnore
-	private Optional<io.inverno.mod.security.SecurityException> cause;
+	private io.inverno.mod.security.SecurityException cause;
 	
 	/**
 	 * <p>
@@ -81,7 +81,7 @@ public class GenericLDAPAuthentication implements LDAPAuthentication {
 		this.dn = dn;
 		this.groups = groups != null ? Collections.unmodifiableSet(groups) : Set.of();
 		this.authenticated = authenticated;
-		this.cause = Optional.empty();
+		this.cause = null;
 	}
 	
 	/**
@@ -99,7 +99,7 @@ public class GenericLDAPAuthentication implements LDAPAuthentication {
 		if(cause != null) {
 			this.authenticated = false;
 		}
-		this.cause = Optional.ofNullable(cause);
+		this.cause = cause;
 	}
 	
 	@Override
@@ -114,7 +114,7 @@ public class GenericLDAPAuthentication implements LDAPAuthentication {
 
 	@Override
 	public Optional<SecurityException> getCause() {
-		return this.cause;
+		return Optional.ofNullable(this.cause);
 	}
 
 	@Override

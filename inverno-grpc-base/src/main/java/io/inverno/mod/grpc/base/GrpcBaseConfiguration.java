@@ -22,7 +22,7 @@ import io.inverno.mod.configuration.Configuration;
  * gRPC base module configuration.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 @Configuration( name = "configuration" )

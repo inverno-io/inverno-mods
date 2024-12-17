@@ -35,11 +35,10 @@ import java.util.function.Supplier;
  * It provides configured {@link CompressionOptions} when initializing channels.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @see EndpointChannelConfigurer
- * @see Http2ConnectionFactory
  */
 @Bean( visibility = Bean.Visibility.PRIVATE )
 public class CompressionOptionsProvider implements Supplier<CompressionOptions[]> {
@@ -53,7 +52,7 @@ public class CompressionOptionsProvider implements Supplier<CompressionOptions[]
 	 * Creates a compression options provider
 	 * </p>
 	 * 
-	 * @param configuration 
+	 * @param configuration the HTTP client module configuration
 	 */
 	public CompressionOptionsProvider(HttpClientConfiguration configuration) {
 		this.configuration = configuration;
@@ -81,7 +80,7 @@ public class CompressionOptionsProvider implements Supplier<CompressionOptions[]
 	 * 
 	 * @param configuration an HTTP client configuration
 	 * 
-	 * @return a list of compression options
+	 * @return an array of compression options
 	 */
 	public CompressionOptions[] get(HttpClientConfiguration configuration) {
 		if(configuration == this.configuration) {
@@ -97,7 +96,7 @@ public class CompressionOptionsProvider implements Supplier<CompressionOptions[]
 	 * 
 	 * @param configuration an HTTP client configuration
 	 * 
-	 * @return a list of compression options
+	 * @return an array of compression options
 	 */
 	private CompressionOptions[] createOptions(HttpClientConfiguration configuration) {
 		List<CompressionOptions> compressionOptionsList = new ArrayList<>();
@@ -112,6 +111,6 @@ public class CompressionOptionsProvider implements Supplier<CompressionOptions[]
 			compressionOptionsList.add(StandardCompressionOptions.brotli(new Encoder.Parameters().setQuality(configuration.compression_brotli_quality()).setMode(Encoder.Mode.of(configuration.compression_brotli_mode())).setWindow(configuration.compression_brotli_window())));
 		}
 
-		return compressionOptionsList.stream().toArray(CompressionOptions[]::new);
+		return compressionOptionsList.toArray(CompressionOptions[]::new);
 	}
 }

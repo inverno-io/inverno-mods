@@ -31,7 +31,7 @@ import java.util.Optional;
  * Base {@link Exchange} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
  * @param <A> the request type

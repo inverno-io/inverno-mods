@@ -22,8 +22,7 @@ import reactor.core.scheduler.NonBlocking;
 
 /**
  * <p>
- * A {@link NonBlocking} thread implementation which prevents blocking calls
- * from the Reactor APIs.
+ * A {@link NonBlocking} thread implementation which prevents blocking calls from the Reactor APIs.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

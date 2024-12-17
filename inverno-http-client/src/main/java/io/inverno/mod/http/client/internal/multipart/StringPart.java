@@ -26,10 +26,10 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A {@link Part} implementation for representing part's with string data.
+ * A {@link io.inverno.mod.http.client.Part Part} implementation for representing part's with string data.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class StringPart<T extends CharSequence> extends AbstractDataPart<T> {

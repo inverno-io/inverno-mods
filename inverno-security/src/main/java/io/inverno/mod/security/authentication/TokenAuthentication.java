@@ -22,7 +22,7 @@ package io.inverno.mod.security.authentication;
  * 
  * <p>
  * An {@link Authenticator} might respond with a token authentication to communicate temporary credentials resulting from the authentication to the authenticated entity. These {@link TokenCredentials}
- * can then later be used by the entity to authenticate using a different channel in a simpler or more perfomant way than the original authentication.
+ * can then later be used by the entity to authenticate using a different channel in a simpler or more performant way than the original authentication.
  * </p>
  * 
  * <p>

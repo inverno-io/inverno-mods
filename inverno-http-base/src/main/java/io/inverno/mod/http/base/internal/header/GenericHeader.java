@@ -18,6 +18,7 @@ package io.inverno.mod.http.base.internal.header;
 import io.inverno.mod.http.base.header.AbstractHeaderBuilder;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderBuilder;
+import java.util.Objects;
 
 /**
  * <p>
@@ -96,36 +97,18 @@ public class GenericHeader implements Header {
 	}
 
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((headerName == null) ? 0 : headerName.hashCode());
-		result = prime * result + ((headerValue == null) ? 0 : headerValue.hashCode());
-		return result;
+	public boolean equals(Object o) {
+		if(this == o) return true;
+		if(o == null || getClass() != o.getClass()) return false;
+		GenericHeader that = (GenericHeader) o;
+		return Objects.equals(headerName, that.headerName) && Objects.equals(headerValue, that.headerValue);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		GenericHeader other = (GenericHeader) obj;
-		if (headerName == null) {
-			if (other.headerName != null)
-				return false;
-		} else if (!headerName.equals(other.headerName))
-			return false;
-		if (headerValue == null) {
-			if (other.headerValue != null)
-				return false;
-		} else if (!headerValue.equals(other.headerValue))
-			return false;
-		return true;
+	public int hashCode() {
+		return Objects.hash(headerName, headerValue);
 	}
-	
+
 	private static final class SimpleHeader extends GenericHeader {
 	
 		public SimpleHeader(String headerName, String headerValue) {

@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * Generic {@link GrpcOutboundRequestMetadata} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public class GenericGrpcRequestMetadata extends AbstractGrpcMetadata<OutboundRequestHeaders> implements GrpcOutboundRequestMetadata {
@@ -106,7 +106,7 @@ public class GenericGrpcRequestMetadata extends AbstractGrpcMetadata<OutboundReq
 	
 	@Override
 	public GrpcOutboundRequestMetadata acceptMessageEncoding(List<String> messageEncodings) {
-		this.headers.set(GrpcHeaders.NAME_GRPC_ACCEPT_MESSAGE_ENCODING, messageEncodings.stream().collect(Collectors.joining(",")));
+		this.headers.set(GrpcHeaders.NAME_GRPC_ACCEPT_MESSAGE_ENCODING, String.join(",", messageEncodings));
 		return this;
 	}
 

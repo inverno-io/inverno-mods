@@ -34,11 +34,8 @@ import io.netty.buffer.ByteBuf;
  * </p>
  * 
  * <p>
- * This class especially provides general implementations for
- * <code>applyTemplate</code> methods which allow to apply templates on the
- * elements of an array, an iterable, a stream and a publisher while making sure
- * the rendering process is non-blocking following reactive programming
- * principles.
+ * This class especially provides general implementations for {@code applyTemplate} methods which allow to apply templates on the elements of an array, an iterable, a stream and a publisher while
+ * making sure the rendering process is non-blocking following reactive programming principles.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -53,7 +50,9 @@ public abstract class AbstractTemplateSet implements TemplateSet {
 	protected final Charset charset;
 	
 	/**
-	 * <p>Creates a template set.</p>
+	 * <p>
+	 * Creates a template set.
+	 * </p>
 	 * 
 	 * @param charset the charset to use to encode data
 	 */
@@ -67,7 +66,7 @@ public abstract class AbstractTemplateSet implements TemplateSet {
 			return this.render((String)value);
 		}
 		else if(value instanceof ByteBuf) {
-			return this.render((ByteBuf)value);
+			return this.render(value);
 		}
 		else {
 			return this.render(value.toString());
@@ -135,8 +134,7 @@ public abstract class AbstractTemplateSet implements TemplateSet {
 	
 	/**
 	 * <p>
-	 * An array {@link Renderable} implementation which iterates over an array and
-	 * render elements in sequence.
+	 * An array {@link Renderable} implementation which iterates over an array and render elements in sequence.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -195,8 +193,7 @@ public abstract class AbstractTemplateSet implements TemplateSet {
 	
 	/**
 	 * <p>
-	 * An iterable {@link Renderable} implementation which renders the elements in
-	 * an iterable in sequence.
+	 * An iterable {@link Renderable} implementation which renders the elements in an iterable in sequence.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -255,8 +252,7 @@ public abstract class AbstractTemplateSet implements TemplateSet {
 	
 	/**
 	 * <p>
-	 * A stream {@link Renderable} implementation which renders the elements in a
-	 * stream in sequence.
+	 * A stream {@link Renderable} implementation which renders the elements in a stream in sequence.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -300,8 +296,7 @@ public abstract class AbstractTemplateSet implements TemplateSet {
 
 	/**
 	 * <p>
-	 * A publisher {@link Renderable} implementation which renders the elements
-	 * emitted by a publisher in sequence.
+	 * A publisher {@link Renderable} implementation which renders the elements emitted by a publisher in sequence.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

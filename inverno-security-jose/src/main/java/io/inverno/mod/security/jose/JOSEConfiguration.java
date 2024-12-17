@@ -87,7 +87,7 @@ public interface JOSEConfiguration {
 	 * Defaults to the empty list.
 	 * </p>
 	 * 
-	 * @return the list of trusted JWK URLs
+	 * @return the set of trusted JWK URLs
 	 */
 	default Set<URI> trusted_jku() {
 		return Set.of();

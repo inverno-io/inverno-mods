@@ -17,6 +17,7 @@ package io.inverno.mod.security.accesscontrol;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import org.apache.commons.text.StringEscapeUtils;
 import reactor.core.publisher.Mono;
@@ -39,7 +40,8 @@ import reactor.core.publisher.Mono;
  *     accessController.hasPermission("print").doOnNext(granted -> {...})...    }</pre>
  * 
  * <p>
- * Permissions can be parameterized in order to control the access to a service or a resouce based on a particular context. For instance, if a printing application wants to control access to printers based on the their names or a user's location, permissions can be checked by defining these as parameters as follows:
+ * Permissions can be parameterized in order to control the access to a service or a resource based on a particular context. For instance, if a printing application wants to control access to printers 
+ * based on the their names or a user's location, permissions can be checked by defining these as parameters as follows:
  * </p>
  * 
  * <pre>{@code
@@ -86,7 +88,7 @@ public interface PermissionBasedAccessController extends AccessController {
 		 * @throws IllegalArgumentException if the key is null or empty or if the value is null or not a string, nor a primitive
 		 */
 		private Parameter(String key, Object value) throws IllegalArgumentException {
-			if(key == null || key.equals("")) {
+			if(key == null || key.isEmpty()) {
 				throw new IllegalArgumentException("Parameter key can't be null or empty");
 			}
 			this.key = key;
@@ -136,38 +138,20 @@ public interface PermissionBasedAccessController extends AccessController {
 		public static Parameter of(String key, Object value) throws IllegalArgumentException {
 			return new Parameter(key, value);
 		}
-		
+
 		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((key == null) ? 0 : key.hashCode());
-			result = prime * result + ((value == null) ? 0 : value.hashCode());
-			return result;
+		public boolean equals(Object o) {
+			if(this == o) return true;
+			if(o == null || getClass() != o.getClass()) return false;
+			Parameter parameter = (Parameter) o;
+			return Objects.equals(key, parameter.key) && Objects.equals(value, parameter.value);
 		}
 
 		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			Parameter other = (Parameter) obj;
-			if (key == null) {
-				if (other.key != null)
-					return false;
-			} else if (!key.equals(other.key))
-				return false;
-			if (value == null) {
-				if (other.value != null)
-					return false;
-			} else if (!value.equals(other.value))
-				return false;
-			return true;
+		public int hashCode() {
+			return Objects.hash(key, value);
 		}
-		
+
 		@Override
 		public String toString() {
 			StringBuilder str = new StringBuilder();
@@ -350,8 +334,8 @@ public interface PermissionBasedAccessController extends AccessController {
 	 * @param v6 the sixth parameter value
 	 * @param k7 the seventh parameter key
 	 * @param v7 the seventh parameter value
-	 * @param k8 the eigth parameter key
-	 * @param v8 the eigth parameter value
+	 * @param k8 the eighth parameter key
+	 * @param v8 the eighth parameter value
 	 * 
 	 * @return a mono emitting true if the permission is granted, false otherwise
 	 */
@@ -379,8 +363,8 @@ public interface PermissionBasedAccessController extends AccessController {
 	 * @param v6 the sixth parameter value
 	 * @param k7 the seventh parameter key
 	 * @param v7 the seventh parameter value
-	 * @param k8 the eigth parameter key
-	 * @param v8 the eigth parameter value
+	 * @param k8 the eighth parameter key
+	 * @param v8 the eighth parameter value
 	 * @param k9 the ninth parameter key
 	 * @param v9 the ninth parameter value
 	 * 
@@ -410,8 +394,8 @@ public interface PermissionBasedAccessController extends AccessController {
 	 * @param v6 the sixth parameter value
 	 * @param k7 the seventh parameter key
 	 * @param v7 the seventh parameter value
-	 * @param k8 the eigth parameter key
-	 * @param v8 the eigth parameter value
+	 * @param k8 the eighth parameter key
+	 * @param v8 the eighth parameter value
 	 * @param k9 the ninth parameter key
 	 * @param v9 the ninth parameter value
 	 * @param k10 the tenth parameter key
@@ -616,8 +600,8 @@ public interface PermissionBasedAccessController extends AccessController {
 	 * @param v6 the sixth parameter value
 	 * @param k7 the seventh parameter key
 	 * @param v7 the seventh parameter value
-	 * @param k8 the eigth parameter key
-	 * @param v8 the eigth parameter value
+	 * @param k8 the eighth parameter key
+	 * @param v8 the eighth parameter value
 	 * 
 	 * @return a mono emitting true if a permission is granted, false otherwise
 	 */
@@ -645,8 +629,8 @@ public interface PermissionBasedAccessController extends AccessController {
 	 * @param v6 the sixth parameter value
 	 * @param k7 the seventh parameter key
 	 * @param v7 the seventh parameter value
-	 * @param k8 the eigth parameter key
-	 * @param v8 the eigth parameter value
+	 * @param k8 the eighth parameter key
+	 * @param v8 the eighth parameter value
 	 * @param k9 the ninth parameter key
 	 * @param v9 the ninth parameter value
 	 * 
@@ -676,8 +660,8 @@ public interface PermissionBasedAccessController extends AccessController {
 	 * @param v6 the sixth parameter value
 	 * @param k7 the seventh parameter key
 	 * @param v7 the seventh parameter value
-	 * @param k8 the eigth parameter key
-	 * @param v8 the eigth parameter value
+	 * @param k8 the eighth parameter key
+	 * @param v8 the eighth parameter value
 	 * @param k9 the ninth parameter key
 	 * @param v9 the ninth parameter value
 	 * @param k10 the tenth parameter key
@@ -882,8 +866,8 @@ public interface PermissionBasedAccessController extends AccessController {
 	 * @param v6 the sixth parameter value
 	 * @param k7 the seventh parameter key
 	 * @param v7 the seventh parameter value
-	 * @param k8 the eigth parameter key
-	 * @param v8 the eigth parameter value
+	 * @param k8 the eighth parameter key
+	 * @param v8 the eighth parameter value
 	 * 
 	 * @return a mono emitting true if all permissions are granted, false otherwise
 	 */
@@ -911,8 +895,8 @@ public interface PermissionBasedAccessController extends AccessController {
 	 * @param v6 the sixth parameter value
 	 * @param k7 the seventh parameter key
 	 * @param v7 the seventh parameter value
-	 * @param k8 the eigth parameter key
-	 * @param v8 the eigth parameter value
+	 * @param k8 the eighth parameter key
+	 * @param v8 the eighth parameter value
 	 * @param k9 the ninth parameter key
 	 * @param v9 the ninth parameter value
 	 * 
@@ -942,8 +926,8 @@ public interface PermissionBasedAccessController extends AccessController {
 	 * @param v6 the sixth parameter value
 	 * @param k7 the seventh parameter key
 	 * @param v7 the seventh parameter value
-	 * @param k8 the eigth parameter key
-	 * @param v8 the eigth parameter value
+	 * @param k8 the eighth parameter key
+	 * @param v8 the eighth parameter value
 	 * @param k9 the ninth parameter key
 	 * @param v9 the ninth parameter value
 	 * @param k10 the tenth parameter key

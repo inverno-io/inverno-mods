@@ -36,6 +36,8 @@ import io.netty.handler.codec.compression.Zstd;
 import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpContentDecompressor;
 import io.netty.handler.codec.http.HttpDecoderConfig;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler;
 import io.netty.handler.codec.http2.Http2CodecUtil;
@@ -52,7 +54,7 @@ import java.util.function.Supplier;
  * A configurer used to configure a channel pipeline for HTTP/1x and/or HTTP/2 connections.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 @Bean(visibility = Visibility.PRIVATE)
@@ -73,14 +75,14 @@ public class HttpServerChannelConfigurer {
 	
 	/**
 	 * <p>
-	 * Creates a HTTP channel configurer.
+	 * Creates an HTTP channel configurer.
 	 * </p>
 	 * 
 	 * @param configuration                      the HTTP server configuration
 	 * @param netService                         the Net service
 	 * @param sslContextSupplier                 a SSL context supplier
-	 * @param http1xChannelHandlerFactory        a HTTP1.x channel handler factory
-	 * @param http2ChannelHandlerFactory         a HTTP/2 channel handler factory
+	 * @param http1xChannelHandlerFactory        an HTTP1.x channel handler factory
+	 * @param http2ChannelHandlerFactory         an HTTP/2 channel handler factory
 	 */
 	public HttpServerChannelConfigurer(
 			HttpServerConfiguration configuration,
@@ -112,7 +114,7 @@ public class HttpServerChannelConfigurer {
 			compressionOptionsList.add(StandardCompressionOptions.brotli(new Encoder.Parameters().setQuality(this.configuration.compression_brotli_quality()).setMode(Encoder.Mode.of(this.configuration.compression_brotli_mode())).setWindow(this.configuration.compression_brotli_window())));
 		}
 		
-		this.compressionOptions = compressionOptionsList.stream().toArray(CompressionOptions[]::new);
+		this.compressionOptions = compressionOptionsList.toArray(CompressionOptions[]::new);
 		
 		this.httpDecoderConfig = new HttpDecoderConfig()
 			.setInitialBufferSize(configuration.http1x_initial_buffer_size())
@@ -238,7 +240,13 @@ public class HttpServerChannelConfigurer {
 	public void configureH2C(ChannelPipeline pipeline) {
 		pipeline.addLast("directH2cHandler", new DirectH2cUpgradeHandler(this::completeDirectH2c, this.http2ConnectionFactory));
 		this.initHttp1x(pipeline);
-		pipeline.addLast("h2cUpgradeHandler", new HttpServerUpgradeHandler(this::completeH2cUpgrade, this::createH2cUpgradeCodec, this.configuration.h2c_max_content_length()));
+		pipeline.addLast("h2cUpgradeHandler", new HttpServerUpgradeHandler(this::completeH2cUpgrade, this::createH2cUpgradeCodec, this.configuration.h2c_max_content_length()) {
+
+			@Override
+			protected boolean shouldHandleUpgradeRequest(HttpRequest req) {
+				return req.headers().contains(HttpHeaderNames.UPGRADE, Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, false);
+			}
+		});
 		this.handleHttp1x(pipeline);
 	}
 	

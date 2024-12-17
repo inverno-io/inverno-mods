@@ -39,7 +39,7 @@ import reactor.core.publisher.Sinks;
  * Http/1.x {@link Exchange} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @param <A> The exchange context type
@@ -53,13 +53,14 @@ class Http1xExchange<A extends ExchangeContext> extends AbstractExchange<A, Http
 	Http1xExchange<?> next;
 	
 	private boolean reset;
-	
+
 	/**
 	 * <p>
 	 * Creates an Http/1.x exchange.
 	 * </p>
-	 * 
-	 * @param configuration      the HTTP client configurartion
+	 *
+	 * @param state              the state
+	 * @param configuration      the HTTP client module configuration
 	 * @param sink               the exchange sink
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
@@ -68,6 +69,7 @@ class Http1xExchange<A extends ExchangeContext> extends AbstractExchange<A, Http
 	 * @param endpointRequest    the endpoint request
 	 */
 	public Http1xExchange(
+			Object state,
 			HttpClientConfiguration configuration,
 			Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink,
 			HeaderService headerService,
@@ -76,7 +78,7 @@ class Http1xExchange<A extends ExchangeContext> extends AbstractExchange<A, Http
 			Http1xConnection connection, 
 			EndpointRequest endpointRequest
 		) {
-		super(configuration, sink, headerService, parameterConverter, context, new Http1xRequest(parameterConverter, connection, endpointRequest));
+		super(state, configuration, sink, headerService, parameterConverter, context, new Http1xRequest(parameterConverter, connection, endpointRequest));
 		this.connection = connection;
 	}
 
@@ -88,7 +90,7 @@ class Http1xExchange<A extends ExchangeContext> extends AbstractExchange<A, Http
 					this.timeoutFuture = null;
 					// we are supposed to have sent the request so we can close the connection
 					this.connection.onRequestError(new RequestTimeoutException("Exceeded timeout " + this.configuration.request_timeout() + "ms"));
-				}, 
+				},
 				this.configuration.request_timeout(), 
 				TimeUnit.MILLISECONDS
 			);
@@ -102,7 +104,7 @@ class Http1xExchange<A extends ExchangeContext> extends AbstractExchange<A, Http
 			this.timeoutFuture = null;
 		}
 	}
-	
+
 	/**
 	 * <p>
 	 * Starts the processing of the exchange.

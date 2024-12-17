@@ -34,7 +34,7 @@ import reactor.core.publisher.Mono;
  */
 public class GenericPBES2JWKGenerator extends AbstractJWKGenerator<GenericPBES2JWK, GenericPBES2JWKGenerator> implements PBES2JWKGenerator<GenericPBES2JWK, GenericPBES2JWKGenerator> {
 
-	private static final RandomStringGenerator DEFAULT_RANDOM_STRING_GENERATOR = new RandomStringGenerator.Builder().build();
+	private static final RandomStringGenerator DEFAULT_RANDOM_STRING_GENERATOR = new RandomStringGenerator.Builder().get();
 	
 	/**
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc7518#section-8.8">RFC7518 Section 8.8</a>

@@ -33,23 +33,12 @@ import reactor.core.publisher.Flux;
  * An application/x-www-form-urlencoded payload encoder implementation as defined by <a href="https://url.spec.whatwg.org/#application/x-www-form-urlencoded">application/x-www-form-urlencoded</a>.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 @Bean(visibility = Bean.Visibility.PRIVATE)
 public class UrlEncodedBodyEncoder implements MultipartEncoder<Parameter> {
 
-	private final OutboundDataSequencer dataSequencer;
-
-	/**
-	 * <p>
-	 * Creates a URL encoded payload encoder.
-	 * </p>
-	 */
-	public UrlEncodedBodyEncoder() {
-		this.dataSequencer = new OutboundDataSequencer();
-	}
-	
 	@Override
 	public Flux<ByteBuf> encode(Flux<Parameter> data, Headers.ContentType contentType) {
 		if(contentType == null || !contentType.getMediaType().equalsIgnoreCase(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED)) {
@@ -63,10 +52,10 @@ public class UrlEncodedBodyEncoder implements MultipartEncoder<Parameter> {
 	 * A part mapper used to map a parameter to a payload data publisher.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 */
-	private class ParameterMapper implements Function<Parameter, ByteBuf> {
+	private static class ParameterMapper implements Function<Parameter, ByteBuf> {
 
 		private final Charset charset;
 		

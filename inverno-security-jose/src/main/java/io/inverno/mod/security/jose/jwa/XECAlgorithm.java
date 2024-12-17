@@ -92,7 +92,7 @@ public enum XECAlgorithm implements JWAAlgorithm<XECJWK> {
 	 * @param cipherFactory        the JWA cipher factory
 	 * @param keyWrappingAlgorithm the key wrapping algorithm
 	 */
-	private XECAlgorithm(String alg, BiFunction<XECJWK, XECAlgorithm, JWASigner> signerFactory, BiFunction<XECJWK, XECAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<XECJWK, XECAlgorithm, JWACipher> cipherFactory, String keyWrappingAlgorithm) {
+	XECAlgorithm(String alg, BiFunction<XECJWK, XECAlgorithm, JWASigner> signerFactory, BiFunction<XECJWK, XECAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<XECJWK, XECAlgorithm, JWACipher> cipherFactory, String keyWrappingAlgorithm) {
 		this.alg = alg;
 		this.signerFactory = signerFactory;
 		this.keyManagerFactory = keyManagerFactory;

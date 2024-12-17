@@ -62,9 +62,7 @@ public interface LogoutSuccessHandler<A extends Authentication, B extends Identi
 	 * @return a composed logout success handler that invokes in sequence this handler followed by the specified handler
 	 */
 	default LogoutSuccessHandler<A, B, C, D, E> andThen(LogoutSuccessHandler<? super A, ? super B, ? super C,  ? super D, ? super E> after) {
-		return (exchange, authentication) -> {
-			return this.handleLogoutSuccess(exchange, authentication).then(after.handleLogoutSuccess(exchange, authentication));
-		};
+		return (exchange, authentication) -> this.handleLogoutSuccess(exchange, authentication).then(after.handleLogoutSuccess(exchange, authentication));
 	}
 	
 	/**
@@ -77,9 +75,7 @@ public interface LogoutSuccessHandler<A extends Authentication, B extends Identi
 	 * @return a composed logout success handler that invokes in sequence the specified handler followed by this handler
 	 */
 	default LogoutSuccessHandler<A, B, C, D, E> compose(LogoutSuccessHandler<? super A, ? super B, ? super C,  ? super D, ? super E> before) {
-		return (exchange, authentication) -> {
-			return before.handleLogoutSuccess(exchange, authentication).then(this.handleLogoutSuccess(exchange, authentication));
-		};
+		return (exchange, authentication) -> before.handleLogoutSuccess(exchange, authentication).then(this.handleLogoutSuccess(exchange, authentication));
 	}
 	
 	/**

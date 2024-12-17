@@ -22,11 +22,11 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * Represents a parameter in a URI component specified in the component's raw value in the form <code>{{@literal <name>[:<pattern>]}}</code>.
+ * Represents a parameter in a URI component specified in the component's raw value in the form {@code {<name>[:<pattern>]}}.
  * </p>
  *
  * <p>
- * A URI parameter has a name and a pattern which default to <code>{@literal [^/]*}</code>.
+ * A URI parameter has a name and a pattern which default to {@code [^/]*}.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -36,10 +36,15 @@ import org.apache.commons.lang3.StringUtils;
  */
 class URIParameter implements URIComponentPart {
 
-	public static final String WILDCARD_PATTERN = "[^/]*";
-	
 	public static final String QUESTION_MARK_PATTERN = "[^/]";
-	
+	public static final String WILDCARD_PATTERN = "[^/]*";
+	public static final String DIRECTORIES_PATTERN = "[^/]*(?:/[^/]*)*";
+
+	private static final byte QUESTION_MARK_TYPE = 0;
+	private static final byte CUSTOM_TYPE = 1;
+	private static final byte WILDCARD_TYPE = 2;
+	private static final byte DIRECTORIES_TYPE = 3;
+
 	private final int offset;
 	
 	private final int length;
@@ -51,11 +56,9 @@ class URIParameter implements URIComponentPart {
 	private final String name;
 	
 	private final String pattern;
-	
-	private final boolean custom;
-	private final boolean wildcard;
-	private final boolean questionMark;
-	
+
+	private final byte type;
+
 	/**
 	 * <p>
 	 * Creates the URI parameter defined at the specified offset and of the specified length within a component's raw value and with the specified name and charset and default pattern.
@@ -120,10 +123,27 @@ class URIParameter implements URIComponentPart {
 		this.allowedCharacters = allowedCharacters;
 		this.charset = charset;
 		this.name = StringUtils.isNotBlank(name) ? name : null;
-		this.pattern = pattern;
-		this.wildcard = this.pattern.equals(WILDCARD_PATTERN);
-		this.questionMark = !this.wildcard && this.pattern.equals(QUESTION_MARK_PATTERN);
-		this.custom = !this.wildcard && !this.questionMark;
+		switch(pattern) {
+			case "?":
+			case QUESTION_MARK_PATTERN:
+				this.type = QUESTION_MARK_TYPE;
+				this.pattern = QUESTION_MARK_PATTERN;
+				break;
+			case "*":
+			case WILDCARD_PATTERN:
+				this.type = WILDCARD_TYPE;
+				this.pattern = WILDCARD_PATTERN;
+				break;
+			case "**":
+			case DIRECTORIES_PATTERN:
+				this.type = DIRECTORIES_TYPE;
+				this.pattern = DIRECTORIES_PATTERN;
+				break;
+			default:
+				this.type = CUSTOM_TYPE;
+				this.pattern = pattern;
+				break;
+		}
 	}
 
 	/**
@@ -192,20 +212,16 @@ class URIParameter implements URIComponentPart {
 	
 	/**
 	 * <p>
-	 * Returns true if the parameter represents a custom pattern.
+	 * Returns true if the parameter represents a {@link #QUESTION_MARK_PATTERN}.
 	 * <p>
-	 * 
-	 * <p>
-	 * A custom pattern is anything other than the {@link #WILDCARD_PATTERN} or {@link #QUESTION_MARK_PATTERN} pattern.
-	 * </p>
-	 * 
-	 * @return true if this is a custom pattern parameter, false otherwise
+	 *
+	 * @return true if this is a question mark pattern parameter, false otherwise
 	 */
 	@Override
-	public boolean isCustom() {
-		return custom;
+	public boolean isQuestionMark() {
+		return this.type == QUESTION_MARK_TYPE;
 	}
-	
+
 	/**
 	 * <p>
 	 * Returns true if the parameter represents a {@link #WILDCARD_PATTERN}.
@@ -215,21 +231,37 @@ class URIParameter implements URIComponentPart {
 	 */
 	@Override
 	public boolean isWildcard() {
-		return wildcard;
+		return this.type == WILDCARD_TYPE;
 	}
-	
+
 	/**
 	 * <p>
-	 * Returns true if the parameter represents a {@link #QUESTION_MARK_PATTERN}.
+	 * Returns true if the parameter represents a {@link #DIRECTORIES_PATTERN}.
 	 * <p>
-	 * 
-	 * @return true if this is a question mark pattern parameter, false otherwise
+	 *
+	 * @return true if this is a directories pattern parameter, false otherwise
 	 */
 	@Override
-	public boolean isQuestionMark() {
-		return questionMark;
+	public boolean isDirectories() {
+		return this.type == DIRECTORIES_TYPE;
 	}
-	
+
+	/**
+	 * <p>
+	 * Returns true if the parameter represents a custom pattern.
+	 * <p>
+	 *
+	 * <p>
+	 * A custom pattern is anything other than the {@link #WILDCARD_PATTERN} or {@link #QUESTION_MARK_PATTERN} pattern.
+	 * </p>
+	 *
+	 * @return true if this is a custom pattern parameter, false otherwise
+	 */
+	@Override
+	public boolean isCustom() {
+		return this.type == CUSTOM_TYPE;
+	}
+
 	/**
 	 * <p>
 	 * Returns the unnamed non-capturing pattern of the parameter.
@@ -238,9 +270,7 @@ class URIParameter implements URIComponentPart {
 	 * @return the parameter pattern
 	 */
 	public String getUnnamedNonCapturingPattern() {
-		StringBuilder parameterPattern = new StringBuilder("(?:");
-		parameterPattern.append(this.pattern).append(")");
-		return parameterPattern.toString();
+		return "(?:" + this.pattern + ")";
 	}
 	
 	/**

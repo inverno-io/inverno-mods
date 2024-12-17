@@ -33,7 +33,7 @@ import reactor.core.publisher.Mono;
  * Http/2 {@link Response} implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2ResponseBody, Http2ResponseTrailers, Http2Response> {
@@ -54,7 +54,7 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
 	 * @param validateHeaders    true to validate headers, false otherwise
-	 * @param connectionStream   the conection stream
+	 * @param connectionStream   the connection stream
 	 * @param head               true to indicate a {@code HEAD} request, false otherwise
 	 */
 	public Http2Response(HeaderService headerService, ObjectConverter<String> parameterConverter, boolean validateHeaders, Http2ConnectionStream connectionStream, boolean head) {
@@ -140,7 +140,7 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 	 * The response body data publisher optimized for {@link Mono} publisher that writes response objects to the connection.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.10
 	 */
 	private class MonoBodyDataSubscriber extends BaseSubscriber<ByteBuf> {
@@ -155,7 +155,7 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 
 		@Override
 		protected void hookOnNext(ByteBuf value) {
-			Http2Response.this.transferedLength += value.readableBytes();
+			Http2Response.this.transferredLength += value.readableBytes();
 			this.data = value;
 		}
 
@@ -163,7 +163,7 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 		protected void hookOnComplete() {
 			if(!Http2Response.this.connectionStream.isReset()) {
 				if(!Http2Response.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
-					Http2Response.this.headers.contentLength(Http2Response.this.transferedLength);
+					Http2Response.this.headers.contentLength(Http2Response.this.transferredLength);
 				}
 
 				if(this.data == null) {
@@ -209,7 +209,7 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 	 * The response body data subscriber that writes response objects to the connection.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.10
 	 */
 	private class BodyDataSubscriber extends BaseSubscriber<ByteBuf> {
@@ -226,7 +226,7 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 		@Override
 		protected void hookOnNext(ByteBuf value) {
 			if(!Http2Response.this.connectionStream.isReset()) {
-				Http2Response.this.transferedLength += value.readableBytes();
+				Http2Response.this.transferredLength += value.readableBytes();
 				if(!this.many && this.singleChunk == null) {
 					this.singleChunk = value;
 				}
@@ -267,7 +267,7 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 				}
 				else {
 					if(!Http2Response.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
-						Http2Response.this.headers.contentLength(Http2Response.this.transferedLength);
+						Http2Response.this.headers.contentLength(Http2Response.this.transferredLength);
 					}
 
 					if(this.singleChunk == null) {

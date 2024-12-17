@@ -21,12 +21,12 @@ import io.inverno.mod.http.base.InboundData;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.server.Part;
 import io.netty.buffer.ByteBuf;
+import io.netty.util.ReferenceCounted;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
@@ -40,18 +40,15 @@ import reactor.core.publisher.Sinks;
  */
 class GenericPart implements Part {
 
-	private String name;
+	private final String name;
+	private final String filename;
+	private final PartHeaders partHeaders;
 	
-	private String filename;
+	private final Sinks.Many<ByteBuf> dataSink;
+	private final Flux<ByteBuf> data;
 
-	private PartHeaders partHeaders;
-	
-	private Sinks.Many<ByteBuf> dataSink;
 	private boolean subscribed;
 	private boolean disposed;
-	
-	private Flux<ByteBuf> data;
-	
 	private InboundData<ByteBuf> rawData;
 	private InboundData<CharSequence> stringData;
 	
@@ -67,19 +64,16 @@ class GenericPart implements Part {
 	public GenericPart(ObjectConverter<String> parameterConverter, String name, Map<String, List<Header>> headers) {
 		this(parameterConverter, name, null, headers);
 	}
-	
+
 	/**
 	 * <p>
 	 * creates a file part.
 	 * </p>
-	 * 
-	 * @param parameterConverter a string object converter
+	 *
+	 * @param parameterConverter the parameter converter
 	 * @param name               the part's name
 	 * @param filename           the part's file name
 	 * @param headers            the part's headers
-	 * @param contentType        the part's media type
-	 * @param charset            the part's charset
-	 * @param contentLength      the part's content length
 	 */
 	public GenericPart(ObjectConverter<String> parameterConverter, String name, String filename, Map<String, List<Header>> headers) {
 		this.name = name;
@@ -130,7 +124,7 @@ class GenericPart implements Part {
 			// Try to drain and release buffered data 
 			// when the datasink was already subscribed data are released in doOnDiscard
 			this.dataSink.asFlux().subscribe(
-				chunk -> chunk.release(), 
+				ReferenceCounted::release,
 				ex -> {
 					// TODO Should be ignored but can be logged as debug or trace log
 				}

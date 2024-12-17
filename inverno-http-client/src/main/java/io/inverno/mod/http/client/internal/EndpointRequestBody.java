@@ -28,6 +28,7 @@ import io.inverno.mod.http.client.RequestBody;
 import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -40,7 +41,7 @@ import reactor.core.publisher.Mono;
  * The {@link RequestBody} implementation exposed in the {@link EndpointRequest} to set the request body.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.8
  */
 public class EndpointRequestBody implements RequestBody {
@@ -66,7 +67,7 @@ public class EndpointRequestBody implements RequestBody {
 	 * Creates an endpoint request body.
 	 * </p>
 	 * 
-	 * @param request               the request
+	 * @param requestHeaders        the request headers
 	 * @param parameterConverter    the parameter converter
 	 * @param urlEncodedBodyEncoder the URL encoded body encoder
 	 * @param multipartBodyEncoder  the multipart body encoder
@@ -104,7 +105,7 @@ public class EndpointRequestBody implements RequestBody {
 	 * Return the raw data publisher that has been set in the request body or null if none was specified.
 	 * </p>
 	 * 
-	 * @return 
+	 * @return the raw data publisher or null
 	 */
 	public Publisher<ByteBuf> getData() {
 		return this.data;
@@ -165,9 +166,10 @@ public class EndpointRequestBody implements RequestBody {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T extends CharSequence> OutboundData<T> string() {
 		if(this.stringData == null) {
-			this.stringData = new EndpointRequestBody.StringOutboundData();
+			this.stringData = new StringOutboundData();
 		}
 		return (OutboundData<T>)this.stringData;
 	}
@@ -201,12 +203,13 @@ public class EndpointRequestBody implements RequestBody {
 	 * Raw {@link OutboundData} implementation.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 */
 	protected class RawOutboundData implements OutboundData<ByteBuf> {
 
 		@Override
+		@SuppressWarnings("unchecked")
 		public <T extends ByteBuf> void stream(Publisher<T> value) throws IllegalStateException {
 			EndpointRequestBody.this.setData((Publisher<ByteBuf>) value);
 		}
@@ -217,7 +220,7 @@ public class EndpointRequestBody implements RequestBody {
 	 * String {@link OutboundData} implementation.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 */
 	protected class StringOutboundData implements OutboundData<CharSequence> {
@@ -226,26 +229,26 @@ public class EndpointRequestBody implements RequestBody {
 		public <T extends CharSequence> void stream(Publisher<T> value) throws IllegalStateException {
 			Publisher<ByteBuf> data;
 			if(value instanceof Mono) {
-				data = ((Mono<T>)value).map(chunk -> Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(chunk, Charsets.DEFAULT)));
+				data = ((Mono<T>)value).map(chunk -> Unpooled.copiedBuffer(chunk, Charsets.DEFAULT));
 			}
 			else {
-				data = Flux.from(value).map(chunk -> Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(chunk, Charsets.DEFAULT)));
+				data = Flux.from(value).map(chunk -> Unpooled.copiedBuffer(chunk, Charsets.DEFAULT));
 			}
 			EndpointRequestBody.this.setData(data);
 		}
 
 		@Override
 		public <T extends CharSequence> void value(T value) throws IllegalStateException {
-			EndpointRequestBody.this.setData(value != null ? Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value, Charsets.DEFAULT))) : Mono.empty());
+			EndpointRequestBody.this.setData(value != null ? Mono.just(Unpooled.copiedBuffer(value, Charsets.DEFAULT)) : Mono.empty());
 		}
 	}
 	
 	/**
 	 * <p>
-	 * Generic {@link RequestBodyConfigurator.Resource} implementation.
+	 * Generic {@link RequestBody.Resource} implementation.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 */
 	protected class ResourceData implements RequestBody.Resource {
@@ -278,17 +281,17 @@ public class EndpointRequestBody implements RequestBody {
 	
 	/**
 	 * <p>
-	 * Generic {@link RequestBodyConfigurator.UrlEncoded} implementation.
+	 * Generic {@link RequestBody.UrlEncoded} implementation.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 */
-	protected class UrlEncodedData implements RequestBody.UrlEncoded<Parameter.Factory> {
+	protected class UrlEncodedData implements Parameter.Factory, RequestBody.UrlEncoded<Parameter.Factory> {
 
 		@Override
 		public void from(BiConsumer<Parameter.Factory, OutboundData<Parameter>> data) {
-			data.accept(this::create, this::stream);
+			data.accept(this, this::stream);
 		}
 
 		/**
@@ -310,28 +313,23 @@ public class EndpointRequestBody implements RequestBody {
 			EndpointRequestBody.this.setData(EndpointRequestBody.this.urlEncodedBodyEncoder.encode(Flux.from(value), contentTypeHeader));
 		}
 		
-		/**
-		 * <p>
-		 * Creates a parameter with specified name and value.
-		 * </p>
-		 * 
-		 * @param <T>   the parameter value type
-		 * @param name  the parameter name 
-		 * @param value the parameter value
-		 * 
-		 * @return a new parameter
-		 */
-		protected <T> Parameter create(String name, T value) {
+		@Override
+		public <T> Parameter create(String name, T value) {
 			return new GenericParameter(name, value, EndpointRequestBody.this.parameterConverter);
+		}
+
+		@Override
+		public <T> Parameter create(String name, T value, Type type) {
+			return new GenericParameter(name, value, EndpointRequestBody.this.parameterConverter, type);
 		}
 	}
 	
 	/**
 	 * <p>
-	 * Generic {@link RequestBodyConfigurator.Multipart} implementation.
+	 * Generic {@link RequestBody.Multipart} implementation.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 */
 	protected class MultipartData implements RequestBody.Multipart<Part.Factory, Part<?>> {
@@ -355,6 +353,10 @@ public class EndpointRequestBody implements RequestBody {
 			Headers.ContentType contentTypeHeader = EndpointRequestBody.this.requestHeaders.getContentTypeHeader();
 			if(contentTypeHeader == null) {
 				contentTypeHeader = new ContentTypeCodec.ContentType(MediaTypes.MULTIPART_FORM_DATA, Charsets.DEFAULT, ContentTypeCodec.generateMultipartBoundary(), null);
+				EndpointRequestBody.this.requestHeaders.set(contentTypeHeader);
+			}
+			else if(contentTypeHeader.getBoundary() == null) {
+				contentTypeHeader = new ContentTypeCodec.ContentType(MediaTypes.MULTIPART_FORM_DATA, Charsets.orDefault(contentTypeHeader.getCharset()), ContentTypeCodec.generateMultipartBoundary(), contentTypeHeader.getParameters());
 				EndpointRequestBody.this.requestHeaders.set(contentTypeHeader);
 			}
 			EndpointRequestBody.this.setData(EndpointRequestBody.this.multipartBodyEncoder.encode(Flux.from(value), contentTypeHeader));

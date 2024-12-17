@@ -48,7 +48,7 @@ public class IrtToken extends Token {
 	 * @param ofKind     the kind of token
 	 * @param tokenImage the token image
 	 */
-	public static final Token newToken(int ofKind, String tokenImage) {
+	public static Token newToken(int ofKind, String tokenImage) {
 		return new IrtToken(ofKind, tokenImage);
 	}
 }

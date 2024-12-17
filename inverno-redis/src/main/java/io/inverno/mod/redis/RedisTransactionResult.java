@@ -67,6 +67,7 @@ public interface RedisTransactionResult {
      * @param <T> inferred type
 	 * 
      * @return the command result at the specified index
+	 *
      * @throws IndexOutOfBoundsException if the index is out of range
      */
     <T> T get(int index) throws IndexOutOfBoundsException;

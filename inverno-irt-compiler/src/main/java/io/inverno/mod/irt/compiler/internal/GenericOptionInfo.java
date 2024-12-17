@@ -24,7 +24,6 @@ import io.inverno.mod.irt.compiler.spi.OptionInfo;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class GenericOptionInfo extends BaseInfo implements OptionInfo {
 

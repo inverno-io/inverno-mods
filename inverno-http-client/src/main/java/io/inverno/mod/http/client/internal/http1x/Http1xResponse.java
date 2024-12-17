@@ -16,18 +16,20 @@
 package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.OutboundResponseHeaders;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import io.inverno.mod.http.client.Response;
 import io.inverno.mod.http.client.internal.AbstractResponse;
 import io.netty.handler.codec.http.HttpResponse;
+import java.util.function.Consumer;
 
 /**
  * <p>
  * Http/1.x {@link Response} implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xResponseBody, Http1xResponseTrailers, LinkedHttpHeaders> {
@@ -42,7 +44,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 	 *
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
-	 * @param response           the originating Http response
+	 * @param response           the originating HTTP response
 	 */
 	public Http1xResponse(
 			HeaderService headerService, 
@@ -53,6 +55,12 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 		
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
+	}
+
+	@Override
+	public Http1xResponse configureInterceptedHeaders(Consumer<OutboundResponseHeaders> headersConfigurer) {
+		this.headers().configureInterceptedHeaders(headersConfigurer);
+		return this;
 	}
 
 	@Override

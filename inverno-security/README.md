@@ -29,11 +29,11 @@ The Inverno security API has been designed to follow a clear security model with
 
 The Inverno security model, which basically defines application security, is based on three main concepts:
 
-- **Authentication** which relates to the authentification of a request made to the application.
+- **Authentication** which relates to the authentication of a request made to the application.
 - **Identification** which relates to the identification of the entity accessing the application.
 - **Access Control** which relates to the control of access to protected services or resources in the application.
 
-The authentication process is about authenticating credentials (e.g. user/password, token...) provided in a request in order to assess whether access to the application is granted to a requesting entity. It is very important to understand that authentication is not about authenticating the entity but really the credentials. The entity represents the originator of a request to the application, it can be external or internal, it can be an application, a device, a proxy or an actual person but as far as the application is concerned, access can only be granted when valid credentials have been authenticated which is more related to the request than the actual entity behind that request. When refering to the *authenticated entity*, we simply refer to that entity behind a request which provided credentials that has been authenticated during the authentication process.
+The authentication process is about authenticating credentials (e.g. user/password, token...) provided in a request in order to assess whether access to the application is granted to a requesting entity. It is very important to understand that authentication is not about authenticating the entity but really the credentials. The entity represents the originator of a request to the application, it can be external or internal, it can be an application, a device, a proxy or an actual person but as far as the application is concerned, access can only be granted when valid credentials have been authenticated which is more related to the request than the actual entity behind that request. When referring to the *authenticated entity*, we simply refer to that entity behind a request which provided credentials that has been authenticated during the authentication process.
 
 > This is actually an important point so let's take a concrete example to better understand what it means. Let's consider a prepaid card which allows for ten entries to a roller coaster, you can buy one and at the entrance pass it to your friends one after the other so you can all enjoy the ride. When passing the gates, it is the pass that is being authenticated not the person holding that pass.
 
@@ -41,7 +41,7 @@ The identification process is about identifying the authenticated entity accessi
 
 The access control process is about controlling whether an authenticated entity has the proper clearance (e.g. roles, permissions...) to access specific services or resources within the application.
 
-From these definitions, it is important to notice that although authentication, identification and access control are all related to an entity accessing the application, they are not necessarily related to each others. For instance [OAuth2][oauth2.1] is a perfect example of authentication without identification. Then we can surely conceive multiple cases where we have authentication without access control, for example an opaque token can be authenticated which gives us no information about the roles or permissions of the authenticated entity. To sum up, a requesting entity can be authenticated, then maybe identified and we may be able to control the access to protected services or resources based on other information (e.g. roles, permissions...)
+From these definitions, it is important to notice that although authentication, identification and access control are all related to an entity accessing the application, they are not necessarily related to each others. For instance [OAuth2][oauth2.1] is a perfect example of authentication without identification. Then we can surely conceive multiple cases where we have authentication without access control, for example an opaque token can be authenticated which gives us no information about the roles or permissions of the authenticated entity. To sum up, a requesting entity can be authenticated, then maybe identified, and we may be able to control the access to protected services or resources based on other information (e.g. roles, permissions...)
 
 Let's consider a more practical example to illustrate the theory. Let's assume our secured application is actually a secured facility:
 
@@ -54,7 +54,7 @@ Let's consider a more practical example to illustrate the theory. Let's assume o
     - there can be unsecured services, like a coffee machine in the lobby which anybody within the facility can use.
     - there can be restricted areas or services that require proper clearance to access. The person must then re-authenticate using the same credentials he used to enter the facility or using temporary credentials received at the entrance (e.g. visitor badge). Access control must then be performed and requires to have the person's clearances securely stored in the facility security system or inside the temporary credentials in which case they should ideally be signed and encrypted to guarantee both integrity (we don't want to let him forge his own clearances) and privacy (we don't want to let him know how access control works in the system).
     - there can be services that require further identification information which can be already available following the person's authentication or which require some additional verification. For instance, the facility can be a casino, anybody can access the restaurant area but the casino area is restricted to adults over 18.
-- finally when leaving the facility, the person must return any temporary credentials he receveived (e.g. visitor badge in exchange from his ID card) or we can just let him go if those credentials have an expiration time and/or can be revoked anytime when we don't want him to use the facility anymore. 
+- finally when leaving the facility, the person must return any temporary credentials he received (e.g. visitor badge in exchange for his ID card) or we can just let him go if those credentials have an expiration time and/or can be revoked anytime when we don't want him to use the facility anymore. 
 
 An Inverno application is secured by composing authentication with identity and access controller inside a **Security Context** that implements application security requirements. 
 
@@ -84,9 +84,7 @@ In order to use the Inverno *security* module, we need to declare a dependency i
 
 ```java
 module io.inverno.example.app {
-    ...
     requires io.inverno.mod.security;
-    ...
 }
 ```
 
@@ -107,10 +105,8 @@ Using Maven:
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.inverno.mod:inverno-security:${VERSION_INVERNO_MODS}'
-...
 ```
 
 Before looking into details of the security API, let's see how to secure a simple standalone application composed of a single `HelloService` bean exposing `sayHello()` method. Initially the application might look like:
@@ -149,8 +145,6 @@ Running the application would return the following output:
 ```plaintext
 $ mvn inverno:run
 ...
-[INFO] Running project: io.inverno.example.app_hello_security@1.0.0-SNAPSHOT...
- [═══════════════════════════════════════════════ 100 % ══════════════════════════════════════════════] 
 15:59:29.395 [main] INFO  io.inverno.core.v1.Application - Inverno is starting...
 
 
@@ -219,7 +213,7 @@ public class Main {
             return;
         }
         
-        // The security manager uses a user authenticator with an in-memory user repository and a Login credentials (i.e. login/pasword) matcher
+        // The security manager uses a user authenticator with an in-memory user repository and a Login credentials (i.e. login/password) matcher
         SecurityManager<LoginCredentials, Identity, AccessController> securityManager = SecurityManager.of(
             new UserAuthenticator<>(
                 InMemoryUserRepository
@@ -269,20 +263,20 @@ $ mvn inverno:run -Dinverno.run.arguments="jsmith invalid"
 ...
 16:08:49.442 [main] ERROR io.inverno.example.app_hello_security.Main - Failed to authenticate user
 io.inverno.mod.security.authentication.InvalidCredentialsException: Invalid credentials
-	at io.inverno.mod.security.authentication.AbstractPrincipalAuthenticator.lambda$authenticate$1(AbstractPrincipalAuthenticator.java:74) ~[io.inverno.mod.security-1.5.0-SNAPSHOT.jar:?]
-	at reactor.core.publisher.MonoErrorSupplied.subscribe(MonoErrorSupplied.java:55) [reactor.core-3.4.14.jar:?]
-	at reactor.core.publisher.Mono.subscribe(Mono.java:4400) [reactor.core-3.4.14.jar:?]
-	at reactor.core.publisher.FluxSwitchIfEmpty$SwitchIfEmptySubscriber.onComplete(FluxSwitchIfEmpty.java:82) [reactor.core-3.4.14.jar:?]
-	at reactor.core.publisher.FluxMapFuseable$MapFuseableSubscriber.onComplete(FluxMapFuseable.java:150) [reactor.core-3.4.14.jar:?]
-	at reactor.core.publisher.FluxFilterFuseable$FilterFuseableSubscriber.onComplete(FluxFilterFuseable.java:171) [reactor.core-3.4.14.jar:?]
-	at reactor.core.publisher.Operators$MonoSubscriber.complete(Operators.java:1817) [reactor.core-3.4.14.jar:?]
-	at reactor.core.publisher.MonoSupplier.subscribe(MonoSupplier.java:62) [reactor.core-3.4.14.jar:?]
-	at reactor.core.publisher.Mono.subscribe(Mono.java:4400) [reactor.core-3.4.14.jar:?]
-	at reactor.core.publisher.Mono.subscribeWith(Mono.java:4515) [reactor.core-3.4.14.jar:?]
-	at reactor.core.publisher.Mono.subscribe(Mono.java:4371) [reactor.core-3.4.14.jar:?]
-	at reactor.core.publisher.Mono.subscribe(Mono.java:4307) [reactor.core-3.4.14.jar:?]
-	at reactor.core.publisher.Mono.subscribe(Mono.java:4279) [reactor.core-3.4.14.jar:?]
-	at io.inverno.example.app_hello_security.Main.main(Main.java:71) [classes/:?]
+    at io.inverno.mod.security.authentication.AbstractPrincipalAuthenticator.lambda$authenticate$1(AbstractPrincipalAuthenticator.java:74) ~[io.inverno.mod.security-1.5.0-SNAPSHOT.jar:?]
+    at reactor.core.publisher.MonoErrorSupplied.subscribe(MonoErrorSupplied.java:55) [reactor.core-3.4.14.jar:?]
+    at reactor.core.publisher.Mono.subscribe(Mono.java:4400) [reactor.core-3.4.14.jar:?]
+    at reactor.core.publisher.FluxSwitchIfEmpty$SwitchIfEmptySubscriber.onComplete(FluxSwitchIfEmpty.java:82) [reactor.core-3.4.14.jar:?]
+    at reactor.core.publisher.FluxMapFuseable$MapFuseableSubscriber.onComplete(FluxMapFuseable.java:150) [reactor.core-3.4.14.jar:?]
+    at reactor.core.publisher.FluxFilterFuseable$FilterFuseableSubscriber.onComplete(FluxFilterFuseable.java:171) [reactor.core-3.4.14.jar:?]
+    at reactor.core.publisher.Operators$MonoSubscriber.complete(Operators.java:1817) [reactor.core-3.4.14.jar:?]
+    at reactor.core.publisher.MonoSupplier.subscribe(MonoSupplier.java:62) [reactor.core-3.4.14.jar:?]
+    at reactor.core.publisher.Mono.subscribe(Mono.java:4400) [reactor.core-3.4.14.jar:?]
+    at reactor.core.publisher.Mono.subscribeWith(Mono.java:4515) [reactor.core-3.4.14.jar:?]
+    at reactor.core.publisher.Mono.subscribe(Mono.java:4371) [reactor.core-3.4.14.jar:?]
+    at reactor.core.publisher.Mono.subscribe(Mono.java:4307) [reactor.core-3.4.14.jar:?]
+    at reactor.core.publisher.Mono.subscribe(Mono.java:4279) [reactor.core-3.4.14.jar:?]
+    at io.inverno.example.app_hello_security.Main.main(Main.java:71) [classes/:?]
 ...
 ```
 
@@ -391,7 +385,7 @@ Hello John!
 
 > A `PersonIdentity` has been attached to the user in the repository but the repository may also contain users with no defined identity which is why `SecurityContext#identity()` returns an `Optional`.
 
-Now let's say we want some priviledged users to be greeted with an extra polite message. We can assign roles to users in the repository and resolve a `RoleBasedAccessContoller` to check priviledges in the `HelloService`:
+Now let's say we want some privileged users to be greeted with an extra polite message. We can assign roles to users in the repository and resolve a `RoleBasedAccessContoller` to check privileges in the `HelloService`:
 
 ```java
 package io.inverno.example.app_hello_security;
@@ -424,7 +418,7 @@ public class Main {
     
     public static void main(String[] args) {
         ...
-        // The security manager now uses a groups RBAC Resolver to resolve the RBAC access controler of the authenticated user
+        // The security manager now uses a groups RBAC Resolver to resolve the RBAC access controller of the authenticated user
         SecurityManager<LoginCredentials, PersonIdentity, RoleBasedAccessController> securityManager = SecurityManager.of(
             new UserAuthenticator<>(
                 InMemoryUserRepository
@@ -506,7 +500,7 @@ Hello Alice!
 
 Now let's take a closer look at the API starting by the `SecurityManager` which is the main entry point to secure an application.
 
-> Note that when securing a Web application, the role of the `SecurityManager` is actually handled by a `SecurityInterceptor` intercepting secured Web route and populating the exchange context with the security context to make it accessible to route handlers and interceptors. Please refere to the *security-http* module documentation for detailed information.
+> Note that when securing a Web application, the role of the `SecurityManager` is actually handled by a `SecurityInterceptor` intercepting secured Web route and populating the exchange context with the security context to make it accessible to route handlers and interceptors. Please refer to the *security-http* module documentation for detailed information.
 
 The security manager is used to authenticate credentials and create a security context exposing the actual authentication result and the authenticated entity's identity and access controller if any. A `SecurityManager` instance is created by composing an `Authenticator` with optional `IdentityResolver` and `AccessControllerResolver` which are respectively used to resolve the `Identity` and the `AccessController` of the authenticated entity based on the `Authentication` object resulting from the authentication of input `Credentials` by the `Authenticator`.
 
@@ -540,11 +534,11 @@ SecurityManager<LoginCredentials, PersonIdentity, RoleBasedAccessController> sec
 SecurityContext<PersonIdentity, RoleBasedAccessController> securityContext = securityManager.authenticate(LoginCredentials.of("user", new RawPassword("password"))).block();
 ```
 
-A security manager shall always return a security context even in case of security errors. For instance it returns:
+A security manager shall always return a security context even in case of security errors. For instance, it returns:
 
 - an **anonymous** security context when authenticating `null` credentials. An anonymous security context only expose an unauthenticated `Authentication` object with no cause.
-- an **denied** security context when authentication or identity or access controller resolutions failed with error.
-- an **granted** security context when authentication and identity and access controller resolutions were successful.
+- a **denied** security context when authentication or identity or access controller resolutions failed with error.
+- a **granted** security context when authentication and identity and access controller resolutions were successful.
 
 The following shows a proper way to handle a security context:
 
@@ -565,7 +559,7 @@ else {
 
 ### Credentials
 
-Credentials must be provided to the application to get access to protected services or resources inside the application. In practice, `Credentials` must be authenticated by the `Authenticator` of a `SecurityManager` which eventually creates the application's `SecurityContext` used accross the application to determine whether the authenticated entity can invoke services or access resources.
+Credentials must be provided to the application to get access to protected services or resources inside the application. In practice, `Credentials` must be authenticated by the `Authenticator` of a `SecurityManager` which eventually creates the application's `SecurityContext` used across the application to determine whether the authenticated entity can invoke services or access resources.
 
 There are many forms of credentials which depend on the actual authentication process. The most common is a username/password pair, but we can also think about tokens, an X.509 certificates... The security API exposes several basic type of credentials.
 
@@ -589,7 +583,7 @@ The `LoginCredentials` interface extends `PrincipalCredentials` and simply expos
 LoginCredentials loginCredentials = LoginCredentials.of("jsmith", new RawPassword("password"));
 ```
 
-> Login credentials provided by a user in a login form for instance usually contain a raw password in clear text, however it is completely possible to define them using an encoded password and therefore secure the password all the way to the authenticator.
+> Login credentials provided by a user in a login form for instance usually contain a raw password in clear text. However, it is completely possible to define them using an encoded password and therefore secure the password all the way to the authenticator.
 
 ### Password
 
@@ -619,7 +613,7 @@ if(password.matches("password")) {
 }
 ```
 
-In order to properly match passwords, it is important to use the same encoder as the one that was used to encode the password. Password encoders can be configured in various ways to reach a proper level of protection. As a result, when encoding password, it is important to always use constant encoder's settings to be able to recover the exact same password instance from a given encoded password. On way to do that is to hardcode these settings in the application but then they shall never be changed or all passwords must be renewed. Another more reliable way would be to store encoder's settings next the encoded password. This can be done by serializing the password as JSON.
+In order to properly match passwords, it is important to use the same encoder as the one that was used to encode the password. Password encoders can be configured in various ways to reach a proper level of protection. As a result, when encoding password, it is important to always use constant encoder's settings to be able to recover the exact same password instance from a given encoded password. On way to do that is to hardcode these settings in the application, but then they shall never be changed or all passwords must be renewed. Another more reliable way would be to store encoder's settings next the encoded password. This can be done by serializing the password as JSON.
 
 ```java
 ObjectMapper mapper = new ObjectMapper();
@@ -701,7 +695,7 @@ compositeAuthenticator.authenticate(LoginCredentials.of("user2", new RawPassword
 compositeAuthenticator.authenticate(LoginCredentials.of("unknown", new RawPassword("password")));
 ```
 
-> This approach might be very usefull when there is a need to authenticate credentials against multiple authentication systems. However you must be aware that some authenticator might not be *chainable* since, as `authenticator2` they can be implemented to claim all credentials peventing further authenticator to be invoked. Let's consider a `LoginCredentials` authenticator, it could rightfully consider that any username/password pair that it is unable to validate should be denied.
+> This approach might be very useful when there is a need to authenticate credentials against multiple authentication systems. However, you must be aware that some authenticator might not be *chainable* since, as `authenticator2` they can be implemented to claim all credentials preventing further authenticator to be invoked. Let's consider a `LoginCredentials` authenticator, it could rightfully consider that any username/password pair that it is unable to validate should be denied.
 
 It is also possible to transform the resulting authentication which can be useful to adapt it for further processing (e.g. identity resolver, access controller resolver, login forms...). In the following example, we transform the authentication returned by a login credentials authenticator into a `TokenAuthentication`:
 
@@ -729,7 +723,7 @@ authenticator.map(authentication -> {
 });
 ```
 
-A proper authentication implementation shall always return an authentication whether authentication succeeds or fails, however there might be use cases where we simply want to fail and propagate the authentication error. This can be desirable when handling denied authentications is not required and must be delegated to a higher level typically the security manager.
+A proper authentication implementation shall always return an authentication whether authentication succeeds or fails. However, there might be use cases where we simply want to fail and propagate the authentication error. This can be desirable when handling denied authentications is not required and must be delegated to a higher level typically the security manager.
 
 Considering previous example, we can make sure only authenticated authentication will be transformed by using the `failOnDenied()` operator which can be invoked to avoid having to handle denied authentications when transforming the authentication output:
 
@@ -737,7 +731,7 @@ Considering previous example, we can make sure only authenticated authentication
 Authenticator<LoginCredentials, Authentication> authenticator = ...
 
 authenticator
-    // Fail when an denied authentication is returned and propagate the underlying SecurityException
+    // Fail when a denied authentication is returned and propagate the underlying SecurityException
     .failOnDenied()
     // Only transform successful authentication
     .map(authentication -> {
@@ -763,7 +757,7 @@ authenticator
 
 It is also possible to fail on both denied or anonymous authentications using the `failOnDeniedAndAnonymous()` operator.
 
-> The API was designed to provide the most flexibility to the application which can decide how denied or anonymous authentications should be handled, unauthenticated authentications actually exist to still be able to create a security context and do things inside the application from an unauthenticated authentication. You should however takes particular care when transforming authentication instances using `map()` or `flatMap()` operators, remember that an authentication represents proof that credentials were authenticated and as a result always make sure the authentication state is taken into account all the way. In previous example, we could have quite easily ignored the authentication in the mapper and always returned an authenticated authentication. Using `failOnDenied()` or `failOnDeniedAndAnonymous()` can prevent you form doing such mistakes.
+> The API was designed to provide the most flexibility to the application which can decide how denied or anonymous authentications should be handled, unauthenticated authentications actually exist to still be able to create a security context and do things inside the application from an unauthenticated authentication. You should however take particular care when transforming authentication instances using `map()` or `flatMap()` operators, remember that an authentication represents proof that credentials were authenticated and as a result always make sure the authentication state is taken into account all the way. In previous example, we could have quite easily ignored the authentication in the mapper and always returned an authenticated authentication. Using `failOnDenied()` or `failOnDeniedAndAnonymous()` can prevent you form doing such mistakes.
 
 The API provides several base implementations that facilitate the authentication setup in an application.
 
@@ -865,7 +859,7 @@ A user repository is a user credentials resolver that provides CRUD operations t
 
 ```java
 UserRepository<PersonIdentity, User<PersonIdentity>> userRepository = null;
-		
+
 // Create a user with identity and groups
 userRepository.createUser(new User<>("jsmith", new PersonIdentity("jsmith", "John", "Smith", "jsmith@inverno.io"), new RawPassword("password"), "group1", "group2"));
 
@@ -890,7 +884,7 @@ The `SimplePasswordPolicy` is a simple implementation that allows to control pas
 
 ```java 
 PasswordPolicy<LoginCredentials, SimplePasswordPolicy.SimplePasswordStrength> passwordPolicy = new SimplePasswordPolicy<>(4, 8);
-		
+
 // Throws a PasswordPolicyException since 'newPassword' is too long (> 8)
 SimplePasswordPolicy.SimplePasswordStrength passwordStrength = passwordPolicy.verify(LoginCredentials.of("jsmith", new RawPassword("password")), "newPassword");
 
@@ -900,7 +894,7 @@ SimplePasswordPolicy.SimplePasswordStrength passwordStrength = passwordPolicy.ve
 // WEAK, MEDIUM, STRONG...
 passwordStrength.getQualifier();
 
-// 10, 42, 100... The higher the better
+// 10, 42, 100... The higher, the better
 passwordStrength.getScore();
 ```
 
@@ -932,7 +926,7 @@ UserRepository<PersonIdentity, User<PersonIdentity>> redisUserRepository = new R
 
 A credentials matcher is usually used in conjunction with a credentials resolver within `Authenticator` implementations to match credentials against trusted credentials resolved using the credentials resolver. Both `PrincipalAuthenticator` and `UserAuthenticator` uses this technique to authenticate `LoginCredentials` identified by the username.
 
-The `CredentialsMatcher` interface is a functional interface defining one `matches()` method which must be reflexive, symetric and transitive. A simplistic implementation can then be created as follows:
+The `CredentialsMatcher` interface is a functional interface defining one `matches()` method which must be reflexive, symmetric and transitive. A simplistic implementation can then be created as follows:
 
 ```java
 CredentialsMatcher<LoginCredentials, LoginCredentials> credentialsMatcher = (credentials, trustedCredentials) -> {
@@ -967,13 +961,13 @@ IdentityResolver<PrincipalAuthentication, PersonIdentity> identityResolver = aut
 };
 ```
 
-A security manager may or may not use an identity manager depending on what is needed by the application. Identity resolution is also not exclusive to the identity resolver, there might be cases where identity information can actually be resolved during the authentication process, these information can then be exposed in an specific authentication and used in an identity resolver to create the actual identity exposed in the security context.
+A security manager may or may not use an identity manager depending on what is needed by the application. Identity resolution is also not exclusive to the identity resolver, there might be cases where identity information can actually be resolved during the authentication process, these information can then be exposed in a specific authentication and used in an identity resolver to create the actual identity exposed in the security context.
 
 > We can also think of various use cases where the identity can not or should not be resolved during the authentication process. For instance, in token based authentication, a token can be authenticated using cryptographic techniques (e.g. signature) without requiring to communicate with an external system which might have provided identity information, identity can then be resolved next by the identity resolver if the application needs it. Again, it is important to understand that authentication and identity are not necessarily correlated, the `LDAPIdentityResolver` provided in the *security-ldap* module is a good example that can be used after another authenticator than the `LDAPAuthenticator`.
 
 #### UserIdentityResolver
 
-The `UserAuthenticator` is a good example of identity information resolved during authentication. The identity is resolved with trusted credentials used for authentication in order to save resources. However a security manager still requires an identity resolver in order to expose the identity in the security context. In this particular case, the `UserIdentityResolver` can be used to simply extract the identity from the `UserAuthentication` and returns it to the security manager.
+The `UserAuthenticator` is a good example of identity information resolved during authentication. The identity is resolved with trusted credentials used for authentication in order to save resources. However, a security manager still requires an identity resolver in order to expose the identity in the security context. In this particular case, the `UserIdentityResolver` can be used to simply extract the identity from the `UserAuthentication` and returns it to the security manager.
 
 ```java
 // Simply returns the identity resolved during authentication
@@ -1014,22 +1008,22 @@ The `ConfigurationSourcePermissionBasedAccessControllerResolver` creates a [perm
 
 ```java
 // The configuration source defining permissions by user
-ConfigurationSource<?,?,?> configurationSource = null;
+ConfigurationSource configurationSource = null;
 
 ConfigurationSourcePermissionBasedAccessControllerResolver accessControllerResolver = new ConfigurationSourcePermissionBasedAccessControllerResolver(configurationSource);
 ```
 
 ## Security Context
 
-The security context is the central component used to secure an application. It is obtained from a [security manager](#security-manager) after credentials authentication. It is composed of the following sub-components:
+The security context is the central component used to secure an application. It is obtained from a [security manager](#security-manager) after credentials authentication. It is composed of the following subcomponents:
 
 - an `Authentication` which results from the authentication of credentials and proves that there was an authentication.
 - an `Identity` which provides information about the identity of the authenticated entity.
 - an `AccessController` which provides services to determine whether the authenticated entity has the right to access protected services or resources within the application.
 
-These basically correspond to the three main concepts composing the Inverno security model as decribed in the [introduction](#security) of the *security* module.
+These basically correspond to the three main concepts composing the Inverno security model as described in the [introduction](#security) of the *security* module.
 
-A `SecurityContext` instance should be distributed in the application anywhere there is a need to protect services and resources (i.e. authentication and access control) or a need for information about the authenticated entity (i.e. identification). It is usually obtained from a security manager but it is also possible to create a security context from previous components as follows:
+A `SecurityContext` instance should be distributed in the application anywhere there is a need to protect services and resources (i.e. authentication and access control) or a need for information about the authenticated entity (i.e. identification). It is usually obtained from a security manager, but it is also possible to create a security context from previous components as follows:
 
 ```java
 Authentication authentication = Authentication.granted();
@@ -1039,16 +1033,16 @@ RoleBasedAccessController accessController = RoleBasedAccessController.of("reade
 SecurityContext<PersonIdentity, RoleBasedAccessController> securityContext = SecurityContext.of(authentication, identity, accessController);
 ```
 
-This construct can be useful for testing but it is important to remember that the API specifies that an authentication must represent the proof that credentials were authenticated which basically guarantees that the security context can be trusted. As a result, the security manager should always be prefered to create the security context.
+This construct can be useful for testing, but it is important to remember that the API specifies that an authentication must represent the proof that credentials were authenticated which basically guarantees that the security context can be trusted. As a result, the security manager should always be preferred to create the security context.
 
 ### Authentication
 
 An authentication results from an authentication process and represents the proof that [credentials](#credentials) were authenticated, typically by an [authenticator](#authenticator). In other words, it guarantees that the entity accessing the application has provided credentials and that they have been authenticated successfully or not.
 
-An `Authentication` is always present in a security context but this does not means credential have been successfully authenticated, it simply means that there was an authentication. It can then takes three forms:
+An `Authentication` is always present in a security context but this does not mean credential have been successfully authenticated, it simply means that there was an authentication. It can then take three forms:
 
 - **anonymous** which corresponds to an authentication which is not authenticated with no cause of error and indicates that authentication was bypassed and application is accessed anonymously.
-- **denied** which corresponds to an authentication which is not authenticated with a cause of error (e.g invalid credentials...) and indicates a failed authentication.
+- **denied** which corresponds to an authentication which is not authenticated with a cause of error (e.g. invalid credentials...) and indicates a failed authentication.
 - **granted** which corresponds to an authenticated authentication and indicates a successful authentication.
 
 From there, it is up to the application to authorize anonymous access and decide what to do in case of denied access. The following example shows how to fully handle authentication in a security context:
@@ -1095,7 +1089,7 @@ else {
 }
 ```
 
-> You might have notice that, unlike identity and access controller types, the authentication type is not defined as formal parameter in the `SecurityContext` interface. The authentication type is important in the security manager which uses specific identity and access controller resolvers for which the actual authentication type is important, however it is no longer useful in the security context which only needs to determine whether authentication is anonymous, denied or granted.
+> You might have noticed that, unlike identity and access controller types, the authentication type is not defined as formal parameter in the `SecurityContext` interface. The authentication type is important in the security manager which uses specific identity and access controller resolvers for which the actual authentication type is important. However, it is no longer useful in the security context which only needs to determine whether authentication is anonymous, denied or granted.
 
 ### Identity
 
@@ -1108,7 +1102,7 @@ SecurityContext<PersonIdentity, RoleBasedAccessController> securityContext = ...
 
 securityContext.getIdentity().ifPresentOrElse(
     identity -> {
-        // Send an email to the authenticated user
+        // Send an e-mail to the authenticated user
         String email = identity.getEmail();
         ...
     }, 
@@ -1123,7 +1117,7 @@ securityContext.getIdentity().ifPresentOrElse(
 
 The access controller provides services used to determine whether access to protected service or resource should be granted to the authenticated entity, it is resolved by the security manager using an [access controller resolver](#accesscontroller-resolver).
 
-As for the identity, the application should not assume that a security context exposes an access controller for an authenticated entity and it must be prepared to deal with a missing access controller.
+As for the identity, the application should not assume that a security context exposes an access controller for an authenticated entity, and it must be prepared to deal with a missing access controller.
 
 ```java
 SecurityContext<PersonIdentity, RoleBasedAccessController> securityContext = ...
@@ -1156,7 +1150,7 @@ RoleBasedAccessController accessController = RoleBasedAccessController.of("reade
 
 This construct can be useful for `AccessControllerResolver` implementations and testing purposes.
 
-The `RoleBasedAccessController` interface basically defines three methods: `hasRole()` used to determine whether the autheticated entity has a specific role, `hasAnyRole()` used to determine whether the authenticated entity has any of the roles in a set of roles and `hasAllRole()` used to determine whether the authenticated entity has all the roles in a set of roles.
+The `RoleBasedAccessController` interface basically defines three methods: `hasRole()` used to determine whether the authenticated entity has a specific role, `hasAnyRole()` used to determine whether the authenticated entity has any of the roles in a set of roles and `hasAllRole()` used to determine whether the authenticated entity has all the roles in a set of roles.
 
 ```java
 SecurityContext<PersonIdentity, RoleBasedAccessController> securityContext = ...
@@ -1169,7 +1163,7 @@ securityContext.getAccessController()
         // Returns true if the authenticated user has any of the roles: 'writer', 'admin'
         Mono<Boolean> canWrite = accessController2.hasAnyRole("writer", "admin");
         
-        // Returns true if the authenticated user has all of the roles: 'reader', 'writer'
+        // Returns true if the authenticated user has all roles: 'reader', 'writer'
         Mono<Boolean> canReadAndWrite = accessController2.hasAllRoles("reader", "writer");
     });
 ```
@@ -1219,34 +1213,34 @@ Considering the following permissions defined in a `CPropsFileConfigurationSourc
 
 ```plaintext
 [ domain = "printer" ] {
-	# jsmith has role 'user' and therefore permission to query to any printer in the printer domain
-	ROLE_user="query"
-	ROLE_admin="*"
+    # jsmith has role 'user' and therefore permission to query to any printer in the printer domain
+    ROLE_user="query"
+    ROLE_admin="*"
 }
 
 [ domain = "printer", printer = "lp1200" ] {
-	# jsmith has permission to query and print to printer lp1200
-	jsmith="query,print"
+    # jsmith has permission to query and print to printer lp1200
+    jsmith="query,print"
 }
 
 [ printer="epsoncolor" ] {
-	# jsmith has permission to manage printer epsoncolor across all domains
-	# when querying with (domain=printer,printer=epsoncolor) the permission is actually 'query' because domain parameter has the highest priority
-	jsmith="manage"
-	ROLE_user="query,print"
+    # jsmith has permission to manage printer epsoncolor across all domains
+    # when querying with (domain=printer,printer=epsoncolor) the permission is actually 'query' because domain parameter has the highest priority
+    jsmith="manage"
+    ROLE_user="query,print"
 }
 
 [ domain = "printer", printer = "XP-4100" ] {
-	# jsmith has all permission on printer XP-4100
-	jsmith="*"
+    # jsmith has all permission on printer XP-4100
+    jsmith="*"
 }
 
 [ domain = "printer", printer = "HL-L6400DW" ] {
-	ROLE_user="query,print"
+    ROLE_user="query,print"
 }
 
 [ domain = "printer", printer = "C400V_DN" ] {
-	jsmith="*,!manage"
+    jsmith="*,!manage"
 }
 ```
 
@@ -1279,6 +1273,6 @@ pbac.hasPermission("manage", "domain", "printer", "printer", "C400V-DN").block()
 
 It is important to remember that when using a defaulting strategy, the order into which parameters are specified in the query can impact results. For instance, the wildcard strategy gives priority to the permission defined with the most parameters and in case of conflict to parameters defined from left to right in the query.
 
-> *With great power comes great responsability.* As you can imagine, this particular permission-based access controller implementation is quite complex and requires rigor to be used properly. The more parameters are considered, the more difficult it is to define permissions. This might also have an impact on performances, especially when a defaulting strategy is used (wildcard defaulting may require `2^n` queries on the configuration source where `n` is the number of parameter). As a guideline, you should try to consider limited number of parameters (ideally two and not more than three) and consider caching permissions.
+> *With great power comes great responsibility.* As you can imagine, this particular permission-based access controller implementation is quite complex and requires rigor to be used properly. The more parameters are considered, the more difficult it is to define permissions. This might also have an impact on performances, especially when a defaulting strategy is used (wildcard defaulting may require `2^n` queries on the configuration source where `n` is the number of parameter). As a guideline, you should try to consider limited number of parameters (ideally two and not more than three) and consider caching permissions.
 
 > As of now, the impact on performances that might be introduced by the `ConfigurationSourcePermissionBasedAccessController` is still unclear due to limited real-life feedbacks which is why no big decision was taken yet to provide caching solutions. Possible solutions include using multiple dedicated Redis replicas when using a `RedisConfigurationSource` or caching the complete list of permissions by user in an in-memory configuration source.

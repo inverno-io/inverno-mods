@@ -75,7 +75,7 @@ public interface PasswordPolicy<A extends LoginCredentials, B extends PasswordPo
 		 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 		 * @since 1.5
 		 */
-		static enum Qualifier {
+		enum Qualifier {
 			/**
 			 * Password offers a very weak protection against attack and should be rejected.
 			 */
@@ -95,7 +95,7 @@ public interface PasswordPolicy<A extends LoginCredentials, B extends PasswordPo
 			/**
 			 * Password offers a very strong protection against attack.
 			 */
-			VERY_STRONG;
+			VERY_STRONG
 		}
 		
 		/**

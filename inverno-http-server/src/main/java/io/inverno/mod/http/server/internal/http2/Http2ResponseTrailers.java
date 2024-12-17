@@ -33,10 +33,10 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * Http/2 {@link OutboundHeaders} implementation representing Http trailers.
+ * Http/2 {@link OutboundHeaders} implementation representing HTTP trailers.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 class Http2ResponseTrailers extends AbstractResponseTrailers<Http2ResponseTrailers> {
@@ -59,7 +59,7 @@ class Http2ResponseTrailers extends AbstractResponseTrailers<Http2ResponseTraile
 	
 	/**
 	 * <p>
-	 * Returns the trailers to send as part of the Http response.
+	 * Returns the trailers to send as part of the HTTP response.
 	 * </p>
 	 * 
 	 * @return the wrapped trailers
@@ -132,9 +132,7 @@ class Http2ResponseTrailers extends AbstractResponseTrailers<Http2ResponseTraile
 	@Override
 	public List<Map.Entry<String, String>> getAll() {
 		List<Map.Entry<String, String>> result = new LinkedList<>();
-		this.trailers.forEach(e -> {
-			result.add(Map.entry(e.getKey().toString(), e.getValue().toString()));
-		});
+		this.trailers.forEach(e -> result.add(Map.entry(e.getKey().toString(), e.getValue().toString())));
 		return result;
 	}
 
@@ -151,9 +149,7 @@ class Http2ResponseTrailers extends AbstractResponseTrailers<Http2ResponseTraile
 	@Override
 	public List<Parameter> getAllParameter() {
 		List<Parameter> result = new LinkedList<>();
-		this.trailers.forEach(e -> {
-			result.add(new GenericParameter(e.getKey().toString(), e.getValue().toString(), this.parameterConverter));
-		});
+		this.trailers.forEach(e -> result.add(new GenericParameter(e.getKey().toString(), e.getValue().toString(), this.parameterConverter)));
 		return result;
 	}
 	
@@ -170,9 +166,7 @@ class Http2ResponseTrailers extends AbstractResponseTrailers<Http2ResponseTraile
 	@Override
 	public List<Header> getAllHeader() {
 		List<Header> result = new LinkedList<>();
-		this.trailers.forEach(e -> {
-			result.add(this.headerService.<Header>decode(e.getKey().toString(), e.getValue().toString()));
-		});
+		this.trailers.forEach(e -> result.add(this.headerService.decode(e.getKey().toString(), e.getValue().toString())));
 		return result;
 	}
 }

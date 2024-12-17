@@ -29,7 +29,7 @@ package io.inverno.mod.grpc.base;
  * where the request is received by the server from the client, implementation shall only provide methods to access gRPC request content.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public interface GrpcBaseRequest {

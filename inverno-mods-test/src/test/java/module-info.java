@@ -26,11 +26,12 @@ module io.inverno.mod.test {
 	requires java.compiler;
 	
 	requires io.inverno.mod.configuration;
-	requires io.inverno.mod.redis.lettuce;
 	requires io.inverno.mod.boot;
-	requires io.inverno.mod.web.server;
 	requires io.inverno.mod.http.client;
-	
+	requires io.inverno.mod.web.client;
+	requires io.inverno.mod.redis.lettuce;
+	requires io.inverno.mod.web.server;
+
 	requires io.inverno.test;
 	
 	requires java.net.http;

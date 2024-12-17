@@ -16,7 +16,6 @@
 package io.inverno.mod.security.internal.accesscontrol;
 
 import io.inverno.mod.security.accesscontrol.RoleBasedAccessController;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 import reactor.core.publisher.Mono;
@@ -59,6 +58,6 @@ public class GenericRoleBasedAccessController implements RoleBasedAccessControll
 
 	@Override
 	public Mono<Boolean> hasAllRoles(Collection<String> roles) {
-		return Mono.just(this.roles.containsAll(Arrays.asList(roles)));
+		return Mono.just(this.roles.containsAll(roles));
 	}
 }

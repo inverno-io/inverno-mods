@@ -1,5 +1,3 @@
-import io.vertx.core.Vertx;
-
 /*
  * Copyright 2021 Jeremy KUHN
  *
@@ -18,29 +16,25 @@ import io.vertx.core.Vertx;
 
 /**
  * <p>
- * The Inverno Vert.x SQL Client module which provides a SQL client based on
- * Vert.x.
+ * The Inverno Vert.x SQL Client module which provides a SQL client based on Vert.x.
  * </p>
  * 
  * <p>
- * This module exposes a pool based SQL client which is automatically created
- * using the module's configuration which provides connection and pooling
- * options. This client can then be used within an application to execute SQL
- * operations on the RDBMS.
+ * This module exposes a pool based SQL client which is automatically created using the module's configuration which provides connection and pooling options. This client can then be used within an
+ * application to execute SQL operations on the RDBMS.
  * </p>
  * 
  * <p>
  * It defines the following sockets:
  * </p>
- * 
+ *
  * <dl>
- * <dt>vertxSqlClientConfiguration</dt>
+ * <dt><b>reactor (required)</b></dt>
+ * <dd>the Inverno reactor</dd>
+ * <dt><b>configuration</b></dt>
  * <dd>the Vert.x SQL client module configuration</dd>
- * <dt>reactor</dt>
- * <dd>the Inverno reactor (required)</dd>
- * <dt>vertx</dt>
- * <dd>A {@link Vertx} instance that overrides the module's internal
- * instance</dd>
+ * <dt><b>vertx</b></dt>
+ * <dd>a {@link io.inverno.mod.sql.vertx.Vertx} instance that overrides the module's internal instance</dd>
  * </dl>
  * 
  * <p>
@@ -48,10 +42,12 @@ import io.vertx.core.Vertx;
  * </p>
  * 
  * <dl>
- * <dt>vertxSqlClientConfiguration</dt>
+ * <dt><b>configuration</b></dt>
  * <dd>the Vert.x SQL client module configuration</dd>
- * <dt>vertxSqlClient</dt>
- * <dd>the Vert.x  pool SQL client to execute SQL operations on the RDBMS</dd>
+ * <dt><b>vertx</b></dt>
+ * <dd>the {@link io.inverno.mod.sql.vertx.Vertx} instance</dd>
+ * <dt><b>vertxSqlClient</b></dt>
+ * <dd>the Vert.x pool SQL client to execute SQL operations on the RDBMS</dd>
  * </dl>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -61,17 +57,17 @@ import io.vertx.core.Vertx;
 module io.inverno.mod.sql.vertx {
 	requires io.inverno.core;
 	requires static io.inverno.core.annotation; // for javadoc...
+
 	requires io.inverno.mod.base;
 	requires transitive io.inverno.mod.configuration;
 	requires transitive io.inverno.mod.sql;
-	
-	requires transitive reactor.core;
-	requires transitive org.reactivestreams;
 
-	requires java.sql;
-	requires io.vertx.core;
 	requires transitive io.vertx.client.sql;
-	
+	requires io.vertx.core;
+	requires java.sql;
+	requires transitive org.reactivestreams;
+	requires transitive reactor.core;
+
 	exports io.inverno.mod.sql.vertx;
 	
 	uses io.vertx.sqlclient.spi.Driver;

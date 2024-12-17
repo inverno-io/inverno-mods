@@ -106,7 +106,7 @@ public class GenericJsonJWS<A, B extends JsonJWS.Signature<A>> extends AbstractJ
 	@Override
 	public String toJson() throws JOSEProcessingException {
 		if(this.signatures.size() == 1) {
-			AbstractSignature<?> signature = (AbstractSignature<?>)this.signatures.get(0);
+			AbstractSignature<?> signature = (AbstractSignature<?>)this.signatures.getFirst();
 			try {
 				return this.mapper.writeValueAsString(Map.of(
 					"payload", this.getEncodedPayload(), 

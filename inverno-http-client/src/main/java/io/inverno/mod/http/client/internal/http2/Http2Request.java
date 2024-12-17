@@ -36,7 +36,7 @@ import reactor.core.publisher.Mono;
  * Http/2 {@link Request} implementation
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class Http2Request extends AbstractRequest<Http2RequestHeaders> {
@@ -117,7 +117,7 @@ public class Http2Request extends AbstractRequest<Http2RequestHeaders> {
 	 * This method simply cancels any active subscription.
 	 * </p>
 	 * 
-	 * @param cause 
+	 * @param cause the error that caused the disposal or null if there was no error
 	 */
 	final void dispose(Throwable cause) {
 		if(this.disposable != null) {
@@ -159,7 +159,7 @@ public class Http2Request extends AbstractRequest<Http2RequestHeaders> {
 	 * The request body data publisher optimized for {@link Mono} publisher that writes a single request object to the connection.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.11
 	 */
 	private class MonoBodyDataSubscriber extends BaseSubscriber<ByteBuf> {
@@ -173,7 +173,7 @@ public class Http2Request extends AbstractRequest<Http2RequestHeaders> {
 		
 		@Override
 		protected void hookOnNext(ByteBuf value) {
-			Http2Request.this.transferedLength += value.readableBytes();
+			Http2Request.this.transferredLength += value.readableBytes();
 			this.data = value;
 		}
 
@@ -190,7 +190,7 @@ public class Http2Request extends AbstractRequest<Http2RequestHeaders> {
 				}
 				else {
 					if(!Http2Request.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
-						Http2Request.this.headers.contentLength(Http2Request.this.transferedLength);
+						Http2Request.this.headers.contentLength(Http2Request.this.transferredLength);
 					}
 
 					if(this.data == null) {
@@ -219,7 +219,7 @@ public class Http2Request extends AbstractRequest<Http2RequestHeaders> {
 	 * The request body data subscriber that writes request objects to the connection.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.11
 	 */
 	private class BodyDataSubscriber extends BaseSubscriber<ByteBuf> {
@@ -236,7 +236,7 @@ public class Http2Request extends AbstractRequest<Http2RequestHeaders> {
 		@Override
 		protected void hookOnNext(ByteBuf value) {
 			if(!Http2Request.this.connectionStream.isReset()) {
-				Http2Request.this.transferedLength += value.readableBytes();
+				Http2Request.this.transferredLength += value.readableBytes();
 				if(!this.many && this.singleChunk == null) {
 					this.singleChunk = value;
 					this.request(1);
@@ -252,7 +252,7 @@ public class Http2Request extends AbstractRequest<Http2RequestHeaders> {
 
 					/*
 					 * In case of big request body, we can end up flooding the channel with WRITE operations, preventing READ to happen.
-					 * This is problematic and will result in connection erros when the server sends a response and terminates the exchange before the request has been entirely sent 
+					 * This is problematic and will result in connection errors when the server sends a response and terminates the exchange before the request has been entirely sent
 					 * (e.g. 413 REQUEST ENTITY TOO LARGE).
 					 * To fix this, we simply wait for the write operation to succeed before requesting the next chunk.
 					 */
@@ -274,15 +274,15 @@ public class Http2Request extends AbstractRequest<Http2RequestHeaders> {
 				else {
 					if(Http2Request.this.headers.isWritten()) {
 						if(this.singleChunk == null) {
-							Http2Request.this.connectionStream.writeData(this.singleChunk, 0, true);
+							Http2Request.this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
 						}
 						else {
-							Http2Request.this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
+							Http2Request.this.connectionStream.writeData(this.singleChunk, 0, true);
 						}
 					}
 					else {
 						if(!Http2Request.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
-							Http2Request.this.headers.contentLength(Http2Request.this.transferedLength);
+							Http2Request.this.headers.contentLength(Http2Request.this.transferredLength);
 						}
 						if(this.singleChunk == null) {
 							Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, true);
@@ -309,7 +309,7 @@ public class Http2Request extends AbstractRequest<Http2RequestHeaders> {
 		@Override
 		protected void hookOnCancel() {
 			if(!Http2Request.this.connectionStream.isReset()) {
-				// Make sure the Http protocol flow is correct
+				// Make sure the HTTP protocol flow is correct
 				if(this.many) {
 					Http2Request.this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
 				}

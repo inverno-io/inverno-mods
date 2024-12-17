@@ -35,27 +35,18 @@ import io.inverno.mod.grpc.server.GrpcServer;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.Status;
-import static io.inverno.mod.http.base.Status.BAD_GATEWAY;
-import static io.inverno.mod.http.base.Status.BAD_REQUEST;
-import static io.inverno.mod.http.base.Status.FORBIDDEN;
-import static io.inverno.mod.http.base.Status.GATEWAY_TIMEOUT;
-import static io.inverno.mod.http.base.Status.NOT_FOUND;
-import static io.inverno.mod.http.base.Status.SERVICE_UNAVAILABLE;
-import static io.inverno.mod.http.base.Status.TOO_MANY_REQUESTS;
-import static io.inverno.mod.http.base.Status.UNAUTHORIZED;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.netty.handler.codec.http2.Http2Error;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * <p>
  * Generic {@link GrpcServer} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 @Bean( name = "grpcServer" )
@@ -90,24 +81,28 @@ public class GenericGrpcServer implements GrpcServer {
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public <A extends ExchangeContext, B extends Exchange<A>, C extends Message, D extends Message, E extends GrpcExchange.Unary<A, C, D>> ExchangeHandler<A, B> unary(C defaultRequestInstance, D defaultResponseInstance, GrpcExchangeHandler<A, C, D, GrpcRequest.Unary<C>, GrpcResponse.Unary<D>, E> grpcExchangeHandler) {
 		Function<B, E> exchangeFactory = exchange -> (E)new GenericGrpcExchange.GenericUnary<>(exchange, () -> this.createRequest(exchange, defaultRequestInstance), () -> this.createResponse(exchange, defaultRequestInstance));
 		return new GrpcExchangeHandlerAdapter<>(grpcExchangeHandler, exchangeFactory, this::handleError);
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <A extends ExchangeContext, B extends Exchange<A>, C extends Message, D extends Message, E extends GrpcExchange.ClientStreaming<A, C, D>> ExchangeHandler<A, B> clientStreaming(C defaultRequestInstance, D defaultResponseInstance, GrpcExchangeHandler<A, C, D, GrpcRequest.Streaming<C>, GrpcResponse.Unary<D>, E> grpcExchangeHandler) {
 		Function<B, E> exchangeFactory = exchange -> (E)new GenericGrpcExchange.GenericClientStreaming<>(exchange, () -> this.createRequest(exchange, defaultRequestInstance), () -> this.createResponse(exchange, defaultRequestInstance));
 		return new GrpcExchangeHandlerAdapter<>(grpcExchangeHandler, exchangeFactory, this::handleError);
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <A extends ExchangeContext, B extends Exchange<A>, C extends Message, D extends Message, E extends GrpcExchange.ServerStreaming<A, C, D>> ExchangeHandler<A, B> serverStreaming(C defaultRequestInstance, D defaultResponseInstance, GrpcExchangeHandler<A, C, D, GrpcRequest.Unary<C>, GrpcResponse.Streaming<D>, E> grpcExchangeHandler) {
 		Function<B, E> exchangeFactory = exchange -> (E)new GenericGrpcExchange.GenericServerStreaming<>(exchange, () -> this.createRequest(exchange, defaultRequestInstance), () -> this.createResponse(exchange, defaultRequestInstance));
 		return new GrpcExchangeHandlerAdapter<>(grpcExchangeHandler, exchangeFactory, this::handleError);
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <A extends ExchangeContext, B extends Exchange<A>, C extends Message, D extends Message, E extends GrpcExchange.BidirectionalStreaming<A, C, D>> ExchangeHandler<A, B> bidirectionalStreaming(C defaultRequestInstance, D defaultResponseInstance, GrpcExchangeHandler<A, C, D, GrpcRequest.Streaming<C>, GrpcResponse.Streaming<D>, E> grpcExchangeHandler) {
 		Function<B, E> exchangeFactory = exchange -> (E)new GenericGrpcExchange.GenericBidirectionalStreaming<>(exchange, () -> this.createRequest(exchange, defaultRequestInstance), () -> this.createResponse(exchange, defaultRequestInstance));
 		return new GrpcExchangeHandlerAdapter<>(grpcExchangeHandler, exchangeFactory, this::handleError);
@@ -144,10 +139,11 @@ public class GenericGrpcServer implements GrpcServer {
 	 * 
 	 * @throws GrpcException if the message encoding specified in the request is not supported
 	 */
+	@SuppressWarnings("unchecked")
 	private <A extends ExchangeContext, B extends Exchange<A>, C extends Message, D extends GrpcRequest<C>> D createRequest(B exchange, C defaultRequestInstance) throws GrpcException {
 		GrpcMessageCompressor messageCompressor = exchange.request().headers().get(GrpcHeaders.NAME_GRPC_MESSAGE_ENCODING)
 			.map(value -> this.compressorService.getMessageCompressor(value).orElseThrow(() -> {
-				exchange.response().headers(headers -> headers.set(GrpcHeaders.NAME_GRPC_ACCEPT_MESSAGE_ENCODING, this.compressorService.getMessageEncodings().stream().collect(Collectors.joining(","))));
+				exchange.response().headers(headers -> headers.set(GrpcHeaders.NAME_GRPC_ACCEPT_MESSAGE_ENCODING, String.join(",", this.compressorService.getMessageEncodings())));
 				return new GrpcException(GrpcStatus.UNIMPLEMENTED, "Unsupported message encoding: " + value);
 			}))
 			.or(() -> this.compressorService.getMessageCompressor(GrpcHeaders.VALUE_IDENTITY))
@@ -172,6 +168,7 @@ public class GenericGrpcServer implements GrpcServer {
 	 * 
 	 * @return a new gRPC server response
 	 */
+	@SuppressWarnings("unchecked")
 	private <A extends ExchangeContext, B extends Exchange<A>, C extends Message, D extends GrpcResponse<C>> D createResponse(B exchange, C defaultResponseInstance) {
 		return (D)new GenericGrpcResponse<>(exchange.response(), () -> this.createMessageWriter(exchange), this.extensionRegistry, () -> exchange.reset(Http2Error.CANCEL.code()));
 	}
@@ -200,7 +197,7 @@ public class GenericGrpcServer implements GrpcServer {
 		// if message encoding has been specified in the response headers we must throw an error if this is not supported
 		GrpcMessageCompressor messageCompressor = exchange.response().headers().get(GrpcHeaders.NAME_GRPC_MESSAGE_ENCODING)
 			.map(value -> this.compressorService.getMessageCompressor(value).orElseThrow(() -> {
-				exchange.response().headers(headers -> headers.set(GrpcHeaders.NAME_GRPC_ACCEPT_MESSAGE_ENCODING, this.compressorService.getMessageEncodings().stream().collect(Collectors.joining(","))));
+				exchange.response().headers(headers -> headers.set(GrpcHeaders.NAME_GRPC_ACCEPT_MESSAGE_ENCODING, String.join(",", this.compressorService.getMessageEncodings())));
 				return new GrpcException(GrpcStatus.UNIMPLEMENTED, "Unsupported message encoding: " + value);
 			}))
 			.orElseGet(() -> {
@@ -246,7 +243,7 @@ public class GenericGrpcServer implements GrpcServer {
 					grpcStatus = grpcError.getStatus();
 				}
 				else if(error instanceof HttpException) {
-					// This is not supposed to happen but we never know
+					// This is not supposed to happen, but we never know
 					// https://github.com/grpc/grpc/blob/master/doc/http-grpc-status-mapping.md
 					HttpException httpError = (HttpException)error;
 					switch(httpError.getStatus()) {

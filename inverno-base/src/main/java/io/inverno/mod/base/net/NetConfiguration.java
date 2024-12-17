@@ -21,7 +21,7 @@ package io.inverno.mod.base.net;
  * Base network configuration.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public interface NetConfiguration {
@@ -39,7 +39,7 @@ public interface NetConfiguration {
 	 */
 	default boolean reuse_address() {
 		return true;
-	};
+	}
 
 	/**
 	 * <p>
@@ -52,9 +52,7 @@ public interface NetConfiguration {
 	 * 
 	 * @return true if the option is enabled, false otherwise
 	 */
-	default boolean reuse_port() {
-		return false;
-	}
+	boolean reuse_port();
 
 	/**
 	 * <p>
@@ -62,14 +60,12 @@ public interface NetConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to false.
+	 * Defaults to {@code false}.
 	 * </p>
 	 * 
 	 * @return true if the option is enabled, false otherwise
 	 */
-	default boolean keep_alive() {
-		return false;
-	}
+	boolean keep_alive();
 
 	/**
 	 * <p>
@@ -77,7 +73,7 @@ public interface NetConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to true.
+	 * Defaults to {@code true}.
 	 * </p>
 	 * 
 	 * @return true if the option is enabled, false otherwise
@@ -92,14 +88,12 @@ public interface NetConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to false.
+	 * Defaults to {@code false}.
 	 * </p>
 	 * 
 	 * @return true if the option is enabled, false otherwise
 	 */
-	default boolean tcp_quickack() {
-		return false;
-	}
+	boolean tcp_quickack();
 
 	/**
 	 * <p>
@@ -107,14 +101,12 @@ public interface NetConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to false.
+	 * Defaults to {@code false}.
 	 * </p>
 	 * 
 	 * @return true if the option is enabled, false otherwise
 	 */
-	default boolean tcp_cork() {
-		return false;
-	}
+	boolean tcp_cork();
 	
 	/**
 	 * <p>

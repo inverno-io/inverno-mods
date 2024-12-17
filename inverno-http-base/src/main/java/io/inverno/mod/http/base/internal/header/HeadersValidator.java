@@ -22,12 +22,12 @@ import java.util.function.BiConsumer;
  * HTTP headers validator.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public interface HeadersValidator extends BiConsumer<CharSequence, CharSequence> {
 
-	public static final HeadersValidator DEFAULT_HTTP1X_HEADERS_VALIDATOR = new DefaultHttp1xHeadersValidator();
+	HeadersValidator DEFAULT_HTTP1X_HEADERS_VALIDATOR = new DefaultHttp1xHeadersValidator();
 	
-	public static final HeadersValidator DEFAULT_HTTP2_HEADERS_VALIDATOR = new DefaultHttp2HeadersValidator();
+	HeadersValidator DEFAULT_HTTP2_HEADERS_VALIDATOR = new DefaultHttp2HeadersValidator();
 }

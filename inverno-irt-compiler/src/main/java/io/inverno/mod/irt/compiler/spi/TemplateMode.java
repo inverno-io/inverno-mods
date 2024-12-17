@@ -21,45 +21,37 @@ import io.netty.buffer.ByteBuf;
 
 /**
  * <p>
- * The template mode specifies how a the compiler should generate a template set
- * class.
+ * The template mode specifies how a the compiler should generate a template set class.
  * </p>
- * 
+ *
  * <p>
- * The mode basically specifies the type of output generated when rendering a data
- * model. The compiler shall also optimize how static contents are stored and output
- * based on the mode, providing zero copy whenever possible.
+ * The mode basically specifies the type of output generated when rendering a data model. The compiler shall also optimize how static contents are stored and output based on the mode, providing zero
+ * copy whenever possible.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public enum TemplateMode {
 
 	/**
-	 * The publisher ByteBuf mode is used to generate a template set class that
-	 * outputs rendered data in a publisher of {@link ByteBuf}.
+	 * The publisher ByteBuf mode is used to generate a template set class that outputs rendered data in a publisher of {@link ByteBuf}.
 	 */
 	PUBLISHER_BYTEBUF,
 	/**
-	 * The ByteBuf mode is used to generate a template set class that outputs
-	 * rendered data in a {@link ByteBuf}.
+	 * The ByteBuf mode is used to generate a template set class that outputs rendered data in a {@link ByteBuf}.
 	 */
 	BYTEBUF,
 	/**
-	 * The publisher String mode is used to generate a template set class that
-	 * outputs rendered data in a publisher of String.
+	 * The publisher String mode is used to generate a template set class that outputs rendered data in a publisher of String.
 	 */
 	PUBLISHER_STRING,
 	/**
-	 * The String mode is used to generate a template set class that outputs
-	 * rendered data in a String.
+	 * The String mode is used to generate a template set class that outputs rendered data in a String.
 	 */
 	STRING,
 	/**
-	 * The Stream mode is used to generate a template set class that outputs
-	 * rendered data in an {@link OutputStream}.
+	 * The Stream mode is used to generate a template set class that outputs rendered data in an {@link OutputStream}.
 	 */
-	STREAM;
+	STREAM
 }

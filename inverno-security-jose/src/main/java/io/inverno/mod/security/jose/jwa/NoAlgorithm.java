@@ -81,7 +81,7 @@ public enum NoAlgorithm implements JWAAlgorithm<JWK> {
 	 * @param keyManagement key management algorithm flag
 	 * @param encryption    encryption algorithm flag
 	 */
-	private NoAlgorithm(String alg, boolean signature, boolean keyManagement, boolean encryption) {
+	NoAlgorithm(String alg, boolean signature, boolean keyManagement, boolean encryption) {
 		this.alg = alg;
 		this.signature = signature;
 		this.keyManagement = keyManagement;

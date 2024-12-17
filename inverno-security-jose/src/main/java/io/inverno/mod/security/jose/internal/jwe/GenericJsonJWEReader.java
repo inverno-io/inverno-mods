@@ -38,7 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -67,7 +66,7 @@ public class GenericJsonJWEReader<A> extends AbstractJsonJOSEObjectReader<A, Jso
 	 * @param type                  the expected payload type
 	 * @param zips                  a list of supported JWE compression algorithms
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public GenericJsonJWEReader(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type, List<JWEZip> zips) {
 		super(mapper, dataConversionService, jwkService, type);
 		this.zips = zips;
@@ -136,7 +135,7 @@ public class GenericJsonJWEReader<A> extends AbstractJsonJOSEObjectReader<A, Jso
 			Set<String> overlappingParameters = new HashSet<>(protectedJWEHeader.getParametersSet());
 			overlappingParameters.retainAll(unprotectedJWEHeader.getParametersSet());
 			if(!overlappingParameters.isEmpty()) {
-				throw new JWEReadException("Protected and unprotected headers must be disjoint: " + overlappingParameters.stream().collect(Collectors.joining(", ")));
+				throw new JWEReadException("Protected and unprotected headers must be disjoint: " + String.join(", ", overlappingParameters));
 			}
 		}
 		
@@ -307,7 +306,7 @@ public class GenericJsonJWEReader<A> extends AbstractJsonJOSEObjectReader<A, Jso
 			overlappingParameters.retainAll(protectedJWEHeader.getParametersSet());
 			overlappingParameters.retainAll(unprotectedJWEHeader.getParametersSet());
 			if(!overlappingParameters.isEmpty()) {
-				throw new JWEReadException("Recipient, protected and unprotected headers must be disjoint: " + overlappingParameters.stream().collect(Collectors.joining(", ")));
+				throw new JWEReadException("Recipient, protected and unprotected headers must be disjoint: " + String.join(", ", overlappingParameters));
 			}
 		}
 		return new GenericJsonJWEReader.RecipientInfo(recipientJWEHeader, new JsonJWEHeader().merge(protectedJWEHeader).merge(unprotectedJWEHeader).merge(recipientJWEHeader), encrypted_keyValue);

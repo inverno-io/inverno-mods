@@ -62,7 +62,7 @@ public class PoolRedisClient<A, B, C extends StatefulRedisConnection<A, B>> exte
 
 	@Override
 	protected Mono<StatefulRedisConnectionOperations<A, B, C, ?>> operations() {
-		return Mono.fromCompletionStage(() -> this.pool.acquire()).map(connection -> new StatefulRedisConnectionOperations<>(connection, connection.reactive(), this.pool, this.keyType, this.valueType));
+		return Mono.fromCompletionStage(this.pool::acquire).map(connection -> new StatefulRedisConnectionOperations<>(connection, connection.reactive(), this.pool, this.keyType, this.valueType));
 	}
 
 	/**
@@ -73,7 +73,7 @@ public class PoolRedisClient<A, B, C extends StatefulRedisConnection<A, B>> exte
 	 * @return a mono emitting RedisTransactionalOperations object
 	 */
 	protected Mono<StatefulRedisConnectionTransactionalOperations<A, B, C, ?>> transactionalOperations() {
-		return Mono.fromCompletionStage(() -> this.pool.acquire()).map(connection -> new StatefulRedisConnectionTransactionalOperations<>(connection, connection.reactive(), this.pool, this.keyType, this.valueType));
+		return Mono.fromCompletionStage(this.pool::acquire).map(connection -> new StatefulRedisConnectionTransactionalOperations<>(connection, connection.reactive(), this.pool, this.keyType, this.valueType));
 	}
 	
 	@Override
@@ -104,14 +104,12 @@ public class PoolRedisClient<A, B, C extends StatefulRedisConnection<A, B>> exte
 
 	@Override
 	public Mono<RedisTransactionResult> multi(Function<RedisOperations<A, B>, Publisher<Publisher<?>>> function, A... watches) {
-		// commands must be subscibed in the function: .set(...).subscribe() which basically returns QUEUED
+		// commands must be subscribed in the function: .set(...).subscribe() which basically returns QUEUED
 		return Mono.usingWhen(
 			this.multi(watches),
 			toperations -> Flux.merge(Flux.from(function.apply(toperations)).concatWithValues(toperations.exec().cast(Object.class))).last().cast(RedisTransactionResult.class),
 			toperations -> Mono.empty(),
-			(toperations, ex) -> {
-				return toperations.discard().then(Mono.error(ex));
-			},
+			(toperations, ex) -> toperations.discard().then(Mono.error(ex)),
 			RedisTransactionalOperations::discard
 		);
 	}

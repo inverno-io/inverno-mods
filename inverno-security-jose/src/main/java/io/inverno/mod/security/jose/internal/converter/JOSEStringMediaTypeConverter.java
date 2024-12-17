@@ -96,7 +96,7 @@ public class JOSEStringMediaTypeConverter implements JOSEMediaTypeConverter, @Pr
 	@SuppressWarnings("unchecked")
 	public <T> Mono<T> decodeOne(Publisher<String> value, Type type) {
 		return Flux.from(value)
-			.reduceWith(() -> new StringBuilder(), (acc, v) -> acc.append(v))
+			.reduceWith(StringBuilder::new, StringBuilder::append)
 			.map(StringBuilder::toString)
 			.flatMap(compact -> {
 				String[] splitCompact = compact.split("\\.");

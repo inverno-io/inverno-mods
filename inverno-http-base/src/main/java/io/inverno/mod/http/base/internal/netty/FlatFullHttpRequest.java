@@ -44,7 +44,7 @@ public class FlatFullHttpRequest extends FlatHttpRequest implements FullHttpRequ
 	 * @param uri             the request URI
 	 * @param headers         the HTTP headers
 	 * @param content         the request content
-	 * @param trailingHeaders the trailing HTTPheaders
+	 * @param trailingHeaders the trailing HTTP headers
 	 */
 	public FlatFullHttpRequest(HttpVersion version, HttpMethod method, String uri, HttpHeaders headers, ByteBuf content, HttpHeaders trailingHeaders) {
 		super(version, method, uri, headers, content);

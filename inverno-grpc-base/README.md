@@ -9,7 +9,6 @@ In order to use the Inverno *grpc-base* module, we need to declare a dependency 
 ```java
 module io.inverno.example.app {
     requires io.inverno.mod.grpc.base;
-    ...
 }
 ```
 
@@ -31,9 +30,7 @@ Using Maven:
 Using Gradle:
 
 ```java
-...
 compile 'io.inverno.mod:inverno-grpc-base:${VERSION_INVERNO_MODS}'
-...
 ```
 
 The *grpc-base* module is usually provided as a transitive dependency by other gRPC modules, the *grpc-client* and *grpc-server* modules in particular, so it might not be necessary to include it explicitly.

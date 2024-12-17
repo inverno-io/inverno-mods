@@ -20,7 +20,7 @@ package io.inverno.mod.http.client;
  * Thrown when an endpoint couldn't establish a connection to a server.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class EndpointConnectException extends HttpClientException {

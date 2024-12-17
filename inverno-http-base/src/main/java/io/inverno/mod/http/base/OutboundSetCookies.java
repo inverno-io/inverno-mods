@@ -23,7 +23,7 @@ import java.util.function.Consumer;
  * Represents mutable outbound HTTP set-cookies.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @see SetCookie

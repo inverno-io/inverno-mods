@@ -38,7 +38,7 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * Base Octet Key Pair JWON Web Key builder implementation.
+ * Base Octet Key Pair JSON Web Key builder implementation.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

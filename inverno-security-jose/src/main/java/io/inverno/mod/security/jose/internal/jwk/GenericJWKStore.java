@@ -28,7 +28,7 @@ import java.util.function.Supplier;
  * </p>
  * 
  * <p>
- * This is an overridable wrapper bean which provides a {@link NoOpJWKStore}. It can be overriden by injecting a custom {@link JWKStore} instance when building the JOSE module.
+ * This is an overridable wrapper bean which provides a {@link NoOpJWKStore}. It can be overridden by injecting a custom {@link JWKStore} instance when building the JOSE module.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

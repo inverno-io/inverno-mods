@@ -68,13 +68,13 @@ public class GenericWebSocketMessage implements WebSocketMessage {
 	}
 
 	@Override
-	public Publisher<ByteBuf> binary() {
-		return Flux.from(this.frames).map(WebSocketFrame::getBinaryData);
+	public Publisher<ByteBuf> raw() {
+		return Flux.from(this.frames).map(WebSocketFrame::getRawData);
 	}
 
 	@Override
-	public Mono<ByteBuf> reducedBinary() {
-		return Flux.from(this.binary()).reduceWith(
+	public Mono<ByteBuf> rawReduced() {
+		return Flux.from(this.raw()).reduceWith(
 			() -> Unpooled.unreleasableBuffer(Unpooled.buffer()), 
 			(acc, chunk) -> {
 				try {
@@ -87,10 +87,10 @@ public class GenericWebSocketMessage implements WebSocketMessage {
 	}
 	
 	@Override
-	public Publisher<String> text() {
+	public Publisher<String> string() {
 		return Flux.from(this.frames).map(frame -> {
 			try {
-				return frame.getTextData();
+				return frame.getStringData();
 			}
 			finally {
 				frame.release();
@@ -99,10 +99,10 @@ public class GenericWebSocketMessage implements WebSocketMessage {
 	}
 
 	@Override
-	public Mono<String> reducedText() {
-		return Flux.from(this.text()).reduceWith(
-			() -> new StringBuilder(), 
-			(acc, chunk) -> acc.append(chunk)
+	public Mono<String> stringReduced() {
+		return Flux.from(this.string()).reduceWith(
+			StringBuilder::new,
+			StringBuilder::append
 		).map(StringBuilder::toString);
 	}
 	

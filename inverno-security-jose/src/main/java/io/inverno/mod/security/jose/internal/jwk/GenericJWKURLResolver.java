@@ -46,7 +46,7 @@ import reactor.core.publisher.Mono;
  * </p>
  *
  * <p>
- * This is an overridable bean which can be overriden by injecting a custom {@link JWKURLResolver} instance when building the JOSE module.
+ * This is an overridable bean which can be overridden by injecting a custom {@link JWKURLResolver} instance when building the JOSE module.
  * </p>
  * 
  * <p>

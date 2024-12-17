@@ -21,7 +21,7 @@ package io.inverno.mod.base.net;
  * Net client configuration.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public interface NetClientConfiguration extends NetConfiguration {

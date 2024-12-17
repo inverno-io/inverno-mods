@@ -91,7 +91,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 	 * @param parameterValueDelimiter a parameter value delimiter
 	 * @param allowEmptyValue         allow empty parameterized value
 	 * @param expectNoValue           expect no parameterized value
-	 * @param allowFlagParameter      allow flag parameters (ie. parameter with no value)
+	 * @param allowFlagParameter      allow flag parameters (i.e. parameter with no value)
 	 * @param allowSpaceInValue       allow space in values
 	 * @param allowQuotedValue        allow quoted values
 	 * @param allowMultiple           allow multiple header values
@@ -144,14 +144,15 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 	 */
 	private A decode(String name, ByteBuf buffer, Charset charset, boolean lf) {
 		// This can be optimized if the buffer is backed by a byte array
-		// It is apparently faster to navigate through the available byte array rather than the bytebuf
+		// It is apparently faster to navigate through the available byte array rather than the ByteBuf
 		int readerIndex = buffer.readerIndex();
 		
 		B builder = this.builderSupplier.get().headerName(name);
+
 		boolean value = false;
 		boolean end = false;
-		Integer startIndex = null;
-		Integer endIndex = null;
+		int startIndex = -1;
+		int endIndex = -1;
 		String parameterName = null;
 		boolean quoted = false;
 		boolean blankValue = true;
@@ -164,7 +165,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					if(buffer.isReadable()) {
 						if(buffer.getByte(buffer.readerIndex()) == HeaderCodec.LF) {
 							buffer.readByte();
-							if(endIndex == null) {
+							if(endIndex == -1) {
 								endIndex = buffer.readerIndex() - 2;
 							}
 							builder.headerValue(buffer.getCharSequence(readerIndex, buffer.readerIndex() - 2 - readerIndex, charset).toString());
@@ -180,14 +181,14 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					}
 				}
 				else if(nextByte == HeaderCodec.LF) {
-					if(endIndex == null) {
+					if(endIndex == -1) {
 						endIndex = buffer.readerIndex() - 1;
 					}
 					builder.headerValue(buffer.getCharSequence(readerIndex, buffer.readerIndex() - 1 - readerIndex, charset).toString());
 					end = true;
 				}
 				else if(nextByte == this.parameterValueDelimiter && this.allowMultiple && !quoted) {
-					if(endIndex == null) {
+					if(endIndex == -1) {
 						endIndex = buffer.readerIndex() - 1;
 					}
 					endSingle = true;
@@ -198,7 +199,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 			}
 			else if(lf) {
 				nextByte = HeaderCodec.LF;
-				if(endIndex == null) {
+				if(endIndex == -1) {
 					endIndex = buffer.readerIndex();
 				}
 				builder.headerValue(buffer.getCharSequence(readerIndex, buffer.readerIndex() - readerIndex, charset).toString());
@@ -207,10 +208,10 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 			else {
 				break;
 			}
-			
+
 			if(end || endSingle) {
 				if(!value) {
-					if(startIndex == null) {
+					if(startIndex == -1) {
 						buffer.readerIndex(readerIndex);
 						throw new MalformedHeaderException(name);
 					}
@@ -221,17 +222,17 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					builder.parameterizedValue(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString());
 				}
 				else if(parameterName != null) {
-					if(startIndex == null) {
+					if(startIndex == -1) {
 						buffer.readerIndex(readerIndex);
 						throw new MalformedHeaderException(name);
 					}
 					builder.parameter(parameterName, buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString());
 				}
-				else if(startIndex != null) {
-					if(endIndex == null) {
+				else if(startIndex != -1) {
+					if(endIndex == -1) {
 						endIndex = buffer.readerIndex() - 1;
 					}
-					if(startIndex.equals(endIndex)) {
+					if(startIndex == endIndex) {
 						buffer.readerIndex(readerIndex);
 						throw new MalformedHeaderException(name);
 					}
@@ -241,7 +242,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					}
 					builder.parameter(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), null);
 				}
-				
+
 				if(end) {
 					return builder.build();
 				}
@@ -249,8 +250,8 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					// consider next value
 					value = false;
 					end = false;
-					startIndex = null;
-					endIndex = null;
+					startIndex = -1;
+					endIndex = -1;
 					parameterName = null;
 					quoted = false;
 					blankValue = true;
@@ -258,24 +259,24 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					continue;
 				}
 			}
-			
+
 			if(!value) {
-				if(startIndex == null) {
+				if(startIndex == -1) {
 					if(!this.allowSpaceInValue && Character.isWhitespace(nextByte)) {
 						continue;
 					}
 					startIndex = buffer.readerIndex() - 1;
 				}
-				
+
 				if(nextByte == this.valueDelimiter) {
 					if(this.expectNoValue) {
 						buffer.readerIndex(readerIndex);
 						throw new MalformedHeaderException(name + ": expect no value");
 					}
-					if(endIndex == null) {
+					if(endIndex == -1) {
 						endIndex = buffer.readerIndex() - 1;
 					}
-					if(startIndex.equals(endIndex)) {
+					if(startIndex == endIndex) {
 						if(!this.allowEmptyValue) {
 							buffer.readerIndex(readerIndex);
 							throw new MalformedHeaderException(name + ": empty value not allowed");
@@ -288,64 +289,64 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 						builder.parameterizedValue(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString());
 					}
 					value = true;
-					startIndex = endIndex = null;
+					startIndex = endIndex = -1;
 				}
 				else if(nextByte == '=') {
 					if(!this.allowEmptyValue) {
 						buffer.readerIndex(readerIndex);
 						throw new MalformedHeaderException(name + ": empty value not allowed");
 					}
-					if(endIndex == null) {
+					if(endIndex == -1) {
 						endIndex = buffer.readerIndex() - 1;
 					}
 					builder.parameterizedValue(null);
 					parameterName = buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString().trim();
 					value = true;
-					startIndex = endIndex = null;
+					startIndex = endIndex = -1;
 				}
 				else if(Character.isWhitespace(nextByte)) {
 					if(!this.allowSpaceInValue) {
-						if(endIndex == null) {
+						if(endIndex == -1) {
 							endIndex = buffer.readerIndex() - 1;
 						}
 					}
 					else {
-						endIndex = null;
+						endIndex = -1;
 					}
 				}
-				else if(endIndex != null) {
-					// There's a space inside the value 
+				else if(endIndex != -1) {
+					// There's a space inside the value
 					if(!this.allowSpaceInValue) {
 						buffer.readerIndex(readerIndex);
 						throw new MalformedHeaderException(name + ": space not allowed in value");
 					}
-					endIndex = null;
+					endIndex = -1;
 				}
 			}
 			else {
 				if(parameterName == null) {
-					if(startIndex == null) {
+					if(startIndex == -1) {
 						if(Character.isWhitespace(nextByte)) {
 							continue;
 						}
 						startIndex = buffer.readerIndex() - 1;
 					}
 					if(nextByte == '=') {
-						if(endIndex == null) {
+						if(endIndex == -1) {
 							endIndex = buffer.readerIndex() - 1;
 						}
-						if(startIndex.equals(endIndex)) {
+						if(startIndex == endIndex) {
 							buffer.readerIndex(readerIndex);
 							throw new MalformedHeaderException(name);
 						}
 						parameterName = buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString();
-						startIndex = endIndex = null;
+						startIndex = endIndex = -1;
 					}
 					else if(nextByte == this.parameterDelimiter) {
-						if(endIndex == null) {
+						if(endIndex == -1) {
 							endIndex = buffer.readerIndex() - 1;
 						}
-						if(startIndex.equals(endIndex)) {
+						if(startIndex == endIndex) {
 							buffer.readerIndex(readerIndex);
 							throw new MalformedHeaderException(name);
 						}
@@ -355,7 +356,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 						}
 						builder.parameter(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), null);
 						parameterName = null;
-						startIndex = endIndex = null;
+						startIndex = endIndex = -1;
 					}
 					else if(Character.isWhitespace(nextByte)) {
 						endIndex = buffer.readerIndex() - 1;
@@ -364,14 +365,14 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 						buffer.readerIndex(readerIndex);
 						throw new MalformedHeaderException(name + ": invalid character " + (char)nextByte);
 					}
-					else if(endIndex != null) {
-						// There's a space inside the name 
+					else if(endIndex != -1) {
+						// There's a space inside the name
 						buffer.readerIndex(readerIndex);
 						throw new MalformedHeaderException(name);
 					}
 				}
 				else {
-					if(startIndex == null) {
+					if(startIndex == -1) {
 						if(!this.allowSpaceInValue && Character.isWhitespace(nextByte)) {
 							continue;
 						}
@@ -388,18 +389,18 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 						blankValue = false;
 						continue;
 					}
-					
+
 					if(nextByte == this.parameterDelimiter) {
-						if(endIndex == null) {
+						if(endIndex == -1) {
 							endIndex = buffer.readerIndex() - 1;
 						}
-						if(startIndex.equals(endIndex)) {
+						if(startIndex == endIndex) {
 							buffer.readerIndex(readerIndex);
 							throw new MalformedHeaderException(name);
 						}
 						builder.parameter(parameterName, buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString());
 						parameterName = null;
-						startIndex = endIndex = null;
+						startIndex = endIndex = -1;
 						quoted = false;
 						blankValue = true;
 					}
@@ -409,22 +410,22 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					else if(Character.isWhitespace(nextByte)) {
 						if(!quoted) {
 							if(!this.allowSpaceInValue) {
-								if(endIndex == null) {
+								if(endIndex == -1) {
 									endIndex = buffer.readerIndex() - 1;
 								}
 							}
 							else {
-								endIndex = null;
+								endIndex = -1;
 							}
 						}
 					}
-					else if(endIndex != null) {
-						// There's a space inside the value 
+					else if(endIndex != -1) {
+						// There's a space inside the value
 						if(!this.allowSpaceInValue) {
 							buffer.readerIndex(readerIndex);
 							throw new MalformedHeaderException(name + ": space not allowed in value");
 						}
-						endIndex = null;
+						endIndex = -1;
 					}
 					else if(blankValue){
 						blankValue = false;

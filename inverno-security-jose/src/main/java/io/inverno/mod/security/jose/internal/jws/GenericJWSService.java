@@ -54,7 +54,7 @@ public class GenericJWSService implements @Provide JWSService {
 	 * @param dataConversionService a data conversion service
 	 * @param jwkService            a JWK service
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public GenericJWSService(ObjectMapper mapper, GenericDataConversionService dataConversionService, JWKService jwkService) {
 		this.mapper = mapper;
 		this.dataConversionService = dataConversionService;

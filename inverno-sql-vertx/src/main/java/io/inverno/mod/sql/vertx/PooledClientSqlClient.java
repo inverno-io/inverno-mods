@@ -30,8 +30,7 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * This SQL client implementation supports operations pipelining but does not
- * support transaction.
+ * This SQL client implementation supports operations pipelining but does not support transaction.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

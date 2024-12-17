@@ -36,7 +36,7 @@ import reactor.core.publisher.Mono;
  * A multipart/form-data payload encoder implementation as defined by <a href="https://tools.ietf.org/html/rfc7578">RFC 7578</a>.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 @Bean( visibility = Bean.Visibility.PRIVATE )
@@ -50,8 +50,7 @@ public class MultipartFormDataBodyEncoder implements MultipartEncoder<Part<?>> {
 		if(contentType.getBoundary() == null) {
 			throw new IllegalArgumentException("Missing multipart form data boundary");
 		}
-		
-		final PartMapper partMapper = new PartMapper(contentType.getBoundary(), contentType.getCharset());
+		final PartMapper partMapper = new PartMapper(contentType.getBoundary(), Charsets.orDefault(contentType.getCharset()));
 		
 		return data
 			.concatMap(part -> {
@@ -69,10 +68,10 @@ public class MultipartFormDataBodyEncoder implements MultipartEncoder<Part<?>> {
 	 * A part mapper used to map a part to a payload data publisher.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 */
-	private class PartMapper implements Function<Part<?>, Publisher<ByteBuf>> {
+	private static class PartMapper implements Function<Part<?>, Publisher<ByteBuf>> {
 
 		private static final int CRLF_SHORT = (HttpConstants.CR << 8) | HttpConstants.LF;
 		
@@ -112,7 +111,7 @@ public class MultipartFormDataBodyEncoder implements MultipartEncoder<Part<?>> {
 				});
 			}
 			else if(part instanceof AbstractDataPart) {
-				AbstractDataPart<?> dataPart = (AbstractDataPart)part;
+				AbstractDataPart<?> dataPart = (AbstractDataPart<?>)part;
 				return Flux.concat(Mono.fromSupplier(() -> {
 					ByteBuf buffer = Unpooled.buffer();
 					if(this.encapsulation) {

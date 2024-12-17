@@ -38,8 +38,8 @@ import java.util.stream.Stream;
  * <li>command line arguments</li>
  * <li>system properties</li>
  * <li>system environment variables</li>
- * <li>the {@code configuration.cprops} file in {@code ./conf/} or <code>${inverno.config.path}/</code> directories if one exists (if the first one exists the second one is ignored)</li>
- * <li>the {@code configuration.cprops} file in <code>${java.home}/conf/</code> directory if it exists</li>
+ * <li>the {@code configuration.cprops} file in {@code ./conf/} or {@code ${inverno.config.path}/} directories if one exists (if the first one exists the second one is ignored)</li>
+ * <li>the {@code configuration.cprops} file in {@code ${java.home}/conf/} directory if it exists</li>
  * <li>the {@code configuration.cprops} file in the application module if it exists</li>
  * </ul>
  *

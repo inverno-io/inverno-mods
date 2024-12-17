@@ -253,7 +253,7 @@ public abstract class AbstractJWKBuilder<A extends JWK, B extends AbstractJWKBui
 	protected Mono<Void> resolve() throws JWKBuildException, JWKResolveException, JWKProcessingException {
 		return Mono.fromRunnable(() -> {
 				if(this.use != null && this.key_ops != null && !this.key_ops.isEmpty() && !(this.use.equals(JWK.USE_SIG) && SIG_OPERATIONS.containsAll(this.key_ops)) && !(this.use.equals(JWK.USE_ENC) && ENC_OPERATIONS.containsAll(this.key_ops)) ) {
-					throw new JWKBuildException("Key operations [" + this.key_ops.stream().collect(Collectors.joining(", ")) +"] are inconsistent with public key use " + this.use);
+					throw new JWKBuildException("Key operations [" + String.join(", ", this.key_ops) +"] are inconsistent with public key use " + this.use);
 				}
 			})
 			.then(this.resolveKid());

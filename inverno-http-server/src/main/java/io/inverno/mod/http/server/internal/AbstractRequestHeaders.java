@@ -24,7 +24,7 @@ import io.inverno.mod.http.base.header.HeaderService;
  * Base {@link InboundRequestHeaders} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.10
  */
 public abstract class AbstractRequestHeaders implements InboundRequestHeaders {
@@ -46,7 +46,7 @@ public abstract class AbstractRequestHeaders implements InboundRequestHeaders {
 	 * </p>
 	 * 
 	 * @param headerService      the header service
-	 * @param parameterConverter the paremeter converter
+	 * @param parameterConverter the parameter converter
 	 */
 	public AbstractRequestHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
@@ -56,7 +56,7 @@ public abstract class AbstractRequestHeaders implements InboundRequestHeaders {
 	@Override
 	public final GenericRequestCookies cookies() {
 		if(this.cookies == null) {
-			this.cookies = new GenericRequestCookies(this, this.parameterConverter);
+			this.cookies = new GenericRequestCookies(this);
 		}
 		return this.cookies;
 	}

@@ -69,7 +69,7 @@ public class Argon2Password extends AbstractPassword<Argon2Password, Argon2Passw
 		 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 		 * @since 1.5
 		 */
-		public static enum HashType {
+		public enum HashType {
 			
 			/**
 			 * Argon2d maximizes resistance to GPU cracking attacks.
@@ -104,7 +104,7 @@ public class Argon2Password extends AbstractPassword<Argon2Password, Argon2Passw
 			 * @param id   the hash type id
 			 * @param name the hash type name
 			 */
-			private HashType(int id, String name) {
+			HashType(int id, String name) {
 				this.id = id;
 				this.name = name;
 			}
@@ -136,9 +136,9 @@ public class Argon2Password extends AbstractPassword<Argon2Password, Argon2Passw
 			 * Returns the hash type corresponding to the specified id.
 			 * </p>
 			 * 
-			 * @param id an hash type id
+			 * @param id a hash type id
 			 * 
-			 * @return an hash type
+			 * @return a hash type
 			 * 
 			 * @throws IllegalArgumentException if the specified id is not supported
 			 */
@@ -156,9 +156,9 @@ public class Argon2Password extends AbstractPassword<Argon2Password, Argon2Passw
 			 * Returns the hash type corresponding to the specified name.
 			 * </p>
 			 * 
-			 * @param name an hash type name
+			 * @param name a hash type name
 			 * 
-			 * @return an hash type
+			 * @return a hash type
 			 * 
 			 * @throws IllegalArgumentException if the specified name is not supported
 			 */
@@ -508,7 +508,7 @@ public class Argon2Password extends AbstractPassword<Argon2Password, Argon2Passw
 		public boolean matches(String raw, String encoded) throws PasswordException {
 			Argon2Parameters decoded_parameters;
 			byte[] decoded_hash;
-			Scanner scanner = new Scanner(encoded).useDelimiter("\\$|,");
+			Scanner scanner = new Scanner(encoded).useDelimiter("[$,]");
 			try  {
 				String currentPart = scanner.next();
 

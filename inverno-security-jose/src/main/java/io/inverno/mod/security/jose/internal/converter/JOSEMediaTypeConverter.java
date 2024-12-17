@@ -23,7 +23,7 @@ import io.inverno.mod.security.jose.jwt.JWTService;
 
 /**
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 public interface JOSEMediaTypeConverter extends MediaTypeConverter<String> {
 

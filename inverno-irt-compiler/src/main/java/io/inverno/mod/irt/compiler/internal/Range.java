@@ -24,7 +24,6 @@ import io.inverno.mod.irt.compiler.internal.parser.Token;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class Range {
 
@@ -43,7 +42,7 @@ public class Range {
 	 * Creates a range between two positions in an IRT source file.
 	 * </p>
 	 * 
-	 * @param begin the begin position
+	 * @param begin the beginning position
 	 * @param end   the end position
 	 */
 	public Range(Position begin, Position end) {
@@ -56,8 +55,8 @@ public class Range {
 	 * Creates a range between two positions in an IRT source file.
 	 * </p>
 	 * 
-	 * @param beginLine   the begin line number
-	 * @param beginColumn the begin column number
+	 * @param beginLine   the beginning line number
+	 * @param beginColumn the beginning column number
 	 * @param endLine     the end line number
 	 * @param endColumn   the end column number
 	 */
@@ -71,7 +70,7 @@ public class Range {
 	 * Creates a range between two tokens in an IRT source file.
 	 * </p>
 	 * 
-	 * @param beginToken the begin token
+	 * @param beginToken the beginning token
 	 * @param endToken the end token
 	 */
 	public Range(Token beginToken, Token endToken) {
@@ -84,7 +83,7 @@ public class Range {
 	 * Returns a new range with the specified begin position.
 	 * </p>
 	 * 
-	 * @param begin the new begin position
+	 * @param begin the new beginning position
 	 * 
 	 * @return a new range
 	 */
@@ -97,8 +96,8 @@ public class Range {
 	 * Returns a new range with the specified begin position.
 	 * </p>
 	 * 
-	 * @param beginLine   the new begin line number
-	 * @param beginColumn the new begin column number
+	 * @param beginLine   the new beginning line number
+	 * @param beginColumn the new beginning column number
 	 * 
 	 * @return a new range
 	 */
@@ -111,7 +110,7 @@ public class Range {
 	 * Returns a new range with the specified begin token.
 	 * </p>
 	 * 
-	 * @param beginToken the new begin token
+	 * @param beginToken the new beginning token
 	 * 
 	 * @return a new range
 	 */

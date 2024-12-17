@@ -27,7 +27,7 @@ import java.util.Optional;
  * Generic {@link GrpcInboundResponseTrailersMetadata} metadata.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public class GenericGrpcResponseTrailersMetadata extends AbstractGrpcMetadata<InboundHeaders> implements GrpcInboundResponseTrailersMetadata {
@@ -51,7 +51,7 @@ public class GenericGrpcResponseTrailersMetadata extends AbstractGrpcMetadata<In
 
 	@Override
 	public int getStatusCode() {
-		return this.headers.get(GrpcHeaders.NAME_GRPC_STATUS).map(value -> Integer.valueOf(value)).orElse(GrpcStatus.OK.getCode());
+		return this.headers.get(GrpcHeaders.NAME_GRPC_STATUS).map(Integer::valueOf).orElse(GrpcStatus.OK.getCode());
 	}
 
 	@Override

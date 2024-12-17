@@ -13,14 +13,13 @@ SQL pooled client, pool or connection and exposes a `RedisCLient` bean created f
 In order to use the Inverno *Lettuce Redis client* module, we need to declare a dependency in the module descriptor:
 
 ```java
+@io.inverno.core.annotation.Module
 module io.inverno.example.app {
-    ...
     requires io.inverno.mod.redis.lettuce;
-    ...
 }
 ```
 
-And also declare this dependencies in the build descriptor:
+And also declare these dependencies in the build descriptor:
 
 Using Maven:
 
@@ -37,10 +36,8 @@ Using Maven:
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.inverno.mod:inverno-redis-lettuce:${VERSION_INVERNO_MODS}'
-...
 ```
 
 ## Configuration
@@ -75,7 +72,7 @@ username=user
 password=password
 ```
 
-By default, this Redis client relies on a dedicated event loop group but it can also rely on Inverno's reactor when a `Reactor` instance is available. This is transparent when assembling an application with the *boot* module which exposes Inverno's reactor.
+By default, this Redis client relies on a dedicated event loop group, but it can also rely on Inverno's reactor when a `Reactor` instance is available. This is transparent when assembling an application with the *boot* module which exposes Inverno's reactor.
 
 ## Lettuce wrappers
 

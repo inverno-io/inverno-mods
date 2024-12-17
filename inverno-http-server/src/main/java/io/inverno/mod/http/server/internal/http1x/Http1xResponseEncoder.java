@@ -54,7 +54,7 @@ public class Http1xResponseEncoder extends HttpResponseEncoder {
 	
 	/**
 	 * <p>
-	 * Creates a HTTP1.x response encoder with the specified BytBuf allocator.
+	 * Creates an HTTP1.x response encoder with the specified BytBuf allocator.
 	 * </p>
 	 * 
 	 * @param byteBufAllocator a ByteBuf allocator

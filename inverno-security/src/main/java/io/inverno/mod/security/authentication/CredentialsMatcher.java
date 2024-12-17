@@ -25,7 +25,7 @@ import io.inverno.mod.security.authentication.user.UserAuthenticator;
  * </p>
  *
  * <p>
- * an {@link Authenticator} implemention can typically relies on a credentials matcher to determine whether the credentials provided by an entity are matching the credentials obtained from a trusted
+ * an {@link Authenticator} implementation can typically relies on a credentials matcher to determine whether the credentials provided by an entity are matching the credentials obtained from a trusted
  * source (i.e. a trusted repository, a trusted directory service...).
  * </p>
  * 
@@ -52,7 +52,7 @@ public interface CredentialsMatcher<A extends Credentials, B extends Credentials
 	 *
 	 * <ul>
 	 * <li>reflexive: {@code matches(credentials, credentials)} should return {@code true}</li>
-	 * <li>symetric: if {@code matches(credentials1, credentials2)} returns {@code true} ({@code matches(credentials2, credentials1)}) should also return {@code true}</li>
+	 * <li>symmetric: if {@code matches(credentials1, credentials2)} returns {@code true} ({@code matches(credentials2, credentials1)}) should also return {@code true}</li>
 	 * <li>transitive: if {@code matches(credentials1, credentials2)} returns {@code true} and {@code matches(credentials2, credentials3)} returns true then {@code matches(credentials1, credentials3)}
 	 * should also return {@code true}</li>
 	 * </ul>

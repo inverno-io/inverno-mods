@@ -95,12 +95,12 @@ public final class LDAPUtils {
 	 * <p>
 	 * Finds the first occurrence of {@code ch} in {@code val} starting from position {@code start}. It doesn't count if {@code ch} has been escaped by a backslash (\)
 	 * </p>
-	 * 
-	 * @param ch
-	 * @param val
-	 * @param start
-	 * 
-	 * @return
+	 *
+	 * @param ch    the character to find
+	 * @param val   the value
+	 * @param start the start position
+	 *
+	 * @return the index of {@code ch} in val
 	 */
 	private static int findUnescaped(char ch, String val, int start) {
 		int len = val.length();
@@ -131,9 +131,9 @@ public final class LDAPUtils {
 	 *     NUL     \00
 	 * }</pre>
 	 * 
-	 * @param obj
+	 * @param obj an object
 	 * 
-	 * @return
+	 * @return the object {@code String} representation
 	 */
 	private static String getEncodedStringRep(Object obj) throws NamingException {
 		String str;
@@ -144,9 +144,9 @@ public final class LDAPUtils {
 			// binary data must be encoded as \hh where hh is a hex char
 			byte[] bytes = (byte[]) obj;
 			StringBuilder b1 = new StringBuilder(bytes.length * 3);
-			for (int i = 0; i < bytes.length; i++) {
+			for(byte aByte : bytes) {
 				b1.append('\\');
-				hexDigit(b1, bytes[i]);
+				hexDigit(b1, aByte);
 			}
 			return b1.toString();
 		}
@@ -185,11 +185,11 @@ public final class LDAPUtils {
 
 	/**
 	 * <p>
-	 * Writes the hex representation of a byte to a StringBuffer.
+	 * Writes the hex representation of a byte to a StringBuilder.
 	 * </p>
 	 * 
-	 * @param buf 
-	 * @param x   
+	 * @param buf the string builder
+	 * @param x   the byte to write
 	 */
 	private static void hexDigit(StringBuilder buf, byte x) {
 		char c;

@@ -16,8 +16,6 @@
 package io.inverno.mod.http.base;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.Optional;
 
 /**
  * <p>
@@ -36,7 +34,7 @@ public class ServiceUnavailableException extends HttpException {
 	/**
 	 * The datetime after which the failed request may be retried.
 	 */
-	private Optional<ZonedDateTime> retryAfter;
+	private ZonedDateTime retryAfter;
 	
 	/**
 	 * <p>
@@ -45,7 +43,7 @@ public class ServiceUnavailableException extends HttpException {
 	 */
 	public ServiceUnavailableException() {
 		super(Status.SERVICE_UNAVAILABLE);
-		this.retryAfter = Optional.empty();
+		this.retryAfter = null;
 	}
 
 	/**
@@ -57,7 +55,7 @@ public class ServiceUnavailableException extends HttpException {
 	 */
 	public ServiceUnavailableException(String message) {
 		super(Status.SERVICE_UNAVAILABLE, message);
-		this.retryAfter = Optional.empty();
+		this.retryAfter = null;
 	}
 
 	/**
@@ -69,7 +67,7 @@ public class ServiceUnavailableException extends HttpException {
 	 */
 	public ServiceUnavailableException(Throwable cause) {
 		super(Status.SERVICE_UNAVAILABLE, cause);
-		this.retryAfter = Optional.empty();
+		this.retryAfter = null;
 	}
 
 	/**
@@ -82,7 +80,7 @@ public class ServiceUnavailableException extends HttpException {
 	 */
 	public ServiceUnavailableException(String message, Throwable cause) {
 		super(Status.SERVICE_UNAVAILABLE, message, cause);
-		this.retryAfter = Optional.empty();
+		this.retryAfter = null;
 	}
 
 	/**
@@ -190,14 +188,14 @@ public class ServiceUnavailableException extends HttpException {
 	}
 	
 	private void setRetryAfter(long retryAfter) {
-		this.retryAfter = Optional.of(ZonedDateTime.now().plus(retryAfter, ChronoUnit.SECONDS));
+		this.retryAfter = ZonedDateTime.now().plusSeconds(retryAfter);
 	}
 	
 	private void setRetryAfter(ZonedDateTime retryAfter) {
 		if(retryAfter.isBefore(ZonedDateTime.now())) {
 			throw new IllegalArgumentException("Can't retry in the past: " + retryAfter);
 		}
-		this.retryAfter = Optional.of(retryAfter);
+		this.retryAfter = retryAfter;
 	}
 	
 	/**
@@ -205,9 +203,9 @@ public class ServiceUnavailableException extends HttpException {
 	 * Returns the datetime after which the failed request may be retried.
 	 * </p>
 	 * 
-	 * @return a zoned datetime
+	 * @return a zoned datetime or null if retry after was not specified
 	 */
-	public Optional<ZonedDateTime> getRetryAfter() {
+	public ZonedDateTime getRetryAfter() {
 		return this.retryAfter;
 	}
 }

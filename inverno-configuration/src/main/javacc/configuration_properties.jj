@@ -23,19 +23,18 @@ options {
 PARSER_BEGIN(ConfigurationPropertiesParser) 
 package io.inverno.mod.configuration.internal.parser.properties;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-
-import io.inverno.mod.configuration.AbstractConfigurationSource;
+import io.inverno.mod.base.Settable;
+import io.inverno.mod.configuration.internal.AbstractConfigurationSource;
 import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.ConfigurationKey.Parameter;
 import io.inverno.mod.configuration.internal.GenericConfigurationProperty;
 import io.inverno.mod.configuration.internal.GenericConfigurationKey;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-public class ConfigurationPropertiesParser<A extends AbstractConfigurationSource<?,?,?,String>> {
+public class ConfigurationPropertiesParser<A extends AbstractConfigurationSource<?, ?, ?, String, ?>> {
 
 	private A inverno_source;
 
@@ -843,17 +842,17 @@ List<ConfigurationProperty> Declaration(String propertyName, Collection<Paramete
 ConfigurationProperty Property(String propertyName, Collection<Parameter> parameters):
 {
 	String name;
-	Optional<String> value;
+	Settable<String> value;
 }
 {
 	name = PropertyName() < EQ > value = PropertyValue() (< LINE_END > | < EOF >)
 	{
-		if(value != null) {
-	    	return new GenericConfigurationProperty<ConfigurationKey, A, String>(new GenericConfigurationKey(propertyName != null ? propertyName + "." + name : name, parameters), value.orElse(null), inverno_source);
-	    }
-	    else {
-	    	return new GenericConfigurationProperty<ConfigurationKey, A, String>(new GenericConfigurationKey(propertyName != null ? propertyName + "." + name : name, parameters), inverno_source);
-	    }
+		if(value.isSet()) {
+			return new GenericConfigurationProperty<ConfigurationKey, A, String>(new GenericConfigurationKey(propertyName != null ? propertyName + "." + name : name, parameters), value.get(), inverno_source);
+		}
+		else {
+			return new GenericConfigurationProperty<ConfigurationKey, A, String>(new GenericConfigurationKey(propertyName != null ? propertyName + "." + name : name, parameters), inverno_source);
+		}
 	}
 }
 
@@ -883,21 +882,21 @@ String PropertyName():
 	}
 }
 
-Optional<String> PropertyValue():
+Settable<String> PropertyValue():
 {
 	Token t;
-	Optional<String> value;
+	Settable<String> value;
 }
 {
 	(
-		t = < INTEGER_LITERAL > { value = Optional.of(t.image); }
-		| t = < FLOATING_POINT_LITERAL > { value = Optional.of(t.image); }
-		| t = < STRING_LITERAL > { value = Optional.of(t.image.substring(1, t.image.length()-1)); }
-		| t = < TEXT_BLOCK_LITERAL > { value = Optional.of(t.image.substring(3, t.image.length()-3)); }
-		| t = < TRUE > { value = Optional.of(t.image); }
-		| t = < FALSE > { value = Optional.of(t.image); }
-		| t = < NULL > { value = Optional.empty(); }
-		| t = < UNSET > { value = null; }
+		t = < INTEGER_LITERAL > { value = Settable.of(t.image); }
+		| t = < FLOATING_POINT_LITERAL > { value = Settable.of(t.image); }
+		| t = < STRING_LITERAL > { value = Settable.of(t.image.substring(1, t.image.length()-1)); }
+		| t = < TEXT_BLOCK_LITERAL > { value = Settable.of(t.image.substring(3, t.image.length()-3)); }
+		| t = < TRUE > { value = Settable.of(t.image); }
+		| t = < FALSE > { value = Settable.of(t.image); }
+		| t = < NULL > { value = Settable.of(null); }
+		| t = < UNSET > { value = Settable.undefined(); }
 	)
 	{
 		return value;

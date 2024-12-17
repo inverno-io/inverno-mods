@@ -37,7 +37,7 @@ import reactor.core.publisher.Mono;
  * Generic {@link GrpcRequest} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public class GenericGrpcRequest<A extends Message> implements GrpcRequest.Unary<A>, GrpcRequest.Streaming<A>  {
@@ -82,7 +82,7 @@ public class GenericGrpcRequest<A extends Message> implements GrpcRequest.Unary<
 	 * @param extensionRegistry     the Protocol buffer extension registry
 	 * @param serviceName           the gRPC service name
 	 * @param methodName            the gRPC service method name
-	 * @param canceExchange         the cancel exchange function
+	 * @param cancelExchange        the cancel exchange function
 	 */
 	public GenericGrpcRequest(Request request, Supplier<GrpcMessageWriter<A>> messageWriterSupplier, ExtensionRegistry extensionRegistry, GrpcServiceName serviceName, String methodName, Runnable cancelExchange) {
 		this.request = request;
@@ -119,9 +119,7 @@ public class GenericGrpcRequest<A extends Message> implements GrpcRequest.Unary<
 	@Override
 	public GrpcInboundRequestMetadata metadata() {
 		if(this.metadata == null) {
-			this.request.headers(headers -> {
-				this.metadata = new GenericGrpcRequestMetadata(headers, this.extensionRegistry);
-			});
+			this.request.headers(headers -> this.metadata = new GenericGrpcRequestMetadata(headers, this.extensionRegistry));
 		}
 		return this.metadata;
 	}
@@ -132,8 +130,9 @@ public class GenericGrpcRequest<A extends Message> implements GrpcRequest.Unary<
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T extends A> void stream(Publisher<T> value) throws IllegalStateException {
-		this.request.body().get().raw().stream(
+		this.request.body().raw().stream(
 			Flux.concat(
 				Mono.just(Unpooled.EMPTY_BUFFER), // Make sure we have a flux here (client buffer first chunk to be able to provide a content-length in case of single publisher)
 				Flux.from(value).transformDeferred(data -> this.messageWriterSupplier.get().apply((Publisher<A>)data))

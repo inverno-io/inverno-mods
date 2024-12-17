@@ -50,7 +50,7 @@ import reactor.core.publisher.Sinks;
  * Generic {@link WebSocketExchange} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
 public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> implements WebSocketExchange<ExchangeContext> {
@@ -59,7 +59,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	
 	private final ChannelHandlerContext context;
 	private final Exchange<ExchangeContext> exchange;
-	private final String subProtocol;
+	private final String subprotocol;
 	private final GenericWebSocketFrame.GenericFactory frameFactory;
 	private final GenericWebSocketMessage.GenericFactory messageFactory;
 	
@@ -90,16 +90,16 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	 *
 	 * @param context        the channel handler context
 	 * @param exchange       the original exchange
-	 * @param subProtocol    the negotiated subprotocol
+	 * @param subprotocol    the negotiated subprotocol
 	 * @param frameFactory   the WebSocket frame factory
 	 * @param messageFactory the WebSocket message factory
 	 * @param closeOnOutboundComplete  true to close WebSocket when outbound publisher completes, false otherwise
-	 * @param inboundCloseFrameTimeout the time to wait for a close frame before closing the WebSocket unilatterally
+	 * @param inboundCloseFrameTimeout the time to wait for a close frame before closing the WebSocket unilaterally
 	 */
 	public GenericWebSocketExchange(
 			ChannelHandlerContext context, 
 			Exchange<ExchangeContext> exchange, 
-			String subProtocol, 
+			String subprotocol,
 			GenericWebSocketFrame.GenericFactory frameFactory, 
 			GenericWebSocketMessage.GenericFactory messageFactory,
 			boolean closeOnOutboundComplete,
@@ -107,7 +107,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 		) {
 		this.context = context;
 		this.exchange = exchange;
-		this.subProtocol = subProtocol;
+		this.subprotocol = subprotocol;
 		this.frameFactory = frameFactory;
 		this.messageFactory = messageFactory;
 		
@@ -145,7 +145,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 			return;
 		}
 		deferHandle.thenMany(this.outboundFrames)
-			.doOnDiscard(GenericWebSocketFrame.class, frame -> frame.release())
+			.doOnDiscard(GenericWebSocketFrame.class, GenericWebSocketFrame::release)
 			.subscribe(this);
 		this.started = true;
 	}
@@ -232,7 +232,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 			throw new WebSocketException("Invalid outbound frame type " + value.getKind() + ", use close() to close the WebSocket");
 		}
 		this.executeInEventLoop(() -> {
-			LOGGER.trace("Write {} frame (size={}, final={})", value.getKind(), value.getBinaryData().readableBytes(), value.isFinal());
+			LOGGER.trace("Write {} frame (size={}, final={})", value.getKind(), value.getRawData().readableBytes(), value.isFinal());
 			this.context.writeAndFlush(this.frameFactory.toUnderlyingWebSocketFrame(value));
 		});
 	}
@@ -273,9 +273,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 			if(!this.inboundSubscribed) {
 				this.inboundSubscribed = true;
 				frameSink.asFlux().subscribe(
-					frame -> {
-						((GenericWebSocketFrame)frame).release();
-					},
+					WebSocketFrame::release,
 					ex -> {
 						// TODO Should be ignored but can be logged as debug or trace log
 					}
@@ -287,11 +285,11 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	
 	/**
 	 * <p>
-	 * Returns the inbound frames sink used by the {@link WebSocketProtocolHandler} to emit the frame received by the server from the client.
+	 * Returns the inbound frames sink used by the {@link io.netty.handler.codec.http.websocketx.WebSocketProtocolHandler WebSocketProtocolHandler} to emit the frame received by the server from the client.
 	 * </p>
 	 * 
 	 * <p>
-	 * An empty optional is returned if the handler does not consume the frames received from the client, in which case the {@link WebSocketProtocolHandler} simply releases the received frames and
+	 * An empty optional is returned if the handler does not consume the frames received from the client, in which case the {@link io.netty.handler.codec.http.websocketx.WebSocketProtocolHandler WebSocketProtocolHandler} simply releases the received frames and
 	 * discards them.
 	 * </p>
 	 * 
@@ -303,7 +301,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	
 	/**
 	 * <p>
-	 * Sets the outboind frame publisher.
+	 * Sets the outbound frame publisher.
 	 * </p>
 	 * 
 	 * @param frames the frames to send to the client
@@ -332,9 +330,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	 * @return the promise
 	 */
 	public ChannelFuture finalizeExchange(ChannelPromise finalPromise) {
-		finalPromise.addListener(future -> {
-			this.inboundFrames.ifPresent(Sinks.Many::tryEmitComplete);
-		});
+		finalPromise.addListener(future -> this.inboundFrames.ifPresent(Sinks.Many::tryEmitComplete));
 		return finalPromise;
 	}
 
@@ -349,8 +345,8 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	}
 	
 	@Override
-	public String getSubProtocol() {
-		return this.subProtocol;
+	public String getSubprotocol() {
+		return this.subprotocol;
 	}
 
 	@Override
@@ -359,7 +355,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 			Sinks.Many<WebSocketFrame> inboundFrameSink = Sinks.many().unicast().onBackpressureBuffer();
 			this.inbound = new GenericInbound(inboundFrameSink.asFlux()
 				.doOnSubscribe(ign -> this.inboundSubscribed = true)
-				.doOnDiscard(GenericWebSocketFrame.class, frame -> frame.release())
+				.doOnDiscard(GenericWebSocketFrame.class, GenericWebSocketFrame::release)
 				.doOnTerminate(() -> {
 					this.inbound = null;
 					this.inboundFrames = Optional.empty();
@@ -416,9 +412,9 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	 * <p>
 	 * Invoked when a WebSocket close frame is received.
 	 * </p>
-	 * 
-	 * @param code
-	 * @param reason 
+	 *
+	 * @param code   the WebSocket close status code
+	 * @param reason the close reason
 	 */
 	public void onCloseReceived(short code, String reason) {
 		if(!this.inClosed) {
@@ -492,7 +488,6 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 					return frame.isFinal();
 				})
 				.map(messageFrames -> {
-					WebSocketMessage message; 
 					if(null == this.currentFrameKind) {
 						// Should never happen
 						throw new IllegalStateException();
@@ -528,9 +523,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 					this.currentFrameKind = frame.isFinal() ? null : frame.getKind();
 					return frame.isFinal();
 				})
-				.map(messageFrames -> {
-					return new GenericWebSocketMessage(WebSocketMessage.Kind.TEXT, messageFrames);
-				});
+				.map(messageFrames -> new GenericWebSocketMessage(WebSocketMessage.Kind.TEXT, messageFrames));
 		}
 
 		@Override
@@ -549,9 +542,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 					this.currentFrameKind = frame.isFinal() ? null : frame.getKind();
 					return frame.isFinal();
 				})
-				.map(messageFrames -> {
-					return new GenericWebSocketMessage(WebSocketMessage.Kind.BINARY, messageFrames);
-				});
+				.map(messageFrames -> new GenericWebSocketMessage(WebSocketMessage.Kind.BINARY, messageFrames));
 		}
 	}
 	

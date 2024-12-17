@@ -84,13 +84,12 @@ public class RedirectLogoutSuccessHandler<A extends Authentication, B extends Id
 	
 	@Override
 	public Mono<Void> handleLogoutSuccess(E exchange, A authentication) {
-		return Mono.fromRunnable(() -> {
-			exchange.response()
-				.headers(headers -> headers
-					.status(Status.FOUND)
-					.set(Headers.NAME_LOCATION, this.logoutSuccessUri)
-				)
-				.body().empty();
-		});
+		return Mono.fromRunnable(() -> exchange.response()
+			.headers(headers -> headers
+				.status(Status.FOUND)
+				.set(Headers.NAME_LOCATION, this.logoutSuccessUri)
+			)
+			.body().empty()
+		);
 	}
 }

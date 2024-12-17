@@ -29,10 +29,10 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * It is used to send request to the endoint.
+ * It is used to send request to the endpoint.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public interface HttpConnection {
@@ -116,10 +116,13 @@ public interface HttpConnection {
 	 *
 	 * @param <A>              the exchange context type
 	 * @param endpointExchange the endpoint exchange
+	 * @param state            a state to pass back when releasing the connection
 	 *
 	 * @return a mono emitting the connected exchange once response headers has been received
+	 * 
+	 * @see HttpConnection.Handler#onRelease(Object)
 	 */
-	<A extends ExchangeContext> Mono<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> send(EndpointExchange<A> endpointExchange);
+	<A extends ExchangeContext> Mono<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> send(EndpointExchange<A> endpointExchange, Object state);
 	
 	/**
 	 * <p>
@@ -153,13 +156,13 @@ public interface HttpConnection {
 	 * @return true if the connection is closed, false otherwise
 	 */
 	boolean isClosed();
-	
+
 	/**
 	 * <p>
 	 * A connection handler used to handle connection lifecycle events.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 */
 	interface Handler {
@@ -185,19 +188,52 @@ public interface HttpConnection {
 		 * @param maxConcurrentRequests the new amount of maximum concurrent requests
 		 */
 		void onSettingsChange(long maxConcurrentRequests);
-		
+
 		/**
 		 * <p>
-		 * Notifies when the connection can be recycled.
+		 * Notifies when the connection is released.
 		 * </p>
+		 *
+		 * <p>
+		 * This is basically invoked when an exchange terminates.
+		 * </p>
+		 *
+		 * @param state the state specified when sending an exchange
 		 */
-		void recycle();
+		void onRelease(Object state);
 		
 		/**
 		 * <p>
 		 * Notifies when the connection is closed.
 		 * </p>
 		 */
-		void close();
+		void onClose();
+	}
+
+	/**
+	 * <p>
+	 * A connection handle.
+	 * </p>
+	 *
+	 * <p>
+	 * It is typically specified as a state when invoking {@link HttpConnection#send(EndpointExchange, Object)} in order to properly return a pooled connection to a pool.
+	 * </p>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.12
+	 */
+	interface Handle {
+
+		/**
+		 * <p>
+		 * Sends a request to the connected endpoint.
+		 * </p>
+		 *
+		 * @param <A>              the exchange context type
+		 * @param endpointExchange the endpoint exchange
+		 *
+		 * @return a mono emitting the connected exchange once response headers has been received
+		 */
+		<A extends ExchangeContext> Mono<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> send(EndpointExchange<A> endpointExchange);
 	}
 }

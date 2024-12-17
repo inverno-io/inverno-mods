@@ -24,7 +24,7 @@ import io.netty.handler.codec.http.HttpHeadersFactory;
  * An {@link HttpHeadersFactory} implementation for creating validating HTTP headers.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  * 
  * @see HeadersValidator
@@ -72,7 +72,7 @@ public class ValidatingHttpHeadersFactory implements HttpHeadersFactory {
 	 * Validating HTTP headers factory.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 */
 	private static class DefaultValidatingHttpHeadersFactory implements HttpHeadersFactory {
@@ -93,7 +93,7 @@ public class ValidatingHttpHeadersFactory implements HttpHeadersFactory {
 	 * Non-validating HTTP headers factory.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 */
 	private static class DefaultNonValidatingHttpHeadersFactory implements HttpHeadersFactory {

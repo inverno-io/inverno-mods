@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  * This implementation uses {@link LinkedHttpHeaders} instead of Netty's {@link DefaultHttpHeaders} as internal headers in order to increase performances.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 class Http1xResponseHeaders extends AbstractResponseHeaders<Http1xResponseHeaders> {
@@ -67,7 +67,7 @@ class Http1xResponseHeaders extends AbstractResponseHeaders<Http1xResponseHeader
 
 	/**
 	 * <p>
-	 * Returns the headers to send as part of the Http response.
+	 * Returns the headers to send as part of the HTTP response.
 	 * </p>
 	 * 
 	 * @return the wrapped headers
@@ -207,7 +207,7 @@ class Http1xResponseHeaders extends AbstractResponseHeaders<Http1xResponseHeader
 
 	@Override
 	public <T extends Header> Optional<T> getHeader(CharSequence name) {
-		return this.get(name).map(value -> this.headerService.<T>decode(name.toString(), value));
+		return this.get(name).map(value -> this.headerService.decode(name.toString(), value));
 	}
 
 	@Override

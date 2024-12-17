@@ -15,16 +15,6 @@
  */
 package io.inverno.mod.configuration.compiler.internal;
 
-import java.util.Arrays;
-import java.util.function.Supplier;
-
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.PrimitiveType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.WildcardType;
-
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.NestedBean;
 import io.inverno.core.annotation.Overridable;
@@ -39,6 +29,13 @@ import io.inverno.mod.configuration.compiler.spi.ConfigurationInfoVisitor;
 import io.inverno.mod.configuration.compiler.spi.ConfigurationPropertyInfo;
 import io.inverno.mod.configuration.compiler.spi.NestedConfigurationPropertyInfo;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.function.Supplier;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.PrimitiveType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * <p>
@@ -100,6 +97,9 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			configurationLoader_load_method.append(context.indent(1)).append("}");
 			
 			StringBuilder configurationLoader_load_override_method = new StringBuilder(context.indent(1)).append("public static ").append(context.getTypeName(configurationInfo.getType())).append(" load(").append(context.getTypeName(configurationInfo.getType())).append(" configuration, ").append(context.getTypeName(context.getConsumerType())).append("<").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("> configurer) {").append(System.lineSeparator());
+			configurationLoader_load_override_method.append(context.indent(2)).append("if(configuration == null) {").append(System.lineSeparator());
+			configurationLoader_load_override_method.append(context.indent(3)).append("return load(configurer);").append(System.lineSeparator());
+			configurationLoader_load_override_method.append(context.indent(2)).append("}").append(System.lineSeparator());
 			configurationLoader_load_override_method.append(context.indent(2)).append("if(configurer == null) {").append(System.lineSeparator());
 			configurationLoader_load_override_method.append(context.indent(3)).append("return configuration;").append(System.lineSeparator());
 			configurationLoader_load_override_method.append(context.indent(2)).append("}").append(System.lineSeparator());
@@ -139,7 +139,7 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			context.removeImport(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS);
 			context.removeImport(ConfigurationLoaderClassGenerationContext.CONFIGURATION_BEAN_INNER_CLASS);
 			
-			configurationLoader_class.insert(0, System.lineSeparator() + System.lineSeparator()).insert(0, context.getImports().stream().sorted().filter(i -> i.lastIndexOf(".") > 0 && !i.substring(0, i.lastIndexOf(".")).equals(packageName)).map(i -> new StringBuilder().append("import ").append(i).append(";")).collect(context.joining(System.lineSeparator())));
+			configurationLoader_class.insert(0, System.lineSeparator() + System.lineSeparator()).insert(0, context.getImports().stream().sorted().filter(i -> !i.startsWith("java.lang") && i.lastIndexOf(".") > 0 && !i.substring(0, i.lastIndexOf(".")).equals(packageName)).map(i -> new StringBuilder().append("import ").append(i).append(";")).collect(context.joining(System.lineSeparator())));
 			if(!packageName.equals("")) {
 				configurationLoader_class.insert(0, ";" + System.lineSeparator() + System.lineSeparator()).insert(0, packageName).insert(0, "package ");
 			}
@@ -166,7 +166,7 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			if(configurationInfo.getProperties().length > 0) {
 				configurationImpl_constructor.append(context.indent(1)).append("public ").append(ConfigurationLoaderClassGenerationContext.CONFIGURATION_INNER_CLASS).append("(");
 				configurationImpl_constructor.append(Arrays.stream(configurationInfo.getProperties()).map(propertyInfo -> this.visit(propertyInfo, context.withMode(GenerationMode.CONFIGURATION_IMPL_PROPERTY_PARAMETER))).collect(context.joining(", ")));
-				configurationImpl_constructor.append(") {\n");
+				configurationImpl_constructor.append(") {").append(System.lineSeparator());
 				configurationImpl_constructor.append(Arrays.stream(configurationInfo.getProperties()).map(propertyInfo -> this.visit(propertyInfo, context.withMode(GenerationMode.CONFIGURATION_IMPL_PROPERTY_ASSIGNMENT))).collect(context.joining(System.lineSeparator())));
 				configurationImpl_constructor.append(System.lineSeparator());
 				configurationImpl_constructor.append(context.indent(1)).append("}");
@@ -176,14 +176,56 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 				.map(propertyInfo -> this.visit(propertyInfo, context.withMode(GenerationMode.CONFIGURATION_IMPL_PROPERTY_ACCESSOR)))
 				.collect(context.joining(System.lineSeparator()));
 			
-			StringBuilder configurationImplClass = new StringBuilder().append(context.indent(0)).append("private static final class ").append(ConfigurationLoaderClassGenerationContext.CONFIGURATION_INNER_CLASS).append(" implements ").append(context.getTypeName(configurationInfo.getType())).append(" {\n\n");
 			
-			configurationImplClass.append(configurationImpl_field_properties).append("\n\n");
-			configurationImplClass.append(configurationImpl_default_constructor).append("\n\n");
+			StringBuilder configuration_hashCode = new StringBuilder();
+			configuration_hashCode.append(context.indent(1)).append("@Override").append(System.lineSeparator());
+			configuration_hashCode.append(context.indent(1)).append("public int hashCode() {").append(System.lineSeparator());
+			configuration_hashCode.append(context.indent(2)).append("return ").append(context.getTypeName(context.getObjectsType())).append(".hash(");
+			configuration_hashCode.append(Arrays.stream(configurationInfo.getProperties())
+				.map(propertyInfo -> new StringBuilder().append("this.").append(propertyInfo.getQualifiedName().getPropertyName()).toString())
+				.collect(context.joining(", "))
+			);
+			configuration_hashCode.append(");").append(System.lineSeparator());
+			configuration_hashCode.append(context.indent(1)).append("}").append(System.lineSeparator());
+			
+			StringBuilder configuration_equals = new StringBuilder();
+			configuration_equals.append(context.indent(1)).append("@Override").append(System.lineSeparator());
+			configuration_equals.append(context.indent(1)).append("public boolean equals(Object obj) {").append(System.lineSeparator());
+			configuration_equals.append(context.indent(2)).append("if(this == obj)").append(System.lineSeparator());
+			configuration_equals.append(context.indent(3)).append("return true;").append(System.lineSeparator());
+			configuration_equals.append(context.indent(2)).append("if(obj == null)").append(System.lineSeparator());
+			configuration_equals.append(context.indent(3)).append("return false;").append(System.lineSeparator());
+			configuration_equals.append(context.indent(2)).append("if(this.getClass() != obj.getClass())").append(System.lineSeparator());
+			configuration_equals.append(context.indent(3)).append("return false;").append(System.lineSeparator());
+			configuration_equals.append(context.indent(2)).append(context.getTypeName(configurationInfo.getType())).append(" other = (").append(context.getTypeName(configurationInfo.getType())).append(")obj;").append(System.lineSeparator());
+			configuration_equals.append(context.indent(2)).append("return ");
+			configuration_equals.append(Arrays.stream(configurationInfo.getProperties())
+				.map(propertyInfo -> { 
+					if(propertyInfo.getType() instanceof PrimitiveType) {
+						return new StringBuilder().append("this.").append(propertyInfo.getQualifiedName().getPropertyName()).append(" == other.").append(propertyInfo.getQualifiedName().getPropertyName()).append("()");
+					}
+					else if(propertyInfo.getType().getKind() == TypeKind.ARRAY) {
+						return new StringBuilder().append(context.getTypeName(context.getObjectsType())).append(".deepEquals(this.").append(propertyInfo.getQualifiedName().getPropertyName()).append(", ").append("other.").append(propertyInfo.getQualifiedName().getPropertyName()).append("())");
+					}
+					else {
+						return new StringBuilder().append(context.getTypeName(context.getObjectsType())).append(".equals(this.").append(propertyInfo.getQualifiedName().getPropertyName()).append(", ").append("other.").append(propertyInfo.getQualifiedName().getPropertyName()).append("())");
+					}
+				})
+				.collect(context.joining(" && "))
+			);
+			configuration_equals.append(";").append(System.lineSeparator());
+			configuration_equals.append(context.indent(1)).append("}").append(System.lineSeparator());
+					
+			StringBuilder configurationImplClass = new StringBuilder().append(context.indent(0)).append("private static final class ").append(ConfigurationLoaderClassGenerationContext.CONFIGURATION_INNER_CLASS).append(" implements ").append(context.getTypeName(configurationInfo.getType())).append(" {").append(System.lineSeparator()).append(System.lineSeparator());
+			
+			configurationImplClass.append(configurationImpl_field_properties).append(System.lineSeparator()).append(System.lineSeparator());
+			configurationImplClass.append(configurationImpl_default_constructor).append(System.lineSeparator()).append(System.lineSeparator());
 			if(configurationImpl_constructor.length() > 0) {
-				configurationImplClass.append(configurationImpl_constructor).append("\n\n");
+				configurationImplClass.append(configurationImpl_constructor).append(System.lineSeparator()).append(System.lineSeparator());
 			}
-			configurationImplClass.append(configurationImpl_property_accessors);
+			configurationImplClass.append(configurationImpl_property_accessors).append(System.lineSeparator());
+			configurationImplClass.append(configuration_hashCode).append(System.lineSeparator());
+			configurationImplClass.append(configuration_equals);
 			
 			configurationImplClass.append(context.indent(0)).append("}");
 			
@@ -200,10 +242,10 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 				.map(propertyInfo -> this.visit(propertyInfo, context.withMode(GenerationMode.CONFIGURATION_CONFIGURATOR_PROPERTY_INJECTOR)))
 				.collect(context.joining(System.lineSeparator()));
 			
-			StringBuilder configurationConfiguratorClass = new StringBuilder().append(context.indent(0)).append("public static final class ").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append(" {\n\n");
+			StringBuilder configurationConfiguratorClass = new StringBuilder().append(context.indent(0)).append("public static final class ").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append(" {").append(System.lineSeparator()).append(System.lineSeparator());
 			
-			configurationConfiguratorClass.append(configurationConfigurator_field_properties).append("\n\n");
-			configurationConfiguratorClass.append(configurationConfigurator_default_constructor).append("\n\n");
+			configurationConfiguratorClass.append(configurationConfigurator_field_properties).append(System.lineSeparator()).append(System.lineSeparator());
+			configurationConfiguratorClass.append(configurationConfigurator_default_constructor).append(System.lineSeparator()).append(System.lineSeparator());
 			configurationConfiguratorClass.append(configurationConfigurator_property_injectors);
 			
 			configurationConfiguratorClass.append(context.indent(0)).append("}");
@@ -215,29 +257,28 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			TypeMirror wrapperAnnotationType = context.getElementUtils().getTypeElement(Wrapper.class.getCanonicalName()).asType();
 			TypeMirror configurationLoaderSupportType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(ConfigurationLoaderSupport.class.getCanonicalName()).asType());
 			TypeMirror configurationSupplierType = context.getTypeUtils().getDeclaredType(context.getElementUtils().getTypeElement(Supplier.class.getCanonicalName()), configurationInfo.getType());
-			WildcardType unknownWildcardType = context.getTypeUtils().getWildcardType(null, null);
-			TypeMirror configurationSourceType = context.getTypeUtils().getDeclaredType(context.getElementUtils().getTypeElement(ConfigurationSource.class.getCanonicalName()), unknownWildcardType, unknownWildcardType, unknownWildcardType);
+			TypeMirror configurationSourceType =  context.getElementUtils().getTypeElement(ConfigurationSource.class.getCanonicalName()).asType();
 			TypeMirror parameterType = context.getElementUtils().getTypeElement(Parameter.class.getCanonicalName()).asType();
 			
-			StringBuilder configurationBeanClass = new StringBuilder().append(context.indent(0)).append("@").append(context.getTypeName(beanAnnotationType)).append("(name = \"").append(configurationInfo.getQualifiedName().getBeanName()).append("\")\n");
+			StringBuilder configurationBeanClass = new StringBuilder().append(context.indent(0)).append("@").append(context.getTypeName(beanAnnotationType)).append("(name = \"").append(configurationInfo.getQualifiedName().getBeanName()).append("\")").append(System.lineSeparator());
 			configurationBeanClass.append(context.indent(0)).append("@").append(context.getTypeName(wrapperAnnotationType)).append(System.lineSeparator());
 			if(configurationInfo.isOverridable()) {
 				TypeMirror overridableAnnotationType = context.getElementUtils().getTypeElement(Overridable.class.getCanonicalName()).asType();
 				configurationBeanClass.append(context.indent(0)).append("@").append(context.getTypeName(overridableAnnotationType)).append(System.lineSeparator());
 			}
-			configurationBeanClass.append(context.indent(0)).append("public static final class ").append(ConfigurationLoaderClassGenerationContext.CONFIGURATION_BEAN_INNER_CLASS).append(" extends ").append(context.getTypeName(configurationLoaderSupportType)).append(".ConfigurationBeanSupport<").append(context.getTypeName(configurationInfo.getType())).append(", ").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append(", ").append(configurationLoaderClassName).append("> implements ").append(context.getTypeName(configurationSupplierType)).append(" {\n\n");
-			configurationBeanClass.append(context.indent(1)).append("public ").append(ConfigurationLoaderClassGenerationContext.CONFIGURATION_BEAN_INNER_CLASS).append("() {\n");
-			configurationBeanClass.append(context.indent(2)).append("super(new ").append(configurationLoaderClassName).append("());\n");
-			configurationBeanClass.append(context.indent(1)).append("}\n\n");
-			configurationBeanClass.append(context.indent(1)).append("public void setConfigurationSource(").append(context.getTypeName(configurationSourceType)).append(" source) {\n");
-			configurationBeanClass.append(context.indent(2)).append("this.loader.withSource(source);\n");
-			configurationBeanClass.append(context.indent(1)).append("}\n\n");
-			configurationBeanClass.append(context.indent(1)).append("public void setParameters(").append(context.getTypeName(parameterType)).append("[] parameters) {\n");
-			configurationBeanClass.append(context.indent(2)).append("this.loader.withParameters(parameters);\n");
-			configurationBeanClass.append(context.indent(1)).append("}\n\n");
-			configurationBeanClass.append(context.indent(1)).append("public void setConfigurer(").append(context.getTypeName(context.getConsumerType())).append("<").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("> configurer) {\n");
-			configurationBeanClass.append(context.indent(2)).append("this.loader.withConfigurer(configurer);\n");
-			configurationBeanClass.append(context.indent(1)).append("}\n");
+			configurationBeanClass.append(context.indent(0)).append("public static final class ").append(ConfigurationLoaderClassGenerationContext.CONFIGURATION_BEAN_INNER_CLASS).append(" extends ").append(context.getTypeName(configurationLoaderSupportType)).append(".ConfigurationBeanSupport<").append(context.getTypeName(configurationInfo.getType())).append(", ").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append(", ").append(configurationLoaderClassName).append("> implements ").append(context.getTypeName(configurationSupplierType)).append(" {").append(System.lineSeparator()).append(System.lineSeparator());
+			configurationBeanClass.append(context.indent(1)).append("public ").append(ConfigurationLoaderClassGenerationContext.CONFIGURATION_BEAN_INNER_CLASS).append("() {").append(System.lineSeparator());
+			configurationBeanClass.append(context.indent(2)).append("super(new ").append(configurationLoaderClassName).append("());").append(System.lineSeparator());
+			configurationBeanClass.append(context.indent(1)).append("}").append(System.lineSeparator()).append(System.lineSeparator());
+			configurationBeanClass.append(context.indent(1)).append("public void setConfigurationSource(").append(context.getTypeName(configurationSourceType)).append(" source) {").append(System.lineSeparator());
+			configurationBeanClass.append(context.indent(2)).append("this.loader.withSource(source);").append(System.lineSeparator());
+			configurationBeanClass.append(context.indent(1)).append("}").append(System.lineSeparator()).append(System.lineSeparator());
+			configurationBeanClass.append(context.indent(1)).append("public void setParameters(").append(context.getTypeName(parameterType)).append("[] parameters) {").append(System.lineSeparator());
+			configurationBeanClass.append(context.indent(2)).append("this.loader.withParameters(parameters);").append(System.lineSeparator());
+			configurationBeanClass.append(context.indent(1)).append("}").append(System.lineSeparator()).append(System.lineSeparator());
+			configurationBeanClass.append(context.indent(1)).append("public void setConfigurer(").append(context.getTypeName(context.getConsumerType())).append("<").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("> configurer) {").append(System.lineSeparator());
+			configurationBeanClass.append(context.indent(2)).append("this.loader.withConfigurer(configurer);").append(System.lineSeparator());
+			configurationBeanClass.append(context.indent(1)).append("}").append(System.lineSeparator());
 			configurationBeanClass.append(context.indent(0)).append("}");
 			
 			return configurationBeanClass;
@@ -271,9 +312,9 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 				TypeMirror nestedAnnotationType = context.getElementUtils().getTypeElement(NestedBean.class.getCanonicalName()).asType();
 				result.append(context.indent(1)).append("@").append(context.getTypeName(nestedAnnotationType)).append(System.lineSeparator());
 			}
-			result.append(context.indent(1)).append("public ").append(context.getTypeName(configurationPropertyInfo.getType())).append(" ").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append("() {\n");
-			result.append(context.indent(2)).append(" return this.").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append(";\n");
-			result.append(context.indent(1)).append("}\n");
+			result.append(context.indent(1)).append("public ").append(context.getTypeName(configurationPropertyInfo.getType())).append(" ").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append("() {").append(System.lineSeparator());
+			result.append(context.indent(2)).append(" return this.").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append(";").append(System.lineSeparator());
+			result.append(context.indent(1)).append("}").append(System.lineSeparator());
 			return result;
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURATION_CONFIGURATOR_PROPERTY_FIELD) {
@@ -281,10 +322,10 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			return new StringBuilder().append(context.indent(1)).append("private ").append(context.getTypeName(context.getTypeUtils().getDeclaredType(context.getElementUtils().getTypeElement(Supplier.class.getCanonicalName()), boxedType))).append(" ").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append(";");
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURATION_CONFIGURATOR_PROPERTY_INJECTOR) {
-			StringBuilder result = new StringBuilder().append(context.indent(1)).append("public ").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append(" ").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append("(").append(context.getTypeName(configurationPropertyInfo.getType())).append(" ").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append(") {\n");
-			result.append(context.indent(2)).append("this.").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append(" = () -> ").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append(";\n");
-			result.append(context.indent(2)).append("return this;\n");
-			result.append(context.indent(1)).append("}\n");
+			StringBuilder result = new StringBuilder().append(context.indent(1)).append("public ").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append(" ").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append("(").append(context.getTypeName(configurationPropertyInfo.getType())).append(" ").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append(") {").append(System.lineSeparator());
+			result.append(context.indent(2)).append("this.").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append(" = () -> ").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append(";").append(System.lineSeparator());
+			result.append(context.indent(2)).append("return this;").append(System.lineSeparator());
+			result.append(context.indent(1)).append("}").append(System.lineSeparator());
 			if(configurationPropertyInfo instanceof NestedConfigurationPropertyInfo) {
 				result.append(System.lineSeparator()).append(this.visit((NestedConfigurationPropertyInfo)configurationPropertyInfo, context));
 			}
@@ -297,8 +338,52 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			return new StringBuilder().append(context.indent(0)).append("\"").append(context.getConfiguration().getQualifiedName().getModuleQName()).append(".").append(configurationPropertyInfo.getQualifiedName().getBeanName()).append("\"");
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURATION_PROPERTY_CONFIGURER) {
+			StringBuilder result = new StringBuilder().append(context.indent(0)).append("results.get(").append(context.getResultIndex().getAndIncrement()).append(").ifPresent(property -> ").append(context.getConfiguration().getQualifiedName().normalize()).append("_configurator.").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append("(property.");
+
+			if(configurationPropertyInfo.getType().getKind() == TypeKind.ARRAY) {
+				result.append("asArrayOf(").append(context.getTypeName(((ArrayType)configurationPropertyInfo.getType()).getComponentType())).append(".class, null)");
+			}
+			else if(context.getTypeUtils().isSameType(context.getCollectionType(), context.getTypeUtils().erasure(configurationPropertyInfo.getType()))) {
+				result.append("asListOf(").append(context.getTypeName(((DeclaredType)configurationPropertyInfo.getType()).getTypeArguments().get(0))).append(".class, null)");
+			}
+			else if(context.getTypeUtils().isSameType(context.getListType(), context.getTypeUtils().erasure(configurationPropertyInfo.getType()))) {
+				result.append("asListOf(").append(context.getTypeName(((DeclaredType)configurationPropertyInfo.getType()).getTypeArguments().get(0))).append(".class, null)");
+			}
+			else if(context.getTypeUtils().isSameType(context.getSetType(), context.getTypeUtils().erasure(configurationPropertyInfo.getType()))) {
+				result.append("asSetOf(").append(context.getTypeName(((DeclaredType)configurationPropertyInfo.getType()).getTypeArguments().get(0))).append(".class, null)");
+			}
+			else if(configurationPropertyInfo.getType() instanceof PrimitiveType) {
+				// boolean, byte, short, int, long, char, float, and double.
+				switch(configurationPropertyInfo.getType().getKind()) {
+					case BOOLEAN: result.append("asBoolean((new boolean[1])[0])");
+						break;
+					case BYTE: result.append("asByte((new byte[1])[0])");
+						break;
+					case SHORT: result.append("asShort((new short[1])[0])");
+						break;
+					case INT: result.append("asInteger((new int[1])[0])");
+						break;
+					case LONG: result.append("asLong((new long[1])[0])");
+						break;
+					case CHAR: result.append("asCharacter((new char[1])[0])");
+						break;
+					case FLOAT: result.append("asFloat((new float[1])[0])");
+						break;
+					case DOUBLE: result.append("asDouble((new double[1])[0])");
+						break;
+					default:
+						throw new IllegalStateException("Unsupported primitive type: " + configurationPropertyInfo.getType());
+				}
+			}
+			else {
+				result.append("as(").append(context.getTypeName(configurationPropertyInfo.getType())).append(".class, null)");
+			}
+			result.append("));");
+			return result;
+		}
+		/*else if(context.getMode() == GenerationMode.CONFIGURATION_PROPERTY_CONFIGURER) {
 			StringBuilder result = new StringBuilder().append(context.indent(0)).append("results.get(").append(context.getResultIndex().getAndIncrement()).append(").getResult().ifPresent(property -> ").append(context.getConfiguration().getQualifiedName().normalize()).append("_configurator.").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append("(property.");
-			
+
 			if(configurationPropertyInfo.getType().getKind() == TypeKind.ARRAY) {
 				result.append("asArrayOf(").append(context.getTypeName(((ArrayType)configurationPropertyInfo.getType()).getComponentType())).append(".class).orElse(null)");
 			}
@@ -339,7 +424,7 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			}
 			result.append("));");
 			return result;
-		}
+		}*/
 		return new StringBuilder();
 	}
 
@@ -358,12 +443,15 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			// Loader class might not be there yet if the nested configuration is defined the current module so we must build the configuration type name without resolving a type element.
 //			TypeMirror nestedConfigurationLoaderType = context.getElementUtils().getTypeElement(nestedConfigurationPropertyInfo.getConfiguration().getType().toString() + ConfigurationLoaderClassGenerationContext.CONFIGURATION_LOADER_CLASS_SUFFIX).asType();
 			
+			String nestedConfigurationPropertyName = nestedConfigurationPropertyInfo.getQualifiedName().getPropertyName();
+			String nestedConfigurationTypeName = context.getTypeName(nestedConfigurationPropertyInfo.getType());
 			String nestedConfigurationLoaderTypeName = context.getConfigurationLoaderTypeName(nestedConfigurationPropertyInfo.getConfiguration());
 			
-			StringBuilder result = new StringBuilder().append(context.indent(1)).append("public ").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append(" ").append(nestedConfigurationPropertyInfo.getQualifiedName().getPropertyName()).append("(").append(context.getTypeName(context.getConsumerType())).append("<").append(nestedConfigurationLoaderTypeName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("> ").append(nestedConfigurationPropertyInfo.getQualifiedName().getPropertyName()).append("_configurer) {\n");
-			result.append(context.indent(2)).append("this.").append(nestedConfigurationPropertyInfo.getQualifiedName().getPropertyName()).append(" = () -> ").append(nestedConfigurationLoaderTypeName).append(".load(").append(nestedConfigurationPropertyInfo.getQualifiedName().getPropertyName()).append("_configurer);\n");
-			result.append(context.indent(2)).append("return this;\n");
-			result.append(context.indent(1)).append("}\n");
+			StringBuilder result = new StringBuilder().append(context.indent(1)).append("public ").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append(" ").append(nestedConfigurationPropertyInfo.getQualifiedName().getPropertyName()).append("(").append(context.getTypeName(context.getConsumerType())).append("<").append(nestedConfigurationLoaderTypeName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("> ").append(nestedConfigurationPropertyName).append("_configurer) {").append(System.lineSeparator());
+			result.append(context.indent(2)).append(nestedConfigurationTypeName).append(" ").append(nestedConfigurationPropertyName).append("_parent = this.").append(nestedConfigurationPropertyName).append(" != null ? this.").append(nestedConfigurationPropertyName).append(".get() : null;").append(System.lineSeparator());
+			result.append(context.indent(2)).append("this.").append(nestedConfigurationPropertyInfo.getQualifiedName().getPropertyName()).append(" = () -> ").append(nestedConfigurationLoaderTypeName).append(".load(").append(nestedConfigurationPropertyName).append("_parent, ").append(nestedConfigurationPropertyName).append("_configurer);").append(System.lineSeparator());
+			result.append(context.indent(2)).append("return this;").append(System.lineSeparator());
+			result.append(context.indent(1)).append("}").append(System.lineSeparator());
 			
 			return result;
 		}

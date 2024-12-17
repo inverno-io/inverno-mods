@@ -22,8 +22,7 @@ import java.util.stream.Stream;
 
 /**
  * <p>
- * A collection of pipes used to transform streams including: filter, sort, map,
- * flatMap...
+ * A collection of pipes used to transform streams including: filter, sort, map, flatMap...
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -42,7 +41,7 @@ public final class StreamPipes {
 	 * @return a stream pipe
 	 */
 	public static <T> StreamPipe<T, T> distinct() {
-		return source -> source.distinct();
+		return Stream::distinct;
 	}
 	
 	/**
@@ -56,84 +55,78 @@ public final class StreamPipes {
 	 * @return a stream pipe
 	 */
 	public static <T> StreamPipe<T, T> sort() {
-		return source -> source.sorted();
+		return Stream::sorted;
 	}
-	
+
 	/**
 	 * <p>
-	 * Returns a pipe which converts a stream to sort the elements using the
-	 * specified comparator.
+	 * Returns a pipe which converts a stream to sort the elements using the specified comparator.
 	 * </p>
-	 * 
-	 * @param <T> the type of element in the stream
+	 *
+	 * @param <T>        the type of element in the stream
 	 * @param comparator a comparator
-	 * 
+	 *
 	 * @return a stream pipe
 	 */
 	public static <T> StreamPipe<T, T> sort(Comparator<? super T> comparator) {
 		return source -> source.sorted(comparator);
 	}
-	
+
 	/**
 	 * <p>
-	 * Returns a pipe which converts a stream to filter out elements that do
-	 * not pass the specified predicate test.
+	 * Returns a pipe which converts a stream to filter out elements that do not pass the specified predicate test.
 	 * </p>
-	 * 
-	 * @param <T> the type of element in the stream
+	 *
+	 * @param <T>       the type of element in the stream
 	 * @param predicate a predicate
-	 * 
+	 *
 	 * @return a stream pipe
 	 */
 	public static <T> StreamPipe<T, T> filter(Predicate<? super T> predicate) {
 		return source -> source.filter(predicate);
 	}
-	
+
 	/**
 	 * <p>
-	 * Returns a pipe which converts a stream to filter out elements based on
-	 * their keys computed using the specified key selector that do
-	 * not pass the specified predicate test.
+	 * Returns a pipe which converts a stream to filter out elements based on their keys computed using the specified key selector that do not pass the specified predicate test.
 	 * </p>
-	 * 
-	 * @param <T> the type of element in the stream
-	 * @param <U> the type of the computed keys
+	 *
+	 * @param <T>         the type of element in the stream
+	 * @param <U>         the type of the computed keys
 	 * @param keySelector a key selector
-	 * @param predicate a predicate
-	 * 
+	 * @param predicate   a predicate
+	 *
 	 * @return a stream pipe
 	 */
 	public static <T, U> StreamPipe<T, T> filter(Function<? super T, ? extends U> keySelector, Predicate<? super U> predicate) {
 		return source -> source.filter(v -> predicate.test(keySelector.apply(v)));
 	}
-	
+
 	/**
 	 * <p>
-	 * Returns a pipe which transforms the elements of a stream by applying the
-	 * specified mapper function.
+	 * Returns a pipe which transforms the elements of a stream by applying the specified mapper function.
 	 * </p>
-	 * 
-	 * @param <T> the type of element in the stream
-	 * @param <R> the type of element in the resulting stream
+	 *
+	 * @param <T>    the type of element in the stream
+	 * @param <R>    the type of element in the resulting stream
 	 * @param mapper a mapper function
-	 * 
+	 *
 	 * @return a stream pipe
 	 */
 	public static <T, R> StreamPipe<T, R> map(Function<? super T,? extends R> mapper) {
 		return source -> source.map(mapper);
 	}
-	
+
 	/**
 	 * <p>
-	 * Returns a pipe which transforms the elements of the stream into streams by
-	 * applying the specified mapper function, then flatten these inner stream into
-	 * a single stream sequentially using concatenation.
+	 * Returns a pipe which transforms the elements of the stream into streams by applying the specified mapper function, then flatten these inner stream into a single stream sequentially using
+	 * concatenation.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>    the type of element in the publisher
 	 * @param <R>    the type of element in the resulting publisher
 	 * @param mapper a mapper function
-	 * 
+	 *
 	 * @return a stream pipe
 	 */
 	public static <T, R> StreamPipe<T, R> flatMap(Function<? super T,? extends Stream<? extends R>> mapper) {

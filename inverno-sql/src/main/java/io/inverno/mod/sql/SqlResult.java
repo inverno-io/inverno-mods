@@ -25,8 +25,7 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * Depending on the nature of the statement operation, a SQL result might expose
- * rows or the number of rows affected by the operation but not both.
+ * Depending on the nature of the statement operation, a SQL result might expose rows or the number of rows affected by the operation but not both.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

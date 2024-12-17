@@ -51,8 +51,7 @@ import java.util.stream.Collectors;
  * </p>
  * 
  * <p>
- * This converter is an object converter and as such it can convert collection
- * of objects using a customizable separator.
+ * This converter is an object converter and as such it can convert collection of objects using a customizable separator.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -379,7 +378,7 @@ public class StringConverter implements ObjectConverter<String> {
 
 	@Override
 	public String encode(Locale value) throws ConverterException {
-		return value != null ? value.toString() : null;
+		return value != null ? value.toLanguageTag() : null;
 	}
 
 	@Override
@@ -746,11 +745,7 @@ public class StringConverter implements ObjectConverter<String> {
 		if(value == null) {
 			return null;
 		}
-		String[] elements = value.split("_");
-        if(elements.length >= 1 && (elements[0].length() == 2 || elements[0].length() == 0)) {
-            return new Locale(elements[0], elements.length >= 2 ? elements[1] : "", elements.length >= 3 ? elements[2] : "");
-        }
-        throw new ConverterException(value + " can't be decoded to the requested type");
+		return Locale.forLanguageTag(value);
 	}
 
 	@Override
@@ -781,9 +776,9 @@ public class StringConverter implements ObjectConverter<String> {
 	@Override
 	public URL decodeURL(String value) throws ConverterException {
 		try {
-			return value != null ? new URL(value) : null;
+			return value != null ? URI.create(value).toURL() : null;
 		} 
-		catch (MalformedURLException e) {
+		catch (IllegalArgumentException | MalformedURLException e) {
 			throw new ConverterException(value + " can't be decoded to the requested type", e);
 		}
 	}
@@ -830,9 +825,10 @@ public class StringConverter implements ObjectConverter<String> {
 	}
 	
 	@Override
-	public Class<?> decodeClass(String value) throws ConverterException {
+	@SuppressWarnings("unchecked")
+	public <T> Class<T> decodeClass(String value) throws ConverterException {
 		try {
-			return value != null ? Class.forName(value) : null;
+			return value != null ? (Class<T>)Class.forName(value) : null;
 		} 
 		catch (ClassNotFoundException e) {
 			throw new ConverterException(value + " can't be decoded to the requested type", e);

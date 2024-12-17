@@ -44,14 +44,12 @@ import java.util.stream.Collectors;
  * </p>
  * 
  * <p>
- * This converter is backed by a {@link StringConverter} which can convert
- * primitive and common objects, it can be extended to be able to convert other
- * types of objects by injecting specific compound decoders and encoders.
+ * This converter is backed by a {@link StringConverter} which can convert primitive and common objects, it can be extended to be able to convert other types of objects by injecting specific compound
+ * decoders and encoders.
  * </p>
  * 
  * <p>
- * This converter is an object converter and as such it can convert collection
- * of objects using a customizable separator.
+ * This converter is an object converter and as such it can convert collection of objects using a customizable separator.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -64,14 +62,13 @@ import java.util.stream.Collectors;
  */
 public class StringCompositeConverter extends CompositeConverter<String> implements ObjectConverter<String> {
 
-	private StringConverter defaultConverter;
+	private final StringConverter defaultConverter;
 	
 	private String arrayListSeparator;
 
 	/**
 	 * <p>
-	 * Creates a string composite converter with the default array/list separator
-	 * ({@link StringConverter#DEFAULT_ARRAY_LIST_SEPARATOR}.
+	 * Creates a string composite converter with the default array/list separator ({@link StringConverter#DEFAULT_ARRAY_LIST_SEPARATOR}.
 	 * </p>
 	 */
 	public StringCompositeConverter() {
@@ -301,7 +298,8 @@ public class StringCompositeConverter extends CompositeConverter<String> impleme
 	}
 
 	@Override
-	public Class<?> decodeClass(String value) throws ConverterException {
+	@SuppressWarnings("unchecked")
+	public <T> Class<T> decodeClass(String value) throws ConverterException {
 		return super.decode(value, Class.class);
 	}
 	

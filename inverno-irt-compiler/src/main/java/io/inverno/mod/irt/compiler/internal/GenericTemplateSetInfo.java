@@ -33,7 +33,6 @@ import io.inverno.mod.irt.compiler.spi.TemplateSetInfoVisitor;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class GenericTemplateSetInfo extends BaseInfo implements TemplateSetInfo {
 
@@ -59,10 +58,10 @@ public class GenericTemplateSetInfo extends BaseInfo implements TemplateSetInfo 
 	public GenericTemplateSetInfo(Range range, PackageInfo templatePackage, List<ImportInfo> imports, List<IncludeInfo> includes, List<OptionInfo> options, List<TemplateInfo> templates) {
 		super(range);
 		this.templatePackage = Optional.ofNullable(templatePackage);
-		this.imports = imports.stream().toArray(ImportInfo[]::new);
-		this.includes = includes.stream().toArray(IncludeInfo[]::new);
-		this.options = options.stream().toArray(OptionInfo[]::new);
-		this.templates = templates.stream().toArray(TemplateInfo[]::new);
+		this.imports = imports.toArray(ImportInfo[]::new);
+		this.includes = includes.toArray(IncludeInfo[]::new);
+		this.options = options.toArray(OptionInfo[]::new);
+		this.templates = templates.toArray(TemplateInfo[]::new);
 	}
 	
 	@Override

@@ -32,7 +32,7 @@ import reactor.core.publisher.Mono;
  * 
  * <p>
  * It searches user entries in an LDAP server based on the DN and uid provided by the LDAP authentication. The attributes to retrieve can be specified and the resulting {@link LDAPIdentity} shall only
- * contains these ones. By default it resolves: uid, sn, cn, grivenName, displayName, mail, title, telephoneNumber, mobile and jpegPhoto.
+ * contains these ones. By default it resolves: uid, sn, cn, givenName, displayName, mail, title, telephoneNumber, mobile and jpegPhoto.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -167,7 +167,7 @@ public class LDAPIdentityResolver implements IdentityResolver<LDAPAuthentication
 				ldapIdentity.setTitle(userEntry.getAllAttribute(LDAPIdentity.ATTRIBUTE_TITLE).stream().map(LDAPAttribute::asString).collect(Collectors.toList()));
 				ldapIdentity.setRegisteredAddress(userEntry.getAllAttribute(LDAPIdentity.ATTRIBUTE_REGISTERED_ADDRESS).stream().map(LDAPAttribute::asString).collect(Collectors.toList()));
 				ldapIdentity.setDestinationIndicator(userEntry.getAllAttribute(LDAPIdentity.ATTRIBUTE_DESTINATION_INDICATOR).stream().map(LDAPAttribute::asString).collect(Collectors.toList()));
-				ldapIdentity.setPreferredDeliveryMethod(userEntry.getAttribute(LDAPIdentity.ATTRIBUTE_PREFERED_DELIVERY_METHOD).map(LDAPAttribute::asString).orElse(null));
+				ldapIdentity.setPreferredDeliveryMethod(userEntry.getAttribute(LDAPIdentity.ATTRIBUTE_PREFERRED_DELIVERY_METHOD).map(LDAPAttribute::asString).orElse(null));
 				ldapIdentity.setFacsimileTelephoneNumber(userEntry.getAllAttribute(LDAPIdentity.ATTRIBUTE_FACSIMILE_TELEPHONE_NUMBER).stream().map(LDAPAttribute::asString).collect(Collectors.toList()));
 				ldapIdentity.setStreet(userEntry.getAllAttribute(LDAPIdentity.ATTRIBUTE_STREET).stream().map(LDAPAttribute::asString).collect(Collectors.toList()));
 				ldapIdentity.setPostOfficeBox(userEntry.getAllAttribute(LDAPIdentity.ATTRIBUTE_POST_OFFICE_BOX).stream().map(LDAPAttribute::asString).collect(Collectors.toList()));

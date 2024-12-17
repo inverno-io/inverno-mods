@@ -62,7 +62,7 @@ public interface WebSocket<A extends ExchangeContext, B extends WebSocketExchang
 	 * </p>
 	 * 
 	 * <p>
-	 * This is a convenience method which delegates to {@link #or(reactor.core.publisher.Mono) } which should be prefered.
+	 * This is a convenience method which delegates to {@link #or(reactor.core.publisher.Mono) } which should be preferred.
 	 * </p>
 	 * 
 	 * @param fallback a fallback action

@@ -28,10 +28,10 @@ import java.net.SocketAddress;
  * Base {@link HttpConnectionRequest} implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
- * @param <A> the Http request headers type
+ * @param <A> the HTTP request headers type
  */
 public abstract class AbstractRequest<A extends OutboundRequestHeaders> implements HttpConnectionRequest {
 	
@@ -46,16 +46,16 @@ public abstract class AbstractRequest<A extends OutboundRequestHeaders> implemen
 	protected final String authority;
 	protected final A headers;
 	
-	protected int transferedLength;
+	protected int transferredLength;
 
 	/**
 	 * <p>
-	 * Create an Http request.
+	 * Create an HTTP request.
 	 * </p>
 	 *
 	 * @param parameterConverter the parameter converter
 	 * @param endpointRequest    the endpoint request
-	 * @param headers            the Http headers
+	 * @param headers            the HTTP headers
 	 * @param authority          the request authority
 	 */
 	public AbstractRequest(
@@ -82,7 +82,7 @@ public abstract class AbstractRequest<A extends OutboundRequestHeaders> implemen
 	 * 
 	 * @return the authority
 	 */
-	protected static final String resolveAuthority(SocketAddress remoteAddress, boolean tls) {
+	protected static String resolveAuthority(SocketAddress remoteAddress, boolean tls) {
 		if(remoteAddress == null) {
 			throw new IllegalStateException("Can't resolve authority");
 		}

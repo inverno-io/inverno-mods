@@ -55,7 +55,6 @@ import io.inverno.mod.security.jose.internal.jwk.rsa.GenericRSAJWKBuilder;
 import io.inverno.mod.security.jose.internal.jwk.rsa.GenericRSAJWKFactory;
 import io.inverno.mod.security.jose.jwa.ECCurve;
 import io.inverno.mod.security.jose.jwa.OCTAlgorithm;
-import io.inverno.mod.security.jose.jwk.JWKService;
 import io.inverno.mod.security.jose.jwk.JWKStore;
 import io.inverno.mod.security.jose.jwk.oct.OCTJWK;
 import io.inverno.mod.security.jose.jws.JWS;

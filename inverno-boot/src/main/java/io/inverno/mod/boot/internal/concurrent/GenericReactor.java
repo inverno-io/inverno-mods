@@ -37,20 +37,16 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * <p>
- * Generic {@link Reactor} implementation which instantiates a core IO event
- * loop groups based on the boot module configuration and hardware/software
- * capabilities.
+ * Generic {@link Reactor} implementation which instantiates a core IO event loop groups based on the boot module configuration and hardware/software capabilities.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class GenericReactor implements Reactor, InternalReactor {
 
 	private final Logger logger = LogManager.getLogger(this.getClass());
 	
-	private final BootConfiguration configuration;
 	private final TransportType transportType;
 	private final ExecutorService workerPool;
 	
@@ -72,11 +68,10 @@ public class GenericReactor implements Reactor, InternalReactor {
 	 * @param workerPool    the worker pool 
 	 */
 	public GenericReactor(BootConfiguration configuration, TransportType transportType, ExecutorService workerPool) {
-		this.configuration = configuration;
 		this.transportType = transportType;
 		this.workerPool = workerPool;
 		
-		this.coreEventLoopGroupSize = this.configuration.reactor_event_loop_group_size();
+		this.coreEventLoopGroupSize = configuration.reactor_event_loop_group_size();
 	}
 	
 	/**
@@ -87,7 +82,7 @@ public class GenericReactor implements Reactor, InternalReactor {
 	 * @param nThreads      the size of the event loop group
 	 * @param threadFactory the thread factory
 	 * 
-	 * @return an new event loop group
+	 * @return a new event loop group
 	 */
 	private EventLoopGroup createEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
 		switch(this.transportType) {
@@ -125,7 +120,7 @@ public class GenericReactor implements Reactor, InternalReactor {
 				GenericReactor.this.logger.debug("Stopping core event loop group...");
 				GenericReactor.this.coreEventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS).addListener(new GenericFutureListener() {
 					@Override
-					public void operationComplete(Future future) throws Exception {
+					public void operationComplete(Future future) {
 						if(!future.isSuccess()) {
 							GenericReactor.this.logger.warn("Error while stopping core IO event loop group", future.cause());
 						}

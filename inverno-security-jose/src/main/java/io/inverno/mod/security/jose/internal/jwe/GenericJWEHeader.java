@@ -63,7 +63,7 @@ public class GenericJWEHeader extends AbstractJOSEHeader<GenericJWEHeader> imple
 	private byte[] raw;
 	
 	/**
-	 * The set of processed parameters (defaults to {@link #PROCESSED_PARAMETERS}.
+	 * The set of processed parameters (defaults to {@link #PROCESSED_PARAMETERS}).
 	 */
 	private Set<String> processedParameters;
 

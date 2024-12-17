@@ -35,7 +35,7 @@ import reactor.core.publisher.Mono;
  */
 public class ConfigurationSourcePermissionBasedAccessControllerResolver implements AccessControllerResolver<PrincipalAuthentication, PermissionBasedAccessController> {
 
-	private final ConfigurationSource<?, ?, ?> configurationSource;
+	private final ConfigurationSource configurationSource;
 	private final String rolePrefix;
 	
 	/**
@@ -45,7 +45,7 @@ public class ConfigurationSourcePermissionBasedAccessControllerResolver implemen
 	 * 
 	 * @param configurationSource a configuration source
 	 */
-	public ConfigurationSourcePermissionBasedAccessControllerResolver(ConfigurationSource<?, ?, ?> configurationSource) {
+	public ConfigurationSourcePermissionBasedAccessControllerResolver(ConfigurationSource configurationSource) {
 		this(configurationSource, null);
 	}
 	
@@ -57,7 +57,7 @@ public class ConfigurationSourcePermissionBasedAccessControllerResolver implemen
 	 * @param configurationSource a configuration source
 	 * @param rolePrefix          the prefix to prepend to a role when resolving role permissions
 	 */
-	public ConfigurationSourcePermissionBasedAccessControllerResolver(ConfigurationSource<?, ?, ?> configurationSource, String rolePrefix) {
+	public ConfigurationSourcePermissionBasedAccessControllerResolver(ConfigurationSource configurationSource, String rolePrefix) {
 		this.configurationSource = configurationSource;
 		this.rolePrefix = rolePrefix;
 	}

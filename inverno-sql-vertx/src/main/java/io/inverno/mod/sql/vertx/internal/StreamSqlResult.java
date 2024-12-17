@@ -25,19 +25,16 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * {@link SqlResult} implementation extracting SQL operation results from a
- * Vert.x {@link Cursor}.
+ * {@link SqlResult} implementation extracting SQL operation results from a Vert.x {@link Cursor}.
  * </p>
  * 
  * <p>
- * Unlike {@link GenericSqlResult}, this implementation supports results
- * streaming. It uses a {@link Cursor} to create a {@link Publisher} of rows
- * which must be subscribed to be able to access row metadata.
+ * Unlike {@link GenericSqlResult}, this implementation supports results streaming. It uses a {@link Cursor} to create a {@link Publisher} of rows which must be subscribed to be able to access row
+ * metadata.
  * </p>
  * 
  * <p>
- * Both {@link #rowsUpdated()} and {@link #rows()} methods return a publisher
- * that consumes the stream and as result it is not possible to invoke both.
+ * Both {@link #rowsUpdated()} and {@link #rows()} methods return a publisher that consumes the stream and as result it is not possible to invoke both.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -74,8 +71,7 @@ public class StreamSqlResult implements SqlResult {
 
 	/**
 	 * <p>
-	 * The returned Mono actually consumed the stream, as a result it is not possible to invoke both
-	 * {@link StreamSqlResult#rows()} and {@link StreamSqlResult#rowsUpdated()}. 
+	 * The returned Mono actually consumed the stream, as a result it is not possible to invoke both {@link #rows()} and {@code rowsUpdated()}.
 	 * </p>
 	 */
 	@Override
@@ -87,15 +83,15 @@ public class StreamSqlResult implements SqlResult {
 				}
 				return rowSet.rowCount();
 			})
-			.repeat(() -> this.cursor.hasMore())
-			.reduce(0, (acc, count) -> acc + count)
+			.repeat(this.cursor::hasMore)
+			.reduce(0, Integer::sum)
 			.doFinally(ign -> this.cursor.close());
 	}
 
 	@Override
 	public Publisher<Row> rows() {
 		return Mono.fromCompletionStage(() -> this.cursor.read(this.fetchSize).toCompletionStage())
-			.repeat(() -> this.cursor.hasMore())
+			.repeat(this.cursor::hasMore)
 			.flatMapIterable(rowSet -> {
 				if(this.rowMetadata == null) {
 					this.rowMetadata = new GenericRowMetadata(rowSet.columnsNames());

@@ -22,7 +22,7 @@ import java.util.Objects;
 
 /**
  * <p>
- * A {@link Resource} implementation that identifies resources by a URI of the form <code>jar:file:/path/to/jar!/path/to/resource</code> and looks up data in a jar file on the file system system.
+ * A {@link Resource} implementation that identifies resources by a URI of the form {@code jar:file:/path/to/jar!/path/to/resource} and looks up data in a jar file on the file system system.
  * </p>
  * 
  * <p>

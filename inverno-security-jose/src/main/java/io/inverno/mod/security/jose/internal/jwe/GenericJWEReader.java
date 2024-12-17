@@ -78,7 +78,7 @@ public class GenericJWEReader<A> extends AbstractJOSEObjectReader<A, JWEHeader, 
 	 * @param keys                  the keys to consider to decrypt the CEK
 	 * @param zips                  a list of supported JWE compression algorithms
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public GenericJWEReader(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type, Publisher<? extends JWK> keys, List<JWEZip> zips) {
 		super(mapper, dataConversionService, jwkService, type, keys);
 		this.zips = zips;

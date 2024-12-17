@@ -15,7 +15,9 @@
  */
 package io.inverno.mod.http.client.internal;
 
+import io.inverno.mod.http.base.OutboundResponseHeaders;
 import io.inverno.mod.http.client.Response;
+import java.util.function.Consumer;
 
 /**
  * <p>
@@ -26,9 +28,10 @@ import io.inverno.mod.http.client.Response;
  * Implementations shall depend on the protocol version.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.8
  */
 public interface HttpConnectionResponse extends Response {
 
+	HttpConnectionResponse configureInterceptedHeaders(Consumer<OutboundResponseHeaders> headersConfigurer);
 }

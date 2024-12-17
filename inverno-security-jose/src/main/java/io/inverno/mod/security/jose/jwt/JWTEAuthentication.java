@@ -43,7 +43,7 @@ public class JWTEAuthentication <A extends JWTClaimsSet> implements TokenAuthent
 	/**
 	 * The security error resulting from a JOSE processing error.
 	 */
-	private final Optional<SecurityException> cause;
+	private final SecurityException cause;
 	
 	/**
 	 * <p>
@@ -54,7 +54,7 @@ public class JWTEAuthentication <A extends JWTClaimsSet> implements TokenAuthent
 	 */
 	public JWTEAuthentication(JWE<A> jwt) {
 		this.jwt = Objects.requireNonNull(jwt);
-		this.cause = Optional.empty();
+		this.cause = null;
 	}
 	
 	/**
@@ -66,7 +66,7 @@ public class JWTEAuthentication <A extends JWTClaimsSet> implements TokenAuthent
 	 */
 	public JWTEAuthentication(SecurityException cause) {
 		this.jwt = null;
-		this.cause = Optional.ofNullable(cause);
+		this.cause = cause;
 	}
 	
 	/**
@@ -78,7 +78,7 @@ public class JWTEAuthentication <A extends JWTClaimsSet> implements TokenAuthent
 	 */
 	JWTEAuthentication(JOSEProcessingException cause) {
 		this.jwt = null;
-		this.cause = Optional.ofNullable(cause).map(e -> new InvalidCredentialsException("Invalid token", e));
+		this.cause = cause != null ? new InvalidCredentialsException("Invalid token", cause) : null;
 	}
 
 	/**
@@ -131,6 +131,6 @@ public class JWTEAuthentication <A extends JWTClaimsSet> implements TokenAuthent
 				return Optional.of(new InvalidCredentialsException(e));
 			}
 		}
-		return this.cause;
+		return Optional.ofNullable(this.cause);
 	}
 }

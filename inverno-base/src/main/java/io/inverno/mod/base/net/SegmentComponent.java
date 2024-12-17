@@ -31,8 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * A URI component representing a segment part of a path in a URI as defined by
- * <a href="https://tools.ietf.org/html/rfc3986#section-3.3">RFC 3986 Section 3.3</a>.
+ * A URI component representing a segment part of a path in a URI as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.3">RFC 3986 Section 3.3</a>.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -42,15 +41,10 @@ import org.apache.commons.lang3.StringUtils;
  */
 class SegmentComponent implements ParameterizedURIComponent {
 
-	public static final Predicate<Integer> ESCAPED_CHARACTERS_SLASH =  b -> {
-		return !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '&' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == '=' || b == ':' || b == '@');
-	};
-	
-	public static final Predicate<Integer> ESCAPED_CHARACTERS_NO_SLASH =  b -> {
-		return !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '&' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == '=' || b == ':' || b == '@' || b == '/');
-	};
-	
-	private final URIFlags flags;
+	public static final Predicate<Integer> ESCAPED_CHARACTERS_SLASH =  b -> !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '&' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == '=' || b == ':' || b == '@');
+
+	public static final Predicate<Integer> ESCAPED_CHARACTERS_NO_SLASH =  b -> !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '&' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == '=' || b == ':' || b == '@' || b == '/');
+
 	private final String rawValue;
 	
 	private final Charset charset;
@@ -81,29 +75,28 @@ class SegmentComponent implements ParameterizedURIComponent {
 	}
 	
 	private SegmentComponent(URIFlags flags, Charset charset, String path, boolean consumePath) {
-		this.flags = flags;
 		this.charset = charset;
 		this.parameters = new LinkedList<>();
 		
 		BiPredicate<Integer, Byte> breakPredicate = null;
-		if(this.flags.isPathPattern()) {
+		if(flags.isPathPattern()) {
 			breakPredicate = (i, nextByte) -> {
-				if(directories && nextByte != '/') {
+				if(this.directories && nextByte != '/') {
 					throw new URIBuilderException("Invalid usage of path pattern '**' which is exclusive: /" + path.substring(0, i+1));
 				}
 				if(nextByte == '?') {
 					if(this.previousWildcard) {
-						this.parameters.add(new URIParameter(i-1, 1, null, "[^/]*", charset));
+						this.parameters.add(new URIParameter(i-1, 1, null, "*", charset));
 						this.previousWildcard = false;
 					}
-					this.parameters.add(new URIParameter(i, 1, null, "[^/]", charset));
+					this.parameters.add(new URIParameter(i, 1, null, "?", charset));
 				}
 				else if(nextByte == '*') {
 					if(this.previousWildcard) {
 						if(i - 1 > 0) {
 							throw new URIBuilderException("Invalid usage of path pattern '**' which is exclusive: /" + path.substring(0, i+1));
 						}
-						this.parameters.add(new URIParameter(i-1, 2, null, ".*", charset));
+						this.parameters.add(new URIParameter(i-1, 2, null, "**", charset));
 						this.previousWildcard = false;
 						this.directories = true;
 						this.wildcard = this.custom = false;
@@ -113,7 +106,7 @@ class SegmentComponent implements ParameterizedURIComponent {
 					}
 				}
 				else if(this.previousWildcard) {
-					this.parameters.add(new URIParameter(i-1, 1, null, "[^/]*", charset));
+					this.parameters.add(new URIParameter(i-1, 1, null, "*", charset));
 					this.previousWildcard = false;
 				}
 				return false;
@@ -132,14 +125,26 @@ class SegmentComponent implements ParameterizedURIComponent {
 		}
 		
 		Consumer<URIParameter> parameterHandler = null;
-		if(this.flags.isParameterized()) {
-			parameterHandler = this.parameters::add;
+		if(flags.isParameterized()) {
+			parameterHandler = parameter -> {
+				if(this.directories) {
+					throw new URIBuilderException("Invalid usage of path pattern '**' which is exclusive: /" + path.substring(0, parameter.getOffset() + parameter.getLength()));
+				}
+				else if(parameter.isDirectories()) {
+					if(!this.parameters.isEmpty() || parameter.getOffset() > 0) {
+						throw new URIBuilderException("Invalid usage of path pattern '**' which is exclusive: /" + path.substring(0, parameter.getOffset() + parameter.getLength()));
+					}
+					this.directories = true;
+					this.wildcard = this.custom = false;
+				}
+				this.parameters.add(parameter);
+			};
 		}
 		
 		URIs.scanURIComponent(path, null, charset, parameterHandler, breakPredicate);
 		this.rawValue = this.segmentRawValue != null ? this.segmentRawValue : path;
 		if(this.previousWildcard) {
-			this.parameters.add(new URIParameter(this.rawValue.length() - 1, 1, null, "[^/]*", charset));
+			this.parameters.add(new URIParameter(this.rawValue.length() - 1, 1, null, "*", charset));
 		}
 	}
 
@@ -160,7 +165,7 @@ class SegmentComponent implements ParameterizedURIComponent {
 	 * </p>
 	 * 
 	 * <p>
-	 * A wildcard segment contains only wildcard pattern parameters (see {@link URIParameter#isWildcardPattern() }) and no static part.
+	 * A wildcard segment contains only wildcard pattern parameters (see {@link URIParameter#isWildcard() }) and no static part.
 	 * </p>
 	 *
 	 * @return true if the segment represent a wildcard pattern, false otherwise
@@ -186,7 +191,7 @@ class SegmentComponent implements ParameterizedURIComponent {
 	 * </p>
 	 * 
 	 * <p>
-	 * A custom segment must contain at least one custom pattern parameter (see {@link URIParameter#isCustomPattern()}).
+	 * A custom segment must contain at least one custom pattern parameter (see {@link URIParameter#isCustom()}).
 	 * </p>
 	 *
 	 * @return true if the segment represents a custom pattern, false otherwise
@@ -258,27 +263,26 @@ class SegmentComponent implements ParameterizedURIComponent {
 				else if(flags.isNormalized()) {
 					// Note that, this doesn't apply to parameterized segment that might be set to ../ or ./ as  a result, normalization will also take place during the build of a parameterized URI
 					String nextSegmentValue = nextSegment.getRawValue();
-					if(nextSegmentValue.equals(".")) {
-						// Segment is ignored
-					}
-					else if(nextSegmentValue.equals("..")) {
-						// We have to remove the previous segment if it is not '..' OR keep that segment if there's no previous segment
-						if(!segments.isEmpty()) {
-							SegmentComponent lastSegment = segments.peekLast();
-							String lastSegmentValue = lastSegment.getRawValue();
-							if(lastSegmentValue.equals("..") || (segments.size() == 1 && lastSegmentValue.equals(""))) {
-								segments.add(nextSegment);
+					if(!nextSegmentValue.equals(".")) {
+						if(nextSegmentValue.equals("..")) {
+							// We have to remove the previous segment if it is not '..' OR keep that segment if there's no previous segment
+							if(!segments.isEmpty()) {
+								SegmentComponent lastSegment = segments.peekLast();
+								String lastSegmentValue = lastSegment.getRawValue();
+								if(lastSegmentValue.equals("..") || (segments.size() == 1 && lastSegmentValue.isEmpty())) {
+									segments.add(nextSegment);
+								}
+								else {
+									segments.removeLast();
+								}
 							}
 							else {
-								segments.removeLast();
+								segments.add(nextSegment);
 							}
 						}
 						else {
 							segments.add(nextSegment);
 						}
-					}
-					else {
-						segments.add(nextSegment);
 					}
 				}
 				else {
@@ -306,11 +310,11 @@ class SegmentComponent implements ParameterizedURIComponent {
 				this.patternGroupNames = List.of();
 				this.pattern = "";
 			}
-			else if(this.directories) {
+			/*else if(this.directories) {
 				this.patternGroupNames = new LinkedList<>();
 				this.patternGroupNames.add(null);
 				this.pattern = "((?:/[^/]*)*)";
-			}
+			}*/
 			else {
 				this.patternGroupNames = new LinkedList<>();
 				StringBuilder patternBuilder = new StringBuilder();
@@ -345,9 +349,9 @@ class SegmentComponent implements ParameterizedURIComponent {
 		if(this.rawValue == null) {
 			return "";
 		}
-		else if(this.directories) {
+		/*else if(this.directories) {
 			return "(?:(?:/[^/]*)*)";
-		}
+		}*/
 		else {
 			StringBuilder patternBuilder = new StringBuilder();
 			int valueIndex = 0;
@@ -463,8 +467,8 @@ class SegmentComponent implements ParameterizedURIComponent {
 			throw new IllegalArgumentException("Missing values to generate segment: " + missingValues);
 		}
 		
-		Predicate<Integer> allowedCharacters = escapeSlash ? SegmentComponent.ESCAPED_CHARACTERS_SLASH : SegmentComponent.ESCAPED_CHARACTERS_NO_SLASH;
-		
+		Predicate<Integer> allowedCharacters = escapeSlash && !this.directories ? SegmentComponent.ESCAPED_CHARACTERS_SLASH : SegmentComponent.ESCAPED_CHARACTERS_NO_SLASH;
+
 		StringBuilder result = new StringBuilder();
 		int valueIndex = 0;
 		for(URIParameter parameter : this.parameters) {
@@ -509,6 +513,11 @@ class SegmentComponent implements ParameterizedURIComponent {
 
 		@Override
 		public boolean isWildcard() {
+			return false;
+		}
+
+		@Override
+		public boolean isDirectories() {
 			return false;
 		}
 
@@ -661,7 +670,7 @@ class SegmentComponent implements ParameterizedURIComponent {
 				}
 				else {
 					// SegmentGroup.WILDCARD:
-					// We can continue if the next s1Part is * (ie. ?*)
+					// We can continue if the next s1Part is * (i.e. ?*)
 					// This should hopefully barely happen, in any case returning INDETERMINATE is safe here since s2 is most likely to match more than s1
 					
 					// SegmentGroup.OTHER_PATTERN:
@@ -694,7 +703,7 @@ class SegmentComponent implements ParameterizedURIComponent {
 					return URIPattern.Inclusion.INCLUDED;
 				}
 
-				// we should advanced s2 as long as its groups are * or ?
+				// we should advance s2 as long as its groups are * or ?
 				for(;j<s2Parts.size();j++) {
 					s2Part = s2Parts.get(j);
 					if(s2Part.isStatic()) {
@@ -746,7 +755,7 @@ class SegmentComponent implements ParameterizedURIComponent {
 					return URIPattern.Inclusion.DISJOINT; 
 				}
 				if(s1Part.isCustom()) {
-					// we have a custom regex so we can't determine wheter s1 matches more data
+					// we have a custom regex so we can't determine whether s1 matches more data
 					return URIPattern.Inclusion.INDETERMINATE; 
 				}
 			}

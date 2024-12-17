@@ -19,13 +19,11 @@ import javax.lang.model.type.TypeMirror;
 
 /**
  * <p>
- * A parameter info corresponds to a parameter in a template declaration in a
- * template set source file.
+ * A parameter info corresponds to a parameter in a template declaration in a template set source file.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public interface ParameterInfo {
 
@@ -33,25 +31,25 @@ public interface ParameterInfo {
 	 * <p>
 	 * Returns the name of the parameter which is a valid Java identifier.
 	 * </p>
-	 * 
+	 *
 	 * @return a name
 	 */
 	String getName();
-	
+
 	/**
 	 * <p>
 	 * Returns the type of the parameter.
 	 * </p>
-	 * 
+	 *
 	 * @return a type
 	 */
 	TypeMirror getType();
-	
+
 	/**
 	 * <p>
 	 * Returns the raw Java formal parameter declaration (ie. [TYPE] [NAME]).
 	 * </p>
-	 * 
+	 *
 	 * @return the raw Java formal parameter declaration
 	 */
 	String getValue();

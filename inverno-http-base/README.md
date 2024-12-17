@@ -36,10 +36,8 @@ Using Maven:
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.inverno.mod:inverno-http-base:${VERSION_INVERNO_MODS}'
-...
 ```
 
 The *http-base* module is usually provided as a transitive dependency by other HTTP modules, the *http-client*, *http-server* or the *web* modules in particular, so it might not be necessary to include it explicitly.
@@ -57,6 +55,65 @@ The base HTTP base API defines common classes and interfaces for implementing ap
 - Common HTTP header types: `Headers.ContentType`, `Headers.Accept`...
 - HTTP header codec API for implementing HTTP header codec used to decode a raw HTTP header in a specific `Header` object
 - A HTTP header service used to encode/decode HTTP headers from/to specific `Header` objects
+
+## HTTP router API
+
+The HTTP router API defines building blocks for the development of advanced routers that can be used in various situations: in a Web server to route an exchange to an exchange handler based on criteria extracted from the request, in A Web client to resolve the exchange interceptors to invoke before sending the request...
+
+The `AbstractRouter` class defines the base `Router` implementation, it is based on a routing chain used to resolve the resource or resources (e.g. handler, interceptor...) that are best matching an input. It is composed of multiple `RoutingLink`, each link being responsible for resolving the next link in the chain based on a specific criteria extracted from the input.
+
+Considering an HTTP server, a request needs to be routed to a specific handler based on the request path, method, content type, accepted content types, accepted languages... The following routing chain could then be used to implement such router:
+
+```java
+var routingChain = RoutingLink
+    .<ExchangeHandler<ExchangeContext>, Exchange<ExchangeContext>, SampleRoute, SampleRouteExtractor>link(next -> new PathRoutingLink<>(next) {...})
+    .link(next -> new MethodRoutingLink<>(next) {...})
+    .link(next -> new ContentRoutingLink<>(next) {...})
+    .link(next -> new OutboundAcceptContentRoutingLink<>(next) {...})
+    .link(next -> new AcceptLanguageRoutingLink<>(next) {...})
+    .getRoutingChain();
+```
+
+In above example, `ExchangeHandler<ExchangeContext>` resources are stored in the routing chain and the expected type of input is `Exchange<ExchangeContext>`. When resolving a handler from an exchange, routing links are invoked top to bottom: the path routing is invoked first to return the next best matching link from the path specified in the input exchange, if no matching route was defined (i.e. there is no route in the routing chain that matches the path) the default next link is returned (matching all paths), the next link, the method routing link in above routing chain, is then invoked until we either reach a terminal link (no resource was defined past that link) or the end of chain and the resource if any was defined is then returned. This approach ensures that a single best matching resource is returned. 
+
+The routing chain accepts `SampleRoute` which must implement `PathRoute`, `MethodRoute`, `ContentRoute`, `AcceptContentRoute` and `AcceptLanguageContentRoute` which are respectively required by `PathRoutingLink`, `MethodRoutingLink`, `ContentRoutingLink`, `OutboundAcceptContentRoutingLink` and `AcceptLanguageRoutingLink`. Routes can be extracted from the chain using a `SampleRouteExtractor`
+
+When implementing an `AbstractRouter`, a routing chain must be set in the constructor and `AbstractRoute`, `AbstractRouteManager` and `AbstractRouteExtractor` implementation must be provided.
+
+```java
+public class SampleRouter extends AbstractRouter<ExchangeHandler<ExchangeContext>, Exchange<ExchangeContext>, SampleRoute, SampleRouteManager, SampleRouter, SampleRouteExtractor> { 
+    
+    public TestRouter() {
+        super(RoutingLink
+            .<ExchangeHandler<ExchangeContext>, Exchange<ExchangeContext>, SampleRoute, SampleRouteExtractor>link(next -> new PathRoutingLink<>(next) {...})
+            .link(next -> new MethodRoutingLink<>(next) {...})
+            .link(next -> new ContentRoutingLink<>(next) {...})
+            .link(next -> new OutboundAcceptContentRoutingLink<>(next) {...})
+            .link(next -> new AcceptLanguageRoutingLink<>(next) {...})
+        );
+    }
+    
+    ....
+}
+```
+
+The API provides several base `RoutingLink` implementations that can be used to create HTTP routers:
+
+- `AcceptLanguageRoutingLink` for resolving resources based on input accepted languages
+- `AuthorityRoutingLink` for resolving resources based on input authority
+- `ContentRoutingLink` for resolving resources based on input content type
+- `ErrorRoutingLink` for resolving resources based on input error
+- `HeadersRoutingLink` for resolving resources based on input headers
+- `InboundAcceptContentRoutingLink` for resolving resources based on input accepted content (for Web client)
+- `OutboundAcceptContentRoutingLink` for resolving resources based on input accepted content (for Web server)
+- `PathRoutingLink` for resolving resources based on input path
+- `QueryParametersRoutingLink` for resolving resources based on input query parameters
+- `URIRoutingLink` for resolving resources based on input URI
+- `WebSocketSubprotocolRoutingLink` for resolving resources based on input accepted WebSocket subprotocols
+
+> This API is currently used in multiple modules which requires routing capabilities: in the *web-server* module for routing Web exchanges to Web exchange handlers or error Web exchange to error Web exchange handlers, in the *web-client* module for resolving the interceptors to apply to a Web exchange before sending the request to the server, in the *discovery-http* module for resolving the endpoints where to send a request.
+> 
+> Although it can be considered as internal, it is generic enough to have value on its own whenever there's a need to best match inputs to resources based on some set of criteria.
 
 ## HTTP header service
 
@@ -107,3 +164,6 @@ By default, the *http-base* module provides codecs for the following headers:
 - `content-type` as defined by [RFC 7231 Section 3.1.1.5][rfc-7231-5.1.1.5]
 - `cookie` as defined by [RFC 6265 Section 4.2][rfc-6265-4.2]
 - `set-cookie` as defined by [RFC 6265 Section 4.1][rfc-6265-4.1]
+
+
+

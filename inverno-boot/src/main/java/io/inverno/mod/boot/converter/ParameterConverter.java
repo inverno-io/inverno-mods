@@ -16,7 +16,6 @@
 package io.inverno.mod.boot.converter;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Provide;
@@ -54,31 +53,5 @@ public class ParameterConverter extends StringCompositeConverter implements @Pro
 	public void setEncoders(List<CompoundEncoder<?, String>> encoders) {
 		super.setEncoders(encoders);
 	}
-	
-	/**
-	 * <p>
-	 * The compound decoders socket.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
-	 * 
-	 * @see ParameterConverter
-	 */
-	@Bean( name = "compoundDecoders" )
-	public static interface CompoundDecodersSocket extends Supplier<List<CompoundDecoder<String, ?>>> {}
-	
-	/**
-	 * <p>
-	 * The compound encoders socket.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
-	 * 
-	 * @see ParameterConverter
-	 */
-	@Bean( name = "compoundEncoders" )
-	public static interface CompoundEncodersSocket extends Supplier<List<CompoundEncoder<?, String>>> {}
 }
 

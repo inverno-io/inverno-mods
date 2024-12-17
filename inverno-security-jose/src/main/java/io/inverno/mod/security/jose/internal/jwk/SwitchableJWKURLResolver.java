@@ -44,7 +44,7 @@ import reactor.core.publisher.Mono;
  * The URL resolution can be disabled by configuration (see {@link JOSEConfiguration#resolve_jku()} and {@link JOSEConfiguration#resolve_x5u()}).
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
 @Bean( name = "switchableJWKURLResolver", visibility = Bean.Visibility.PRIVATE )
@@ -62,7 +62,7 @@ public class SwitchableJWKURLResolver implements JWKURLResolver {
 	 * </p>
 	 *
 	 * @param configuration the JOSE module configuration
-	 * @param urlResolver   the modume JWK URL resolver
+	 * @param urlResolver   the module JWK URL resolver
 	 */
 	public SwitchableJWKURLResolver(JOSEConfiguration configuration, JWKURLResolver urlResolver) {
 		this.configuration = configuration;

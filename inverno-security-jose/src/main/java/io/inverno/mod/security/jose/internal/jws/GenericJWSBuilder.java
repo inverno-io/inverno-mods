@@ -68,7 +68,7 @@ public class GenericJWSBuilder<A> extends AbstractJOSEObjectBuilder<A, JWSHeader
 	 * @param type                  the payload type
 	 * @param keys                  the keys to consider to sign the JWS
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public GenericJWSBuilder(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type, Publisher<? extends JWK> keys) {
 		super(mapper, dataConversionService, jwkService, type, keys);
 	}

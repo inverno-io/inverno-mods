@@ -66,7 +66,7 @@ public class DigestPassword extends AbstractPassword<DigestPassword, DigestPassw
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.5
 	 */
-	public class Encoder implements Password.Encoder<DigestPassword, DigestPassword.Encoder> {
+	public static class Encoder implements Password.Encoder<DigestPassword, DigestPassword.Encoder> {
 
 		/**
 		 * The algorithm.

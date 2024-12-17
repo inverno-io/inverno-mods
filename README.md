@@ -34,11 +34,11 @@ The [Inverno modules framework][inverno-io] project provides a collection of com
 
 While being fully integrated, any of these modules can also be used individually in any application thanks to the high modularity and low footprint offered by the Inverno framework.
 
-The objective is to provide a complete consistent set of high end tools and components for the development of fast and maintainable applications.
+The objective is to provide a complete consistent set of high-end tools and components for the development of fast and maintainable applications.
 
 ## Using a module
 
-Modules can be used in a Inverno module by defining dependencies in the module descriptor. For instance you can create a Web application module using the *boot* and *web-server* modules:
+Modules can be used in an Inverno module by defining dependencies in the module descriptor. For instance, you can create a Web application module using the *boot* and *web-server* modules:
 
 ```java
 @io.inverno.core.annotation.Module
@@ -80,35 +80,35 @@ Several example projects showing various features are also available in the [Inv
 
 Feel free to report bugs and feature requests in GitHub's issue tracking system if you ran in any issue or wish to see some new functionalities implemented in the framework.
 
-## Available modules
+## List of modules
 
 The framework currently provides the following modules.
 
-### inverno-base
+### io.inverno.mod.base
 
-The foundational APIs of the Inverno framework modules:
+The Inverno base module defines foundational APIs of the Inverno framework modules:
 
 - Conversion API used to convert objects from/to other objects
 - Concurrent API defining the reactive threading model API
 - Net API providing URI manipulation as well as low level network client and server utilities
 - Reflect API for manipulating parameterized type at runtime
-- Resource API to read/write any kind of resources (eg. file, zip, jar, classpath, module...)
+- Resource API to read/write any kind of resources (e.g. file, zip, jar, classpath, module...)
 
-### inverno-boot
+### io.inverno.mod.boot
 
-The boot Inverno module provides base services to an application:
+The Inverno boot module provides base services to an application:
 
 - the reactor which defines the reactive threading model of an application
 - a net service used for the implementation of optimized network clients and servers
-- a media type service used to determine the media type of a resource
+- a media type service used to determine resource media types
 - a resource service used to access resources based on URIs
 - a basic set of converters to decode/encode JSON, parameters (string to primitives or common types), media types (text/plain, application/json, application/x-ndjson...)
 - a worker thread pool used to execute tasks asynchronously
 - a JSON reader/writer
 
-### inverno-configuration
+### io.inverno.mod.configuration
 
-Application configuration API providing great customization and configuration features to multiple parts of an application (eg. system configuration, multitenant configuration, user preferences...).
+The Inverno configuration module defines an application configuration API providing great customization and configuration features to multiple parts of an application (e.g. system configuration, multitenant configuration, user preferences...).
 
 This module also introduces the `.cprops` configuration file format which facilitates the definition of complex parameterized configuration.
 
@@ -126,11 +126,45 @@ In addition, it also provides implementations for multiple configuration sources
 
 Configurations are defined as simple interfaces in a module which are processed by the Inverno compiler to generate configuration loaders and beans to make them available in an application with no further effort.
 
-### inverno-grpc-base
+### io.inverno.mod.discovery
+
+The Inverno discovery module defines the foundational API for service discovery. At its center, the discovery service is used to resolve specific network services from URI identifiers. Requests are submitted to these services whose role is to assign them to the right service instances based on routing rules and/or load balancing strategies.
+
+The module provides supporting classes to ease the development of discovery service implementation, it especially provides:
+
+- base DNS discovery service implementation for resolving services from a hostname using DNS lookup
+- base configuration discovery service implementation for resolving services from a specific service descriptor stored in a configuration source
+- caching discovery service wrapper for automatically caching and refreshing resolved services
+- composite discovery service which combines multiple discovery services into one
+- base traffic load balancer implementations for random and round-robin strategies with support for weighted or non-weighted service instances 
+
+### io.inverno.mod.discovery.http
+
+The Inverno discovery HTTP module specializes the Discovery API for HTTP service resolution by defining a specific HTTP traffic policy and shipping extra *least requests* and *minimum load factor* load balancing strategies. It also provides a DNS HTTP discovery service bean for resolving HTTP services through DNS lookup. 
+
+The module can be used jointly with the [Web client module](#ioinvernomodwebclient) in order to resolve standard HTTP URIs (i.e. `http://`, `https://`, `ws://` or `wss://`).
+
+### io.inverno.mod.discovery.http.k8s
+
+The Inverno discovery HTTP Kubernetes module provides discovery service beans resolving HTTP services deployed in a Kubernetes cluster. 
+
+It currently exposes an environment based discovery service implementation which resolves service inet socket address (i.e. host and port) from the environment variables defined by Kubernetes for each service in the cluster pods (i.e. `<SERVICE_NAME>_SERVICE_HOST` and `<SERVICE_NAME>_SERVICE_PORT_HTTP`).
+
+The module can be used jointly with the [Web client module](#ioinvernomodwebclient) in order to resolve HTTP services from `k8s-env://<SERVICE_NAME>` URIs in a Kubernetes cluster.
+
+### io.inverno.mod.discovery.http.meta
+
+The Inverno discovery HTTP meta module specifies the HTTP meta service which, as its name suggest, allows to combine several other HTTP services into one by routing requests whose content (path, method, content type, headers, query parameters...) matches specific rules to the corresponding service. It also supports request rewriting, including path, request/response headers and query parameters, as well as cross-service load balancing (i.e. load balance requests among multiple services).
+
+The module exposes a configuration based HTTP meta discovery service which resolves HTTP meta service descriptors from a configuration source. 
+
+The module can be used jointly with the [Web client module](#ioinvernomodwebclient) in order to resolve HTTP services from `conf://<SERVICE_NAME>` URIs.
+
+### io.inverno.mod.grpc.base
 
 The Inverno gRPC base module provides the foundational API as well as common services for developing [gRPC][grpc] clients and servers, such as message compressors (e.g. `gzip`, `deflate`, `snappy`...).
 
-### inverno-grpc-client
+### io.inverno.mod.grpc.client
 
 The Inverno gRPC client module provides a service to convert HTTP client exchange into gRPC client exchanges supporting the [gRPC protocol over HTTP/2][grpc-over-http2].
 
@@ -143,7 +177,7 @@ It supports the following features:
 
 [Inverno tools][inverno-tools-root] provide a gRPC [Protocol buffer][protobuf] compiler plugin for generating client stubs for each service definition.
 
-### inverno-grpc-server
+### io.inverno.mod.grpc.server
 
 The Inverno gRPC server module provides a service to convert gRPC server exchange handlers supporting the [gRPC protocol over HTTP/2][grpc-over-http2] into HTTP server exchange handlers that can be injected in the HTTP server controller or Web routes to expose gRPC endpoints.
 
@@ -156,11 +190,13 @@ It supports the following features:
 
 [Inverno tools][inverno-tools-root] provide a gRPC [Protocol buffer][protobuf] compiler plugin for generating Web routes configurers for each service definition.
 
-### inverno-http-base
+### io.inverno.mod.http.base
 
-The Inverno HTTP base module provides the foundational API as well as common services for HTTP client and server development, in particular an extensible HTTP header service used to decode and encode HTTP headers.
+The Inverno HTTP base module provides the foundational API as well as common services for HTTP client and server development, such as an extensible HTTP header service used to decode and encode HTTP headers.
 
-### inverno-http-client
+It also provides a generic router API used to create routers to best match an input to a resource based on some set of criteria. This API is especially used in the Web server module for routing Web exchange to Web exchange handlers or in the Web client module for resolving interceptors.
+
+### io.inverno.mod.http.client
 
 The Inverno HTTP client module provides a fully reactive HTTP/1.x and HTTP/2 client implementation based on Netty. 
 
@@ -173,7 +209,7 @@ It supports the following features:
 - Multipart form data
 - WebSocket
 
-### inverno-http-server
+### io.inverno.mod.http.server
 
 The Inverno HTTP server module provides a fully reactive HTTP/1.x and HTTP/2 server implementation based on Netty. 
 
@@ -187,7 +223,7 @@ It supports the following features:
 - Multipart form data
 - WebSocket
 
-### inverno-irt
+### io.inverno.mod.irt
 
 The Inverno Reactive Template module provides a reactive template engine including:
 
@@ -196,24 +232,24 @@ The Inverno Reactive Template module provides a reactive template engine includi
 - pipes for data transformation
 - functional syntax inspired from XSLT and Erlang on top of the Java language that perfectly embraces reactive principles
 
-### inverno-ldap
+### io.inverno.mod.ldap
 
 The Inverno LDAP module specifies a reactive API for querying [LDAP][ldap] servers. It also includes a basic LDAP client implementation based on the JDK. It supports bind and search operations.
 
-### inverno-redis
+### io.inverno.mod.redis
 
 The Inverno Redis client module specifies a reactive API for executing Redis commands on a [Redis][redis] data store. It supports:
 
 - batch queries
 - transaction
 
-### inverno-redis-lettuce
+### io.inverno.mod.redis.lettuce
 
 The Inverno Redis client Lettuce implementation module provides Redis implementation on top of [Lettuce][lettuce] async pool.
 
-It also exposes a Redis Client bean backed by a Lettuce client and created using the module's configuration. It can be used as is to send commands to a Redis data store.
+It also provides a Redis Client bean backed by a Lettuce client and created using the module's configuration. It can be used as is to send commands to a Redis data store.
 
-### inverno-security
+### io.inverno.mod.security
 
 The Inverno Security module specifies an API for authenticating request to an application and controlling the access to protected services or resources. It provides:
 
@@ -224,7 +260,7 @@ The Inverno Security module specifies an API for authenticating request to an ap
 - Role-based access control.
 - Permission-based access control.
 
-### inverno-security-http
+### io.inverno.mod.security.http
 
 The Inverno Security HTTP module is an extension to the Inverno Security module that provides a specific API and base implementations for securing applications accessed via HTTP. It provides supports for:
 
@@ -234,11 +270,11 @@ The Inverno Security HTTP module is an extension to the Inverno Security module 
 - Cross-origin resource sharing support CORS.
 - Protection against Cross-site request forgery attack CSRF.
 
-### inverno-security-ldap
+### io.inverno.mod.security.ldap
 
 The Inverno Security LDAP module is an extension to the Inverno Security module that provides support for authentication and identification against LDAP and Active Directory servers.
 
-### inverno-security-jose
+### io.inverno.mod.security.jose
 
 The Inverno Security JOSE module is a complete implementation of JSON Object Signing and Encryption RFCs. It provides:
 
@@ -252,7 +288,7 @@ The Inverno Security JOSE module is a complete implementation of JSON Object Sig
 - CFRG Elliptic Curve Diffie-Hellman (ECDH) and Signatures support as specified by [RFC 8037][rfc8037].
 - CBOR Object Signing and Encryption (COSE) as specified by [RFC 8812][rfc8812].
 
-### inverno-sql
+### io.inverno.mod.sql
 
 The Inverno SQL client module specifies a reactive API for executing SQL statements on a RDBMS. It supports:
 
@@ -260,25 +296,43 @@ The Inverno SQL client module specifies a reactive API for executing SQL stateme
 - batch execution
 - transaction
 
-### inverno-sql-vertx
+### io.inverno.mod.sql.vertx
 
 The Inverno SQL client Vert.x implementation module provides SQL Client implementations on top of [Vert.x][vertx-sql-client] pool and pooled client.
 
 It also exposes a pool based Sql Client bean created using the module's configuration that can be used as is to query a RDBMS.
 
-### inverno-web-server
+### io.inverno.mod.web.base
+
+The Inverno Web base module provides the foundational API as well as common services for Web client and server development, such as a data conversion service used to create inbound data decoder and outbound data encoder for respectively decoding and encoding HTTP or WebSocket payloads based on their media types. 
+
+It also defines common request parameter binding annotations for creating declarative Web client or Web server routes.
+
+### io.inverno.mod.web.client
+
+The Inverno Web client module provides advanced features on top of the HTTP client module, including:
+
+- path parameters
+- exchange interceptors based on path, path pattern, HTTP method, request and response content negotiation including request and response content type and language of the response.
+- seamless payload conversion from raw representation (arrays of bytes) to Java objects based on request or response content type as well as WebSocket subprotocol
+- seamless parameter (path, cookie, header, query...) conversion from string to Java objects
+- a complete set of annotations for creating declarative Web clients
+
+Web clients can be created in a declarative way using annotations which are processed by the Inverno compiler to generate the Web client implementation and expose a corresponding bean in the module. 
+
+### io.inverno.mod.web.server
 
 The Inverno Web server module provides advanced features on top of the HTTP server module, including:
 
-- request routing based on path, path pattern, HTTP method, request and response content negotiation including request and response content type and language of the response.
 - path parameters
-- interceptors
-- transparent payload conversion based on the content type of the request or the response from raw representation (arrays of bytes) to Java objects 
+- request routing based on path, path pattern, HTTP method, request and response content negotiation including request and response content type and language of the response.
+- exchange interceptors based on path, path pattern, HTTP method, request and response content negotiation including request and response content type and language of the response.
+- transparent payload conversion from raw representation (arrays of bytes) to Java objects based on request or response content type as well as WebSocket subprotocol 
 - transparent parameter (path, cookie, header, query...) conversion from string to Java objects
 - static resource handler to serve static resources from various location based on the resource API
-- a complete set of annotations for easy REST controller development
+- a complete set of annotations for creating declarative REST controllers
 
-REST controllers can be easily defined using annotations which are processed by the Inverno compiler to generate the Web server configuration. The compiler also checks that everything is in order as for example that there are no conflicting routes.
+REST controllers can be created in a declarative way using annotations which are processed by the Inverno compiler to generate corresponding Web server routes and register them in the Web server. The compiler also performs some static checks to make sure routes are defined properly and that there are no conflicting routes.
 
 ## Building Inverno framework modules
 

@@ -23,12 +23,12 @@ import reactor.core.scheduler.NonBlocking;
 
 /**
  * <p>
- * A reactor defines the core threading model and more specifically it provides the main event loop used at the core of Inverno's applications.
+ * A reactor defines the core threading model of Inverno's applications and more specifically it provides the main event loop group.
  * </p>
  *
  * <p>
- * A reactor exposes a single acceptor event loop group used to accept connection and methods to create event loop groups backed by a unique core event loop group in order to optimize thread creation
- * and usage based on hardware and software capabilities.
+ * A reactor exposes a single acceptor event loop group used to accept connection and methods to create event loop groups backed by a unique core event loop group in order to optimize thread usage
+ * based on hardware and software capabilities.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

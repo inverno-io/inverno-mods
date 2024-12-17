@@ -36,7 +36,7 @@ import reactor.core.publisher.Flux;
  * A gRPC message reader used to transform raw data publishers into gRPC message publishers.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  * 
  * @param <A> the message type
@@ -156,6 +156,7 @@ public class GrpcMessageReader<A extends Message> implements Function<Publisher<
 					int index = 0;
 
 					// remove and release first buffers when they are unreadable
+					//noinspection StatementWithEmptyBody
 					for(;index < accBuffers.size() && !accBuffers.get(index).isReadable();index++) {}
 
 					if(index < accBuffers.size() - 1) {
@@ -219,7 +220,7 @@ public class GrpcMessageReader<A extends Message> implements Function<Publisher<
 	 * <a href="https://datatracker.ietf.org/doc/html/draft-kumar-rtgwg-grpc-protocol-00">gRPC protocol</a>
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 */
 	private static class LengthPrefix {

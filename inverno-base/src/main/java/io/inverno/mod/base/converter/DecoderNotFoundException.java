@@ -17,8 +17,7 @@ package io.inverno.mod.base.converter;
 
 /**
  * <p>
- * Thrown by a {@link CompositeDecoder} to indicate that no decoder can decode a
- * given type.
+ * Thrown by a {@link CompositeDecoder} to indicate that no decoder can decode a given type.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -74,8 +73,7 @@ public class DecoderNotFoundException extends ConverterException {
 
 	/**
 	 * <p>
-	 * Creates a decoder not found exception with the specified message, cause,
-	 * suppression enabled or disabled and writable stack trace enabled or disabled.
+	 * Creates a decoder not found exception with the specified message, cause, suppression enabled or disabled and writable stack trace enabled or disabled.
 	 * </p>
 	 * 
 	 * @param message            the message

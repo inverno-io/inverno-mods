@@ -48,7 +48,7 @@ public class JWSAuthentication<A extends Authentication> implements TokenAuthent
 	/**
 	 * The security error resulting from a JOSE processing error.
 	 */
-	private final Optional<SecurityException> cause;
+	private final SecurityException cause;
 
 	/**
 	 * <p>
@@ -59,7 +59,7 @@ public class JWSAuthentication<A extends Authentication> implements TokenAuthent
 	 */
 	public JWSAuthentication(JWS<A> jws) {
 		this.jws = jws;
-		this.cause = Optional.empty();
+		this.cause = null;
 	}
 	
 	/**
@@ -71,7 +71,7 @@ public class JWSAuthentication<A extends Authentication> implements TokenAuthent
 	 */
 	public JWSAuthentication(SecurityException cause) {
 		this.jws = null;
-		this.cause = Optional.ofNullable(cause);
+		this.cause = cause;
 	}
 
 	/**
@@ -83,7 +83,7 @@ public class JWSAuthentication<A extends Authentication> implements TokenAuthent
 	 */
 	JWSAuthentication(JOSEProcessingException cause) {
 		this.jws = null;
-		this.cause = Optional.ofNullable(cause).map(e -> new InvalidCredentialsException("Invalid token", e));
+		this.cause = cause != null ? new InvalidCredentialsException("Invalid token", cause) : null;
 	}
 	
 	/**
@@ -120,6 +120,6 @@ public class JWSAuthentication<A extends Authentication> implements TokenAuthent
 		if(this.jws != null) {
 			return this.jws.getPayload().getCause();
 		}
-		return this.cause;
+		return Optional.ofNullable(this.cause);
 	}
 }

@@ -24,7 +24,7 @@ import io.inverno.mod.configuration.Configuration;
  * The Boot module net client configuration.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 @Configuration( generateBean = false )

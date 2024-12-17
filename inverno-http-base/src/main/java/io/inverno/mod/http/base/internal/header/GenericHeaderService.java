@@ -15,20 +15,18 @@
  */
 package io.inverno.mod.http.base.internal.header;
 
-import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Supplier;
-
-import io.netty.buffer.ByteBuf;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.BeanSocket;
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.netty.buffer.ByteBuf;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -107,7 +105,7 @@ public class GenericHeaderService implements HeaderService {
 					// - this is a bit tricky as for selector when it comes to the injection of list along with single values 
 					HeaderCodec<?> previousCodec = this.codecs.put(supportedHeaderName, codec);
 					if(previousCodec != null) {
-						throw new IllegalArgumentException("Multiple codecs found for header " + supportedHeaderName + ": " + previousCodec.toString() + ", " + codec.toString());
+						throw new IllegalArgumentException("Multiple codecs found for header " + supportedHeaderName + ": " + previousCodec + ", " + codec);
 					}
 				}
 			}
@@ -199,35 +197,34 @@ public class GenericHeaderService implements HeaderService {
 	
 	private String readName(ByteBuf buffer, Charset charset) {
 		int readerIndex = buffer.readerIndex();
-		Integer startIndex = null;
-		Integer endIndex = null;
+
+		int startIndex = -1;
+		int endIndex;
 		while(buffer.isReadable()) {
 			byte nextByte = buffer.readByte();
 
-			if(startIndex == null && Character.isWhitespace(nextByte)) {
-				continue;
-			}
-			 
-			if(startIndex == null) {
-				startIndex = buffer.readerIndex() - 1;
-			}
-			 
-			if(nextByte == ':') {
-				endIndex = buffer.readerIndex() - 1;
-				if(startIndex.equals(endIndex)) {
-					buffer.readerIndex(readerIndex);
-					throw new MalformedHeaderException("Malformed Header: empty name");
+			if(startIndex != -1 || !Character.isWhitespace(nextByte)) {
+				if(startIndex == -1) {
+					startIndex = buffer.readerIndex() - 1;
 				}
-				return buffer.slice(startIndex, endIndex - startIndex).toString(charset).toLowerCase();
-			}
-			else if(Character.isWhitespace(nextByte)) {
-				// There's a white space between the header name and the colon
-				buffer.readerIndex(readerIndex);
-				throw new MalformedHeaderException("Malformed Header: name can't contain white space");
-			}
-			else if(!HeaderService.isTokenCharacter((char)nextByte)) {
-				buffer.readerIndex(readerIndex);
-				throw new MalformedHeaderException("Malformed Header: " + (buffer.readerIndex()-1) + " " + buffer.toString(Charsets.UTF_8) + " " + String.valueOf(Character.toChars(nextByte)));
+
+				if(nextByte == ':') {
+					endIndex = buffer.readerIndex() - 1;
+					if(startIndex == endIndex) {
+						buffer.readerIndex(readerIndex);
+						throw new MalformedHeaderException("Malformed Header: empty name");
+					}
+					return buffer.slice(startIndex, endIndex - startIndex).toString(charset).toLowerCase();
+				}
+				else if(Character.isWhitespace(nextByte)) {
+					// There's a white space between the header name and the colon
+					buffer.readerIndex(readerIndex);
+					throw new MalformedHeaderException("Malformed Header: name can't contain white space");
+				}
+				else if(!HeaderService.isTokenCharacter((char)nextByte)) {
+					buffer.readerIndex(readerIndex);
+					throw new MalformedHeaderException("Malformed Header: " + (buffer.readerIndex()-1) + " " + buffer.toString(Charsets.UTF_8) + " " + String.valueOf(Character.toChars(nextByte)));
+				}
 			}
 		}
 		buffer.readerIndex(readerIndex);
@@ -235,46 +232,29 @@ public class GenericHeaderService implements HeaderService {
 	}
 	
 	private String[] splitNameValue(String header) {
-		Integer startIndex = null;
-		Integer endIndex = null;
+		int startIndex = -1;
+		int endIndex;
 		for(int i=0;i<header.length();i++) {
 			char nextChar = header.charAt(i);
-			
-			if(startIndex == null && Character.isWhitespace(nextChar)) {
-				continue;
-			}
-			
-			if(startIndex == null) {
-				startIndex = i;
-			}
-			
-			if(nextChar == ':') {
-				endIndex = i;
-				if(startIndex.equals(endIndex)) {
-					throw new MalformedHeaderException("Malformed Header: empty name");
+
+			if(startIndex != -1 || !Character.isWhitespace(nextChar)) {
+				if(startIndex == -1) {
+					startIndex = i;
 				}
-				return new String[] {header.substring(startIndex, endIndex).toLowerCase(), header.substring(i+1)};
-			}
-			else if(Character.isWhitespace(nextChar)) {
-				throw new MalformedHeaderException("Malformed Header: name can't contain white space");
-			}
-			else if(!HeaderService.isTokenCharacter(nextChar)) {
-				throw new MalformedHeaderException("Malformed Header: " + i + " " + header + " " + nextChar);
+
+				if(nextChar == ':') {
+					endIndex = i;
+					if(startIndex == endIndex) {
+						throw new MalformedHeaderException("Malformed Header: empty name");
+					}
+					return new String[]{header.substring(startIndex, endIndex).toLowerCase(), header.substring(i + 1)};
+				} else if(Character.isWhitespace(nextChar)) {
+					throw new MalformedHeaderException("Malformed Header: name can't contain white space");
+				} else if(!HeaderService.isTokenCharacter(nextChar)) {
+					throw new MalformedHeaderException("Malformed Header: " + i + " " + header + " " + nextChar);
+				}
 			}
 		}
 		return null;
 	}
-	
-	/**
-	 * <p>
-	 * Header codecs socket.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
-	 * 
-	 * @see GenericHeaderService
-	 */
-	@Bean( name = "headerCodecs" )
-	public static interface HeaderCodecsSocket extends Supplier<List<HeaderCodec<?>>> {}
 }

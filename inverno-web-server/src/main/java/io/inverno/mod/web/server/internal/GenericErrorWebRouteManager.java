@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2020 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,16 @@
  */
 package io.inverno.mod.web.server.internal;
 
-import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.router.AbstractRoute;
 import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.web.server.ErrorWebExchange;
 import io.inverno.mod.web.server.ErrorWebRoute;
 import io.inverno.mod.web.server.ErrorWebRouteManager;
-import io.inverno.mod.web.server.ErrorWebRouter;
-import java.util.Objects;
+import io.inverno.mod.web.server.WebServer;
+import io.inverno.mod.web.server.internal.router.InternalErrorWebRouter;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -31,177 +33,97 @@ import java.util.stream.Collectors;
  * <p>
  * Generic {@link ErrorWebRouteManager} implementation.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
+ *
+ * @param <A> the exchange context type
+ * @param <B> the Web server type
  */
-class GenericErrorWebRouteManager extends AbstractErrorWebManager<GenericErrorWebRouteManager> implements ErrorWebRouteManager<ExchangeContext, ErrorWebRouter<ExchangeContext>> {
+public class GenericErrorWebRouteManager<A extends ExchangeContext, B extends WebServer<A>> implements ErrorWebRouteManager<A, B> {
 
-	private final GenericErrorWebRouter router;
+	private final B server;
+	private final InternalErrorWebRouter.RouteManager<A> routeManager;
 
-	private ExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> handler;
-	
 	/**
 	 * <p>
-	 * Creates a generic error web route manager.
+	 * Creates a generic error Web route manager.
 	 * </p>
-	 * 
-	 * @param router the generic error web router
+	 *
+	 * @param server       a Web server
+	 * @param routeManager an internal error route manager
 	 */
-	public GenericErrorWebRouteManager(GenericErrorWebRouter router) {
-		this.router = router;
+	public GenericErrorWebRouteManager(B server, InternalErrorWebRouter.RouteManager<A> routeManager) {
+		this.server = server;
+		this.routeManager = routeManager;
 	}
 
 	@Override
-	public GenericErrorWebRouter enable() {
-		this.findRoutes().stream().forEach(route -> route.enable());
-		return this.router;
+	public ErrorWebRouteManager<A, B> error(Class<? extends Throwable> error) {
+		this.routeManager.errorType(error);
+		return this;
 	}
 
 	@Override
-	public GenericErrorWebRouter disable() {
-		this.findRoutes().stream().forEach(route -> route.disable());
-		return this.router;
+	public ErrorWebRouteManager<A, B> path(String path, boolean matchTrailingSlash) {
+		this.routeManager.resolvePath(path, matchTrailingSlash);
+		return this;
 	}
 
 	@Override
-	public GenericErrorWebRouter remove() {
-		this.findRoutes().stream().forEach(route -> route.remove());
-		return this.router;
+	public ErrorWebRouteManager<A, B> consume(String mediaRange) {
+		this.routeManager.contentType(mediaRange);
+		return this;
 	}
 
 	@Override
-	public Set<ErrorWebRoute<ExchangeContext>> findRoutes() {
-		// TODO Implement filtering in the route extractor
-		return this.router.getRoutes().stream().filter(route -> {
-			// We want all routes that share the same criteria as the one defined in this route manager
-			if(this.errors != null && !this.errors.isEmpty()) {
-				if(route.getError() == null || !this.errors.contains(route.getError())) {
-					return false;
-				}
-			}
-			if(this.paths != null) {
-				if(route.getPath() != null) {
-					if(!this.paths.contains(route.getPath())) {
-						return false;
-					}
-				}
-				else if(route.getPathPattern() != null) {
-					if(this.paths.stream().noneMatch(path -> route.getPathPattern().matcher(path).matches())) {
-						return false;
-					}
-				}
-				else {
-					return false;
-				}
-			}
-			if(this.pathPatterns != null) {
-				if(route.getPath() != null) {
-					if(this.pathPatterns.stream().noneMatch(pattern -> pattern.matcher(route.getPath()).matches())) {
-						return false;
-					}
-				}
-				else if(route.getPathPattern() != null) {
-					if(this.pathPatterns.stream().noneMatch(pattern -> pattern.includes(route.getPathPattern()) != URIPattern.Inclusion.DISJOINT)) {
-						return false;
-					}
-				}
-				else {
-					return false;
-				}
-			}
-			if(this.produces != null && !this.produces.isEmpty()) {
-				if(route.getProduce() == null || !this.produces.contains(route.getProduce())) {
-					return false;
-				}
-			}
-			if(this.languages != null && !this.languages.isEmpty()) {
-				if(route.getLanguage() == null || !this.languages.contains(route.getLanguage())) {
-					return false;
-				}
-			}
-			return true;
-		}).collect(Collectors.toSet());
+	public ErrorWebRouteManager<A, B> produce(String mediaType) {
+		this.routeManager.accept(mediaType);
+		return this;
 	}
 
 	@Override
-	public ErrorWebRouter<ExchangeContext> handler(ExchangeHandler<? super ExchangeContext, ErrorWebExchange<ExchangeContext>> handler) {
-		Objects.requireNonNull(handler);
-		this.handler = handler;
-		this.commit();
-		return this.router;
+	public ErrorWebRouteManager<A, B> language(String language) {
+		this.routeManager.language(language);
+		return this;
 	}
-	
-	private void commit() {
-		Consumer<GenericErrorWebRoute> languagesCommitter = route -> {
-			if(this.languages != null && !this.languages.isEmpty()) {
-				for(String language : this.languages) {
-					route.setLanguage(language);
-					route.setHandler(this.handler);
-					this.router.setRoute(route);
-				}
-			}
-			else {
-				route.setHandler(this.handler);
-				this.router.setRoute(route);
-			}
-		};
-		
-		Consumer<GenericErrorWebRoute> producesCommitter = route -> {
-			if(this.produces != null && !this.produces.isEmpty()) {
-				for(String produce : this.produces) {
-					route.setProduce(produce);
-					languagesCommitter.accept(route);
-				}
-			}
-			else {
-				languagesCommitter.accept(route);
-			}
-		};
-		
-		Consumer<GenericErrorWebRoute> consumesCommitter = route -> {
-			if(this.consumes != null && !this.consumes.isEmpty()) {
-				for(String consume : this.consumes) {
-					route.setConsume(consume);
-					producesCommitter.accept(route);
-				}
-			}
-			else {
-				producesCommitter.accept(route);
-			}
-		};
 
-		Consumer<GenericErrorWebRoute> pathCommitter = route -> {
-			if(this.paths != null && !this.paths.isEmpty() || this.pathPatterns != null && !this.pathPatterns.isEmpty()) {
-				if(this.paths != null) {
-					for(String path : this.paths) {
-						route.setPath(path);
-						consumesCommitter.accept(route);
-					}
-				}
-				if(this.pathPatterns != null) {
-					for(URIPattern pathPattern : this.pathPatterns) {
-						route.setPathPattern(pathPattern);
-						consumesCommitter.accept(route);
-					}
-				}
-			}
-			else {
-				consumesCommitter.accept(route);
-			}
-		};
-		
-		Consumer<GenericErrorWebRoute> errorsCommitter = route -> {
-			if(this.errors != null && !this.errors.isEmpty()) {
-				for(Class<? extends Throwable> error : this.errors) {
-					route.setError(error);
-					pathCommitter.accept(route);
-				}
-			}
-			else {
-				pathCommitter.accept(route);
-			}
-		};
-		errorsCommitter.accept(new GenericErrorWebRoute(this.router));
+	@SuppressWarnings("unchecked")
+	@Override
+	public B handler(ExchangeHandler<? super A, ErrorWebExchange<A>> handler) {
+		Consumer<InternalErrorWebRouter.Route<A>> routeConfigurer;
+		if(this.server instanceof Intercepting) {
+			routeConfigurer = route -> route.get().setInterceptors(new ArrayList<>(((Intercepting<A>)this.server).getErrorWebRouteInterceptorRouter().resolveAll(route)));
+		}
+		else {
+			routeConfigurer = route -> {};
+		}
+		this.routeManager.set(() -> new ErrorWebRouteHandler<>((ReactiveExchangeHandler<A, ErrorWebExchange<A>>)handler), routeConfigurer);
+		return this.server;
+	}
+
+	@Override
+	public B enable() {
+		this.routeManager.findRoutes().forEach(AbstractRoute::enable);
+		return this.server;
+	}
+
+	@Override
+	public B disable() {
+		this.routeManager.findRoutes().forEach(AbstractRoute::disable);
+		return this.server;
+	}
+
+	@Override
+	public B remove() {
+		this.routeManager.findRoutes().forEach(AbstractRoute::remove);
+		return this.server;
+	}
+
+	@Override
+	public Set<ErrorWebRoute<A>> findRoutes() {
+		return this.routeManager.findRoutes().stream()
+			.map(GenericErrorWebRoute::new)
+			.collect(Collectors.toUnmodifiableSet());
 	}
 }

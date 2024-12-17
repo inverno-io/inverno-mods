@@ -22,7 +22,7 @@ import com.google.protobuf.MessageLite;
  * Represents mutable outbound gRPC metadata.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  * 
  * @param <A> the gRPC outbound metadata type

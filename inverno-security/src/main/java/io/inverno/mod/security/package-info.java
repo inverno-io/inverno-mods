@@ -15,7 +15,7 @@
  */
 /**
  * <p>
- * Common Inverno security components.
+ * Inverno base security API.
  * </p>
  */
 package io.inverno.mod.security;

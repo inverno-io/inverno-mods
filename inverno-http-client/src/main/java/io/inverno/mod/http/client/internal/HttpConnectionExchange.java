@@ -27,7 +27,7 @@ import io.inverno.mod.http.base.ExchangeContext;
  * Implementations shall depend on the protocol version.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.8
  * 
  * @param <A> The exchange context type 

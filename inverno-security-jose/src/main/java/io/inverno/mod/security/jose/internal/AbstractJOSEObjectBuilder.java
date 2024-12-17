@@ -36,7 +36,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -106,7 +105,7 @@ public abstract class AbstractJOSEObjectBuilder<A, B extends JOSEHeader, C exten
 	 * @param type                  the payload type
 	 * @param keys                  the keys to consider to secure JOSE objects
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public AbstractJOSEObjectBuilder(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type, Publisher<? extends JWK> keys) {
 		this.mapper = mapper;
 		this.dataConversionService = dataConversionService;
@@ -213,7 +212,7 @@ public abstract class AbstractJOSEObjectBuilder<A, B extends JOSEHeader, C exten
 			Set<String> invalidCustomParameters = new HashSet<>(customParameters.keySet());
 			invalidCustomParameters.retainAll(this.getProcessedParameters());
 			if(!invalidCustomParameters.isEmpty()) {
-				throw new JOSEObjectBuildException("Custom parameters must not include registered parameters: " + invalidCustomParameters.stream().collect(Collectors.joining(", ")));
+				throw new JOSEObjectBuildException("Custom parameters must not include registered parameters: " + String.join(", ", invalidCustomParameters));
 			}
 		}
 		if(header.getCritical() != null) {
@@ -222,7 +221,7 @@ public abstract class AbstractJOSEObjectBuilder<A, B extends JOSEHeader, C exten
 				remainingCrit.removeAll(customParameters.keySet());
 			}
 			if(!remainingCrit.isEmpty()) {
-				throw new JOSEObjectBuildException("Critical parameters must not include parameters not defined as custom parameters: " + remainingCrit.stream().collect(Collectors.joining(", ")));
+				throw new JOSEObjectBuildException("Critical parameters must not include parameters not defined as custom parameters: " + String.join(", ", remainingCrit));
 			}
 		}
 	}
@@ -274,7 +273,7 @@ public abstract class AbstractJOSEObjectBuilder<A, B extends JOSEHeader, C exten
 		String resolvedContentType;
 		if(StringUtils.isNotBlank(overridingContentType)) {
 			if(LOGGER.isDebugEnabled() && StringUtils.isNotBlank(cty) && MediaTypes.normalizeApplicationMediaType(cty).equals(MediaTypes.normalizeApplicationMediaType(overridingContentType))) {
-				// We just log a debug here since we want to be able to override the JWS header content type (eg. application/json to encode application/jwt)
+				// We just log a debug here since we want to be able to override the JWS header content type (e.g. application/json to encode application/jwt)
 				LOGGER.debug("The overriding content type differs from the JOSE header content type");
 			}
 			resolvedContentType = overridingContentType;
@@ -288,10 +287,10 @@ public abstract class AbstractJOSEObjectBuilder<A, B extends JOSEHeader, C exten
 		
 		MediaTypeConverter<String> payloadConverter = this.dataConversionService.getConverter(resolvedContentType).orElseThrow(() -> new JOSEObjectBuildException("No converter found for content type: " + resolvedContentType));
 		if(this.type != null) {
-			return p -> Flux.from(payloadConverter.encodeOne(Mono.just(p), this.type)).reduceWith(() -> new StringBuilder(), (acc, v) -> acc.append(v)).map(StringBuilder::toString);
+			return p -> Flux.from(payloadConverter.encodeOne(Mono.just(p), this.type)).reduceWith(StringBuilder::new, StringBuilder::append).map(StringBuilder::toString);
 		}
 		else {
-			return p -> Flux.from(payloadConverter.encodeOne(Mono.just(p))).reduceWith(() -> new StringBuilder(), (acc, v) -> acc.append(v)).map(StringBuilder::toString);
+			return p -> Flux.from(payloadConverter.encodeOne(Mono.just(p))).reduceWith(StringBuilder::new, StringBuilder::append).map(StringBuilder::toString);
 		}
 	}
 }

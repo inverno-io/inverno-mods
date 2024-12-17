@@ -27,6 +27,7 @@ import io.inverno.mod.security.identity.UserIdentityResolver;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -377,7 +378,7 @@ public class User<A extends Identity> implements LoginCredentials {
 		 * @return this builder
 		 */
 		public Builder<A> groups(Collection<String> groups) {
-			this.groups = groups != null ? groups.stream().collect(Collectors.toSet()) : null;
+			this.groups = groups != null ? new HashSet<>(groups) : null;
 			return this;
 		}
 		

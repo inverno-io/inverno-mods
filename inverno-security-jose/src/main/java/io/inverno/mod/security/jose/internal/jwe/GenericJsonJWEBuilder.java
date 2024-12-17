@@ -76,7 +76,7 @@ public class GenericJsonJWEBuilder<A> extends AbstractJsonJOSEObjectBuilder<A, J
 	 * @param type                  the payload type
 	 * @param zips                  a list of supported JWE compression algorithms
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public GenericJsonJWEBuilder(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type, List<JWEZip> zips) {
 		super(mapper, dataConversionService, jwkService, type);
 		this.zips = zips;
@@ -137,7 +137,7 @@ public class GenericJsonJWEBuilder<A> extends AbstractJsonJOSEObjectBuilder<A, J
 			Set<String> overlappingParameters = protectedJWEHeader.getParametersSet();
 			overlappingParameters.retainAll(unprotectedJWEHeader.getParametersSet());
 			if(!overlappingParameters.isEmpty()) {
-				throw new JWEBuildException("Protected and unprotected headers must be disjoint: " + overlappingParameters.stream().collect(Collectors.joining(", ")));
+				throw new JWEBuildException("Protected and unprotected headers must be disjoint: " + String.join(", ", overlappingParameters));
 			}
 		}
 		
@@ -195,7 +195,7 @@ public class GenericJsonJWEBuilder<A> extends AbstractJsonJOSEObjectBuilder<A, J
 					raw_aad = protectedJWEHeader != null ? protectedJWEHeader.getEncoded().getBytes(StandardCharsets.US_ASCII) : new byte[0];
 				}
 
-				RecipientInfo firstRecipient = this.recipientInfos.get(0);
+				RecipientInfo firstRecipient = this.recipientInfos.getFirst();
 				Mono<JWE<A>> first = new RecipientJWEBuilder<>(
 					this.mapper,
 					this.dataConversionService,
@@ -422,7 +422,7 @@ public class GenericJsonJWEBuilder<A> extends AbstractJsonJOSEObjectBuilder<A, J
 				Set<String> overlappingParameters = this.recipientJWEHeader.getParametersSet();
 				overlappingParameters.retainAll(this.jweHeader.getParametersSet());
 				if(!overlappingParameters.isEmpty()) {
-					throw new JWEBuildException("Recipient, protected and unprotected headers must be disjoint: " + overlappingParameters.stream().collect(Collectors.joining(", ")));
+					throw new JWEBuildException("Recipient, protected and unprotected headers must be disjoint: " + String.join(", ", overlappingParameters));
 				}
 				this.headerConfigurer.accept(this.jweHeader);
 			}

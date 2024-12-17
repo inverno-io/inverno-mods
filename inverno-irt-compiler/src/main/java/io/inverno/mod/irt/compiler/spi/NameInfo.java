@@ -17,15 +17,15 @@ package io.inverno.mod.irt.compiler.spi;
 
 /**
  * <p>
- * An name info corresponds to a name in a template set source
- * file.
+ * An name info corresponds to a name in a template set source file.
  * </p>
- * 
- * <p>A name info is generic, it can designate a package, an import, an include, a template set name or a value accessor. 
- * 
+ *
+ * <p>
+ * A name info is generic, it can designate a package, an import, an include, a template set name or a value accessor.
+ * </p>
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public interface NameInfo {
 
@@ -33,7 +33,7 @@ public interface NameInfo {
 	 * <p>
 	 * Returns the parts composing the name.
 	 * </p>
-	 * 
+	 *
 	 * @return the name parts
 	 */
 	String[] getParts();

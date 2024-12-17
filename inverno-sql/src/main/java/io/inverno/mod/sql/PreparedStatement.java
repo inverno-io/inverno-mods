@@ -93,7 +93,7 @@ public interface PreparedStatement {
 	 * </p>
 	 *
 	 * <p>
-	 * This is is a shortcut for <code>.and().bind(...).and().bind(...)...</code> that appends the specified list of bindings to the current batch.
+	 * This is is a shortcut for {@code .and().bind(...).and().bind(...)...} that appends the specified list of bindings to the current batch.
 	 * </p>
 	 *
 	 * @param values a list of argument bindings
@@ -108,7 +108,7 @@ public interface PreparedStatement {
 	 * </p>
 	 *
 	 * <p>
-	 * This is is a shortcut for <code>.and().bind(...).and().bind(...)...</code> that appends the specified list of bindings to the current batch.
+	 * This is is a shortcut for {@code .and().bind(...).and().bind(...)...} that appends the specified list of bindings to the current batch.
 	 * </p>
 	 *
 	 * @param values a stream of argument bindings

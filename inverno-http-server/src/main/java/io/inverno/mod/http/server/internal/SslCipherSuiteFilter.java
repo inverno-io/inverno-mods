@@ -24,6 +24,7 @@ import io.netty.handler.ssl.CipherSuiteFilter;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.mod.http.server.HttpServerConfiguration;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -36,7 +37,7 @@ import io.inverno.mod.http.server.HttpServerConfiguration;
 @Bean(visibility = Visibility.PRIVATE)
 public class SslCipherSuiteFilter implements CipherSuiteFilter {
 
-	private HttpServerConfiguration configuration;
+	private final HttpServerConfiguration configuration;
 	
 	public SslCipherSuiteFilter(HttpServerConfiguration configuration) {
 		this.configuration = configuration;
@@ -50,13 +51,15 @@ public class SslCipherSuiteFilter implements CipherSuiteFilter {
 		}
 		
 		if(configuration.tls_ciphers_includes() != null) {
-			filteredCiphers.retainAll(Arrays.asList(configuration.tls_ciphers_includes()));
+
+
+			filteredCiphers.retainAll(Arrays.stream(configuration.tls_ciphers_includes()).collect(Collectors.toSet()));
 		}
 		if(configuration.tls_ciphers_excludes() != null) {
-			filteredCiphers.removeAll(Arrays.asList(configuration.tls_ciphers_excludes()));
+			filteredCiphers.removeAll(Arrays.stream(configuration.tls_ciphers_excludes()).collect(Collectors.toSet()));
 		}
 		
-		return filteredCiphers.stream().toArray(String[]::new);
+		return filteredCiphers.toArray(String[]::new);
 	}
 
 }

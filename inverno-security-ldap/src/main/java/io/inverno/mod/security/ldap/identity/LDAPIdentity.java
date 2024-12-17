@@ -46,7 +46,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.32">RFC4519 Section 2.32</a>
 	 */
-	static String ATTRIBUTE_SN = "sn";
+	String ATTRIBUTE_SN = "sn";
 	/**
 	 * <p>
 	 * Names of an object.
@@ -54,7 +54,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.3">RFC4519 Section 2.3</a>
 	 */
-	static String ATTRIBUTE_CN = "cn";
+	String ATTRIBUTE_CN = "cn";
 	/**
 	 * <p>
 	 * Telephone numbers that comply with the ITU Recommendation E.123.
@@ -62,7 +62,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.35">RFC4519 Section 2.35</a>
 	 */
-	static String ATTRIBUTE_TELEPHONE_NUMBER = "telephoneNumber";
+	String ATTRIBUTE_TELEPHONE_NUMBER = "telephoneNumber";
 	/**
 	 * <p>
 	 * Human-readable descriptive phrases about the object.
@@ -70,7 +70,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.5">RFC4519 Section 2.5</a>
 	 */
-	static String ATTRIBUTE_DESCRIPTION = "description";
+	String ATTRIBUTE_DESCRIPTION = "description";
 	/**
 	 * <p>
 	 * Title of a person in their organizational context.
@@ -78,7 +78,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.38">RFC4519 Section 2.38</a>
 	 */
-	static String ATTRIBUTE_TITLE = "title";
+	String ATTRIBUTE_TITLE = "title";
 	/**
 	 * <p>
 	 * Postal addresses suitable for reception of telegrams or expedited documents, where it is necessary to have the recipient accept delivery.
@@ -86,7 +86,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.27">RFC4519 Section 2.27</a>
 	 */
-	static String ATTRIBUTE_REGISTERED_ADDRESS = "registeredAddress"; // AD: -
+	String ATTRIBUTE_REGISTERED_ADDRESS = "registeredAddress"; // AD: -
 	/**
 	 * <p>
 	 * Country and city strings associated with the object (the addressee) needed to provide the Public Telegram Service.
@@ -94,7 +94,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.6">RFC4519 Section 2.6</a>
 	 */
-	static String ATTRIBUTE_DESTINATION_INDICATOR = "destinationIndicator"; // AD: -
+	String ATTRIBUTE_DESTINATION_INDICATOR = "destinationIndicator"; // AD: -
 	/**
 	 * <p>
 	 * An indication of the preferred method of getting a message to the object.
@@ -102,7 +102,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.26">RFC4519 Section 2.26</a>
 	 */
-	static String ATTRIBUTE_PREFERED_DELIVERY_METHOD = "preferredDeliveryMethod"; // AD: -
+	String ATTRIBUTE_PREFERRED_DELIVERY_METHOD = "preferredDeliveryMethod"; // AD: -
 	/**
 	 * <p>
 	 * Telephone numbers (and, optionally, the parameters) for facsimile terminals.
@@ -110,7 +110,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.10">RFC4519 Section 2.10</a>
 	 */
-	static String ATTRIBUTE_FACSIMILE_TELEPHONE_NUMBER = "facsimileTelephoneNumber";
+	String ATTRIBUTE_FACSIMILE_TELEPHONE_NUMBER = "facsimileTelephoneNumber";
 	/**
 	 * <p>
 	 * Site information from a postal address (i.e., the street name, place, avenue, and the house number).
@@ -118,7 +118,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.34">RFC4519 Section 2.34</a>
 	 */
-	static String ATTRIBUTE_STREET = "street"; // AD: streetAddress
+	String ATTRIBUTE_STREET = "street"; // AD: streetAddress
 	/**
 	 * <p>
 	 * Postal box identifiers that a Postal Service uses when a customer arranges to receive mail at a box on the premises of the Postal Service.
@@ -126,7 +126,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.25">RFC4519 Section 2.25</a>
 	 */
-	static String ATTRIBUTE_POST_OFFICE_BOX = "postOfficeBox";
+	String ATTRIBUTE_POST_OFFICE_BOX = "postOfficeBox";
 	/**
 	 * <p>
 	 * Codes used by a Postal Service to identify postal service zones.
@@ -134,7 +134,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.24">RFC4519 Section 2.24</a>
 	 */
-	static String ATTRIBUTE_POSTAL_CODE = "postalCode";
+	String ATTRIBUTE_POSTAL_CODE = "postalCode";
 	/**
 	 * <p>
 	 * Addresses used by a Postal Service to perform services for the object.
@@ -142,7 +142,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.23">RFC4519 Section 2.23</a>
 	 */
-	static String ATTRIBUTE_POSTAL_ADDRESS = "postalAddress"; // AD: -
+	String ATTRIBUTE_POSTAL_ADDRESS = "postalAddress"; // AD: -
 	/**
 	 * <p>
 	 * Names that a Postal Service uses to identify a post office.
@@ -150,7 +150,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.22">RFC4519 Section 2.22</a>
 	 */
-	static String ATTRIBUTE_PHYSICAL_DELIVERY_OFFICE_NAME = "physicalDeliveryOfficeName";
+	String ATTRIBUTE_PHYSICAL_DELIVERY_OFFICE_NAME = "physicalDeliveryOfficeName";
 	/**
 	 * <p>
 	 * Names of an organizational unit.
@@ -158,7 +158,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.20">RFC4519 Section 2.20</a>
 	 */
-	static String ATTRIBUTE_OU = "ou";
+	String ATTRIBUTE_OU = "ou";
 	/**
 	 * <p>
 	 * Full names of states or provinces.
@@ -166,7 +166,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.33">RFC4519 Section 2.33</a>
 	 */
-	static String ATTRIBUTE_ST = "st";
+	String ATTRIBUTE_ST = "st";
 	/**
 	 * <p>
 	 * Names of a locality or place, such as a city, county, or other geographic region.
@@ -174,7 +174,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.16">RFC4519 Section 2.16</a>
 	 */
-	static String ATTRIBUTE_L = "l";
+	String ATTRIBUTE_L = "l";
 	/**
 	 * <p>
 	 * Values of the license or registration plate associated with an individual.
@@ -182,7 +182,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc2798#section-2.1">RFC2798 Section 2.1</a>
 	 */
-	static String ATTRIBUTE_CAR_LICENSE = "carLicense";
+	String ATTRIBUTE_CAR_LICENSE = "carLicense";
 	/**
 	 * <p>
 	 * Department to which a person belongs.
@@ -190,7 +190,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc2798#section-2.1">RFC2798 Section 2.3</a>
 	 */
-	static String ATTRIBUTE_DEPARTMENT_NUMBER = "departmentNumber";
+	String ATTRIBUTE_DEPARTMENT_NUMBER = "departmentNumber";
 	/**
 	 * <p>
 	 * Preferred name of a person to be used when displaying entries.
@@ -198,7 +198,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc2798#section-2.3">RFC2798 Section 2.3</a>
 	 */
-	static String ATTRIBUTE_DISPLAY_NAME = "displayName";
+	String ATTRIBUTE_DISPLAY_NAME = "displayName";
 	/**
 	 * <p>
 	 * Numeric or alphanumeric identifier assigned to a person.
@@ -206,7 +206,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc2798#section-2.4">RFC2798 Section 2.4</a>
 	 */
-	static String ATTRIBUTE_EMPLOYEE_NUMBER = "employeeNumber";
+	String ATTRIBUTE_EMPLOYEE_NUMBER = "employeeNumber";
 	/**
 	 * <p>
 	 * Used to identify the employer to employee relationship.
@@ -214,7 +214,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc2798#section-2.5">RFC2798 Section 2.5</a>
 	 */
-	static String ATTRIBUTE_EMPLOYEE_TYPE = "employeeType";
+	String ATTRIBUTE_EMPLOYEE_TYPE = "employeeType";
 	/**
 	 * <p>
 	 * Strings that are the part of a person's name that is not their surname.
@@ -222,7 +222,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.12">RFC4519 Section 2.12</a>
 	 */
-	static String ATTRIBUTE_GIVEN_NAME = "givenName";
+	String ATTRIBUTE_GIVEN_NAME = "givenName";
 	/**
 	 * <p>
 	 * A home telephone number associated with a person.
@@ -230,7 +230,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc1274#section-9.3.16">RFC1274 Section 9.3.16</a>
 	 */
-	static String ATTRIBUTE_HOME_PHONE = "homePhone";
+	String ATTRIBUTE_HOME_PHONE = "homePhone";
 	/**
 	 * <p>
 	 * A home postal address for an object.
@@ -238,7 +238,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc1274#section-9.3.29">RFC1274 Section 9.3.29</a>
 	 */
-	static String ATTRIBUTE_HOME_POSTAL_ADDRESS = "homePostalAddress"; // AD: -
+	String ATTRIBUTE_HOME_POSTAL_ADDRESS = "homePostalAddress"; // AD: -
 	/**
 	 * <p>
 	 * Strings of initials of some or all of an individual's names, except the surname(s).
@@ -246,7 +246,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.14">RFC4519 Section 2.14</a>
 	 */
-	static String ATTRIBUTE_INITIALS = "initials";
+	String ATTRIBUTE_INITIALS = "initials";
 	/**
 	 * <p>
 	 * Images of a person using the JPEG File Interchange Format
@@ -254,7 +254,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc2798#section-2.6">RFC2798 Section 2.6</a>
 	 */
-	static String ATTRIBUTE_JPEG_PHOTO = "jpegPhoto";
+	String ATTRIBUTE_JPEG_PHOTO = "jpegPhoto";
 	/**
 	 * <p>
 	 * Uniform Resource Identifiers with optional label.
@@ -262,7 +262,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc2079">RFC2079</a>
 	 */
-	static String ATTRIBUTE_LABELED_URI = "labeledURI";
+	String ATTRIBUTE_LABELED_URI = "labeledURI";
 	/**
 	 * <p>
 	 * An electronic mailbox.
@@ -270,7 +270,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc1274#section-9.3.3">RFC1274 Section 9.3.3</a>
 	 */
-	static String ATTRIBUTE_MAIL = "mail";
+	String ATTRIBUTE_MAIL = "mail";
     /**
 	 * <p>
 	 * The manager of an object represented by an entry.
@@ -278,7 +278,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc1274#section-9.3.10">RFC1274 Section 9.3.10</a>
 	 */
-	static String ATTRIBUTE_MANAGER = "manager";
+	String ATTRIBUTE_MANAGER = "manager";
 	/**
 	 * <p>
 	 * A mobile telephone number associated with a person.
@@ -286,7 +286,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc1274#section-9.3.31">RFC1274 Section 9.3.31</a>
 	 */
-	static String ATTRIBUTE_MOBILE = "mobile";
+	String ATTRIBUTE_MOBILE = "mobile";
 	/**
 	 * <p>
 	 * Names of an organization.
@@ -294,7 +294,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.19">RFC4519 Section 2.19</a>
 	 */
-	static String ATTRIBUTE_O = "o";
+	String ATTRIBUTE_O = "o";
 	/**
 	 * <p>
 	 * The room number of an object.
@@ -302,7 +302,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc1274#section-9.3.6">RFC1274 Section 9.3.6</a>
 	 */
-	static String ATTRIBUTE_ROOM_NUMBER = "roomNumber";
+	String ATTRIBUTE_ROOM_NUMBER = "roomNumber";
 	/**
 	 * <p>
 	 * The secretary of a person.
@@ -310,7 +310,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc1274#section-9.3.17">RFC1274 Section 9.3.17</a>
 	 */
-	static String ATTRIBUTE_SECRETARY = "secretary";
+	String ATTRIBUTE_SECRETARY = "secretary";
 	/**
 	 * <p>
 	 * Computer system login names associated with the object.
@@ -318,7 +318,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc4519#section-2.39">RFC4519 Section 2.39</a>
 	 */
-	static String ATTRIBUTE_UID = "uid";
+	String ATTRIBUTE_UID = "uid";
 	/**
 	 * <p>
 	 * The certificate (public key) of a person.
@@ -326,7 +326,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc2256#section-5.37">RFC2256 Section 5.37</a>
 	 */
-	static String ATTRIBUTE_USER_CERTIFICATE = "userCertificate"; // AD: -
+	String ATTRIBUTE_USER_CERTIFICATE = "userCertificate"; // AD: -
 	/**
 	 * <p>
 	 * Preferred written or spoken language.
@@ -334,7 +334,7 @@ public interface LDAPIdentity extends Identity {
 	 * 
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc2798#section-2.7">RFC2798 Section 2.7</a>
 	 */
-	static String ATTRIBUTE_PREFERRED_LANGUAGE = "preferredLanguage";
+	String ATTRIBUTE_PREFERRED_LANGUAGE = "preferredLanguage";
 
 	/**
 	 * <p>

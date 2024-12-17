@@ -103,19 +103,17 @@ public class DigestCredentialsMatcher<A extends LoginCredentials> implements Cre
 			// request-digest = <"> < KD ( H(A1), unq(nonce-value) ":" H(A2) ) >
 			serverDigest = DigestUtils.kd(credentials.getDigest(), hash_a1, credentials.getNonce() + ":" + hash_a2);
 		}
-		else switch (credentials.getQop()) {
-			case "auth": {
-				// https://datatracker.ietf.org/doc/html/rfc7616#section-3.4.1
-				// response = <"> < KD ( H(A1), unq(nonce) ":" nc ":" unq(cnonce) ":" unq(qop) ":" H(A2) ) <">
-				// A1 = unq(username) ":" unq(realm) ":" passwd
-				// A2 = Method ":" request-uri
-				// KD(secret, data) = H(concat(secret, ":", data))
+		else if(credentials.getQop().equals("auth")) {
+			// https://datatracker.ietf.org/doc/html/rfc7616#section-3.4.1
+			// response = <"> < KD ( H(A1), unq(nonce) ":" nc ":" unq(cnonce) ":" unq(qop) ":" H(A2) ) <">
+			// A1 = unq(username) ":" unq(realm) ":" passwd
+			// A2 = Method ":" request-uri
+			// KD(secret, data) = H(concat(secret, ":", data))
 
-				serverDigest = DigestUtils.kd(credentials.getDigest(), hash_a1, credentials.getNonce() + ":" + credentials.getNc() + ":" + credentials.getCnonce() + ":" + credentials.getQop() + ":" + hash_a2);
-				break;
-			}
-			default:
-				throw new AuthenticationException("Unsupported qop: " + credentials.getQop());
+			serverDigest = DigestUtils.kd(credentials.getDigest(), hash_a1, credentials.getNonce() + ":" + credentials.getNc() + ":" + credentials.getCnonce() + ":" + credentials.getQop() + ":" + hash_a2);
+		}
+		else {
+			throw new AuthenticationException("Unsupported qop: " + credentials.getQop());
 		}
 		return serverDigest.equals(credentials.getResponse());
 	}

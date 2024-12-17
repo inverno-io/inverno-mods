@@ -40,7 +40,7 @@ import reactor.core.publisher.Mono;
  * Http/1.x {@link Exchange} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 class Http1xExchange extends AbstractHttp1xExchange {
@@ -70,7 +70,7 @@ class Http1xExchange extends AbstractHttp1xExchange {
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 * @param headersValidator      the header validator
 	 * @param connection            the Http/1.x connection
-	 * @param request               the originating Http request
+	 * @param request               the originating HTTP request
 	 */
 	public Http1xExchange(
 			HttpServerConfiguration configuration, 
@@ -181,9 +181,9 @@ class Http1xExchange extends AbstractHttp1xExchange {
 	}
 	
 	@Override
-	public Optional<? extends WebSocket<ExchangeContext, ? extends WebSocketExchange<ExchangeContext>>> webSocket(String... subProtocols) {
+	public Optional<? extends WebSocket<ExchangeContext, ? extends WebSocketExchange<ExchangeContext>>> webSocket(String... subprotocols) {
 		if(this.configuration.ws_enabled()) {
-			this.webSocket = new Http1xWebSocket(this.configuration, this.connection, this, subProtocols);
+			this.webSocket = new Http1xWebSocket(this.configuration, this.connection, this, subprotocols);
 			return Optional.of(this.webSocket);
 		}
 		return Optional.empty();
@@ -194,7 +194,7 @@ class Http1xExchange extends AbstractHttp1xExchange {
 	 * The subscriber used to subscribe to the mono returned by the exchange handler and that sends the response on complete.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.10
 	 */
 	private class ExchangeHandlerSubscriber extends BaseSubscriber<Void> {

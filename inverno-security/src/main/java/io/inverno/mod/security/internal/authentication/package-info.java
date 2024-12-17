@@ -15,7 +15,7 @@
  */
 /**
  * <p>
- * Inverno security authentication API implementation.
+ * Inverno security authentication implementation classes.
  * </p>
  */
 package io.inverno.mod.security.internal.authentication;

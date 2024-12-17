@@ -23,7 +23,7 @@ import java.util.Objects;
  * Generic {@link GrpcServiceName} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public class GenericGrpcServiceName implements GrpcServiceName {
@@ -131,7 +131,7 @@ public class GenericGrpcServiceName implements GrpcServiceName {
 	 * Validates and sets the service name.
 	 * </p>
 	 * 
-	 * @param serviceName
+	 * @param serviceName a service name
 	 * 
 	 * @throws IllegalArgumentException if the specified name is not valid gRPC identifier
 	 */
@@ -171,27 +171,16 @@ public class GenericGrpcServiceName implements GrpcServiceName {
 	}
 
 	@Override
-	public int hashCode() {
-		int hash = 7;
-		return hash;
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		GenericGrpcServiceName that = (GenericGrpcServiceName) o;
+		return Objects.equals(packageName, that.packageName) && Objects.equals(serviceName, that.serviceName);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final GenericGrpcServiceName other = (GenericGrpcServiceName) obj;
-		if (!Objects.equals(this.packageName, other.packageName)) {
-			return false;
-		}
-		return Objects.equals(this.serviceName, other.serviceName);
+	public int hashCode() {
+		return Objects.hash(packageName, serviceName);
 	}
 
 	@Override

@@ -77,7 +77,7 @@ public class WebSocketException extends HttpException {
 	 * Creates a WebSocket exception with specified HTTP status code.
 	 * </p>
 	 *
-	 * @param statusCode a HTTP status code
+	 * @param statusCode an HTTP status code
 	 *
 	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
 	 */
@@ -90,7 +90,7 @@ public class WebSocketException extends HttpException {
 	 * Creates a WebSocket exception with specified HTTP status code and message.
 	 * </p>
 	 *
-	 * @param statusCode a HTTP status code
+	 * @param statusCode an HTTP status code
 	 * @param message    a message
 	 *
 	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
@@ -104,7 +104,7 @@ public class WebSocketException extends HttpException {
 	 * Creates a WebSocket exception with specified HTTP status code and cause.
 	 * </p>
 	 *
-	 * @param statusCode a HTTP status code
+	 * @param statusCode an HTTP status code
 	 * @param cause      a cause
 	 *
 	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
@@ -118,7 +118,7 @@ public class WebSocketException extends HttpException {
 	 * Creates a WebSocket exception with specified HTTP status code, message and cause.
 	 * </p>
 	 *
-	 * @param statusCode a HTTP status code
+	 * @param statusCode an HTTP status code
 	 * @param message    a message
 	 * @param cause      a cause
 	 *
@@ -133,7 +133,7 @@ public class WebSocketException extends HttpException {
 	 * Creates a WebSocket exception with specified HTTP status.
 	 * </p>
 	 *
-	 * @param status a HTTP status
+	 * @param status an HTTP status
 	 */
 	public WebSocketException(Status status) {
 		super(status);
@@ -144,7 +144,7 @@ public class WebSocketException extends HttpException {
 	 * Creates a WebSocket exception with specified HTTP status and message.
 	 * </p>
 	 *
-	 * @param status  a HTTP status
+	 * @param status  an HTTP status
 	 * @param message a message
 	 */
 	public WebSocketException(Status status, String message) {
@@ -156,7 +156,7 @@ public class WebSocketException extends HttpException {
 	 * Creates a WebSocket exception with specified HTTP status and cause.
 	 * </p>
 	 * 
-	 * @param status a HTTP status
+	 * @param status an HTTP status
 	 * @param cause  a cause
 	 */
 	public WebSocketException(Status status, Throwable cause) {
@@ -168,7 +168,7 @@ public class WebSocketException extends HttpException {
 	 * Creates a WebSocket exception with specified HTTP status, message and cause.
 	 * </p>
 	 * 
-	 * @param status  a HTTP status
+	 * @param status  an HTTP status
 	 * @param message a message
 	 * @param cause   a cause
 	 */

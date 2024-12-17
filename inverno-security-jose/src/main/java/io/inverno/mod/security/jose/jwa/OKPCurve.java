@@ -30,7 +30,7 @@ package io.inverno.mod.security.jose.jwa;
  * </ul>
  * 
  * <p>
- * These curves are used in conjuntion with algorithms defined by {@link EdECAlgorithm} and {@link XECAlgorithm}.
+ * These curves are used in conjunction with algorithms defined by {@link EdECAlgorithm} and {@link XECAlgorithm}.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -77,7 +77,7 @@ public enum OKPCurve {
 	 * @param jcaName the JCA name
 	 * @param keyLength the key length in bytes
 	 */
-	private OKPCurve(String crv, String jcaName, int keyLength) {
+	OKPCurve(String crv, String jcaName, int keyLength) {
 		this.crv = crv;
 		this.jcaName = jcaName;
 		this.keyLength = keyLength;

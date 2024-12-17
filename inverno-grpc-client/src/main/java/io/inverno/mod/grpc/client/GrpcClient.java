@@ -147,7 +147,7 @@ public interface GrpcClient {
 	 * @param <A> the exchange context type
 	 * @param <B> the stub type
 	 */
-	interface Stub<A extends ExchangeContext, B extends GrpcClient.Stub<A, B>> extends AutoCloseable {
+	interface Stub<A extends ExchangeContext, B extends GrpcClient.Stub<A, B>> {
 
 		/**
 		 * <p>
@@ -159,12 +159,30 @@ public interface GrpcClient {
 		 * @return a configured stub
 		 */
 		B withMetadata(Consumer<GrpcOutboundRequestMetadata> metadataConfigurer);
+	}
+
+	/**
+	 * <p>
+	 * A closeable gRPC client stub definition.
+	 * </p>
+	 *
+	 * <p>
+	 * This is intended to be used when generating gRPC client stub from Protocol buffer definitions.
+	 * </p>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.12
+	 *
+	 * @param <A> the exchange context type
+	 * @param <B> the stub type
+	 */
+	interface CloseableStub<A extends ExchangeContext, B extends GrpcClient.Stub<A, B>> extends Stub<A, B>, AutoCloseable {
 
 		/**
 		 * <p>
 		 * Subscribes to {@link #shutdownGracefully() } in order to eventually close the underlying endpoint.
 		 * </p>
-		 * 
+		 *
 		 * <p>
 		 * This method should return right away before the endpoint is actually closed, you should prefer {@link #shutdown()} or {@link #shutdownGracefully()} to control when the endpoint is actually
 		 * closed.
@@ -174,21 +192,21 @@ public interface GrpcClient {
 		default void close() {
 			this.shutdownGracefully().subscribe();
 		}
-		
+
 		/**
 		 * <p>
 		 * Shutdowns the underlying endpoint right away.
 		 * </p>
-		 * 
+		 *
 		 * @return a mono which completes once the underlying endpoint is shutdown
 		 */
 		Mono<Void> shutdown();
-		
+
 		/**
 		 * <p>
-		 * Gracefully shutdwon the underlying endpoint.
+		 * Gracefully shutdown the underlying endpoint.
 		 * </p>
-		 * 
+		 *
 		 * @return a mono which completes once the underlying endpoint is shutdown
 		 */
 		Mono<Void> shutdownGracefully();

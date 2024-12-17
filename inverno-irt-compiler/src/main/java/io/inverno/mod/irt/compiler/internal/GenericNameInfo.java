@@ -26,7 +26,6 @@ import io.inverno.mod.irt.compiler.spi.NameInfo;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class GenericNameInfo extends BaseInfo implements NameInfo {
 
@@ -42,7 +41,7 @@ public class GenericNameInfo extends BaseInfo implements NameInfo {
 	 */
 	public GenericNameInfo(Range range, List<String> parts) {
 		super(range);
-		this.parts = parts.stream().toArray(String[]::new);
+		this.parts = parts.toArray(String[]::new);
 	}
 
 	@Override

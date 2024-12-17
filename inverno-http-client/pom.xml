@@ -57,7 +57,10 @@
 			<artifactId>brotli4j</artifactId>
 			<optional>true</optional>
 		</dependency>
-		
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-common</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>io.netty</groupId>
 			<artifactId>netty-codec-http</artifactId>
@@ -78,21 +81,19 @@
 			<groupId>io.netty</groupId>
 			<artifactId>netty-handler-proxy</artifactId>
 		</dependency>
-		
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-core</artifactId>
 		</dependency>
-		
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-text</artifactId>
-		</dependency>
-		
+
 		<dependency>
 			<groupId>org.junit.platform</groupId>
 			<artifactId>junit-platform-launcher</artifactId>

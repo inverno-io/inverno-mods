@@ -57,7 +57,7 @@ public class GenericPBES2JWK extends AbstractJWK implements PBES2JWK {
 	
 	private PBES2Algorithm pbes2Alg;
 	
-	private Optional<SecretKey> secretKey;
+	private SecretKey secretKey;
 	
 	private Map<PBES2Algorithm, JWAKeyManager> keyManagers;
 	
@@ -94,7 +94,7 @@ public class GenericPBES2JWK extends AbstractJWK implements PBES2JWK {
 		super(PBES2JWK.KEY_TYPE, key, trusted);
 		
 		this.p = p;
-		this.secretKey = key != null ? Optional.of(key) : null;
+		this.secretKey = key;
 	}
 	
 	/**
@@ -128,16 +128,13 @@ public class GenericPBES2JWK extends AbstractJWK implements PBES2JWK {
 
 	@Override
 	public Optional<SecretKey> toSecretKey() throws JWKProcessingException {
-		if(this.secretKey == null) {
-			this.secretKey = Optional.ofNullable(this.p)
-				.map(p -> {
-					if(this.pbes2Alg != null) {
-						return new SecretKeySpec(Base64.getUrlDecoder().decode(this.p), this.pbes2Alg.getJcaAlgorithm());
-					}
-					return new SecretKeySpec(Base64.getUrlDecoder().decode(this.p), null);
-				});
+		if(this.secretKey == null && this.p != null) {
+			if(this.pbes2Alg != null) {
+				this.secretKey = new SecretKeySpec(Base64.getUrlDecoder().decode(this.p), this.pbes2Alg.getJcaAlgorithm());
+			}
+			throw new JWKProcessingException("Missing algorithm");
 		}
-		return this.secretKey;
+		return Optional.ofNullable(this.secretKey);
 	}
 
 	@Override
@@ -153,9 +150,7 @@ public class GenericPBES2JWK extends AbstractJWK implements PBES2JWK {
 
 	@Override
 	public PBES2JWK minify() {
-		GenericPBES2JWK jwk = new GenericPBES2JWK(this.p, (SecretKey)this.key, this.trusted);
-		
-		return jwk;
+		return new GenericPBES2JWK(this.p, (SecretKey)this.key, this.trusted);
 	}
 	
 	@Override
@@ -239,9 +234,7 @@ public class GenericPBES2JWK extends AbstractJWK implements PBES2JWK {
 		if(this.keyManagers == null) {
 			this.keyManagers = new HashMap<>();
 		}
-		return this.keyManagers.computeIfAbsent(algorithm, ign -> {
-			return algorithm.createKeyManager(this);
-		});
+		return this.keyManagers.computeIfAbsent(algorithm, ign -> algorithm.createKeyManager(this));
 	}
 
 	@Override

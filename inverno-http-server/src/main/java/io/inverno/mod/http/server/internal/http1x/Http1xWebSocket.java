@@ -44,7 +44,7 @@ class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<Ex
 	
 	private final Http1xConnection connection;
 	private final Http1xExchange exchange;
-	private final String[] subProtocols;
+	private final String[] subprotocols;
 	
 	private WebSocketExchangeHandler<? super ExchangeContext, WebSocketExchange<ExchangeContext>> handler;
 	private Mono<Void> fallback;
@@ -59,20 +59,18 @@ class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<Ex
 	 * </p>
 	 *
 	 * @param configuration  the server configuration
-	 * @param request        the original HTTP/1.x exchange
 	 * @param connection     the HTTP/1.x connection
-	 * @param request        the original HTTP/1.x exchange
-	 * @param subProtocols   the list of supported subprotocols
+	 * @param subprotocols   the list of supported subprotocols
 	 */
-	public Http1xWebSocket(HttpServerConfiguration configuration, Http1xConnection connection, Http1xExchange exchange, String[] subProtocols) {
+	public Http1xWebSocket(HttpServerConfiguration configuration, Http1xConnection connection, Http1xExchange exchange, String[] subprotocols) {
 		this.connection = connection;
 		this.exchange = exchange;
-		this.subProtocols = subProtocols;
+		this.subprotocols = subprotocols;
 	}
 	
 	/**
 	 * <p>
-	 * Tries to upgrade the Http connection to a WebSocket connection.
+	 * Tries to upgrade the HTTP connection to a WebSocket connection.
 	 * </p>
 	 * 
 	 * <p>
@@ -81,7 +79,7 @@ class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<Ex
 	 */
 	void connect() {
 		if(this.connection.executor().inEventLoop()) {
-			this.connection.writeWebSocketHandshake(this.subProtocols).subscribe(new Http1xWebSocket.WebSocketHandshakeSubscriber());
+			this.connection.writeWebSocketHandshake(this.subprotocols).subscribe(new Http1xWebSocket.WebSocketHandshakeSubscriber());
 		}
 		else {
 			this.connection.executor().execute(this::connect);
@@ -158,13 +156,13 @@ class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<Ex
 		}
 		
 		@Override
+		@SuppressWarnings("unchecked")
 		protected void hookOnComplete() {
-			// We finished the upgrade, we can log the result
 			Http1xWebSocket.this.exchange.response().headers(headers -> headers.status(Status.SWITCHING_PROTOCOLS));
 			Http1xWebSocket.this.disposable = null;
 			Http1xWebSocket.this.exchange.request().dispose(null);
 			Http1xWebSocket.this.exchange.response().dispose(null);
-			Http1xWebSocket.this.webSocketExchange.start(Http1xWebSocket.this.handler);
+			Http1xWebSocket.this.webSocketExchange.start((WebSocketExchangeHandler<ExchangeContext, WebSocketExchange<ExchangeContext>>) Http1xWebSocket.this.handler);
 			// TODO log + dispose next exchanges if any
 		}
 

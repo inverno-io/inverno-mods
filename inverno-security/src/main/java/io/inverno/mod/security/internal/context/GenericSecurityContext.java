@@ -43,25 +43,25 @@ public class GenericSecurityContext<A extends Identity, B extends AccessControll
 	/**
 	 * The optional identity.
 	 */
-	private Optional<A> identity;
+	private A identity;
 	
 	/**
 	 * The optional access controller.
 	 */
-	private Optional<B> accessController;
+	private B accessController;
 
 	/**
 	 * <p>
 	 * Creates a generic security context with the specified authentication.
 	 * </p>
 	 * 
-	 * @param authentication the authetication.
+	 * @param authentication the authentication.
 	 */
 	public GenericSecurityContext(Authentication authentication) {
 		Objects.requireNonNull(authentication);
 		this.authentication = authentication;
-		this.identity = Optional.empty();
-		this.accessController = Optional.empty();
+		this.identity = null;
+		this.accessController = null;
 	}
 
 	/**
@@ -76,22 +76,7 @@ public class GenericSecurityContext<A extends Identity, B extends AccessControll
 	 * @param identity the identity to set
 	 */
 	public void setIdentity(A identity) {
-		this.identity = this.isAuthenticated() ? Optional.ofNullable(identity) : Optional.empty();
-	}
-
-	/**
-	 * <p>
-	 * Sets the identity of the authenticated entity.
-	 * </p>
-	 * 
-	 * <p>
-	 * Following security context contract, the identity is only sets when the context is authenticated (see {@link #isAuthenticated() }).
-	 * </p>
-	 * 
-	 * @param identity the optional identity to set
-	 */
-	public void setIdentity(Optional<A> identity) {
-		this.identity = this.isAuthenticated() ? identity : Optional.empty();
+		this.identity = this.isAuthenticated() ? identity : null;
 	}
 
 	/**
@@ -106,22 +91,7 @@ public class GenericSecurityContext<A extends Identity, B extends AccessControll
 	 * @param accessController the access controller to set
 	 */
 	public void setAccessController(B accessController) {
-		this.accessController = this.isAuthenticated() ? Optional.ofNullable(accessController): Optional.empty();
-	}
-
-	/**
-	 * <p>
-	 * Sets the access controller for the authenticated entity.
-	 * </p>
-	 * 
-	 * <p>
-	 * Following security context contract, the access controller is only sets when the context is authenticated (see {@link #isAuthenticated() }).
-	 * </p>
-	 * 
-	 * @param accessController the optional access controller to set
-	 */
-	public void setAccessController(Optional<B> accessController) {
-		this.accessController = this.isAuthenticated() ? accessController: Optional.empty();
+		this.accessController = this.isAuthenticated() ? accessController : null;
 	}
 
 	@Override
@@ -131,11 +101,11 @@ public class GenericSecurityContext<A extends Identity, B extends AccessControll
 
 	@Override
 	public Optional<A> getIdentity() {
-		return this.identity;
+		return Optional.ofNullable(this.identity);
 	}
 
 	@Override
 	public Optional<B> getAccessController() {
-		return this.accessController;
+		return Optional.ofNullable(this.accessController);
 	}
 }

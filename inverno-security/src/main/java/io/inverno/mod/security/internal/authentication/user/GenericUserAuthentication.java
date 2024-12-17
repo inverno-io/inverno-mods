@@ -48,7 +48,7 @@ public class GenericUserAuthentication<A extends Identity> implements UserAuthen
 	private final String username;
 
 	/**
-	 * The users's identity.
+	 * The user's identity.
 	 */
 	@JsonIgnore
 	private final A identity;
@@ -69,7 +69,7 @@ public class GenericUserAuthentication<A extends Identity> implements UserAuthen
 	 * The cause of the failed authentication that resulted in this authentication.
 	 */
 	@JsonIgnore
-	private Optional<io.inverno.mod.security.SecurityException> cause;
+	private io.inverno.mod.security.SecurityException cause;
 	
 	/**
 	 * <p>
@@ -87,7 +87,7 @@ public class GenericUserAuthentication<A extends Identity> implements UserAuthen
 		this.identity = identity;
 		this.groups = groups != null ? Collections.unmodifiableSet(groups) : Set.of();
 		this.authenticated = authenticated;
-		this.cause = Optional.empty();
+		this.cause = null;
 	}
 	
 	/**
@@ -105,7 +105,7 @@ public class GenericUserAuthentication<A extends Identity> implements UserAuthen
 		if(cause != null) {
 			this.authenticated = false;
 		}
-		this.cause = Optional.ofNullable(cause);
+		this.cause = cause;
 	}
 
 	@Override
@@ -133,7 +133,7 @@ public class GenericUserAuthentication<A extends Identity> implements UserAuthen
 
 	@Override
 	public Optional<io.inverno.mod.security.SecurityException> getCause() {
-		return this.cause;
+		return Optional.ofNullable(this.cause);
 	}
 
 	@Override

@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -61,7 +60,7 @@ public class GenericJsonJWSReader<A> extends AbstractJsonJOSEObjectReader<A, Jso
 	 * @param jwkService a JWK service
 	 * @param type the expected payload type
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public GenericJsonJWSReader(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type) {
 		super(mapper, dataConversionService, jwkService, type);
 	}
@@ -211,7 +210,7 @@ public class GenericJsonJWSReader<A> extends AbstractJsonJOSEObjectReader<A, Jso
 					
 					Set<String> overlappedParameters = signatureJWSHeader.stopRecordOverlap();
 					if(overlappedParameters != null && !overlappedParameters.isEmpty()) {
-						throw new JWSReadException("Protected and unprotected headers must be disjoint: " + overlappedParameters.stream().collect(Collectors.joining(", ")));
+						throw new JWSReadException("Protected and unprotected headers must be disjoint: " + String.join(", ", overlappedParameters));
 					}
 					signatureJWSHeader.setEncoded(protectedValue);
 				}
@@ -244,7 +243,7 @@ public class GenericJsonJWSReader<A> extends AbstractJsonJOSEObjectReader<A, Jso
 	 * @param overridingPayloadDecoder an overriding payload decoder
 	 * @param overridingContentType    an overriding payload content type
 	 * @param cty the common payload content type
-	 * @param b64 the comming b64 parameter
+	 * @param b64 the common b64 parameter
 	 * 
 	 * @return a singe JWS payload publisher
 	 * 

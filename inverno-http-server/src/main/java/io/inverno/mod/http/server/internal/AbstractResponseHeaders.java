@@ -21,6 +21,7 @@ import io.inverno.mod.http.base.OutboundSetCookies;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
+import java.lang.reflect.Type;
 import java.util.function.Consumer;
 
 /**
@@ -28,7 +29,7 @@ import java.util.function.Consumer;
  * Base {@link OutboundResponseHeaders} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.10
  * 
  * @param <A> the response headers type
@@ -87,6 +88,7 @@ public abstract class AbstractResponseHeaders<A extends AbstractResponseHeaders<
 	public abstract A contentLength(long contentLength);
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public final A cookies(Consumer<OutboundSetCookies> cookiesConfigurer) {
 		if(cookiesConfigurer != null) {
 			cookiesConfigurer.accept(this.cookies());
@@ -106,10 +108,30 @@ public abstract class AbstractResponseHeaders<A extends AbstractResponseHeaders<
 	public abstract A add(CharSequence name, CharSequence value);
 
 	@Override
+	public <T> A addParameter(CharSequence name, T value) {
+		return this.add(name, this.parameterConverter.encode(value));
+	}
+
+	@Override
+	public <T> OutboundResponseHeaders addParameter(CharSequence name, T value, Type type) {
+		return this.add(name, this.parameterConverter.encode(value, type));
+	}
+
+	@Override
 	public abstract A add(Header... headers);
 
 	@Override
 	public abstract A set(CharSequence name, CharSequence value);
+
+	@Override
+	public <T> A setParameter(CharSequence name, T value) {
+		return this.set(name, this.parameterConverter.encode(value));
+	}
+
+	@Override
+	public <T> OutboundResponseHeaders setParameter(CharSequence name, T value, Type type) {
+		return this.set(name, this.parameterConverter.encode(value, type));
+	}
 
 	@Override
 	public abstract A set(Header... headers);

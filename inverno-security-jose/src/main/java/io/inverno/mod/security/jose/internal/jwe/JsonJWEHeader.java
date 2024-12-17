@@ -212,12 +212,12 @@ public class JsonJWEHeader extends GenericJWEHeader {
 	@Override
 	public JsonJWEHeader encryptionAlgorithm(String enc) {
 		this.enc = enc;
-		return (JsonJWEHeader)this;
+		return this;
 	}
 
 	@Override
 	public JsonJWEHeader compressionAlgorithm(String zip) {
 		this.zip = zip;
-		return (JsonJWEHeader)this;
+		return this;
 	}
 }

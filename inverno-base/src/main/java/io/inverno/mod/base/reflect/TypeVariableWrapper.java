@@ -39,8 +39,7 @@ class TypeVariableWrapper<D extends GenericDeclaration> implements TypeVariable<
 	
 	/**
 	 * <p>
-	 * Creates a type variable wrapper based on an underlying type variable with
-	 * specified name and bounds.
+	 * Creates a type variable wrapper based on an underlying type variable with specified name and bounds.
 	 * </p>
 	 * 
 	 * @param typeVariable the underlying type variable
@@ -111,8 +110,7 @@ class TypeVariableWrapper<D extends GenericDeclaration> implements TypeVariable<
 	
 	/**
 	 * <p>
-	 * An annotated type wrapper that simply wrapped an existing type ignoring
-	 * annotations.
+	 * An annotated type wrapper that simply wrapped an existing type ignoring annotations.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -121,7 +119,14 @@ class TypeVariableWrapper<D extends GenericDeclaration> implements TypeVariable<
 	private static class AnnotatedTypeWrapper implements AnnotatedType {
 
 		private final Type type;
-		
+
+		/**
+		 * <p>
+		 * Creates an annotated type wrapper.
+		 * </p>
+		 *
+		 * @param type the type to wrap
+		 */
 		public AnnotatedTypeWrapper(Type type) {
 			this.type = type;
 		}

@@ -38,15 +38,11 @@ class WildcardTypeImpl implements WildcardType {
 
 	/**
 	 * <p>
-	 * Creates a wildcard type with the requested bounds. Note that the array
-	 * arguments are not cloned because instances of this class are never
-	 * constructed from outside the containing package.
+	 * Creates a wildcard type with the requested bounds. Note that the array arguments are not cloned because instances of this class are never constructed from outside the containing package.
 	 * </p>
 	 *
-	 * @param upperBounds the array of types representing the upper bound(s) of this
-	 *                    type variable
-	 * @param lowerBounds the array of types representing the lower bound(s) of this
-	 *                    type variable
+	 * @param upperBounds the array of types representing the upper bound(s) of this type variable
+	 * @param lowerBounds the array of types representing the lower bound(s) of this type variable
 	 */
 	public WildcardTypeImpl(Type[] upperBounds, Type[] lowerBounds) {
 		this.upperBounds = upperBounds;
@@ -55,13 +51,11 @@ class WildcardTypeImpl implements WildcardType {
 
 	/**
 	 * <p>
-	 * Returns an array of {@link Type Type} objects representing the upper bound(s)
-	 * of this type variable. Note that if no upper bound is explicitly declared,
-	 * the upper bound is {@link Object Object}.
+	 * Returns an array of {@link Type} objects representing the upper bound(s) of this type variable. Note that if no upper bound is explicitly declared, the upper bound is
+	 * {@link Object}.
 	 * </p>
 	 *
-	 * @return an array of types representing the upper bound(s) of this type
-	 *         variable
+	 * @return an array of types representing the upper bound(s) of this type variable
 	 */
 	public Type[] getUpperBounds() {
 		return this.upperBounds.length == 0 ? new Type[] { Object.class } : this.upperBounds.clone();
@@ -69,14 +63,12 @@ class WildcardTypeImpl implements WildcardType {
 
 	/**
 	 * <p>
-	 * Returns an array of {@link Type Type} objects representing the lower bound(s)
-	 * of this type variable. Note that if no lower bound is explicitly declared,
-	 * the lower bound is the type of {@code null}. In this case, a zero length
+	 * Returns an array of {@link Type} objects representing the lower bound(s) of this type variable. Note that if no lower bound is explicitly declared, the lower bound is the type of
+	 * {@code null}. In this case, a zero length
 	 * array is returned.
 	 * </p>
 	 *
-	 * @return an array of types representing the lower bound(s) of this type
-	 *         variable
+	 * @return an array of types representing the lower bound(s) of this type variable
 	 */
 	public Type[] getLowerBounds() {
 		return this.lowerBounds.clone();
@@ -84,16 +76,14 @@ class WildcardTypeImpl implements WildcardType {
 
 	/**
 	 * <p>
-	 * Indicates whether some other object is "equal to" this one. It is implemented
-	 * compatibly with the JDK's
-	 * {@link sun.reflect.generics.reflectiveObjects.WildcardTypeImpl
-	 * WildcardTypeImpl}.
+	 * Indicates whether some other object is "equal to" this one. It is implemented compatibly with the JDK's {@link sun.reflect.generics.reflectiveObjects.WildcardTypeImpl WildcardTypeImpl}.
 	 * </p>
 	 *
 	 * @param object the reference object with which to compare
-	 * @return {@code true} if this object is the same as the object argument;
-	 *         {@code false} otherwise
-	 * @see sun.reflect.generics.reflectiveObjects.WildcardTypeImpl#equals
+	 *
+	 * @return {@code true} if this object is the same as the object argument; {@code false} otherwise
+	 *
+	 * @see sun.reflect.generics.reflectiveObjects.WildcardTypeImpl#equals(Object) WildcardTypeImpl#equals(Object)
 	 */
 	@Override
 	public boolean equals(Object object) {
@@ -111,13 +101,12 @@ class WildcardTypeImpl implements WildcardType {
 
 	/**
 	 * <p>
-	 * Returns a hash code value for the object. It is implemented compatibly with
-	 * the JDK's {@link sun.reflect.generics.reflectiveObjects.WildcardTypeImpl
-	 * WildcardTypeImpl}.
+	 * Returns a hash code value for the object. It is implemented compatibly with the JDK's {@link sun.reflect.generics.reflectiveObjects.WildcardTypeImpl WildcardTypeImpl}.
 	 * </p>
 	 *
 	 * @return a hash code value for this object
-	 * @see sun.reflect.generics.reflectiveObjects.WildcardTypeImpl#hashCode
+	 *
+	 * @see sun.reflect.generics.reflectiveObjects.WildcardTypeImpl#hashCode() WildcardTypeImpl#hashCode()
 	 */
 	@Override
 	public int hashCode() {
@@ -126,13 +115,12 @@ class WildcardTypeImpl implements WildcardType {
 
 	/**
 	 * <p>
-	 * Returns a string representation of the object. It is implemented compatibly
-	 * with the JDK's {@link sun.reflect.generics.reflectiveObjects.WildcardTypeImpl
-	 * WildcardTypeImpl}.
+	 * Returns a string representation of the object. It is implemented compatibly with the JDK's {@link sun.reflect.generics.reflectiveObjects.WildcardTypeImpl WildcardTypeImpl}.
 	 * </p>
 	 *
 	 * @return a string representation of the object
-	 * @see sun.reflect.generics.reflectiveObjects.WildcardTypeImpl#toString
+	 *
+	 * @see sun.reflect.generics.reflectiveObjects.WildcardTypeImpl#toString() WildcardTypeImpl#toString()
 	 */
 	@Override
 	public String toString() {

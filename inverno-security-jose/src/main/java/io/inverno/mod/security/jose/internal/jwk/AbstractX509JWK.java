@@ -42,7 +42,7 @@ public abstract class AbstractX509JWK<A extends PublicKey, B extends PrivateKey>
 	/**
 	 * The underlying certificate.
 	 */
-	protected final Optional<X509Certificate> certificate;
+	protected final X509Certificate certificate;
 	
 	/**
 	 * The X.509 URL parameter as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7517#section-4.6">RFC7517 Section 4.6</a>.
@@ -124,7 +124,7 @@ public abstract class AbstractX509JWK<A extends PublicKey, B extends PrivateKey>
 	 */
 	protected AbstractX509JWK(String kty, PrivateKey key, X509Certificate certificate, boolean trusted) throws JWKProcessingException {
 		super(kty, key, trusted);
-		this.certificate = Optional.ofNullable(certificate);
+		this.certificate = certificate;
 	}
 	
 	@Override
@@ -201,7 +201,7 @@ public abstract class AbstractX509JWK<A extends PublicKey, B extends PrivateKey>
 	
 	@Override
 	public Optional<X509Certificate> getX509Certificate() {
-		return certificate;
+		return Optional.ofNullable(certificate);
 	}
 
 	@Override

@@ -22,7 +22,6 @@ package io.inverno.mod.irt.compiler.internal;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class Position {
 

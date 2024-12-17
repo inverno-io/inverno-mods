@@ -48,7 +48,7 @@ public interface QueryParameters {
 	 * Returns the names of the query parameters sent in the request.
 	 * </p>
 	 * 
-	 * @return a list of header names
+	 * @return a set of header names
 	 */
 	Set<String> getNames();
 	

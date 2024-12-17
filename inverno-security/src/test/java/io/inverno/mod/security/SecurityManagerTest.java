@@ -19,7 +19,6 @@ import io.inverno.mod.security.accesscontrol.AccessControlException;
 import io.inverno.mod.security.accesscontrol.GroupsRoleBasedAccessControllerResolver;
 import io.inverno.mod.security.accesscontrol.RoleBasedAccessController;
 import io.inverno.mod.security.authentication.Authentication;
-import io.inverno.mod.security.authentication.CredentialsNotFoundException;
 import io.inverno.mod.security.authentication.InvalidCredentialsException;
 import io.inverno.mod.security.authentication.LoginCredentials;
 import io.inverno.mod.security.authentication.LoginCredentialsMatcher;
@@ -39,7 +38,7 @@ import org.junit.jupiter.api.Test;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 public class SecurityManagerTest {
-	
+
 	@Test
 	public void test() {
 		SecurityManager<LoginCredentials, PersonIdentity, RoleBasedAccessController> securityManager = SecurityManager.of(

@@ -24,10 +24,8 @@ import java.util.Map;
  * </p>
  * 
  * <p>
- * the raw value of parameterized component can contain parameters of the form
- * <code>{{@literal <name>[:<pattern>]}}</code> which can be replaced by actual
- * values when building a URI (eg.
- * {scheme}://{userinfo}@{host}:{port}/a/{segment}?parameter={parameter}#{fragment}).
+ * the raw value of parameterized component can contain parameters of the form {@code {<name>[:<pattern>]}} which can be replaced by actual values when building a URI (e.g.
+ * {@code {scheme}://{userinfo}@{host}:{port}/a/{segment}?parameter={parameter}#{fragment})}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -42,46 +40,40 @@ interface ParameterizedURIComponent extends URIComponent {
 	 * Returns the list of parameters present in the component.
 	 * </p>
 	 * 
-	 * @return a list of parameters or an empty list if the component have no
-	 *         parameter
+	 * @return a list of parameters or an empty list if the component have no parameter
 	 */
 	List<URIParameter> getParameters();
 	
 	/**
 	 * <p>
-	 * Returns the value of the component after replacing the parameters with the
-	 * string representation of the specified values.
+	 * Returns the value of the component after replacing the parameters with the string representation of the specified values.
 	 * </p>
 	 * 
 	 * <p>
-	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section
-	 * 2.1</a>.
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 * 
 	 * @param values a list of values to replace the component's parameters
 	 * 
 	 * @return the component value
-	 * @throws IllegalArgumentException if there's not enough values to replace all
-	 *                                  parameters
+	 *
+	 * @throws IllegalArgumentException if there's not enough values to replace all parameters
 	 */
 	String getValue(List<Object> values) throws IllegalArgumentException;
 	
 	/**
 	 * <p>
-	 * Returns the value of the component after replacing the parameters with the
-	 * string representation of the specified values.
+	 * Returns the value of the component after replacing the parameters with the string representation of the specified values.
 	 * </p>
 	 * 
 	 * <p>
-	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section
-	 * 2.1</a>.
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 * 
 	 * @param values a map of values to replace the component's parameters
 	 * 
 	 * @return the component value
+	 *
 	 * @throws IllegalArgumentException if there are missing values
 	 */
 	String getValue(Map<String, ?> values);

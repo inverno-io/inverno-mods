@@ -18,7 +18,6 @@ package io.inverno.mod.http.base.ws;
 import io.inverno.mod.http.base.ExchangeContext;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
-import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -61,7 +60,7 @@ public interface BaseWebSocketExchange<A extends ExchangeContext> {
 	 * 
 	 * @return a subprotocol or null if no subprotocol was specified by both client and server
 	 */
-	String getSubProtocol();
+	String getSubprotocol();
 	
 	/**
 	 * <p>
@@ -300,7 +299,7 @@ public interface BaseWebSocketExchange<A extends ExchangeContext> {
 		 *
 		 * @param closeOnComplete true to close the WebSocket exchange when the frames publisher completes, false otherwise
 		 * 
-		 * @return the outound
+		 * @return the outbound
 		 */
 		Outbound closeOnComplete(boolean closeOnComplete);
 		

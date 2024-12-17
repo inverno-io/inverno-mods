@@ -19,8 +19,7 @@ import org.reactivestreams.Publisher;
 
 /**
  * <p>
- * A publisher pipe is used within a template to transform a publisher before applying
- * templates to the emitted elements.
+ * A publisher pipe is used within a template to transform a publisher before applying templates to the emitted elements.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

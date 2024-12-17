@@ -30,7 +30,7 @@ package io.inverno.mod.http.base;
  * where the response is provided and sent from the server to the client, implementation shall provide methods to set HTTP response content.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public interface BaseResponse {

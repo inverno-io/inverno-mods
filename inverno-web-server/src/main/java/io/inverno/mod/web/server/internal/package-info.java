@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2024 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 /**
  * <p>
- * Inverno Web API implementation classes and module sockets.
+ * Inverno Web server implementation classes.
  * </p>
+ *
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.12
  */
 package io.inverno.mod.web.server.internal;

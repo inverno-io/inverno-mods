@@ -53,5 +53,4 @@ public class ReactorEventLoopGroupProvider extends DefaultEventLoopGroupProvider
 	public Promise<Boolean> release(EventExecutorGroup eventLoopGroup, long quietPeriod, long timeout, TimeUnit unit) {
 		return new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE).setSuccess(true);
 	}
-	
 }

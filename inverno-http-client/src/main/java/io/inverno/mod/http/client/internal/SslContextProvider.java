@@ -23,8 +23,6 @@ import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolConfig.Protocol;
-import io.netty.handler.ssl.ApplicationProtocolConfig.SelectedListenerFailureBehavior;
-import io.netty.handler.ssl.ApplicationProtocolConfig.SelectorFailureBehavior;
 import io.netty.handler.ssl.CipherSuiteFilter;
 import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
@@ -108,7 +106,7 @@ public class SslContextProvider {
 			SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
 			SslProvider sslProvider = SslProvider.isAlpnSupported(SslProvider.OPENSSL) ? SslProvider.OPENSSL : SslProvider.JDK;
 			sslContextBuilder.sslProvider(sslProvider);
-		
+
 			if(configuration.tls_key_store() != null) {
 				try (Resource keystoreResource = this.resourceService.getResource(configuration.tls_key_store())) {
 					keystoreResource.openReadableByteChannel().ifPresentOrElse(
@@ -200,13 +198,12 @@ public class SslContextProvider {
 			if(http2 || supportedProtocols.size() > 1) {
 				ApplicationProtocolConfig apn = new ApplicationProtocolConfig(
 					Protocol.ALPN,
-					SelectorFailureBehavior.NO_ADVERTISE,
-					SelectedListenerFailureBehavior.ACCEPT,
+					sslProvider == SslProvider.JDK ? ApplicationProtocolConfig.SelectorFailureBehavior.FATAL_ALERT : ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
+					sslProvider == SslProvider.JDK ? ApplicationProtocolConfig.SelectedListenerFailureBehavior.FATAL_ALERT : ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
 					supportedProtocols
 				);
 				sslContextBuilder.applicationProtocolConfig(apn);
 			}
-			
 			return sslContextBuilder.build();
 		}
 		catch(NoSuchAlgorithmException | KeyManagementException| SSLException e) {

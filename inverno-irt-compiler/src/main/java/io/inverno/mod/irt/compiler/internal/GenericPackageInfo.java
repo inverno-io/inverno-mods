@@ -25,7 +25,6 @@ import io.inverno.mod.irt.compiler.spi.PackageInfo;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class GenericPackageInfo extends BaseInfo implements PackageInfo {
 

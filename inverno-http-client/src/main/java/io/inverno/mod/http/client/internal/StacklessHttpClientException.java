@@ -19,10 +19,10 @@ import io.inverno.mod.http.client.HttpClientException;
 
 /**
  * <p>
- * Stackless Http client exception.
+ * Stackless HTTP client exception.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.11
  */
 public class StacklessHttpClientException extends HttpClientException {
@@ -31,7 +31,7 @@ public class StacklessHttpClientException extends HttpClientException {
 
 	/**
 	 * <p>
-	 * Creates a stackless Http client exception.
+	 * Creates a stackless HTTP client exception.
 	 * </p>
 	 */
 	public StacklessHttpClientException() {
@@ -39,7 +39,7 @@ public class StacklessHttpClientException extends HttpClientException {
 
 	/**
 	 * <p>
-	 * Creates a stackless Http client exception.
+	 * Creates a stackless HTTP client exception.
 	 * </p>
 	 * 
 	 * @param message the message
@@ -50,7 +50,7 @@ public class StacklessHttpClientException extends HttpClientException {
 
 	/**
 	 * <p>
-	 * Creates a Http client exception.
+	 * Creates an HTTP client exception.
 	 * </p>
 	 * 
 	 * @param message the message
@@ -62,7 +62,7 @@ public class StacklessHttpClientException extends HttpClientException {
 
 	/**
 	 * <p>
-	 * Creates a stackless Http client exception.
+	 * Creates a stackless HTTP client exception.
 	 * </p>
 	 * 
 	 * @param cause the cause

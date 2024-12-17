@@ -79,7 +79,7 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 	protected final String headerName;
 	
 	/**
-	 * The paramerer name.
+	 * The parameter name.
 	 */
 	protected final String parameterName;
 	
@@ -211,7 +211,7 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 					 * caching the data for later processing which is clearly inconsistent.
 					 * Note that this behavior is the same as JEE HttpServletRequest which differentiates parts in multipart/form-data request from parameters in an application/x-www-form-urlencoded
 					 * request. 
-					 * application/x-www-form-urlencoded can be safely consumed here as the publisher is cached in the request body and can be subscribed mutliple times.
+					 * application/x-www-form-urlencoded can be safely consumed here as the publisher is cached in the request body and can be subscribed multiple times.
 					 */
 					return exchange.request().body().orElseThrow(() -> new ForbiddenException("Missing CSRF token header/parameter"))
 						.urlEncoded()
@@ -459,7 +459,7 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 		 * an HTTP header or a query parameter.
 		 * </p>
 		 * 
-		 * @param httpOnly true to create an http only cookie, false otherwise
+		 * @param httpOnly true to create an HTTP only cookie, false otherwise
 		 * 
 		 * @return this builder
 		 */

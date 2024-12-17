@@ -25,7 +25,6 @@ import io.inverno.mod.security.jose.jwk.JWKGenerateException;
 import io.inverno.mod.security.jose.jwk.JWKKeyResolver;
 import io.inverno.mod.security.jose.jwk.JWKReadException;
 import io.inverno.mod.security.jose.jwk.JWKStore;
-import io.inverno.mod.security.jose.jwk.JWKURLResolver;
 import io.inverno.mod.security.jose.jwk.X509JWKCertPathValidator;
 import io.inverno.mod.security.jose.jwk.ec.ECJWK;
 import io.inverno.mod.security.jose.jwk.ec.ECJWKFactory;

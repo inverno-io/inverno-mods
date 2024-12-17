@@ -30,7 +30,7 @@ import io.inverno.mod.http.server.ExchangeHandler;
  * processing such as internal errors or errors raised in interceptors, other errors should normally be handled within the gRPC exchange itself.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  * 
  * @see GenericGrpcServer#handleError(io.inverno.mod.http.server.Exchange, java.lang.Throwable) 

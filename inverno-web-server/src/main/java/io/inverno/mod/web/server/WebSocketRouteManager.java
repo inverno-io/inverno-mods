@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Jeremy KUHN
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,154 +15,124 @@
  */
 package io.inverno.mod.web.server;
 
-import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
-import io.inverno.mod.web.server.spi.AcceptAware;
-import io.inverno.mod.web.server.spi.PathAware;
-import java.util.Set;
+import io.inverno.mod.web.server.ws.Web2SocketExchange;
 
 /**
- *
- * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.5
- */
-/**
  * <p>
- * A WebSocket route manager is used to manage WebSocket routes in a web router.
+ * Manages WebSocket routes in the Web server.
  * </p>
  *
  * <p>
- * It is created by a web router and allows to define, enable, disable, remove and find WebSocket routes in a web router.
+ * A WebSocket route manager is obtained from {@link WebServer#webSocketRoute()}, it allows to specify the criteria a Web exchange must match to be handled by the WebSocket exchange handler defined in
+ * {@link #handler(WebSocketExchangeHandler)}
  * </p>
- * 
+ *
+ * <p>
+ * When setting the exchange handler, interceptors defined in an intercepted Web server are applied to the route when criteria are matching.
+ * </p>
+ *
+ * <p>
+ * It is possible to specify multiple values for any given criteria resulting in multiple WebSocket routes being created in the Web router. For instance, the following code will result in the creation
+ * of two routes:
+ * </p>
+ *
+ * <pre>{@code
+ * webServer
+ *     .route()
+ *         .path("/path/to/resource")
+ *         .subProtocol("json")
+ *         .subProtocol("xml")
+ *         .handler(exchange -> {...})
+ * }</pre>
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  *
- * @see WebExchange
- * @see WebRoute
- * @see WebRouter
- *
- * @param <A> the type of the exchange context
- * @param <B> the type of web routable
+ * @param <A> the exchange context type
+ * @param <B> the Web router type
  */
-public interface WebSocketRouteManager<A extends ExchangeContext, B extends WebRoutable<A, B>> {
-	
+public interface WebSocketRouteManager<A extends ExchangeContext, B extends WebRouter<A>> extends BaseWebRouteManager<A, WebExchange<A>, WebSocketRoute<A>, B> {
+
 	/**
 	 * <p>
-	 * Specifies the path to the WebSocket resource served by the route without matching trailing slash.
+	 * Specifies the absolute path that must be matched by a Web exchange to be processed by the route.
 	 * </p>
 	 *
 	 * <p>
-	 * The specified path can be a parameterized path including path parameters as defined by {@link URIBuilder}.
+	 * The specified path can be specified as a parameterized path and include path pattern like {@code ?}, {@code *}, {@code **} as defined by {@link io.inverno.mod.base.net.URIBuilder}. Note that
+	 * this path is only meant to filter routes and as a result path parameters have no use.
 	 * </p>
 	 *
-	 * @param path the path to the resource
+	 * @param path a path
 	 *
-	 * @return the WebSocket route manager
+	 * @return the route manager
 	 *
 	 * @throws IllegalArgumentException if the specified path is not absolute
-	 *
-	 * @see PathAware
 	 */
-	default WebSocketRouteManager<A, B> path(String path) throws IllegalArgumentException {
+	default WebSocketRouteManager<A, B> path(String path) {
 		return this.path(path, false);
 	}
-	
+
 	/**
 	 * <p>
-	 * Specifies the path to the WebSocket resource served by the route matching or not trailing slash.
+	 * Specifies the absolute path that must be matched with or without trailing slash by a Web exchange to be processed by the route.
 	 * </p>
 	 *
 	 * <p>
-	 * The specified path can be a parameterized path including path parameters as defined by {@link URIBuilder}.
+	 * The specified path can be specified as a parameterized path and include path pattern like {@code ?}, {@code *}, {@code **} as defined by {@link io.inverno.mod.base.net.URIBuilder}. Note that
+	 * this path is only meant to filter routes and as a result path parameters have no use.
 	 * </p>
 	 *
-	 * @param path               the path to the resource
+	 * @param path a path
 	 * @param matchTrailingSlash true to match path with or without trailing slash, false otherwise
 	 *
-	 * @return the WebSocket route manager
+	 * @return the route manager
 	 *
 	 * @throws IllegalArgumentException if the specified path is not absolute
-	 *
-	 * @see PathAware
 	 */
-	WebSocketRouteManager<A, B> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException;
-	
+	WebSocketRouteManager<A, B> path(String path, boolean matchTrailingSlash);
+
 	/**
 	 * <p>
-	 * Specifies the language of the WebSocket resource served by the web route.
+	 * Specifies the language tag as defined by <a href="https://tools.ietf.org/html/rfc7231#section-5.3.5">RFC 7231 Section 5.3.5</a> that must be accepted by a Web exchange to be processed by the
+	 * route.
 	 * </p>
 	 *
-	 * @param language a language tag
+	 * @param languageTag a language tag (e.g. {@code fr-FR})
 	 *
-	 * @return the WebSocket route manager
-	 *
-	 * @see AcceptAware
+	 * @return the route manager
 	 */
-	WebSocketRouteManager<A, B> language(String language);
-	
+	WebSocketRouteManager<A, B> language(String languageTag);
+
 	/**
 	 * <p>
-	 * Specifies the subprotocol supported by the WebSocket resource served by the route.
+	 * Specifies the WebSocket subProtocol that must be matched by a Web exchange to be processed by the route.
 	 * </p>
 	 *
-	 * @param subprotocol a WebSocket subprotocol
+	 * @param subprotocol a subProtocol
 	 *
-	 * @return the WebSocket route manager
-	 *
-	 * @see WebSocketProtocolAware
+	 * @return the route manager
 	 */
 	WebSocketRouteManager<A, B> subprotocol(String subprotocol);
-	
+
 	/**
 	 * <p>
-	 * Specifies the route WebSocket exchange handler.
+	 * Specifies the WebSocket exchange handler used to process Web exchanges matching the criteria specified in the route manager and returns the originating Web router.
 	 * </p>
 	 *
 	 * <p>
-	 * This method basically appends the route specified in the WebSocket route manager to the router it comes from.
+	 * The WebSocket route manager is usually obtained from {@link WebServer#webSocketRoute()} in which case the resulting Web router is then a {@link WebServer} instance.
 	 * </p>
 	 *
-	 * @param handler the route WebSocket exchange handler
+	 * <p>
+	 * Any Web route interceptor defined in an intercepted Web server and matching the criteria specified in the route manager is applied to the resulting WebSocket routes.
+	 * </p>
 	 *
-	 * @return the Web routable
+	 * @param handler a WebSocket exchange handler
+	 *
+	 * @return the originating Web router
 	 */
 	B handler(WebSocketExchangeHandler<? super A, Web2SocketExchange<A>> handler);
-	
-	/**
-	 * <p>
-	 * Enables all WebSocket routes that matches the criteria specified in the WebSocket route manager and defined in the router it comes from.
-	 * </p>
-	 *
-	 * @return the Web routable
-	 */
-	B enable();
-
-	/**
-	 * <p>
-	 * Disables all WebSocket routes that matches the criteria specified in the WebSocket route manager and defined in the router it comes from.
-	 * </p>
-	 *
-	 * @return the Web routable
-	 */
-	B disable();
-
-	/**
-	 * <p>
-	 * Removes all WebSocket routes that matches the criteria specified in the WebSocket route manager and defined in the router it comes from.
-	 * </p>
-	 *
-	 * @return the Web routable
-	 */
-	B remove();
-
-	/**
-	 * <p>
-	 * Finds all WebSocket routes that matches the criteria specified in the WebSocket route manager and defined in the router it comes from.
-	 * </p>
-	 *
-	 * @return a set of WebSocketRoute routes or an empty set if no route matches the criteria
-	 */
-	Set<WebSocketRoute<A>> findRoutes();
 }

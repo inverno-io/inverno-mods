@@ -17,7 +17,9 @@ package io.inverno.mod.http.client;
 
 import io.inverno.mod.base.net.NetClientConfiguration;
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.Method;
 import java.net.InetSocketAddress;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -29,10 +31,12 @@ import java.net.InetSocketAddress;
  * obtained.
  * </p>
  * 
- * <p>The following code show how to send a request to an HTTP server:</p>
+ * <p>
+ * The following code show how to send a request to an HTTP server:
+ * </p>
  * 
  * <pre>{@code
- * HttpClient httpCLient = ...;
+ * HttpClient httpClient = ...;
  * 
  * Endpoint endpoint = httpClient.endpoint("example.com". 80).build();
  * 
@@ -46,10 +50,115 @@ import java.net.InetSocketAddress;
  * endpoint.close().block();
  * }</pre>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * <p>
+ * {@link UnboundExchange} are created created from the client, they must be explicitly bound to an actual endpoint before they can be sent, so {@link UnboundExchange#bind(Endpoint)} must be invoked
+ * before publishers returned by {@link UnboundExchange#response()} or {@link UnboundExchange#webSocket()} are subscribed.
+ * </p>
+ *
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public interface HttpClient {
+
+	/**
+	 * <p>
+	 * Creates an unbound HTTP exchange.
+	 * </p>
+	 *
+	 * <p>
+	 * This method is a shortcut for {@code exchange(Method.GET, "/", null)}.
+	 * </p>
+	 *
+	 * @return an HTTP exchange mono
+	 */
+	default <T extends ExchangeContext> Mono<? extends UnboundExchange<T>> exchange() {
+		return this.exchange(Method.GET, "/", null);
+	}
+
+	/**
+	 * <p>
+	 * Creates an unbound HTTP exchange.
+	 * </p>
+	 *
+	 * <p>
+	 * This method is a shortcut for {@code exchange(Method.GET, "/", context)}.
+	 * </p>
+	 *
+	 * @param context the exchange context
+	 *
+	 * @return an HTTP exchange mono
+	 */
+	default <T extends ExchangeContext> Mono<? extends UnboundExchange<T>> exchange(T context) {
+		return this.exchange(Method.GET, "/", null);
+	}
+
+	/**
+	 * <p>
+	 * Creates an unbound HTTP exchange.
+	 * </p>
+	 *
+	 * <p>
+	 * This method is a shortcut for {@code exchange(Method.GET, requestTarget, null)}.
+	 * </p>
+	 *
+	 * @param requestTarget the request target path
+	 *
+	 * @return an HTTP exchange mono
+	 */
+	default <T extends ExchangeContext> Mono<? extends UnboundExchange<T>> exchange(String requestTarget) {
+		return this.exchange(Method.GET, requestTarget, null);
+	}
+
+	/**
+	 * <p>
+	 * Creates an unbound HTTP exchange.
+	 * </p>
+	 *
+	 * <p>
+	 * This method is a shortcut for {@code exchange(Method.GET, requestTarget, context)}.
+	 * </p>
+	 *
+	 * @param requestTarget the request target path
+	 * @param context       the exchange context
+	 *
+	 * @return an HTTP exchange mono
+	 */
+	default <T extends ExchangeContext> Mono<? extends UnboundExchange<T>> exchange(String requestTarget, T context) {
+		return this.exchange(Method.GET, requestTarget, context);
+	}
+
+	/**
+	 * <p>
+	 * Creates an unbound HTTP exchange.
+	 * </p>
+	 *
+	 * <p>
+	 * This method is a shortcut for {@code exchange(method, requestTarget, null)}.
+	 * </p>
+	 *
+	 * @param method        the HTTP method
+	 * @param requestTarget the request target path
+	 *
+	 * @return an HTTP exchange mono
+	 */
+	default <T extends ExchangeContext> Mono<? extends UnboundExchange<T>> exchange(Method method, String requestTarget) {
+		return this.exchange(method, requestTarget, null);
+	}
+
+	/**
+	 * <p>
+	 * Creates an unbound HTTP exchange with a context.
+	 * </p>
+	 *
+	 * @param method        the HTTP method
+	 * @param requestTarget the request target path
+	 * @param context       the exchange context
+	 *
+	 * @return an HTTP exchange mono
+	 *
+	 * @throws IllegalArgumentException if the specified request target is invalid
+	 */
+	<T extends ExchangeContext> Mono<? extends UnboundExchange<T>> exchange(Method method, String requestTarget, T context) throws IllegalArgumentException;
 
 	/**
 	 * <p>
@@ -62,7 +171,7 @@ public interface HttpClient {
 	 * 
 	 * @return an endpoint builder
 	 */
-	default <A extends ExchangeContext> EndpointBuilder<A, Exchange<A>, InterceptableExchange<A>> endpoint(String host, int port) {
+	default <A extends ExchangeContext> EndpointBuilder<A, Exchange<A>, InterceptedExchange<A>> endpoint(String host, int port) {
 		return this.endpoint(InetSocketAddress.createUnresolved(host, port));
 	}
 	
@@ -76,7 +185,7 @@ public interface HttpClient {
 	 *
 	 * @return an endpoint builder
 	 */
-	<A extends ExchangeContext> EndpointBuilder<A, Exchange<A>, InterceptableExchange<A>> endpoint(InetSocketAddress remoteAddress);
+	<A extends ExchangeContext> EndpointBuilder<A, Exchange<A>, InterceptedExchange<A>> endpoint(InetSocketAddress remoteAddress);
 	
 	/**
 	 * <p>
@@ -87,14 +196,14 @@ public interface HttpClient {
 	 * Endpoint builders are created by invoking {@link #endpoint(java.net.InetSocketAddress) }.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 * 
 	 * @param <A> the exchange context type
 	 * @param <B> the exchange type
-	 * @param <C> the interceptable exchange type
+	 * @param <C> the intercepted exchange type
 	 */
-	interface EndpointBuilder<A extends ExchangeContext, B extends Exchange<A>, C extends InterceptableExchange<A>> {
+	interface EndpointBuilder<A extends ExchangeContext, B extends Exchange<A>, C extends InterceptedExchange<A>> {
 		
 		/**
 		 * <p>

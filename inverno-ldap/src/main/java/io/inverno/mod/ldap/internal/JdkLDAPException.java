@@ -103,7 +103,7 @@ public class JdkLDAPException extends LDAPException {
 	 * 
 	 * @param message            a message
 	 * @param cause              the cause of the error
-	 * @param enableSuppression whether or not suppression is enabled or disabled
+	 * @param enableSuppression  whether or not suppression is enabled or disabled
 	 * @param writableStackTrace whether or not the stack trace should be writable
 	 */
 	public JdkLDAPException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {

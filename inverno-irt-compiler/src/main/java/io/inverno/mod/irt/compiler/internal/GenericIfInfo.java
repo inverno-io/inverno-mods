@@ -28,7 +28,6 @@ import io.inverno.mod.irt.compiler.spi.StatementInfo;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class GenericIfInfo extends BaseInfo implements IfInfo {
 
@@ -44,7 +43,7 @@ public class GenericIfInfo extends BaseInfo implements IfInfo {
 	 */
 	public GenericIfInfo(Range range, List<CaseInfo> cases) {
 		super(range);
-		this.cases = cases.stream().toArray(CaseInfo[]::new);
+		this.cases = cases.toArray(CaseInfo[]::new);
 	}
 
 	@Override
@@ -71,15 +70,14 @@ public class GenericIfInfo extends BaseInfo implements IfInfo {
 		 * Creates a generic case info.
 		 * </p>
 		 * 
-		 * @param range           the range in the IRT source file where the info is
-		 *                        defined
+		 * @param range           the range in the IRT source file where the info is defined
 		 * @param guardExpression a guard expression
 		 * @param statements      a list of statements
 		 */
 		public GenericCaseInfo(Range range, String guardExpression, List<StatementInfo> statements) {
 			super(range);
 			this.guardExpression = Optional.ofNullable(guardExpression);
-			this.statements = statements.stream().toArray(StatementInfo[]::new);
+			this.statements = statements.toArray(StatementInfo[]::new);
 		}
 		
 		@Override

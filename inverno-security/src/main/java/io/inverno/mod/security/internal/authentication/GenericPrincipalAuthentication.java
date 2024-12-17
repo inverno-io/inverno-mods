@@ -41,7 +41,7 @@ public class GenericPrincipalAuthentication implements PrincipalAuthentication {
 	private final String username;
 	
 	/**
-	 * Flag indicating whether the prinipal has been authenticated.
+	 * Flag indicating whether the principal has been authenticated.
 	 */
 	@JsonIgnore
 	private boolean authenticated;
@@ -50,7 +50,7 @@ public class GenericPrincipalAuthentication implements PrincipalAuthentication {
 	 * The cause of the failed authentication that resulted in this authentication.
 	 */
 	@JsonIgnore
-	private Optional<io.inverno.mod.security.SecurityException> cause;
+	private io.inverno.mod.security.SecurityException cause;
 	
 	/**
 	 * <p>
@@ -64,7 +64,7 @@ public class GenericPrincipalAuthentication implements PrincipalAuthentication {
 	public GenericPrincipalAuthentication(@JsonProperty("username") String username, @JsonProperty("authenticated") boolean authenticated) {
 		this.username = username;
 		this.authenticated = authenticated;
-		this.cause = Optional.empty();
+		this.cause = null;
 	}
 	
 	/**
@@ -82,7 +82,7 @@ public class GenericPrincipalAuthentication implements PrincipalAuthentication {
 		if(cause != null) {
 			this.authenticated = false;
 		}
-		this.cause = Optional.ofNullable(cause);
+		this.cause = cause;
 	}
 
 	@Override
@@ -98,7 +98,7 @@ public class GenericPrincipalAuthentication implements PrincipalAuthentication {
 
 	@Override
 	public Optional<io.inverno.mod.security.SecurityException> getCause() {
-		return this.cause;
+		return Optional.ofNullable(this.cause);
 	}
 
 	@Override

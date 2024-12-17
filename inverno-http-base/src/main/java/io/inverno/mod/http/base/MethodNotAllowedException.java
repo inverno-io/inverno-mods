@@ -35,7 +35,54 @@ public class MethodNotAllowedException extends HttpException {
 	 * The list of methods allowed by the requested resource.
 	 */
 	private final Set<Method> allowedMethods;
-	
+
+	/**
+	 * <p>
+	 * Creates a method not allowed exception.
+	 * </p>
+	 */
+	public MethodNotAllowedException() {
+		super(Status.METHOD_NOT_ALLOWED);
+		this.allowedMethods = Set.of();
+	}
+
+	/**
+	 * <p>
+	 * Creates a method not allowed exception with the specified message.
+	 * </p>
+	 *
+	 * @param message a message
+	 */
+	public MethodNotAllowedException(String message) {
+		super(Status.METHOD_NOT_ALLOWED, message);
+		this.allowedMethods = Set.of();
+	}
+
+	/**
+	 * <p>
+	 * Creates a method not allowed exception with the specified cause.
+	 * </p>
+	 *
+	 * @param cause a cause
+	 */
+	public MethodNotAllowedException(Throwable cause) {
+		super(Status.METHOD_NOT_ALLOWED, cause);
+		this.allowedMethods = Set.of();
+	}
+
+	/**
+	 * <p>
+	 * Creates a method not allowed exception with the specified message and cause.
+	 * </p>
+	 *
+	 * @param message a message
+	 * @param cause   a cause
+	 */
+	public MethodNotAllowedException(String message, Throwable cause) {
+		super(Status.METHOD_NOT_ALLOWED, message, cause);
+		this.allowedMethods = Set.of();
+	}
+
 	/**
 	 * <p>
 	 * Creates a method not allowed exception with the specified list of methods allowed by the requested resource.
@@ -93,7 +140,7 @@ public class MethodNotAllowedException extends HttpException {
 	 * Returns the list of methods allowed by the requested resource.
 	 * </p>
 	 * 
-	 * @return the list of allowed methods
+	 * @return the set of allowed methods
 	 */
 	public Set<Method> getAllowedMethods() {
 		return allowedMethods;

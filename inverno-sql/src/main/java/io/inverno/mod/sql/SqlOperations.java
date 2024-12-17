@@ -50,8 +50,7 @@ public interface SqlOperations {
 	 * </p>
 	 * 
 	 * <p>
-	 * Prepared statements are pre-compiled and protect against SQL injection
-	 * attacks.
+	 * Prepared statements are pre-compiled and protect against SQL injection attacks.
 	 * </p>
 	 * 
 	 * @param sql the SQL to execute
@@ -62,8 +61,7 @@ public interface SqlOperations {
 	
 	/**
 	 * <p>
-	 * Executes a query operation using a prepared statement with the specified
-	 * arguments and returns the resulting rows.
+	 * Executes a query operation using a prepared statement with the specified arguments and returns the resulting rows.
 	 * </p>
 	 * 
 	 * @param sql  the SQL query to execute
@@ -75,9 +73,7 @@ public interface SqlOperations {
 	
 	/**
 	 * <p>
-	 * Executes a query operation using a prepared statement with the specified
-	 * arguments, applies a row mapping function to the resulting rows and returns
-	 * the results.
+	 * Executes a query operation using a prepared statement with the specified arguments, applies a row mapping function to the resulting rows and returns the results.
 	 * </p>
 	 * 
 	 * @param <T>       the type of results
@@ -91,9 +87,7 @@ public interface SqlOperations {
 
 	/**
 	 * <p>
-	 * Executes a query operation using a prepared statement with the specified
-	 * arguments, maps a single row to an object using a row mapping function and
-	 * return that object.
+	 * Executes a query operation using a prepared statement with the specified arguments, maps a single row to an object using a row mapping function and return that object.
 	 * </p>
 	 * 
 	 * @param <T>       The type of the resulting object
@@ -107,9 +101,7 @@ public interface SqlOperations {
 	
 	/**
 	 * <p>
-	 * Executes an update operation such as insert, update or delete using a
-	 * prepared statement with the specified arguments and returns the number rows
-	 * affected by the operation.
+	 * Executes an update operation such as insert, update or delete using a prepared statement with the specified arguments and returns the number rows affected by the operation.
 	 * </p>
 	 * 
 	 * @param sql  the SQL update to execute
@@ -121,8 +113,7 @@ public interface SqlOperations {
 
 	/**
 	 * <p>
-	 * Executes multiple update operations in a batch using the specified list of
-	 * arguments and returns the number rows affected by the operation.
+	 * Executes multiple update operations in a batch using the specified list of arguments and returns the number rows affected by the operation.
 	 * </p>
 	 * 
 	 * @param sql  the SQL update to execute
@@ -134,8 +125,7 @@ public interface SqlOperations {
 	
 	/**
 	 * <p>
-	 * Executes multiple update operations in a batch using the specified stream of
-	 * arguments and returns the number rows affected by the operation.
+	 * Executes multiple update operations in a batch using the specified stream of arguments and returns the number rows affected by the operation.
 	 * </p>
 	 * 
 	 * @param sql  the SQL update to execute

@@ -1,5 +1,6 @@
 [media-type]: https://en.wikipedia.org/wiki/Media_type
 [rfc-3986]: https://tools.ietf.org/html/rfc3986
+[netty]: https://netty.io/
 
 # Base
 
@@ -10,7 +11,6 @@ In order to use the Inverno *base* module, we need to declare a dependency in th
 ```java
 module io.inverno.example.app {
     requires io.inverno.mod.base;
-    ...
 }
 ```
 
@@ -33,19 +33,13 @@ Using Maven:
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.inverno.mod:inverno-base:${VERSION_INVERNO_MODS}'
-...
 ```
 
 The *base* module is usually provided as a transitive dependency by other modules, mainly the *boot* module, so defining a direct dependency is usually not necessary at least for an application module.
 
-## Converter API
-
-The converter API provides interfaces and classes for building converters, decoders or encoders which are basically used to decode/encode objects of a given type from/to objects of another type.
-
-### Scope
+## Scope
 
 The `Scope` interface specifies a way to expose different bean instances depending on particular scope.
 
@@ -91,9 +85,22 @@ The base module expose three base `Scope` implementations:
 
 - the `KeyScope` which binds an instance to an arbitrary key
 - the `ThreadScope` which binds an instance to the current thread
-- the `ReactorScope` which binds an instance to the current reactor's thread. This is very similar to the `ThreadScope` but this throws an `IllegalStateException` when used outside the scope of the reactor (ie. the current thread is not a reactor thread).
+- the `ReactorScope` which binds an instance to the current reactor's thread. This is very similar to the `ThreadScope` but this throws an `IllegalStateException` when used outside the scope of the reactor (i.e. the current thread is not a reactor thread).
 
 > Particular care must be taken when using this technique in order to avoid resource leaks. For instance, when a scoped instance is no longer in use, it should be cleaned explicitly as references can be strongly reachable. The `KeyScope` exposes the `remove()` for this purpose. Also when using prototype bean instance, the destroy method, if any, may not be invoked if the instance is reclaimed before it can be destroyed, as a result you should avoid using such bean instances within scope beans.
+
+
+## Concurrent API
+
+The concurrent API defines services facilitating the creation of concurrent multithreaded applications based on a reactor threading model using [Netty][netty].
+
+It especially provides the `Reactor` interface used to obtain `EventLoopGroup` instances backed by a root event loop group in order to reuse event loops across different network servers or clients running in the same application.
+
+It also defines a lock-free `CommandExecutor` which guarantees that commands are executed in sequence without thread locking.
+
+## Converter API
+
+The converter API provides interfaces and classes for building converters, decoders or encoders which are basically used to decode/encode objects of a given type from/to objects of another type.
 
 ### Basic converter
 
@@ -141,7 +148,7 @@ public class IntegerToStringEncoder implements Encoder<Integer, String> {
 
 A string to integer converter can then be created by combining both implementations.
 
-The previous example while not very representative illustrates the basic decoder and encoder API, you should now wonder how to use this properly in an application and what is the fundamental difference between a decoder and an encoder, the answer actually lies in the names. A decoder is meant to *decode* data formatted in a particular way into a representation that can be used in an application whereas an encoder is meant to *encode* an object in an application into data formatted in a particular way. From there, we understand that a converter can be used to read or write raw data (JSON data in an array of bytes for instance) to or from actual usable representations in the form of Java objects but it can also be used as an object mapper to convert from one representation to another (domain object to data transfer object for instance).
+The previous example while not very representative illustrates the basic decoder and encoder API, you should now wonder how to use this properly in an application and what is the fundamental difference between a decoder and an encoder, the answer actually lies in the names. A decoder is meant to *decode* data formatted in a particular way into a representation that can be used in an application whereas an encoder is meant to *encode* an object in an application into data formatted in a particular way. From there, we understand that a converter can be used to read or write raw data (JSON data in an array of bytes for instance) to or from actual usable representations in the form of Java objects, but it can also be used as an object mapper to convert from one representation to another (domain object to data transfer object for instance).
 
 A more realistic example would then be a JSON string to object converter:
 
@@ -476,15 +483,29 @@ URIPattern.Inclusion inclusion = uriPattern1.includes(uriPattern2); // returns U
 
 The proposed implementation is not exact which is why the `includes()` method returns `INCLUDED` when inclusion could be determined with certainty, `DISJOINT` when exclusion could be determined with certainty and `INDETERMINATE` when inclusion could not be determined with certainty.
 
-> Note that inclusion can only be determined when considering path patterns, ie. created using `buildPathPattern()` method and containing only a path component. The `includes()` method will always return `INDETERMINATE` for any other type of URI patterns.
+> Note that inclusion can only be determined when considering path patterns created using `buildPathPattern()` method and containing only a path component. The `includes()` method will always return `INDETERMINATE` for any other type of URI patterns.
 
 ### Network service
 
 The `NetService` interface specifies a service for building optimized network clients and servers based on Netty. The *base* module doesn't provide any implementation, a base implementation is provided in the *boot* module.
 
-This service especially defines methods to obtain `EventLoopGroup` instances backed by a root event loop group in order to reuse event loops across different network servers or clients running in the same application.
+This service especially defines methods to create basic network clients and servers.
 
-It also defines methods to create basic network client and server bootstraps.
+```java
+NetService netService = ...
+
+ServerBootstrap server = netService.createServer(new InetSocketAddress("127.0.0.1", 1234));
+Bootstrap client = netService.createClient(new InetSocketAddress("127.0.0.1", 1234));
+```
+
+The `NetService` also exposes methods for resolving hostname addresses using DNS resolution.
+
+```java
+NetService netService = ...
+
+Mono<InetSocketAddress> exampleOrgAddress = this.resolve("example.org", 80);
+Mono<List<InetSocketAddress>> headlessServiceAddresses = this.resolveAll("service.prod.svc.cluster.local", 8080);
+```
 
 ## Reflection API
 
@@ -564,7 +585,7 @@ A resource is identified by a URI whose scheme specifies the kind of resources. 
 </tr>
 </table>
 
-The `ResourceService` interface specifies a service which provides a unified access to resources based only on the resource URI. The *base* module doesn't provide any implementation, a base implementation is provided in the *boot* module.
+The `ResourceService` interface specifies a service which provides unified access to resources based only on the resource URI. The *base* module doesn't provide any implementation, a base implementation is provided in the *boot* module.
 
 A typical use case is to get a resource from a URI without knowing the actual kind of the resource.
 
@@ -574,7 +595,7 @@ ResourceService resourceService = ...
 Resource resource = resourceService.getResource(URI.create("classpath:/path/to/resource"));
 ```
 
-The resource service can also be used to list resources at a given location. Nonetheless this actually depends on the implementation and the kind of resource, although it is clearly possible to list resources from a file location, it might not be supported to list resources from a class path or URL location.
+The resource service can also be used to list resources at a given location, nonetheless this actually depends on the implementation and the kind of resource, although it is clearly possible to list resources from a file location, it might not be supported to list resources from a class path or URL location.
 
 The *boot* module [implementation](#resource-service) supports for instance the listing of resources that match a specific path pattern:
 

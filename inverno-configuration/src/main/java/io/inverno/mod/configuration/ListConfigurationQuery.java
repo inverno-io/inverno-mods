@@ -190,7 +190,7 @@ public interface ListConfigurationQuery<A extends ListConfigurationQuery<A>> {
 	
 	/**
 	 * <p>
-	 * Defines eigth parameters that specify the context in which configuration properties are to be retrieved.
+	 * Defines eighth parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
 	 *
 	 * @param k1 the first parameter name

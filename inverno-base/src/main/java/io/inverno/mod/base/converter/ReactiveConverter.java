@@ -16,7 +16,9 @@
 package io.inverno.mod.base.converter;
 
 /**
- * <p>A reactive converter.</p> 
+ * <p>
+ * A reactive converter.
+ * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

@@ -21,7 +21,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -43,13 +42,11 @@ import io.inverno.mod.irt.compiler.spi.TemplateSetInfo;
 
 /**
  * <p>
- * The Inverno Reactive Template compiler plugin generates a template set class
- * for each <code>*.irt</code> source file present in the module source folder.
+ * The Inverno Reactive Template compiler plugin generates a template set class for each {@code *.irt} source file present in the module source folder.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- * 
  */
 public class IrtCompilerPlugin implements CompilerPlugin {
 
@@ -97,7 +94,7 @@ public class IrtCompilerPlugin implements CompilerPlugin {
 				.map(sourceFilePath -> {
 					String templateName = sourceFilePath.getFileName().toString();
 					templateName = templateName.substring(0, templateName.length() - this.irtFileExtension.length());
-					return this.compileSingle(execution, sourceFilePath.normalize(), StreamSupport.stream(moduleSourcePath.relativize(sourceFilePath).getParent().spliterator(), false).map(p -> p.toString()).collect(Collectors.joining(".")), templateName);
+					return this.compileSingle(execution, sourceFilePath.normalize(), StreamSupport.stream(moduleSourcePath.relativize(sourceFilePath).getParent().spliterator(), false).map(Path::toString).collect(Collectors.joining(".")), templateName);
 				})
 				.collect(Collectors.toList());
 			if(this.pluginContext.getOptions().isVerbose()) {
@@ -138,7 +135,7 @@ public class IrtCompilerPlugin implements CompilerPlugin {
 			
 			TemplateSetInfo info = irtParser.TemplateSet();
 			
-			String declaredPackage = info.getPackage().map(packageInfo -> Arrays.stream(packageInfo.getName().getParts()).collect(Collectors.joining("."))).orElse("");
+			String declaredPackage = info.getPackage().map(packageInfo -> String.join(".", packageInfo.getName().getParts())).orElse("");
 			if(!expectedPackage.equals(declaredPackage)) {
 				result.addError(new IrtCompilationException("The declared package \"" + declaredPackage + "\" does not match the expected package \"" + expectedPackage + "\""));
 			}
@@ -161,9 +158,7 @@ public class IrtCompilerPlugin implements CompilerPlugin {
 			if(result.hasError()) {
 				System.out.print(" [  KO  ]");
 				for(int i=0;i<result.getErrors().size();i++) {
-					if(i >= 0) {
-						System.err.println();
-					}
+					System.err.println();
 					System.err.print("         - [ERROR] " + result.getErrors().get(i).getMessage());
 				}
 			}
@@ -185,9 +180,8 @@ public class IrtCompilerPlugin implements CompilerPlugin {
 	 */
 	private static class CompilationResult {
 		
-		private Path sourceFilePath;
-		
-		private List<IrtCompilationException> errors;
+		private final Path sourceFilePath;
+		private final List<IrtCompilationException> errors;
 		
 		public CompilationResult(Path sourceFilePath) {
 			this.sourceFilePath = sourceFilePath;

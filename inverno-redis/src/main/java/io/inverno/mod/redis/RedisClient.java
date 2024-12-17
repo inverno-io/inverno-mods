@@ -62,7 +62,7 @@ public interface RedisClient<A, B> extends RedisOperations<A, B> {
 	 * </p>
 	 *
 	 * <p>
-	 * The specified function shall return queries publishers created from the Redis operations argument, these queries are then pipelined on a single Redis connection, defering the flush of queries
+	 * The specified function shall return queries publishers created from the Redis operations argument, these queries are then pipelined on a single Redis connection, deferring the flush of queries
 	 * over the network.
 	 * </p>
 	 *

@@ -114,7 +114,7 @@ public abstract class AbstractPreparedStatement implements PreparedStatement {
 		}
 		this.batch.pollLast();
 		values.forEach(value -> this.batch.add(new ListTuple(Arrays.asList(value))));
-		this.currentParameters = (ListTuple)this.batch.getLast();;
+		this.currentParameters = (ListTuple)this.batch.getLast();
 		return this;
 	}
 	

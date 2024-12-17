@@ -158,7 +158,7 @@ public class JWEAuthenticator<A extends Authentication>  implements Authenticato
 	 *
 	 * @param jweService          the JWE service
 	 * @param authenticationType  the original authentication type
-	 * @param keys                the keys to consider to cecode the JWE
+	 * @param keys                the keys to consider to encode the JWE
 	 * @param processedParameters the parameters processed by the application
 	 */
 	public JWEAuthenticator(JWEService jweService, Type authenticationType, Publisher<? extends JWK> keys, String... processedParameters) {

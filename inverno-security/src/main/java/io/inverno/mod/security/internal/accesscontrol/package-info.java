@@ -15,7 +15,7 @@
  */
 /**
  * <p>
- * Inverno security access control API implementation.
+ * Inverno security access control implementation classes.
  * </p>
  */
 package io.inverno.mod.security.internal.accesscontrol;

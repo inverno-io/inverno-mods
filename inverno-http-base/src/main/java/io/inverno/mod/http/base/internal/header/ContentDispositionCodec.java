@@ -144,23 +144,13 @@ public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDis
 			
 			@Override
 			public Builder parameter(String name, String value) {
-				if(name.equals(PART_NAME)) {
-					this.partName = value;
-				}
-				else if(name.equals(FILENAME)) {
-					this.filename = value;
-				}
-				else if(name.equals(CREATION_DATE)) {
-					this.creationDateTime = value;
-				}
-				else if(name.equals(MODIFICATION_DATE)) {
-					this.modificationDatetime = value;
-				}
-				else if(name.equals(READ_DATE)) {
-					this.readDateTime = value;
-				}
-				else if(name.equals(SIZE)) {
-					this.size = Integer.valueOf(value);
+				switch(name) {
+					case PART_NAME -> this.partName = value;
+					case FILENAME -> this.filename = value;
+					case CREATION_DATE -> this.creationDateTime = value;
+					case MODIFICATION_DATE -> this.modificationDatetime = value;
+					case READ_DATE -> this.readDateTime = value;
+					case SIZE -> this.size = Integer.valueOf(value);
 				}
 				return super.parameter(name, value);
 			}

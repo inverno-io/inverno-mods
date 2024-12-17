@@ -21,7 +21,7 @@ package io.inverno.mod.http.base;
  * Represents HTTP protocol versions.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public enum HttpVersion {
@@ -29,16 +29,16 @@ public enum HttpVersion {
 	/**
 	 * HTTP protocol with undefined version.
 	 */
-	HTTP(0, 0, "HTTP", false),
+	HTTP(0, 0, "http", false),
 	
 	/**
 	 * HTTP/1.0 protocol as defined by <a href="https://tools.ietf.org/html/rfc1945">RFC 1945</a>
 	 */
-	HTTP_1_0(1, 0, "HTTP/1.0", false), 
+	HTTP_1_0(1, 0, "http/1.0", false),
 	/**
 	 * HTTP/1.1 protocol as defined by <a href="https://www.rfc-editor.org/rfc/rfc7230">RFC 7230</a>
 	 */
-	HTTP_1_1(1, 1, "HTTP/1.1", true), 
+	HTTP_1_1(1, 1, "http/1.1", true),
 	/**
 	 * HTTP/2.0 protocol as defined by <a href="https://tools.ietf.org/html/rfc7540">RFC 7540</a>
 	 */
@@ -48,8 +48,18 @@ public enum HttpVersion {
 	private final int minor;
 	private final String code;
 	private final boolean alpn;
-	
-	private HttpVersion(int major, int minor, String code, boolean alpn) {
+
+	/**
+	 * <p>
+	 * Creates an HTTP protocol version.
+	 * </p>
+	 *
+	 * @param major the major version
+	 * @param minor the mino version
+	 * @param code  the protocol code (e.g. http/1.1)
+	 * @param alpn  true to indicate that version supports ALPN, false otherwise
+	 */
+	HttpVersion(int major, int minor, String code, boolean alpn) {
 		this.major = major;
 		this.minor = minor;
 		this.code = code;
@@ -94,7 +104,7 @@ public enum HttpVersion {
 	 * Determines whether the protocol is supported by ALPN as specified by <a href="https://tools.ietf.org/html/rfc7301">RFC 7301</a>
 	 * </p>
 	 * 
-	 * @return true if the protocol is supportd by ALPN, false otherwise
+	 * @return true if the protocol is supported by ALPN, false otherwise
 	 */
 	public boolean isAlpn() {
 		return alpn;

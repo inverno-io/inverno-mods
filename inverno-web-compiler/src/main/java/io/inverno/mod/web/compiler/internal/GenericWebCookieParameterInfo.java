@@ -32,11 +32,11 @@ import io.inverno.mod.web.compiler.spi.WebParameterQualifiedName;
  * 
  * @see AbstractWebParameterInfo
  */
-class GenericWebCookieParameterInfo extends AbstractWebParameterInfo implements WebCookieParameterInfo {
+public class GenericWebCookieParameterInfo extends AbstractWebParameterInfo implements WebCookieParameterInfo {
 
 	/**
 	 * <p>
-	 * Creates a generic web cookie parameter info.
+	 * Creates a generic Web cookie parameter info.
 	 * </p>
 	 *
 	 * @param name             the parameter qualified name
@@ -45,7 +45,7 @@ class GenericWebCookieParameterInfo extends AbstractWebParameterInfo implements 
 	 * @param type             the parameter type
 	 * @param required         true to indicate a required parameter, false otherwise
 	 */
-	public GenericWebCookieParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement element, TypeMirror type, boolean required) {
-		super(name, reporter, element, type, required);
+	public GenericWebCookieParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, TypeMirror type, boolean required) {
+		super(name, reporter, parameterElement, type, required);
 	}
 }

@@ -72,7 +72,7 @@ public interface RedisTransactionalClient<A, B> extends RedisClient<A, B> {
 	 * 
 	 * <p>
 	 * The connection is obtained and the transaction started when the returned publisher is subscribed. The transaction is executed when the returned operations publisher successfully completes or
-	 * discarded when it completes with errors. The connection is eventually closed once the EXEX/DISCARD operation terminates.
+	 * discarded when it completes with errors. The connection is eventually closed once the EXEC/DISCARD operation terminates.
 	 * </p>
 	 * 
 	 * <p>

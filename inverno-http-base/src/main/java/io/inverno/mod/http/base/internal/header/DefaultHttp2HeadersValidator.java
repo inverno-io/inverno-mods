@@ -16,7 +16,6 @@
 package io.inverno.mod.http.base.internal.header;
 
 import io.netty.handler.codec.http.HttpHeaderValidationUtil;
-import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2Error;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Headers;
@@ -28,7 +27,7 @@ import io.netty.util.internal.PlatformDependent;
  * Default HTTP/2 {@link HeadersValidator} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 class DefaultHttp2HeadersValidator implements HeadersValidator {
@@ -43,13 +42,13 @@ class DefaultHttp2HeadersValidator implements HeadersValidator {
 	
 	/**
 	 * <p>
-	 * Borrowed from {@link DefaultHttp2Headers#HTTP2_NAME_VALIDATOR}.
+	 * Borrowed from {@code io.netty.handler.codec.http2.DefaultHttp2Headers#HTTP2_NAME_VALIDATOR}.
 	 * </p>
 	 * 
 	 * @param name the header name
 	 */
 	private static void validateName(CharSequence name) {
-		if(name == null || name.length() == 0) {
+		if(name == null || name.isEmpty()) {
 			PlatformDependent.throwException(Http2Exception.connectionError(Http2Error.PROTOCOL_ERROR, "empty headers are not allowed [%s]", name));
 		}
 

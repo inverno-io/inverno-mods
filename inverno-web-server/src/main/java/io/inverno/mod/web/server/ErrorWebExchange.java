@@ -24,19 +24,15 @@ import java.util.function.Function;
 
 /**
  * <p>
- * An error exchange that extends the HTTP server {@link ErrorExchange} with features for the Web.
+ * An error exchange that extends HTTP server {@link ErrorExchange}.
  * </p>
  *
  * <p>
- * It especially supports response body encoding based on the response content type.
+ * It especially provides response body encoding based on the response content type.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- *
- * @see ErrorWebRoute
- * @see ErrorWebRouteManager
- * @see ErrorWebRouter
  *
  * @param <A> the type of the exchange context
  */
@@ -44,15 +40,15 @@ public interface ErrorWebExchange<A extends ExchangeContext> extends ErrorExchan
 
 	@Override
 	WebRequest request();
-	
+
 	@Override
 	WebResponse response();
-	
+
 	@Override
 	default ErrorWebExchange<A> mapError(Function<? super Throwable, ? extends Throwable> errorMapper) {
 		ErrorWebExchange<A> thisExchange = this;
-		return new ErrorWebExchange<A>() {
-			
+		return new ErrorWebExchange<>() {
+
 			@Override
 			public HttpVersion getProtocol() {
 				return thisExchange.getProtocol();
@@ -62,7 +58,7 @@ public interface ErrorWebExchange<A extends ExchangeContext> extends ErrorExchan
 			public A context() {
 				return thisExchange.context();
 			}
-			
+
 			@Override
 			public WebRequest request() {
 				return thisExchange.request();
@@ -72,7 +68,7 @@ public interface ErrorWebExchange<A extends ExchangeContext> extends ErrorExchan
 			public WebResponse response() {
 				return thisExchange.response();
 			}
-			
+
 			@Override
 			public void reset(long code) {
 				thisExchange.reset(code);
@@ -82,7 +78,7 @@ public interface ErrorWebExchange<A extends ExchangeContext> extends ErrorExchan
 			public Optional<Throwable> getCancelCause() {
 				return thisExchange.getCancelCause();
 			}
-			
+
 			@Override
 			public Throwable getError() {
 				return errorMapper.apply(thisExchange.getError());

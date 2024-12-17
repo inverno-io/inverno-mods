@@ -59,7 +59,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -228,7 +227,7 @@ public final class GenericJWKService implements @Provide JWKService {
 			// we SHOULD also ignore those that we don't understand (https://datatracker.ietf.org/doc/html/rfc7517#section-5) or that we can't load properly
 			// this could be delegated to the caller which can decide what to do with errors in the resulting publisher (e.g. onErrorContinue())
 			// by doing this we are consistent with the single JWK load
-			return (Publisher<JWK>) Flux.fromIterable(keysValue)
+			return Flux.fromIterable(keysValue)
 				.flatMap(keyElementValue -> {
 					final Map<String, Object> keyElement;
 					try {
@@ -276,9 +275,7 @@ public final class GenericJWKService implements @Provide JWKService {
 		// and finally we return the key corresponding to header's kid, x5u, x5c, x5t, x5t#S256 in that order, failing if inconsistencies have been detected
 		return Flux.concat(
 			this.resolveJku(header), 
-			Flux.defer(() -> {
-				return Flux.from(this.read(this.mergeWithHeader(Map.of(), header), false)).onErrorResume(e -> Mono.empty());
-			})
+			Flux.defer(() -> Flux.from(this.read(this.mergeWithHeader(Map.of(), header), false)).onErrorResume(e -> Mono.empty()))
 		);
 	}
 	
@@ -296,7 +293,7 @@ public final class GenericJWKService implements @Provide JWKService {
 				.concatMap(factory -> factory.generate(alg, parameters)
 					.doOnError(e -> {
 						error.addSuppressed(e);
-						LOGGER.debug("Error generating JWK with factory: " + factory, e);
+						LOGGER.debug("Error generating JWK with factory: {}", factory, e);
 					})
 					.onErrorResume(e -> Mono.empty())
 				)
@@ -349,7 +346,7 @@ public final class GenericJWKService implements @Provide JWKService {
 					.concatMap(factory -> factory.read(jwk)
 						.doOnError(e -> {
 							error.addSuppressed(e);
-							LOGGER.debug("Error resolving JWK with factory: " + factory, e);
+							LOGGER.debug("Error resolving JWK with factory: {}", factory, e);
 						})
 						.onErrorResume(e -> Mono.empty())
 					)
@@ -522,15 +519,4 @@ public final class GenericJWKService implements @Provide JWKService {
 		}
 		return keys;
 	}
-	
-	/**
-	 * <p>
-	 * JWK Service extra JWK factories.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.5
-	 */
-	@Bean( name = "jwkFactories")
-	public static interface JWKFactoriesSocket extends Supplier<List<JWKFactory<?, ?, ?>>> {}
 }

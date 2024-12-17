@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2021 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package io.inverno.mod.web.server;
 
-import java.lang.reflect.Type;
-
 import io.inverno.mod.base.converter.MediaTypeConverter;
 import io.inverno.mod.http.server.Part;
+import io.inverno.mod.web.base.InboundDataDecoder;
+import java.lang.reflect.Type;
 
 /**
  * <p>
@@ -47,7 +47,7 @@ public interface WebPart extends Part {
 	 * @return a decoder
 	 */
 	<A> InboundDataDecoder<A> decoder(Class<A> type);
-	
+
 	/**
 	 * <p>
 	 * Returns a decoder to decode the part's payload to the specified type based on the part's content type.

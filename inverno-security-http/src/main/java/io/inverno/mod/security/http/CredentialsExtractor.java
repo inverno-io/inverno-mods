@@ -59,8 +59,6 @@ public interface CredentialsExtractor<A extends Credentials> {
 	 * @return a composed credentials extractor
 	 */
 	default CredentialsExtractor<A> or(CredentialsExtractor<? extends A> other) {
-		return exchange -> {
-			return this.extract(exchange).switchIfEmpty(other.extract(exchange));
-		};
+		return exchange -> this.extract(exchange).switchIfEmpty(other.extract(exchange));
 	}
 }

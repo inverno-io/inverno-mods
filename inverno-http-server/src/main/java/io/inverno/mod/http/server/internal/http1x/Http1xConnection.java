@@ -65,14 +65,12 @@ import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.net.SocketAddress;
 import java.security.cert.Certificate;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -86,7 +84,7 @@ import reactor.core.scheduler.Schedulers;
  * </p>
  * 
  * <p>
- * Http pipelining is implemented by linking {@link Http1xExchange} one after the other. At any point in time there is at most one {@link #requestingExchange} and one {@link #respondingExchange} that
+ * HTTP pipelining is implemented by linking {@link Http1xExchange} one after the other. At any point in time there is at most one {@link #requestingExchange} and one {@link #respondingExchange} that
  * can be the same as the requesting exchange.
  * </p>
  * 
@@ -104,7 +102,7 @@ import reactor.core.scheduler.Schedulers;
  * The connection is shutdown on decoder error after any pending non-faulty requests have been processed.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 public class Http1xConnection extends ChannelDuplexHandler implements HttpConnection {
@@ -327,9 +325,10 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 						}
 						else {
 							this.gracefulShutdownTimeout = this.channelContext.executor()
-								.schedule(() -> {
-									this.close(this.channelContext, this.gracefulShutdownClosePromise);
-								}, this.configuration.graceful_shutdown_timeout(), TimeUnit.MILLISECONDS);
+								.schedule(
+									() -> this.close(this.channelContext, this.gracefulShutdownClosePromise),
+									this.configuration.graceful_shutdown_timeout(), TimeUnit.MILLISECONDS
+								);
 						}
 					}
 				})
@@ -516,10 +515,6 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 				this, 
 				httpRequest
 			);
-			
-			if(msg instanceof LastHttpContent) {
-				exchange.request().body().ifPresent(body -> body.getDataSink().tryEmitComplete());
-			}
 
 			if(this.requestingExchange == null) {
 				this.respondingExchange = this.requestingExchange = exchange;
@@ -584,7 +579,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	
 	/**
 	 * <p>
-	 * Requests to write an Http object.
+	 * Requests to write an HTTP object.
 	 * </p>
 	 * 
 	 * <p>
@@ -599,7 +594,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	
 	/**
 	 * <p>
-	 * Requests to write an Http object.
+	 * Requests to write an HTTP object.
 	 * </p>
 	 * 
 	 * <p>
@@ -675,14 +670,16 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	 * The resulting mono completes successfully and emits the resulting WebSocket exchange when the opening handshake succeeds or with an error when it fails in which case the channel pipeline is
 	 * restored to its original state.
 	 * </p>
+	 *
+	 * @param subprotocols a list of subprotocols
 	 * 
 	 * @return a Mono emitting the WebSocket exchange on successful the opening handshake
 	 */
-	public Mono<GenericWebSocketExchange> writeWebSocketHandshake(String[] subProtocols) {
+	public Mono<GenericWebSocketExchange> writeWebSocketHandshake(String[] subprotocols) {
 		return Mono.defer(() -> {
 			WebSocketServerProtocolConfig.Builder webSocketConfigBuilder = WebSocketServerProtocolConfig.newBuilder()
 				.websocketPath(this.respondingExchange.request().getPath())
-				.subprotocols(subProtocols != null && subProtocols.length > 0 ? Arrays.stream(subProtocols).collect(Collectors.joining(",")) : null)
+				.subprotocols(subprotocols != null && subprotocols.length > 0 ? String.join(",", subprotocols) : null)
 				.checkStartsWith(false)
 				.handleCloseFrames(false)
 				.dropPongFrames(true)
@@ -716,7 +713,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 				extensionHandshakers.add(new PerMessageDeflateServerExtensionHandshaker(
 					this.configuration.ws_message_compression_level(),
 					this.configuration.ws_message_allow_server_window_size(),
-					this.configuration.ws_message_prefered_client_window_size(),
+					this.configuration.ws_message_preferred_client_window_size(),
 					this.configuration.ws_message_allow_server_no_context(),
 					this.configuration.ws_message_preferred_client_no_context()
 				));
@@ -770,24 +767,28 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	 */
 	public void onExchangeComplete() {
 		if(this.channelContext.executor().inEventLoop()) {
-			if(!this.respondingExchange.keepAlive) {
-				this.shutdown().subscribe();
-			}
-			else {
-				// This is required if the request body publisher hasn't been consumed in order to free resources
-				this.respondingExchange.dispose(null);
-				this.respondingExchange = this.respondingExchange.next;
-				if(this.respondingExchange != null) {
-					if(this.respondingExchange.next != null || this.decoderError == null) {
-						this.respondingExchange.start();
-					}
-					else {
-						this.decoderError(this.decoderError);
-					}
+			if(this.respondingExchange != null) {
+				// The responding exchange might be null when the connection is closed before the exchange gets completed
+				// This especially happens when the handler invoked a non-blocking operation (e.g. client call) on a different thread
+				if(!this.respondingExchange.keepAlive) {
+					this.shutdown().subscribe();
 				}
 				else {
-					this.requestingExchange = null;
-					this.tryShutdown();
+					// This is required if the request body publisher hasn't been consumed in order to free resources
+					this.respondingExchange.dispose(null);
+					this.respondingExchange = this.respondingExchange.next;
+					if(this.respondingExchange != null) {
+						if(this.respondingExchange.next != null || this.decoderError == null) {
+							this.respondingExchange.start();
+						}
+						else {
+							this.decoderError(this.decoderError);
+						}
+					}
+					else {
+						this.requestingExchange = null;
+						this.tryShutdown();
+					}
 				}
 			}
 		}
@@ -809,7 +810,11 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	 */
 	public void onExchangeError(Throwable throwable) {
 		if(this.channelContext.executor().inEventLoop()) {
-			this.respondingExchange.handleError(throwable);
+			if(this.respondingExchange != null) {
+				// The responding exchange might be null when the connection is closed before the exchange gets completed
+				// This especially happens when the handler invoked a non-blocking operation (e.g. client call) on a different thread
+				this.respondingExchange.handleError(throwable);
+			}
 		}
 		else {
 			this.channelContext.executor().execute(() -> this.onExchangeError(throwable));

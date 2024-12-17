@@ -73,7 +73,7 @@ public final class Charsets {
 	 * @throws NullPointerException if the other charset is null
 	 */
 	public static Charset or(Charset charset, Charset other) {
-		Objects.requireNonNull(other, () -> "other");
+		Objects.requireNonNull(other);
 		return charset != null ? charset : other;
 	}
 }

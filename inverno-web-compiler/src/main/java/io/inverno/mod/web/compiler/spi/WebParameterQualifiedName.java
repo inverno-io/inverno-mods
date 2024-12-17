@@ -15,13 +15,12 @@
  */
 package io.inverno.mod.web.compiler.spi;
 
-import io.inverno.core.compiler.spi.BeanQualifiedName;
 import io.inverno.core.compiler.spi.QualifiedName;
 import io.inverno.core.compiler.spi.QualifiedNameFormatException;
 
 /**
  * <p>
- * A qualified name identifying a parameter in a web route.
+ * A qualified name identifying a parameter in a Web route.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -35,7 +34,7 @@ public class WebParameterQualifiedName extends QualifiedName {
 	
 	/**
 	 * <p>
-	 * Creates a web parameter qualified name with the specified route qualified name and parameter name.
+	 * Creates a Web parameter qualified name with the specified route qualified name and parameter name.
 	 * </p>
 	 *
 	 * @param routeQName the route qualified name
@@ -75,45 +74,5 @@ public class WebParameterQualifiedName extends QualifiedName {
 	 */
 	public String getParameterName() {
 		return this.name;
-	}
-	
-	/**
-	 * <p>
-	 * Creates a web parameter qualified name from the specified raw value of the form {@code WebRouteQualifiedName():<parameterName>} where {@code <parameterName>} is a valid Java name.
-	 * </p>
-	 *
-	 * @param qname a raw qualified name
-	 *
-	 * @return a web parameter qualified name
-	 * @throws QualifiedNameFormatException if the specified value is not a web parameter qualified name
-	 */
-	public static WebParameterQualifiedName valueOf(String qname) throws QualifiedNameFormatException {
-		int lastSeparatorIndex = qname.lastIndexOf(".");
-		if (lastSeparatorIndex == -1) {
-			throw new QualifiedNameFormatException("Invalid qname " + qname + ", was expecting: WebParameterQualifiedName().<parameterName>");
-		}
-		return new WebParameterQualifiedName(WebRouteQualifiedName.valueOf(qname.substring(0, lastSeparatorIndex)), qname.substring(lastSeparatorIndex + 1));
-	}
-
-	/**
-	 * <p>
-	 * Creates a web parameter qualified name from the specified bean qualified name of the web controller and the specified raw value of the form {@code <routeName>:<parameterName>} where
-	 * {@code <routeName>} and {@code <parameterName>} are valid Java names.
-	 * </p>
-	 *
-	 * @param controllerQName a web controller qualified name
-	 * @param qname           a raw qualified name
-	 *
-	 * @return a web parameter qualified name
-	 * @throws QualifiedNameFormatException if the specified value is not a web parameter qualified name
-	 */
-	public static WebParameterQualifiedName valueOf(BeanQualifiedName controllerQName, String qname)
-			throws QualifiedNameFormatException {
-		String[] qnameParts = qname.split(".");
-		if (qnameParts.length < 2) {
-			throw new QualifiedNameFormatException(
-					"Invalid qname " + qname + ", was expecting: <routeName>.<parameterName>");
-		}
-		return new WebParameterQualifiedName(new WebRouteQualifiedName(controllerQName, qnameParts[0]), qnameParts[1]);
 	}
 }

@@ -23,7 +23,7 @@ import java.util.Optional;
 
 /**
  * <p>
- * The securiy context represents the central security component in an application.
+ * The security context represents the central security component in an application.
  * </p>
  * 
  * <p>
@@ -80,7 +80,7 @@ public interface SecurityContext<A extends Identity, B extends AccessController>
 
 	/**
 	 * <p>
-	 * Creates a security context with the specified authentiation and identity.
+	 * Creates a security context with the specified authentication and identity.
 	 * </p>
 	 *
 	 * <p>
@@ -102,7 +102,7 @@ public interface SecurityContext<A extends Identity, B extends AccessController>
 
 	/**
 	 * <p>
-	 * Creates a security context with the specified authentiation and access controller.
+	 * Creates a security context with the specified authentication and access controller.
 	 * </p>
 	 * 
 	 * <p>
@@ -124,7 +124,7 @@ public interface SecurityContext<A extends Identity, B extends AccessController>
 
 	/**
 	 * <p>
-	 * Creates a security context with the specified authentiation, identity and access controller.
+	 * Creates a security context with the specified authentication, identity and access controller.
 	 * </p>
 	 *
 	 * @param <A>              the identity type
@@ -144,22 +144,17 @@ public interface SecurityContext<A extends Identity, B extends AccessController>
 
 	/**
 	 * <p>
-	 * Creates a security context with the specified authentiation, identity and access controller.
+	 * Creates a security context builder with the specified authentication.
 	 * </p>
-	 * 
+	 *
 	 * @param <A>              the identity type
 	 * @param <B>              the access controller type
-	 * @param authentication   an authentication
-	 * @param identity         an optional identity
-	 * @param accessController an optional access controller
+	 * @param authentication an authentication
 	 *
-	 * @return a new security context
+	 * @return a security context builder
 	 */
-	static <A extends Identity, B extends AccessController> SecurityContext<A, B> of(Authentication authentication, Optional<A> identity, Optional<B> accessController) {
-		GenericSecurityContext<A, B> context = new GenericSecurityContext<>(authentication);
-		context.setIdentity(identity);
-		context.setAccessController(accessController);
-		return context;
+	static <A extends Identity, B extends AccessController> SecurityContext.Builder<A, B> builder(Authentication authentication) {
+		return new SecurityContext.Builder<>(authentication);
 	}
 
 	/**
@@ -238,5 +233,74 @@ public interface SecurityContext<A extends Identity, B extends AccessController>
 	 */
 	default Optional<B> getAccessController() {
 		return Optional.empty();
+	}
+
+	/**
+	 * <p>
+	 * A security context builder.
+	 * </p>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.12
+	 *
+	 * @param <A> the identity type
+	 * @param <B> the access controller type
+	 */
+	class Builder<A extends Identity, B extends AccessController> {
+
+		private final Authentication authentication;
+
+		private A identity;
+		private B accessController;
+
+		/**
+		 * <p>
+		 * Creates a security context builder
+		 * </p>
+		 *
+		 * @param authentication an authentication
+		 */
+		private Builder(Authentication authentication) {
+			this.authentication = authentication;
+		}
+
+		/**
+		 * <p>
+		 * Specifies an identity.
+		 * </p>
+		 *
+		 * @param identity an identity
+		 *
+		 * @return the builder
+		 */
+		public Builder<A, B> identity(A identity) {
+			this.identity = identity;
+			return this;
+		}
+
+		/**
+		 * <p>
+		 * Specifies an access controller.
+		 * </p>
+		 *
+		 * @param accessController an access controller
+		 *
+		 * @return the builder
+		 */
+		public Builder<A, B> accessController(B accessController) {
+			this.accessController = accessController;
+			return this;
+		}
+
+		/**
+		 * <p>
+		 * Builds the security context.
+		 * </p>
+		 *
+		 * @return a security context
+		 */
+		public SecurityContext<A, B> build() {
+			return SecurityContext.of(this.authentication, this.identity, this.accessController);
+		}
 	}
 }

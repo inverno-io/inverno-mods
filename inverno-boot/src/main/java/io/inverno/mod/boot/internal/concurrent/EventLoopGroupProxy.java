@@ -28,9 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
- * An event loop group wrapper that provides the event loops of the root event
- * loop group in order to optimize resource usage when multiple IO event loop
- * groups are used within an application.
+ * An event loop group wrapper that provides the event loops of the root event loop group in order to optimize resource usage when multiple IO event loop groups are used within an application.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -42,8 +40,7 @@ class EventLoopGroupProxy extends MultithreadEventLoopGroup {
 
 	/**
 	 * <p>
-	 * Creates a event loop group with the specified amount of threads provided by
-	 * the specified root event loop group.
+	 * Creates a event loop group with the specified amount of threads provided by the specified root event loop group.
 	 * </p>
 	 * 
 	 * @param nThreads           the number of threads to allocate to the group
@@ -54,12 +51,14 @@ class EventLoopGroupProxy extends MultithreadEventLoopGroup {
 	}
 
 	@Override
-	protected EventLoop newChild(Executor executor, Object... args) throws Exception {
+	protected EventLoop newChild(Executor executor, Object... args) {
 		return ((EventLoopGroup) args[0]).next();
 	}
 
 	/**
+	 * <p>
 	 * Event loop group is shutdown when the coreEventLoopGroup is shutdown.
+	 * </p>
 	 */
 	@Override
 	@Deprecated
@@ -67,7 +66,9 @@ class EventLoopGroupProxy extends MultithreadEventLoopGroup {
 	}
 
 	/**
+	 * <p>
 	 * Event loop group is shutdown when the coreEventLoopGroup is shutdown.
+	 * </p>
 	 */
 	@Override
 	@Deprecated
@@ -76,7 +77,9 @@ class EventLoopGroupProxy extends MultithreadEventLoopGroup {
 	}
 	
 	/**
+	 * <p>
 	 * Event loop group is shutdown when the coreEventLoopGroup is shutdown.
+	 * </p>
 	 */
 	@Override
 	public Future<?> shutdownGracefully() {
@@ -84,7 +87,9 @@ class EventLoopGroupProxy extends MultithreadEventLoopGroup {
 	}
 
 	/**
+	 * <p>
 	 * Event loop group is shutdown when the coreEventLoopGroup is shutdown.
+	 * </p>
 	 */
 	@Override
 	public Future<?> shutdownGracefully(long quietPeriod, long timeout, TimeUnit unit) {

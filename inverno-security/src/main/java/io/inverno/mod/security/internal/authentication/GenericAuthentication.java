@@ -58,7 +58,7 @@ public class GenericAuthentication implements Authentication {
 	 * The cause of the failed authentication that resulted in this authentication.
 	 */
 	@JsonIgnore
-	private final Optional<io.inverno.mod.security.SecurityException> cause;
+	private final io.inverno.mod.security.SecurityException cause;
 
 	/**
 	 * <p>
@@ -69,7 +69,7 @@ public class GenericAuthentication implements Authentication {
 	 */
 	public GenericAuthentication(boolean authenticated) {
 		this.authenticated = authenticated;
-		this.cause = Optional.empty();
+		this.cause = null;
 	}
 
 	/**
@@ -81,7 +81,7 @@ public class GenericAuthentication implements Authentication {
 	 */
 	public GenericAuthentication(io.inverno.mod.security.SecurityException cause) {
 		this.authenticated = false;
-		this.cause = Optional.ofNullable(cause);
+		this.cause = cause;
 	}
 	
 	@Override
@@ -91,7 +91,7 @@ public class GenericAuthentication implements Authentication {
 
 	@Override
 	public Optional<io.inverno.mod.security.SecurityException> getCause() {
-		return this.cause;
+		return Optional.ofNullable(this.cause);
 	}
 
 	@Override

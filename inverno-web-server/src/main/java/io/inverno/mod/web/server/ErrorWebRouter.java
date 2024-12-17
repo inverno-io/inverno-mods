@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2024 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,76 +16,108 @@
 package io.inverno.mod.web.server;
 
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.web.server.spi.ErrorRouter;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * <p>
- * An error web router is used to handle failing requests for which an error was thrown during the initial processing.
+ * Entry point for configuring the error Web routes used to route error Web exchanges to a matching error Web exchange handlers.
  * </p>
  *
  * <p>
- * It determines the error web exchange handler to invoke based on the type of the error as well as the media type and language accepted by the client.
+ * It is implemented by the {@link WebServer}. Error handlers are defined using an {@link ErrorWebRouteManager} which allows to specify the criteria an error Web exchange must match to be processed by
+ * the error Web exchange handler defined in the route.
  * </p>
  *
  * <p>
- * An error web router is itself an error exchange handler that can be used as error handler of a HTTP server.
+ * When defining a route, the error Web route interceptors defined in an intercepted Web server and matching the route's criteria are applied to the error Web exchange handler.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.12
  *
- * @see ErrorExchange
- * @see ErrorWebExchange
- * @see ErrorWebRoute
  * @see ErrorWebRouteManager
+ * @see WebServer
  *
- * @param <A> the type of the exchange context
+ * @param <A> the exchange context type
  */
-public interface ErrorWebRouter<A extends ExchangeContext> extends
-	ErrorRouter<A, ErrorWebExchange<A>, ErrorWebRouter<A>, ErrorWebInterceptedRouter<A>, ErrorWebRouteManager<A, ErrorWebRouter<A>>, ErrorWebRouteManager<A, ErrorWebInterceptedRouter<A>>, ErrorWebInterceptorManager<A, ErrorWebInterceptedRouter<A>>, ErrorWebRoute<A>>,
-	ErrorWebRoutable<A, ErrorWebRouter<A>>,
-	ErrorWebInterceptable<A, ErrorWebInterceptedRouter<A>> {
+public interface ErrorWebRouter<A extends ExchangeContext> extends BaseWebRouter {
 
 	/**
 	 * <p>
-	 * Configures the error web router using the specified configurer and returns it.
+	 * Returns a new route manager for defining an error Web route.
 	 * </p>
 	 *
-	 * <p>
-	 * If the specified configurer is null this method is a noop.
-	 * </p>
-	 *
-	 * @param configurer an error web router configurer
-	 *
-	 * @return the error web router
+	 * @return a new error Web route manager
 	 */
-	@SuppressWarnings("unchecked")
-	default ErrorWebRouter<A> configure(ErrorWebRouterConfigurer<? super A> configurer) {
-		configurer.configure((ErrorWebRouter)this);
+	ErrorWebRouteManager<A, ? extends ErrorWebRouter<A>> routeError();
+
+	/**
+	 * <p>
+	 * Configures an error Web route and returns the originating error Web router.
+	 * </p>
+	 *
+	 * @param configurer an error Web route configurer function
+	 *
+	 * @return the originating error Web router
+	 */
+	default ErrorWebRouter<A> routeError(Consumer<ErrorWebRouteManager<A, ? extends ErrorWebRouter<A>>> configurer) {
+		configurer.accept(this.routeError());
 		return this;
 	}
 
 	/**
 	 * <p>
-	 * Configures the web router using the specified configurers and returns it.
+	 * Configures multiple error Web routes and returns the originating error Web router.
 	 * </p>
 	 *
-	 * <p>
-	 * If the specified list of configurers is null or empty this method is a noop.
-	 * </p>
+	 * @param configurer an error Web route configurer
 	 *
-	 * @param configurers a list of error web router configurers
-	 *
-	 * @return the error web router
+	 * @return the originating error Web router
 	 */
-	default ErrorWebRouter<A> configure(List<ErrorWebRouterConfigurer<? super A>> configurers) {
-		if(configurers != null) {
-			for(ErrorWebRouterConfigurer<? super A> configurer : configurers) {
-				this.configure(configurer);
-			}
-		}
-		return this;
+	ErrorWebRouter<A> configureErrorRoutes(ErrorWebRouter.Configurer<? super A> configurer);
+
+	/**
+	 * <p>
+	 * Configures multiple error Web routes and returns the originating error Web router.
+	 * </p>
+	 *
+	 * @param configurers a list of error Web route configurers
+	 *
+	 * @return the originating error Web router
+	 */
+	ErrorWebRouter<A> configureErrorRoutes(List<ErrorWebRouter.Configurer<? super A>> configurers);
+
+	/**
+	 * <p>
+	 * Returns the error Web routes defined in the router.
+	 * </p>
+	 *
+	 * @return a set of error Web routes
+	 */
+	Set<ErrorWebRoute<A>> getErrorRoutes();
+
+	/**
+	 * <p>
+	 * A configurer used to configure error Web routes in a Web server.
+	 * </p>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.12
+	 *
+	 * @param <A> the exchange context type
+	 */
+	@FunctionalInterface
+	interface Configurer<A extends ExchangeContext> {
+
+		/**
+		 * <p>
+		 * Configures error Web routes.
+		 * </p>
+		 *
+		 * @param routes the error Web router to use to define error Web routes
+		 */
+		void configure(ErrorWebRouter<A> routes);
 	}
 }

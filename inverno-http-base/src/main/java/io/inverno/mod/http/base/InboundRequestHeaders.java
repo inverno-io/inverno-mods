@@ -30,7 +30,7 @@ import io.inverno.mod.http.base.header.Headers;
  * An inbound request is received by a server in a server exchange.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public interface InboundRequestHeaders extends InboundHeaders {
@@ -49,9 +49,28 @@ public interface InboundRequestHeaders extends InboundHeaders {
 	 * Decodes and returns the content type header of the request.
 	 * </p>
 	 * 
-	 * @return the decoded content type header
+	 * @return the decoded content type header or null
 	 */
 	Headers.ContentType getContentTypeHeader();
+
+	/**
+	 * <p>
+	 * Returns the accept header field value of the request.
+	 * </p>
+	 *
+	 * @return the accept header value or null
+	 */
+	String getAccept();
+
+	/**
+	 * <p>
+	 * Decodes and returns the accept header of the request.
+	 * Returns the accept header field value of the request.
+	 * </p>
+	 *
+	 * @return the decoded accept header or null
+	 */
+	Headers.Accept getAcceptHeader();
 	
 	/**
 	 * <p>

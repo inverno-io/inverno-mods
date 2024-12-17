@@ -35,7 +35,8 @@ import io.inverno.mod.base.resource.ResourceService;
  * </p>
  *
  * <p>
- * This implementation allows to resolve resources with the same name but in different module by specifying '*' instead of a module name in the module resource URI.</p>
+ * This implementation allows to resolve resources with the same name but in different module by specifying '*' instead of a module name in the module resource URI.
+ * </p>
  *
  * <pre>{@code
  * ModuleResourceProvider provider = new ModuleResourceProvider();

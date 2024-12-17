@@ -19,10 +19,10 @@ import io.inverno.mod.http.server.HttpServerException;
 
 /**
  * <p>
- * Stackless Http server exception.
+ * Stackless HTTP server exception.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.11
  */
 public class StacklessHttpServerException extends HttpServerException {
@@ -31,7 +31,7 @@ public class StacklessHttpServerException extends HttpServerException {
 
 	/**
 	 * <p>
-	 * Creates a stackless Http server exception.
+	 * Creates a stackless HTTP server exception.
 	 * </p>
 	 */
 	public StacklessHttpServerException() {
@@ -39,7 +39,7 @@ public class StacklessHttpServerException extends HttpServerException {
 
 	/**
 	 * <p>
-	 * Creates a stackless Http server exception.
+	 * Creates a stackless HTTP server exception.
 	 * </p>
 	 * 
 	 * @param message the message
@@ -50,7 +50,7 @@ public class StacklessHttpServerException extends HttpServerException {
 
 	/**
 	 * <p>
-	 * Creates a Http server exception.
+	 * Creates an HTTP server exception.
 	 * </p>
 	 * 
 	 * @param message the message
@@ -62,7 +62,7 @@ public class StacklessHttpServerException extends HttpServerException {
 
 	/**
 	 * <p>
-	 * Creates a stackless Http server exception.
+	 * Creates a stackless HTTP server exception.
 	 * </p>
 	 * 
 	 * @param cause the cause

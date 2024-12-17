@@ -19,7 +19,7 @@ import java.time.ZonedDateTime;
 
 /**
  * <p>
- * Represents a HTTP set-cookie as defined by <a href="https://tools.ietf.org/html/rfc6265#section-4.1">RFC 6265 Section 4.1</a>
+ * Represents an HTTP set-cookie as defined by <a href="https://tools.ietf.org/html/rfc6265#section-4.1">RFC 6265 Section 4.1</a>
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -76,10 +76,10 @@ public interface SetCookie extends Cookie {
 	
 	/**
 	 * <p>
-	 * Returns cookie's http only flag attribute.
+	 * Returns cookie's HTTP only flag attribute.
 	 * </p>
 	 * 
-	 * @return the http only flag or null
+	 * @return the HTTP only flag or null
 	 */
 	Boolean isHttpOnly();
 	
@@ -100,7 +100,7 @@ public interface SetCookie extends Cookie {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	public static interface Configurator {
+	interface Configurator {
 
 		/**
 		 * <p>
@@ -185,10 +185,10 @@ public interface SetCookie extends Cookie {
 
 		/**
 		 * <p>
-		 * Sets the cookie http only flag attribute.
+		 * Sets the cookie HTTP only flag attribute.
 		 * </p>
 		 * 
-		 * @param httpOnly the cookie http only flag
+		 * @param httpOnly the cookie HTTP only flag
 		 * 
 		 * @return the configurator
 		 */

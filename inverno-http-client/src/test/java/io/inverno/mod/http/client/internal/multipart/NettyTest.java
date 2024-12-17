@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 @Disabled
 public class NettyTest {

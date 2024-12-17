@@ -16,7 +16,7 @@
 package io.inverno.mod.configuration.source;
 
 import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
-import io.inverno.mod.configuration.AbstractHashConfigurationSource;
+import io.inverno.mod.configuration.internal.AbstractHashConfigurationSource;
 import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.DefaultingStrategy;
@@ -52,7 +52,7 @@ import reactor.core.publisher.Mono;
  * properties.setProperty("db.url[env=\"prod\",zone=\"us\"]", "jdbc:oracle:thin:@prod_us.db.server:1521:sid");
  * }</pre>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @see AbstractHashConfigurationSource
@@ -60,9 +60,9 @@ import reactor.core.publisher.Mono;
 public class PropertiesConfigurationSource extends AbstractHashConfigurationSource<String, PropertiesConfigurationSource> {
 
 	private static final Logger LOGGER = LogManager.getLogger(PropertiesConfigurationSource.class);
-	
+
 	private final Properties properties;
-	
+
 	private Mono<List<ConfigurationProperty>> propertiesPublisher;
 
 	/**
@@ -92,22 +92,52 @@ public class PropertiesConfigurationSource extends AbstractHashConfigurationSour
 
 	/**
 	 * <p>
-	 * Creates a properties configuration source from the specified initial source and using the specified defaulting strategy.
+	 * Creates a properties configuration source from the specified original source which applies the specified default parameters.
 	 * </p>
 	 *
-	 * @param initial            the initial configuration source.
+	 * @param original           the original configuration source
+	 * @param defaultParameters  the default parameters to apply
+	 */
+	private PropertiesConfigurationSource(PropertiesConfigurationSource original, List<ConfigurationKey.Parameter> defaultParameters) {
+		this(original, defaultParameters, original.defaultingStrategy);
+	}
+
+	/**
+	 * <p>
+	 * Creates a properties configuration source from the specified original source which uses the specified defaulting strategy.
+	 * </p>
+	 *
+	 * @param original           the original configuration source
 	 * @param defaultingStrategy a defaulting strategy
 	 */
-	private PropertiesConfigurationSource(PropertiesConfigurationSource initial, DefaultingStrategy defaultingStrategy) {
-		super(initial, defaultingStrategy);
-		this.properties = initial.properties;
+	private PropertiesConfigurationSource(PropertiesConfigurationSource original, DefaultingStrategy defaultingStrategy) {
+		this(original, original.defaultParameters, defaultingStrategy);
 	}
-	
+
+	/**
+	 * <p>
+	 * Creates a properties configuration source from the specified original source which applies the specified default parameters and uses the specified defaulting strategy.
+	 * </p>
+	 *
+	 * @param original           the original configuration source
+	 * @param defaultParameters  the default parameters to apply
+	 * @param defaultingStrategy a defaulting strategy
+	 */
+	private PropertiesConfigurationSource(PropertiesConfigurationSource original, List<ConfigurationKey.Parameter> defaultParameters, DefaultingStrategy defaultingStrategy) {
+		super(original, defaultParameters, defaultingStrategy);
+		this.properties = original.properties;
+	}
+
+	@Override
+	public PropertiesConfigurationSource withParameters(List<ConfigurationKey.Parameter> parameters) throws IllegalArgumentException {
+		return new PropertiesConfigurationSource(this, parameters);
+	}
+
 	@Override
 	public PropertiesConfigurationSource withDefaultingStrategy(DefaultingStrategy defaultingStrategy) {
-		return new PropertiesConfigurationSource(this.initial != null ? this.initial : this, defaultingStrategy);
+		return new PropertiesConfigurationSource(this, defaultingStrategy);
 	}
-	
+
 	@Override
 	protected Mono<List<ConfigurationProperty>> load() {
 		if(this.propertiesPublisher == null) {
@@ -115,8 +145,8 @@ public class PropertiesConfigurationSource extends AbstractHashConfigurationSour
 				.map(entry -> {
 					try {
 						ConfigurationOptionParser<PropertiesConfigurationSource> parser = new ConfigurationOptionParser<>(new StringProvider(entry.getKey().toString()));
-						return new GenericConfigurationProperty<ConfigurationKey, PropertiesConfigurationSource, String>( parser.StartKey(), entry.getValue().toString(), this);
-					} 
+						return new GenericConfigurationProperty<>( parser.StartKey(), entry.getValue().toString(), this);
+					}
 					catch (ParseException e) {
 						LOGGER.warn(() -> "Ignoring property " + entry.getKey() + " after parsing error: " + e.getMessage());
 					}

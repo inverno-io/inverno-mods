@@ -71,8 +71,7 @@ public class ConverterException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a converter exception with the specified message, cause, suppression
-	 * enabled or disabled and writable stack trace enabled or disabled.
+	 * Creates a converter exception with the specified message, cause, suppression enabled or disabled and writable stack trace enabled or disabled.
 	 * </p>
 	 * 
 	 * @param message            the message

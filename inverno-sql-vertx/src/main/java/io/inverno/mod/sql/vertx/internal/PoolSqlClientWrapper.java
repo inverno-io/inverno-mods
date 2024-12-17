@@ -38,9 +38,8 @@ import java.util.ServiceLoader;
  * </p>
  * 
  * <p>
- * This wrapper bean creates an SQL client based on the module configuration. It
- * determines the underlying Vert.x SQL client based on the database URI scheme,
- * corresponding client module must be present on the module path.
+ * This wrapper bean creates an SQL client based on the module configuration. It determines the underlying Vert.x SQL client based on the database URI scheme, corresponding client module must be
+ * present on the module path.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -60,8 +59,7 @@ public class PoolSqlClientWrapper implements Supplier<SqlClient> {
 	 * </p>
 	 * 
 	 * @param configuration the Vert.x SQL client module configuration
-	 * @param vertx         the Vert.x instance to use when creating the Vert.x SQL
-	 *                      pool
+	 * @param vertx         the Vert.x instance to use when creating the Vert.x SQL pool
 	 */
 	public PoolSqlClientWrapper(VertxSqlClientConfiguration configuration, Vertx vertx) {
 		this.configuration = configuration;

@@ -22,10 +22,13 @@ import io.inverno.mod.base.converter.ByteBufConverter;
 import io.inverno.mod.base.converter.MediaTypeConverter;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.resource.MediaTypes;
+import java.lang.reflect.Type;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 
 /**
  * <p>
- * ByteBuf {@code text/plain} media type converter.
+ * {@code ByteBuf} {@code text/plain} media type converter.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -50,5 +53,22 @@ public class TextByteBufMediaTypeConverter extends ByteBufConverter implements @
 	@Override
 	public boolean canConvert(String mediaType) {
 		return mediaType.equalsIgnoreCase(MediaTypes.TEXT_PLAIN);
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> Flux<T> decodeMany(Publisher<ByteBuf> value, Type type) {
+		// We have to preserve the payload when considering a publisher so we don't want to take array separator into account
+		if(String.class.equals(type)) {
+			return (Flux<T>)Flux.from(value).map(buf -> {
+				try {
+					return buf.toString(this.getCharset());
+				}
+				finally {
+					buf.release();
+				}
+			});
+		}
+		return this.<T>decodeOne(value, type).flux();
 	}
 }

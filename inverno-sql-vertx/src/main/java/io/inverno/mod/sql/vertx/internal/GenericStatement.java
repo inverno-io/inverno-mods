@@ -64,14 +64,12 @@ public class GenericStatement implements Statement {
 				.execute()
 				.toCompletionStage()
 			)
-			.flatMapMany(rowSet -> {
-				return Flux.create(sink -> {
-					RowSet<io.vertx.sqlclient.Row> current = rowSet;
-					do {
-						sink.next(new GenericSqlResult(current));
-					} while( (current = current.next()) != null);
-					sink.complete();
-				});
-			});
+			.flatMapMany(rowSet -> Flux.create(sink -> {
+				RowSet<io.vertx.sqlclient.Row> current = rowSet;
+				do {
+					sink.next(new GenericSqlResult(current));
+				} while( (current = current.next()) != null);
+				sink.complete();
+			}));
 	}
 }

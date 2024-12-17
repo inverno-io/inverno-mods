@@ -28,8 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * A URI component representing a query parameter in an URI as defined by
- * <a href="https://tools.ietf.org/html/rfc3986#section-3.4">RFC 3986 Section 3.4</a>.
+ * A URI component representing a query parameter in an URI as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.4">RFC 3986 Section 3.4</a>.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -39,11 +38,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 class QueryParameterComponent implements ParameterizedURIComponent {
 	
-	public static final Predicate<Integer> ESCAPED_CHARACTERS =  b -> {
-		return !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '&' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == '=' || b == ':' || b == '@' || b == '/' || b == '?');
-	};
-	
-	private final URIFlags flags;
+	public static final Predicate<Integer> ESCAPED_CHARACTERS =  b -> !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == ':' || b == '@' || b == '/' || b == '?');
+
 	private final String rawName;
 	private final String rawValue;
 	
@@ -65,12 +61,11 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 	 * @param value   a parameter value
 	 */
 	public QueryParameterComponent(URIFlags flags, Charset charset, String rawName, Object value) {
-		this.flags = flags;
 		this.charset = charset;
 		this.rawName = rawName;
 		this.rawValue = value != null ? value.toString() : null;
 		this.parameters = new LinkedList<>();
-		if(this.flags.isParameterized()) {
+		if(flags.isParameterized()) {
 			URIs.scanURIComponent(this.rawValue, null, this.charset, this.parameters::add, null);
 		}
 	}
@@ -133,7 +128,7 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 			URIParameter parameter = this.parameters.get(i);
 			String parameterValue = parameter.checkValue(values.get(i).toString());
 			if(parameter.getOffset() > valueIndex) {
-				result.append(this.rawValue.substring(valueIndex, parameter.getOffset()));
+				result.append(this.rawValue, valueIndex, parameter.getOffset());
 			}
 			result.append(parameterValue);
 			valueIndex = parameter.getOffset() + parameter.getLength();
@@ -150,8 +145,7 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 	 * </p>
 	 *
 	 * <p>
-	 * Note that the returned value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * Note that the returned value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 *
 	 * @param values a map of values to replace the component's parameters
@@ -174,7 +168,7 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 		for(URIParameter parameter : this.parameters) {
 			String parameterValue = parameter.checkValue(values.get(parameter.getName()).toString());
 			if(parameter.getOffset() > valueIndex) {
-				result.append(this.rawValue.substring(valueIndex, parameter.getOffset()));
+				result.append(this.rawValue, valueIndex, parameter.getOffset());
 			}
 			result.append(parameterValue);
 			valueIndex = parameter.getOffset() + parameter.getLength();

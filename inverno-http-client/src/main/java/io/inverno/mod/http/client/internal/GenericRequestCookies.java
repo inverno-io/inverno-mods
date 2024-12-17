@@ -23,6 +23,7 @@ import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.header.CookieCodec;
 import io.inverno.mod.http.base.internal.header.GenericCookieParameter;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +36,7 @@ import java.util.Set;
  * Generic request cookies implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class GenericRequestCookies implements OutboundCookies {
@@ -105,6 +106,12 @@ public class GenericRequestCookies implements OutboundCookies {
 	}
 
 	@Override
+	public <T> OutboundCookies addCookie(String name, T value, Type type) {
+		this.pairs.computeIfAbsent(name, ign -> new ArrayList<>()).add(new GenericCookieParameter(this.parameterConverter, name, this.parameterConverter.encode(value, type)));
+		return this;
+	}
+
+	@Override
 	public boolean contains(String name) {
 		return this.pairs.containsKey(name);
 	}
@@ -118,7 +125,7 @@ public class GenericRequestCookies implements OutboundCookies {
 	public Optional<CookieParameter> get(String name) {
 		return Optional.ofNullable(this.getAll(name)).map(cookies ->  {
 			if(!cookies.isEmpty()) {
-				return cookies.get(0);
+				return cookies.getFirst();
 			}
 			return null;
 		});

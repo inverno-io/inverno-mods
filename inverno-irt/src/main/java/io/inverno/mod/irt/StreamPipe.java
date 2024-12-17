@@ -19,8 +19,7 @@ import java.util.stream.Stream;
 
 /**
  * <p>
- * A stream pipe is used within a template to transform a stream before applying
- * templates to the elements of the stream.
+ * A stream pipe is used within a template to transform a stream before applying templates to the elements of the stream.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

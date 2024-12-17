@@ -30,7 +30,7 @@ import io.inverno.mod.security.SecurityException;
  * @since 1.5
  * 
  * @param <A> the type of the first login credentials
- * @param <B> the type of the seconde login credentials
+ * @param <B> the type of the second login credentials
  */
 public class LoginCredentialsMatcher<A extends LoginCredentials, B extends LoginCredentials> implements CredentialsMatcher<A, B> {
 

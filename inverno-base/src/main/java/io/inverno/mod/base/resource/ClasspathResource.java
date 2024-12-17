@@ -31,7 +31,7 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A {@link Resource} implementation that identifies resources by a URI of the form <code>classpath:/path/to/resource</code> and looks up data on the classpath.
+ * A {@link Resource} implementation that identifies resources by a URI of the form {@code classpath:/path/to/resource} and looks up data on the classpath.
  * </p>
  *
  * <p>
@@ -60,7 +60,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 	
 	private Class<?> clazz;
 	private ClassLoader classLoader;
-	
+
 	private Optional<Resource> resource;
 	
 	private ResourceException resolutionError;

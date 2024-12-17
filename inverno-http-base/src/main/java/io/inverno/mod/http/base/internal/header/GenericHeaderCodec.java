@@ -28,7 +28,7 @@ import java.util.function.Supplier;
 
 /**
  * <p>
- * Genric HTTP {@link HeaderCodec} implementation.
+ * Generic HTTP {@link HeaderCodec} implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -63,20 +63,17 @@ public class GenericHeaderCodec<A extends Header, B extends HeaderBuilder<A, B>>
 		int readerIndex = buffer.readerIndex();
 		
 		B builder = this.builderSupplier.get().headerName(name);
-		
-		Integer startIndex = null;
-		Integer endIndex = null;
+
+		int startIndex = -1;
+		int endIndex;
 		while(buffer.isReadable()) {
 			byte nextByte = buffer.readByte();
-			
-			if(startIndex == null && Character.isWhitespace(nextByte)) {
-				continue;
-			}
-			else {
-				if(startIndex == null) {
-					 startIndex = buffer.readerIndex() - 1;
+
+			if(startIndex != -1 || !Character.isWhitespace(nextByte)) {
+				if(startIndex == -1) {
+					startIndex = buffer.readerIndex() - 1;
 				}
-				
+
 				if(nextByte == CR) {
 					if(buffer.getByte(buffer.readerIndex()) == LF) {
 						buffer.readByte();
@@ -97,6 +94,7 @@ public class GenericHeaderCodec<A extends Header, B extends HeaderBuilder<A, B>>
 				}
 			}
 		}
+
 		buffer.readerIndex(readerIndex);
 		// TODO returning null might not be the proper way to tell that we don't have enough data...
 		return null;

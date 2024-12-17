@@ -27,7 +27,9 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * <p>Base class for {@link ParameterizedURIComponent} implementations.</p>
+ * <p>
+ * Base class for {@link ParameterizedURIComponent} implementations.
+ * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
@@ -51,8 +53,7 @@ abstract class AbstractParameterizedURIComponent implements ParameterizedURIComp
 	
 	/**
 	 * <p>
-	 * Creates a parameterized URI component with the specified flags, charset and
-	 * raw value.
+	 * Creates a parameterized URI component with the specified flags, charset and raw value.
 	 * </p>
 	 * 
 	 * @param flags    URI flags
@@ -65,8 +66,7 @@ abstract class AbstractParameterizedURIComponent implements ParameterizedURIComp
 
 	/**
 	 * <p>
-	 * Creates a parameterized URI component with the specified flags, charset, raw
-	 * value and escaped characters predicate.
+	 * Creates a parameterized URI component with the specified flags, charset, raw value and escaped characters predicate.
 	 * </p>
 	 * 
 	 * @param flags             URI flags
@@ -80,8 +80,7 @@ abstract class AbstractParameterizedURIComponent implements ParameterizedURIComp
 	
 	/**
 	 * <p>
-	 * Creates a parameterized URI component with the specified flags, charset, raw
-	 * value, escaped characters predicate and allowed characters predicate.
+	 * Creates a parameterized URI component with the specified flags, charset, raw value, escaped characters predicate and allowed characters predicate.
 	 * </p>
 	 * 
 	 * @param flags             URI flags
@@ -100,41 +99,6 @@ abstract class AbstractParameterizedURIComponent implements ParameterizedURIComp
 		if(this.flags.isParameterized()) {
 			URIs.scanURIComponent(this.rawValue, this.allowedCharacters, this.charset, this.parameters::add, null);
 		}
-		
-		/*if(this.flags.isParameterized() && StringUtils.isNotBlank(this.rawValue)) {
-			byte[] valueBytes = this.rawValue.getBytes(charset);
-			String parameterName = null;
-			Integer parameterIndex = null;
-			for(int i=0;i<valueBytes.length;i++) {
-				byte nextByte = valueBytes[i];
-				if(nextByte == '{' && parameterIndex == null) {
-					// open path parameter
-					parameterIndex = i;
-				}
-				else if(nextByte == '}' && parameterIndex != null && valueBytes[i-1] != '\\') {
-					// close path parameter
-					if(parameterName == null) {
-						parameterName = new String(valueBytes, parameterIndex + 1, i - (parameterIndex + 1)); 
-						this.parameters.add(new URIParameter(parameterIndex, i - parameterIndex + 1, parameterName, this.allowedCharacters, this.charset));
-					}
-					else {
-						int patternIndex = parameterIndex + 1 + parameterName.length() + 1;
-						this.parameters.add(new URIParameter(parameterIndex, i - parameterIndex + 1, parameterName, new String(valueBytes, patternIndex, i - patternIndex), this.allowedCharacters, this.charset));
-					}
-					parameterName = null;
-					parameterIndex = null;
-				}
-				else if(nextByte == ':' && parameterIndex != null && parameterName == null) {
-					parameterName = new String(valueBytes, parameterIndex + 1, i - (parameterIndex + 1));
-				}
-				else if(parameterIndex == null && this.allowedCharacters != null && !this.allowedCharacters.test((int)nextByte)) {
-					throw new URIBuilderException("Invalid character " + (char)nextByte + " found in URI component");
-				}
-			}
-			if(parameterIndex != null) {
-				throw new IllegalArgumentException("Invalid component value with incomplete parameter: " + this.rawValue);
-			}
-		}*/
 	}
 
 	@Override
@@ -163,7 +127,7 @@ abstract class AbstractParameterizedURIComponent implements ParameterizedURIComp
 						patternBuilder.append("(").append(Pattern.quote(this.rawValue.substring(valueIndex, parameter.getOffset()))).append(")");
 						this.patternGroupNames.add(null);
 					}
-					patternBuilder.append(parameter.getPattern()).append(")");
+					patternBuilder.append(parameter.getPattern());
 					this.patternGroupNames.add(parameter.getName());
 					valueIndex = parameter.getOffset() + parameter.getLength();
 				}

@@ -20,27 +20,21 @@ import java.util.Optional;
 
 /**
  * <p>
- * An option info corresponds to a template declaration in a template set source
- * file.
+ * An option info corresponds to a template declaration in a template set source file.
  * </p>
- * 
+ *
  * <p>
- * A template specifies the rendering rules of one or more input data. It can
- * have a name to be able to define multiple rendering mode for the same type of
- * input data. It is composed of a list of {@link StatementInfo statements}
- * which specify how the input data should be rendered.
+ * A template specifies the rendering rules of one or more input data. It can have a name to be able to define multiple rendering mode for the same type of input data. It is composed of a list of
+ * {@link StatementInfo statements} which specify how the input data should be rendered.
  * </p>
- * 
+ *
  * <p>
- * When multiple template sets are included in the template set it is also
- * possible to resolve conflicting templates using a {@link SelectInfo} which
- * allows to select the template set to use when a particular template is
- * applied. A selector might also be used to defined template aliases.
+ * When multiple template sets are included in the template set it is also possible to resolve conflicting templates using a {@link SelectInfo} which allows to select the template set to use when a
+ * particular template is applied. A selector might also be used to defined template aliases.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public interface TemplateInfo {
 
@@ -48,71 +42,63 @@ public interface TemplateInfo {
 	 * <p>
 	 * Returns the name of the template.
 	 * </p>
-	 * 
+	 *
 	 * @return an optional returning a name or an empty optional if the template has no name.
 	 */
 	Optional<String> getName();
-	
+
 	/**
 	 * <p>
-	 * Returns the template parameters specifying the input data rendered in the
-	 * template.
+	 * Returns the template parameters specifying the input data rendered in the template.
 	 * </p>
-	 * 
+	 *
 	 * @return an ordered map of parameter info.
 	 */
 	Map<String, ParameterInfo> getParameters();
-	
+
 	/**
 	 * <p>
 	 * Returns the list of statements defining the rendering rules.
 	 * </p>
-	 * 
-	 * @return an optional returning the list of statements or an empty optional if
-	 *         this template defines a selector info instead.
+	 *
+	 * @return an optional returning the list of statements or an empty optional if this template defines a selector info instead.
 	 */
 	Optional<StatementInfo[]> getStatements();
-	
+
 	/**
 	 * <p>
 	 * Returns the template selector.
 	 * </p>
-	 * 
-	 * @return an optional returning a template selector or an empty optional if
-	 *         this template defines a list of statements instead.
+	 *
+	 * @return an optional returning a template selector or an empty optional if this template defines a list of statements instead.
 	 */
 	Optional<SelectInfo> getSelect();
-	
+
 	/**
 	 * <p>
-	 * A template selector used to select a particular template set in case of
-	 * templates conflict or to define a template alias.
+	 * A template selector used to select a particular template set in case of templates conflict or to define a template alias.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * A conflict may occur when two included templates define the same template
-	 * (ie. same name and same parameters). Such conflict can be resolved by
-	 * overriding the template and explicitly select the included template set.
+	 * A conflict may occur when two included templates define the same template (ie. same name and same parameters). Such conflict can be resolved by overriding the template and explicitly select the
+	 * included template set.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * A template alias can be defined by defining a template and make it point to
-	 * another named template.
+	 * A template alias can be defined by defining a template and make it point to another named template.
 	 * </p>
-	 * 
+	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.2
-	 *
 	 */
 	interface SelectInfo {
-		
+
 		/**
 		 * <p>
 		 * Returns the name of the template set to select to resolve a conflict.
 		 * </p>
-		 * 
-		 * @return an optional returning the template set name or an empty optional if
-		 *         an alias is defined instead.
+		 *
+		 * @return an optional returning the template set name or an empty optional if an alias is defined instead.
 		 */
 		Optional<NameInfo> getTemplateSetName();
 
@@ -120,9 +106,8 @@ public interface TemplateInfo {
 		 * <p>
 		 * The name of the template to apply when this template is applied.
 		 * </p>
-		 * 
-		 * @return an optional returning a templat ename or an empty optional if a
-		 *         template set is defined instead.
+		 *
+		 * @return an optional returning a template name or an empty optional if a template set is defined instead.
 		 */
 		Optional<String> getTemplateName();
 	}

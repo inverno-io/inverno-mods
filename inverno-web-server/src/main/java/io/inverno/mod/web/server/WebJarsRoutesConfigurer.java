@@ -30,7 +30,7 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
- * Web routes configurer used to configure routes exposing WebJars resources deployed on the module path or class path.
+ * Web router configurer used to configure routes exposing WebJars resources deployed on the module path or class path.
  * </p>
  *
  * <p>
@@ -47,7 +47,7 @@ import org.apache.logging.log4j.Logger;
  * 
  * @param <A> the exchange context type
  */
-public class WebJarsRoutesConfigurer<A extends ExchangeContext> implements WebRoutesConfigurer<A> {
+public class WebJarsRoutesConfigurer<A extends ExchangeContext> implements WebRouter.Configurer<A> {
 	
 	private static final Logger LOGGER = LogManager.getLogger(WebJarsRoutesConfigurer.class);
 	
@@ -66,7 +66,7 @@ public class WebJarsRoutesConfigurer<A extends ExchangeContext> implements WebRo
 	
 	/**
 	 * <p>
-	 * Creates a WebJars web routes configurer with the specified resource service.
+	 * Creates a WebJars Web routes configurer with the specified resource service.
 	 * </p>
 	 * 
 	 * @param resourceService the resource service
@@ -76,7 +76,7 @@ public class WebJarsRoutesConfigurer<A extends ExchangeContext> implements WebRo
 	}
 
 	@Override
-	public void configure(WebRoutable<A, ?> routes) {
+	public void configure(WebRouter<A> routes) {
 		/* 3 possibilities:
 		 * - native image
 		 *   - /[module_name]/webjars/* -> resource:/META-INF/resources/webjars
@@ -91,9 +91,7 @@ public class WebJarsRoutesConfigurer<A extends ExchangeContext> implements WebRo
 
 		if(ApplicationRuntime.getApplicationRuntime() == ApplicationRuntime.IMAGE_NATIVE) {
 			this.resourceService.getResources(URI.create("resource:/META-INF/resources/webjars"))
-				.flatMap(resource -> {
-					return this.resourceService.getResources(URI.create(resource.getURI().toString() + "/*/*"));
-				})
+				.flatMap(resource -> this.resourceService.getResources(URI.create(resource.getURI().toString() + "/*/*")))
 				.forEach(baseResource -> {
 					String spec = baseResource.getURI().getSchemeSpecificPart();
 					int versionIndex = spec.lastIndexOf("/");
@@ -127,7 +125,7 @@ public class WebJarsRoutesConfigurer<A extends ExchangeContext> implements WebRo
 						webjarName = webjarName.substring(webjarName.indexOf('.') + 1);
 					}
 					if(webjarNames.add(webjarName)) {
-						String webjarVersion = module.getDescriptor().rawVersion().get();
+						String webjarVersion = module.getDescriptor().rawVersion().orElseThrow(() -> new IllegalStateException("WebJar module is missing version"));
 						Resource baseResource = this.resourceService.getResource(URI.create(ModuleResource.SCHEME_MODULE + "://" + module.getName() + "/META-INF/resources/webjars/" + webjarName + "/" + webjarVersion + "/"));
 						String webjarRootPath = WebJarsRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
 						LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
@@ -140,9 +138,7 @@ public class WebJarsRoutesConfigurer<A extends ExchangeContext> implements WebRo
 			}
 
 			this.resourceService.getResources(URI.create("classpath:/META-INF/resources/webjars"))
-				.flatMap(resource -> {
-					return this.resourceService.getResources(URI.create(resource.getURI().toString() + "/*/*"));
-				})
+				.flatMap(resource -> this.resourceService.getResources(URI.create(resource.getURI().toString() + "/*/*")))
 				.forEach(baseResource -> {
 					String spec = baseResource.getURI().getSchemeSpecificPart();
 					int versionIndex = spec.lastIndexOf("/");

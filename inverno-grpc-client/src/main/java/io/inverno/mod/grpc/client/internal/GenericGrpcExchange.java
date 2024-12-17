@@ -39,12 +39,12 @@ import reactor.core.publisher.Mono;
  * Generic {@link GrpcExchange} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public class GenericGrpcExchange<A extends ExchangeContext, B extends Message, C extends Message, D extends GrpcRequest<B>, E extends GrpcResponse<C>> implements GrpcExchange<A, B, C, D, E> {
 
-	public static final Logger LOGGER = LogManager.getLogger(GrpcExchange.class);
+	public static final Logger LOGGER = LogManager.getLogger(GenericGrpcExchange.class);
 	
 	/**
 	 * The underlying client HTTP exchange.
@@ -139,7 +139,7 @@ public class GenericGrpcExchange<A extends ExchangeContext, B extends Message, C
 	 * Generic {@link GrpcExchange.Unary} implementation.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 * 
 	 * @param <A> the exchange context type
@@ -169,7 +169,7 @@ public class GenericGrpcExchange<A extends ExchangeContext, B extends Message, C
 	 * Generic {@link GrpcExchange.ClientStreaming} implementation.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 * 
 	 * @param <A> the exchange context type
@@ -199,7 +199,7 @@ public class GenericGrpcExchange<A extends ExchangeContext, B extends Message, C
 	 * Generic {@link GrpcExchange.ServerStreaming} implementation.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 * 
 	 * @param <A> the exchange context type
@@ -229,7 +229,7 @@ public class GenericGrpcExchange<A extends ExchangeContext, B extends Message, C
 	 * Generic {@link GrpcExchange.BidirectionalStreaming} implementation.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 * 
 	 * @param <A> the exchange context type

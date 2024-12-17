@@ -29,7 +29,7 @@ import java.nio.file.spi.FileSystemProvider;
  * with {@link ClassLoader#resources(java.lang.String) } when running a native image.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.7
  */
 public enum ApplicationRuntime {
@@ -50,7 +50,7 @@ public enum ApplicationRuntime {
 	private static final ApplicationRuntime SINGLETON;
 	
 	static {
-		if(FileSystemProvider.installedProviders().stream().filter(fsp -> fsp.getScheme().equals("resource")).findFirst().isPresent()) {
+		if(FileSystemProvider.installedProviders().stream().anyMatch(fsp -> fsp.getScheme().equals("resource"))) {
 			// We found the resource:/ file system provider which is available in a native image
 			SINGLETON = IMAGE_NATIVE;
 		}

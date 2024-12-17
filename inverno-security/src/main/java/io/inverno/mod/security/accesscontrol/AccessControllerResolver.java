@@ -31,7 +31,7 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  * 
- * @param <A> the type of authenthentication
+ * @param <A> the type of authentication
  * @param <B> the type of access controller
  */
 @FunctionalInterface

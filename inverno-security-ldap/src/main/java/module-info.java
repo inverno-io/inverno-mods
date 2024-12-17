@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-import io.inverno.mod.security.ldap.authentication.LDAPAuthenticator;
-import io.inverno.mod.security.ldap.authentication.LDAPAuthentication;
-import io.inverno.mod.security.ldap.authentication.ActiveDirectoryAuthenticator;
-import io.inverno.mod.security.ldap.identity.LDAPIdentityResolver;
-
 /**
  * <p>
  * The Inverno framework LDAP security module provides support for authentication and identity on an LDAP server or an Active Directory server.
@@ -29,9 +24,9 @@ import io.inverno.mod.security.ldap.identity.LDAPIdentityResolver;
  * </p>
  * 
  * <ul>
- * <li>{@link LDAPAuthenticator} for authentication on an LDAP server.</li>
- * <li>{@link ActiveDirectoryAuthenticator} for authentication on an Active Directory server.</li>
- * <li>{@link LDAPIdentityResolver} to resolve an identity from an {@link LDAPAuthentication}.</li>
+ * <li>{@link io.inverno.mod.security.ldap.authentication.LDAPAuthenticator} for authentication on an LDAP server.</li>
+ * <li>{@link io.inverno.mod.security.ldap.authentication.ActiveDirectoryAuthenticator} for authentication on an Active Directory server.</li>
+ * <li>{@link io.inverno.mod.security.ldap.identity.LDAPIdentityResolver} to resolve an identity from an {@link io.inverno.mod.security.ldap.authentication.LDAPAuthentication}.</li>
  * </ul>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

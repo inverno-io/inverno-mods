@@ -56,8 +56,7 @@ public abstract class KeyScope<T> extends Scope<T> {
 	 * </p>
 	 * 
 	 * <p>
-	 * If no instance is bound to the key, a new instance is created and kept in the
-	 * scope.
+	 * If no instance is bound to the key, a new instance is created and kept in the scope.
 	 * </p>
 	 * 
 	 * @param key the key defining the scope of the instance

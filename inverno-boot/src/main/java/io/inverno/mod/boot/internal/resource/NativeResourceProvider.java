@@ -34,8 +34,7 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * {@link ResourceProvider} implementation used to resolve resources
- * in a native image (ie. {@code resource:path/to/resource}).
+ * {@link ResourceProvider} implementation used to resolve resources in a native image (ie. {@code resource:path/to/resource}).
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

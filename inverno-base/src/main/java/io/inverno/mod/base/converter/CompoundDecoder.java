@@ -19,8 +19,7 @@ import java.lang.reflect.Type;
 
 /**
  * <p>
- * A compound decoder is used in a {@link CompositeDecoder} to decode particular
- * types of objects.
+ * A compound decoder is used in a {@link CompositeDecoder} to decode particular types of objects.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -36,8 +35,7 @@ public interface CompoundDecoder<From, To> extends Decoder<From, To> {
 
 	/**
 	 * <p>
-	 * Determines whether the decoder can decode the type represented by the
-	 * specified class.
+	 * Determines whether the decoder can decode the type represented by the specified class.
 	 * </p>
 	 * 
 	 * @param <T>  the type of the object to decode

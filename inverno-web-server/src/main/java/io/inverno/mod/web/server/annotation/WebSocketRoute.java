@@ -15,49 +15,44 @@
  */
 package io.inverno.mod.web.server.annotation;
 
-import io.inverno.mod.base.converter.MediaTypeConverter;
-import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.http.base.ws.WebSocketMessage;
-import io.inverno.mod.web.server.Web2SocketExchange;
-import io.netty.buffer.ByteBuf;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+
 
 /**
  * <p>
- * Specifies a WebSocket route in a web controller.
+ * Specifies a WebSocket route in a Web controller.
  * </p>
  * 
  * <p>
- * A WebSocket route is an annotated method in a web controller which basically implement the WebSocket exchange handler logic. It accepts any combination of the following parameters:
+ * A WebSocket route is an annotated method in a Web controller which basically implement the WebSocket exchange handler logic. It accepts any combination of the following parameters:
  * </p>
  * 
  * <ul>
- * <li>{@link Web2SocketExchange} which is the WebSocket exchange to handle</li>
- * <li>{@link Web2SocketExchange.Inbound} which is the WebSocket inbound</li>
- * <li>{@link Web2SocketExchange.Outbound} which is the WebSocket outbound</li>
- * <li>Any publisher (i.e. {@link Publisher}, {@link Flux} or {@link Mono}) of {@link ByteBuf}, {@code String} or {@code T} as WebSocket inbound.</li>
+ * <li>{@code Web2SocketExchange} which is the WebSocket exchange to handle</li>
+ * <li>{@link io.inverno.mod.web.base.ws.BaseWeb2SocketExchange.Inbound} which is the WebSocket inbound</li>
+ * <li>{@link io.inverno.mod.web.base.ws.BaseWeb2SocketExchange.Outbound} which is the WebSocket outbound</li>
+ * <li>Any publisher (i.e. {@link java.util.concurrent.Flow.Publisher}, {@link reactor.core.publisher.Flux} or {@link reactor.core.publisher.Mono}) of {@link io.netty.buffer.ByteBuf}, {@code String}
+ * or {@code T} as WebSocket inbound.</li>
  * </ul>
  * 
  * <p>
- * The method's return type can also be used to specify the WebSocket outbound as a publisher of {@link ByteBuf}, {@code String} or {@code T}, in which case it is not possible to specify it as
- * a method parameter.
+ * The method's return type can also be used to specify the WebSocket outbound as a publisher of {@link io.netty.buffer.ByteBuf}, {@code String} or {@code T}, in which case it is not possible to
+ * specify it as a method parameter.
  * </p>
  * 
  * <p>
- * When an inbound or outbound publisher is specified with {@code T} other than {@link ByteBuf} or {@code String}, WebSocket messages are automcatically decoded or encoded using the
- * {@link MediaTypeConverter} corresponding to the negotiated subprotocol as defined by {@link Web2SocketExchange}.
+ * When an inbound or outbound publisher is specified with {@code T} other than {@link io.netty.buffer.ByteBuf} or {@code String}, WebSocket messages are automcatically decoded or encoded using the
+ * {@link io.inverno.mod.base.converter.MediaTypeConverter} corresponding to the negotiated subprotocol as defined by {@code Web2SocketExchange}.
  * </p>
  * 
  * <p>
- * A simple Websocket route can be defined as follows in a web controller bean:
+ * A simple Websocket route can be defined as follows in a Web controller bean:
  * </p>
  * 
  * <pre>{@code
@@ -88,7 +83,7 @@ public @interface WebSocketRoute {
 	 * </p>
 	 *
 	 * <p>
-	 * A path can be a parameterized path parameters as defined by {@link URIBuilder}.
+	 * A path can be a parameterized path parameters as defined by {@link io.inverno.mod.base.net.URIBuilder}.
 	 * </p>
 	 *
 	 * <p>
@@ -142,4 +137,15 @@ public @interface WebSocketRoute {
 	 * @return a WebSocket message type
 	 */
 	WebSocketMessage.Kind messageType() default WebSocketMessage.Kind.TEXT;
+
+	/**
+	 * <p>
+	 * Specifies whether the WebSocket exchange should be closed when the outbound frames publisher completes successfully.
+	 * </p>
+	 * 
+	 * @return true to close the WebSocket exchange when the outbound frames publisher completes, false otherwise
+	 * 
+	 * @see io.inverno.mod.http.base.ws.BaseWebSocketExchange.Outbound#closeOnComplete(boolean)
+	 */
+	boolean closeOnComplete() default true;
 }

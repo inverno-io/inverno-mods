@@ -31,6 +31,7 @@ import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfigurationLoader;
 import io.inverno.mod.http.client.RequestTimeoutException;
 import io.inverno.mod.test.AbstractInvernoModTest;
+import io.inverno.mod.test.ModsTestUtils;
 import io.inverno.mod.test.configuration.ConfigurationInvocationHandler;
 import io.inverno.test.InvernoCompilationException;
 import io.inverno.test.InvernoModuleLoader;
@@ -38,9 +39,7 @@ import io.inverno.test.InvernoModuleProxy;
 import io.inverno.test.InvernoTestCompiler;
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.lang.reflect.Proxy;
-import java.net.ServerSocket;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +59,7 @@ import reactor.core.publisher.Mono;
 
 /**
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 public class HttpClientSpecificTest {
 	
@@ -90,7 +89,7 @@ public class HttpClientSpecificTest {
 		
 		InvernoModuleLoader moduleLoader = invernoCompiler.compile(MODULE_WEBROUTE);
 		
-		testServerPort = getFreePort();
+		testServerPort = ModsTestUtils.getFreePort();
 		
 		Class<?> httpConfigClass = moduleLoader.loadClass(MODULE_WEBROUTE, "io.inverno.mod.http.server.HttpServerConfiguration");
 		ConfigurationInvocationHandler httpConfigHandler = new ConfigurationInvocationHandler(httpConfigClass, Map.of("server_port", testServerPort, "h2_enabled", true));
@@ -132,16 +131,7 @@ public class HttpClientSpecificTest {
 			testServerModuleProxy.stop();
 		}
 	}
-	
-	private static int getFreePort() {
-		try (ServerSocket serverSocket = new ServerSocket(0)) {
-			return serverSocket.getLocalPort();
-		} 
-		catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-	}
-	
+
 	@Test
 	public void test_interceptor() {
 		AtomicBoolean interceptorFlag = new AtomicBoolean(false);
@@ -308,7 +298,7 @@ public class HttpClientSpecificTest {
 				.flatMap(exchange -> {
 					exchange.request()
 						.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-						.body().get().string().value("a,b,c");
+						.body().string().value("a,b,c");
 					return exchange.response();
 				})
 				.flatMapMany(response -> {
@@ -338,10 +328,12 @@ public class HttpClientSpecificTest {
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
 			))
 			.interceptor(exchange -> {
-				exchange.request().body().ifPresent(body -> body.transform(data -> Flux.from(data)
-					.doOnNext(buf -> interceptedRequestBody.append(buf.toString(Charsets.UTF_8)))
-				));
-				
+				if(exchange.request().getMethod().isBodyAllowed()) {
+					exchange.request().body().transform(data -> Flux.from(data)
+						.doOnNext(buf -> interceptedRequestBody.append(buf.toString(Charsets.UTF_8)))
+					);
+				}
+
 				exchange.response().body().transform(data -> Flux.from(data)
 					.doOnNext(buf -> interceptedResponseBody.append(buf.toString(Charsets.UTF_8)))
 				);
@@ -355,7 +347,7 @@ public class HttpClientSpecificTest {
 				.flatMap(exchange -> {
 					exchange.request()
 						.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-						.body().get().string().value("a,b,c");
+						.body().string().value("a,b,c");
 					return exchange.response();
 				})
 				.flatMapMany(response -> {
@@ -668,7 +660,7 @@ public class HttpClientSpecificTest {
 				.flatMap(exchange -> {
 					exchange.request()
 						.headers(headers -> headers.contentType("text/plain"))
-						.body().get().string().stream(Flux.concat(Flux.just("a", "b"), Mono.just("timeout").delayElement(Duration.ofSeconds(2))));
+						.body().string().stream(Flux.concat(Flux.just("a", "b"), Mono.just("timeout").delayElement(Duration.ofSeconds(2))));
 					return exchange.response();
 				})
 				.cast(Object.class)
@@ -719,7 +711,7 @@ public class HttpClientSpecificTest {
 			Mono<Object> timeoutRequest = endpoint
 				.exchange(Method.POST, "/post_timeout")
 				.flatMap(exchange -> {
-					exchange.request().body().get().string().stream(Mono.just("timeout").delayElement(Duration.ofSeconds(2)));
+					exchange.request().body().string().stream(Mono.just("timeout").delayElement(Duration.ofSeconds(2)));
 					return exchange.response();
 				})
 				.cast(Object.class)
@@ -830,7 +822,7 @@ public class HttpClientSpecificTest {
 				.flatMap(exchange -> {
 					exchange.request()
 						.headers(headers -> headers.contentType("text/plain"))
-						.body().get().string().stream(Flux.concat(Flux.just("a", "b"), Mono.just("timeout").delayElement(Duration.ofSeconds(2))));
+						.body().string().stream(Flux.concat(Flux.just("a", "b"), Mono.just("timeout").delayElement(Duration.ofSeconds(2))));
 					return exchange.response();
 				})
 				.cast(Object.class)
@@ -898,7 +890,7 @@ public class HttpClientSpecificTest {
 				.flatMap(exchange -> {
 					exchange.request()
 						.headers(headers -> headers.contentType("text/plain"))
-						.body().get().string().stream(Mono.just("timeout").delayElement(Duration.ofSeconds(2)));
+						.body().string().stream(Mono.just("timeout").delayElement(Duration.ofSeconds(2)));
 					return exchange.response();
 				})
 				.cast(Object.class)
@@ -1022,7 +1014,7 @@ public class HttpClientSpecificTest {
 				.flatMap(exchange -> {
 					exchange.request()
 						.headers(headers -> headers.contentType("text/plain"))
-						.body().get().string().stream(Flux.concat(Flux.just("a", "b"), Mono.just("timeout").delayElement(Duration.ofSeconds(2))).delaySubscription(Duration.ofMillis(200)));
+						.body().string().stream(Flux.concat(Flux.just("a", "b"), Mono.just("timeout").delayElement(Duration.ofSeconds(2))).delaySubscription(Duration.ofMillis(200)));
 					return exchange.response();
 				})
 				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
@@ -1075,7 +1067,7 @@ public class HttpClientSpecificTest {
 			blankH2cEndpoint
 				.exchange(Method.POST, "/upload")
 				.flatMap(exchange -> {
-					exchange.request().body().get().multipart().from((factory, output) -> output.value(
+					exchange.request().body().multipart().from((factory, output) -> output.value(
 						factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_big.txt"))))
 					));
 					return exchange.response();
@@ -1108,7 +1100,7 @@ public class HttpClientSpecificTest {
 							.set(Headers.NAME_EXPECT, Headers.VALUE_100_CONTINUE)
 							.contentLength(17)
 						)
-						.body().get().string().value("post_100_continue");
+						.body().string().value("post_100_continue");
 					return exchange.response();
 				})
 				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
@@ -1126,7 +1118,7 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_http1x_proxy() {
-		int proxyPort = getFreePort();
+		int proxyPort = ModsTestUtils.getFreePort();
 		
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf

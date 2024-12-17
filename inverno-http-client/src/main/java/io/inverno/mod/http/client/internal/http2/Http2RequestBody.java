@@ -24,7 +24,7 @@ import org.reactivestreams.Publisher;
  * Http/2 request body.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.8
  */
 public class Http2RequestBody {

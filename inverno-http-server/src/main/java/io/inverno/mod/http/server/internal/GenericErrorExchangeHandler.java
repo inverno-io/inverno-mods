@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * Generic {@link ErrorExchangeHandler} implementation.
+ * Generic error {@link ExchangeHandler} implementation.
  * </p>
  * 
  * <p>
@@ -53,9 +53,9 @@ public class GenericErrorExchangeHandler implements ExchangeHandler<ExchangeCont
 				errorExchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)httpError).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
 			}
 			else if(errorExchange.getError() instanceof ServiceUnavailableException) {
-				((ServiceUnavailableException)httpError).getRetryAfter().ifPresent(retryAfter -> {
-					errorExchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(Headers.FORMATTER_RFC_5322_DATE_TIME)));
-				});
+				if(((ServiceUnavailableException)httpError).getRetryAfter() != null) {
+					errorExchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, ((ServiceUnavailableException)httpError).getRetryAfter().format(Headers.FORMATTER_RFC_5322_DATE_TIME)));
+				}
 			}
 			errorExchange.response().headers(headers -> headers.status(httpError.getStatusCode())).body().empty();
 		}

@@ -27,7 +27,7 @@ import reactor.core.publisher.Mono;
  * It is used to set the payload sent to a client or a server either in a response or a request.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @param <A> the type of data

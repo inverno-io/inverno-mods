@@ -21,7 +21,7 @@ package io.inverno.mod.web.compiler.spi;
  * </p>
  *
  * <p>
- * This is used to differentiate WebSocket route parameter from other web route parameters.
+ * This is used to differentiate WebSocket route parameter from other Web route parameters.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

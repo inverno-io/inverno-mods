@@ -39,7 +39,7 @@ public interface HttpServerConfiguration {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.7
 	 */
-	public static enum ClientAuth {
+	enum ClientAuth {
 		/**
 		 * Indicates that client authentication will not be requested during TLS handshake.
 		 */
@@ -51,7 +51,7 @@ public interface HttpServerConfiguration {
 		/**
 		 * Indicates that client authentication will be requested during TLS handshake and that the handshake will fail if the client does not present authentication.
 		 */
-		REQUIRED;
+		REQUIRED
 	}
 	
 	/**
@@ -128,7 +128,7 @@ public interface HttpServerConfiguration {
 	 * @return the graceful shutdown timeout
 	 */
 	default long graceful_shutdown_timeout() {
-		return 30000l;
+		return 30000L;
 	}
 	
 	/**
@@ -431,7 +431,7 @@ public interface HttpServerConfiguration {
 	 * Defaults to {@link ClientAuth#NONE}.
 	 * </p>
 	 * 
-	 * @return 
+	 * @return the client authentication type
 	 */
 	default ClientAuth tls_client_auth() {
 		return ClientAuth.NONE;
@@ -503,7 +503,7 @@ public interface HttpServerConfiguration {
 	 * The list of ciphers to include.
 	 * </p>
 	 * 
-	 * @return a list of ciphers
+	 * @return an array of ciphers
 	 */
 	String[] tls_ciphers_includes();
 
@@ -512,7 +512,7 @@ public interface HttpServerConfiguration {
 	 * The list of ciphers to exclude.
 	 * </p>
 	 * 
-	 * @return a list of ciphers
+	 * @return an array of ciphers
 	 */
 	String[] tls_ciphers_excludes();
 	
@@ -601,7 +601,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 *
 	 * <p>
-	 * When SSL is disabled, the property enables/disables Http/2 over cleartext (H2C) protocol as decribed by <a href="https://datatracker.ietf.org/doc/html/rfc7540#section-3.2">RFC 7540 Section
+	 * When SSL is disabled, the property enables/disables Http/2 over cleartext (H2C) protocol as described by <a href="https://datatracker.ietf.org/doc/html/rfc7540#section-3.2">RFC 7540 Section
 	 * 3.2</a>.
 	 * </p>
 	 *
@@ -612,12 +612,7 @@ public interface HttpServerConfiguration {
 	 * @return true if the option is enabled, false otherwise
 	 */
 	default boolean h2_enabled() {
-		if(this.tls_enabled()) {
-			return true;
-		}
-		else {
-			return false;
-		}
+		return this.tls_enabled();
 	}
 	
 	/**
@@ -647,7 +642,7 @@ public interface HttpServerConfiguration {
 	 * @return the header table size
 	 */
 	default Long http2_header_table_size() {
-		return 4096l;
+		return 4096L;
 	}
 
 	/**
@@ -752,7 +747,7 @@ public interface HttpServerConfiguration {
 	 * @return the WebSocket handshake timeout
 	 */
 	default long ws_handshake_timeout() {
-		return -1l;
+		return -1L;
 	}
 	
 	/**
@@ -767,7 +762,7 @@ public interface HttpServerConfiguration {
 	 * @return the WebSocket close timeout
 	 */
 	default long ws_close_timeout() {
-		return -1l;
+		return -1L;
 	}
 	
 	/**
@@ -877,16 +872,16 @@ public interface HttpServerConfiguration {
 	
 	/**
 	 * <p>
-	 * The prefered client window size to use if client inflater is customizable.
+	 * The preferred client window size to use if client inflater is customizable.
 	 * </p>
 	 * 
 	 * <p>
 	 * Defaults to {@code 15}.
 	 * </p>
 	 * 
-	 * @return the prefered client window size
+	 * @return the preferred client window size
 	 */
-	default int ws_message_prefered_client_window_size() {
+	default int ws_message_preferred_client_window_size() {
 		return 15;
 	}
 	
@@ -951,6 +946,6 @@ public interface HttpServerConfiguration {
 	 * @return the inbound close frame timeout
 	 */
 	default long ws_inbound_close_frame_timeout() {
-		return 60000l;
+		return 60000L;
 	}
 }

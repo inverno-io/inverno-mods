@@ -21,17 +21,17 @@ import java.util.Map;
 
 /**
  * <p>
- * A URI builder is used for creating URIs as defined by
- * <a href="https://tools.ietf.org/html/rfc3986">RFC 3986</a>.
+ * A URI builder is used for creating URIs as defined by <a href="https://tools.ietf.org/html/rfc3986">RFC 3986</a>.
  * </p>
  *
  * <p>
- * The URI components provided to the builder can be parameterized with parameters of the form <code>{{@literal <name>[:<pattern>]}}</code> when the
- * component allows it. It allows to create URI templates used to generate contextual URIs or create URI patterns to match particular URIs.
+ * The URI components provided to the builder can be parameterized with parameters of the form {@code {<name>[:<pattern>]}} when the component allows it. It allows to create URI
+ * templates used to generate contextual URIs or create URI patterns to match particular URIs.
  * </p>
  *
  * <p>
- * The following is a complete example of parameterized URI:</p>
+ * The following is a complete example of parameterized URI:
+ * </p>
  *
  * <pre>{@code
  * {scheme}://{userinfo}@{host}:{port}/a/{segment}?parameter={parameter}#{fragment}
@@ -47,8 +47,7 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Sets the scheme component as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-3.1">RFC 3986 Section 3.1</a>.
+	 * Sets the scheme component as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.1">RFC 3986 Section 3.1</a>.
 	 * </p>
 	 *
 	 * @param scheme the scheme to set
@@ -59,8 +58,18 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Sets the user information component as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-3.2.1">RFC 3986 Section 3.2.1</a>.
+	 * Sets the authority component as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.2">RFC 3986 Section 3.2</a>.
+	 * </p>
+	 *
+	 * @param authority the authority to set
+	 *
+	 * @return the URI builder
+	 */
+	URIBuilder authority(String authority);
+
+	/**
+	 * <p>
+	 * Sets the user information component as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.2.1">RFC 3986 Section 3.2.1</a>.
 	 * </p>
 	 *
 	 * @param userInfo the user information to set
@@ -71,8 +80,7 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Sets the host component as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-3.2.2">RFC 3986 Section 3.2.2</a>.
+	 * Sets the host component as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.2.2">RFC 3986 Section 3.2.2</a>.
 	 * </p>
 	 *
 	 * @param host the host to set
@@ -83,8 +91,7 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Sets the port component as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-3.2.3">RFC 3986 Section 3.2.3</a>.
+	 * Sets the port component as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.2.3">RFC 3986 Section 3.2.3</a>.
 	 * </p>
 	 *
 	 * @param port the port to set
@@ -95,8 +102,7 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Sets the port component as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-3.2.3">RFC 3986 Section 3.2.3</a>.
+	 * Sets the port component as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.2.3">RFC 3986 Section 3.2.3</a>.
 	 * </p>
 	 *
 	 * @param port the port to set
@@ -107,8 +113,7 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Appends the specified path as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-3.3">RFC 3986 Section 3.3</a> ignoring the trailing slash
+	 * Appends the specified path as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.3">RFC 3986 Section 3.3</a> ignoring the trailing slash
 	 * </p>
 	 *
 	 * @param path the path to append
@@ -121,8 +126,7 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Appends the specified path as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-3.3">RFC 3986 Section 3.3</a> ignoring or not the trailing slash.
+	 * Appends the specified path as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.3">RFC 3986 Section 3.3</a> ignoring or not the trailing slash.
 	 * </p>
 	 *
 	 * @param path                the path to append
@@ -134,8 +138,7 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Appends the specified path segment as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-3.3">RFC 3986 Section 3.3</a>
+	 * Appends the specified path segment as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.3">RFC 3986 Section 3.3</a>
 	 * </p>
 	 *
 	 * @param segment the path segment to append
@@ -155,14 +158,12 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Sets the query component as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-3.4">RFC 3986 Section 3.4</a>.
+	 * Sets the query component as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.4">RFC 3986 Section 3.4</a>.
 	 * </p>
 	 *
 	 * <p>
-	 * This method basically replaces previous query component value with the specified value removing query parameters if any. Implementation does
-	 * not extract query parameters from the specified value which remains opaque. If you wish to provide query parameters you should use
-	 * {@link #queryParameter(String, String)} instead.
+	 * This method basically replaces previous query component value with the specified value removing query parameters if any. Implementation does not extract query parameters from the specified
+	 * value which remains opaque. If you wish to provide query parameters you should use {@link #queryParameter(String, String)} instead.
 	 * </p>
 	 *
 	 * @param value the query value
@@ -173,8 +174,7 @@ public interface URIBuilder extends Cloneable {
 	
 	/**
 	 * <p>
-	 * Appends a query parameter component with specified name and value as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.4">RFC
-	 * 3986 Section 3.4</a>.
+	 * Appends a query parameter component with specified name and value as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.4">RFC 3986 Section 3.4</a>.
 	 * </p>
 	 *
 	 * @param name  the query parameter name
@@ -195,8 +195,7 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Sets the fragment component as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-3.5">RFC 3986 Section 3.5</a>.
+	 * Sets the fragment component as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.5">RFC 3986 Section 3.5</a>.
 	 * </p>
 	 *
 	 * @param fragment the fragment to set
@@ -277,8 +276,7 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Builds the URI from the builder's URI components after replacing the parameters with the string representation of the specified values escaping
-	 * slash in the path segment components.
+	 * Builds the URI from the builder's URI components after replacing the parameters with the string representation of the specified values escaping slash in the path segment components.
 	 * </p>
 	 *
 	 * @param values an array of values to replace the components parameters
@@ -293,8 +291,7 @@ public interface URIBuilder extends Cloneable {
 	
 	/**
 	 * <p>
-	 * Builds the URI from the builder's URI components after replacing the parameters with the string representation of the specified values escaping
-	 * slash in the path segment components.
+	 * Builds the URI from the builder's URI components after replacing the parameters with the string representation of the specified values escaping slash in the path segment components.
 	 * </p>
 	 *
 	 * @param values a list of values to replace the components parameters
@@ -309,8 +306,7 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Builds the URI from the builder's URI components after replacing the parameters with the string representation of the specified values escaping
-	 * or not slash in the path segment components.
+	 * Builds the URI from the builder's URI components after replacing the parameters with the string representation of the specified values escaping or not slash in the path segment components.
 	 * </p>
 	 *
 	 * @param values      a list of values to replace the components parameters
@@ -339,8 +335,7 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Builds the URI from the builder's URI components after replacing the parameters with the string representation of the specified values escaping
-	 * or not slash in the path segment components.
+	 * Builds the URI from the builder's URI components after replacing the parameters with the string representation of the specified values escaping or not slash in the path segment components.
 	 * </p>
 	 *
 	 * @param values      a map of values to replace the components parameters
@@ -354,13 +349,12 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Builds the string representation of the URI from the builder's URI components after replacing the parameters with the string representation of
-	 * the specified values escaping slash in path segment components.
+	 * Builds the string representation of the URI from the builder's URI components after replacing the parameters with the string representation of the specified values escaping slash in path
+	 * segment components.
 	 * </p>
 	 *
 	 * <p>
-	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 *
 	 * @param values an array of values to replace the components parameters
@@ -375,13 +369,12 @@ public interface URIBuilder extends Cloneable {
 	
 	/**
 	 * <p>
-	 * Builds the string representation of the URI from the builder's URI components after replacing the parameters with the string representation of
-	 * the specified values escaping slash in path segment components.
+	 * Builds the string representation of the URI from the builder's URI components after replacing the parameters with the string representation of the specified values escaping slash in path
+	 * segment components.
 	 * </p>
 	 *
 	 * <p>
-	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 *
 	 * @param values a list of values to replace the components parameters
@@ -396,13 +389,12 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Builds the string representation of the URI from the builder's URI components after replacing the parameters with the string representation of
-	 * the specified values escaping or not slash in the path segment components.
+	 * Builds the string representation of the URI from the builder's URI components after replacing the parameters with the string representation of the specified values escaping or not slash in the
+	 * path segment components.
 	 * </p>
 	 *
 	 * <p>
-	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 *
 	 * @param values      a list of values to replace the components parameters
@@ -416,13 +408,12 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Builds the string representation of the URI from the builder's URI components after replacing the parameters with the string representation of
-	 * the specified values escaping slash in path segment components.
+	 * Builds the string representation of the URI from the builder's URI components after replacing the parameters with the string representation of the specified values escaping slash in path
+	 * segment components.
 	 * </p>
 	 *
 	 * <p>
-	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 *
 	 * @param values a map of values to replace the components parameters
@@ -437,13 +428,12 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Builds the string representation of the URI from the builder's URI components after replacing the parameters with the string representation of
-	 * the specified values escaping or not slash in the path segment components.
+	 * Builds the string representation of the URI from the builder's URI components after replacing the parameters with the string representation of the specified values escaping or not slash in the
+	 * path segment components.
 	 * </p>
 	 *
 	 * <p>
-	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 *
 	 * @param values      a map of values to replace the components parameters
@@ -468,13 +458,12 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Builds the path component string from the builder's URI path segment components after replacing the parameters with the string representation
-	 * of the specified values escaping slash in path segment components.
+	 * Builds the path component string from the builder's URI path segment components after replacing the parameters with the string representation of the specified values escaping slash in path
+	 * segment components.
 	 * </p>
 	 *
 	 * <p>
-	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 *
 	 * @param values an array of values to replace the path components parameters
@@ -489,13 +478,12 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Builds the path component string from the builder's URI path segment components after replacing the parameters with the string representation
-	 * of the specified values escaping slash in path segment components.
+	 * Builds the path component string from the builder's URI path segment components after replacing the parameters with the string representation of the specified values escaping slash in path
+	 * segment components.
 	 * </p>
 	 *
 	 * <p>
-	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 *
 	 * @param values a list of values to replace the path components parameters
@@ -510,13 +498,12 @@ public interface URIBuilder extends Cloneable {
 	
 	/**
 	 * <p>
-	 * Builds the path component string from the builder's URI path segment components after replacing the parameters with the string representation
-	 * of the specified values escaping or not slash in the path segment components.
+	 * Builds the path component string from the builder's URI path segment components after replacing the parameters with the string representation of the specified values escaping or not slash in
+	 * the path segment components.
 	 * </p>
 	 *
 	 * <p>
-	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 *
 	 * @param values      an array of values to replace the path components parameters
@@ -530,13 +517,12 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Builds the path component string from the builder's URI path segment components after replacing the parameters with the string representation
-	 * of the specified values escaping slash in path segment components.
+	 * Builds the path component string from the builder's URI path segment components after replacing the parameters with the string representation of the specified values escaping slash in path
+	 * segment components.
 	 * </p>
 	 *
 	 * <p>
-	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 *
 	 * @param values a map of values to replace the components parameters
@@ -549,13 +535,12 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Builds the path component string from the builder's URI path segment components after replacing the parameters with the string representation
-	 * of the specified values escaping or not slash in the path segment components.
+	 * Builds the path component string from the builder's URI path segment components after replacing the parameters with the string representation of the specified values escaping or not slash in
+	 * the path segment components.
 	 * </p>
 	 *
 	 * <p>
-	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 *
 	 * @param values      a map of values to replace the components parameters
@@ -580,16 +565,14 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Builds the query component string from the builder's URI query parameter components after replacing the parameters with the string
-	 * representation of the specified values.
+	 * Builds the query component string from the builder's URI query parameter components after replacing the parameters with the string representation of the specified values.
 	 * </p>
 	 *
 	 * <p>
-	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 *
-	 * @param values an array of values to replace the path components parameters
+	 * @param values an array of values to replace the components parameters
 	 *
 	 * @return a query string
 	 *
@@ -601,16 +584,14 @@ public interface URIBuilder extends Cloneable {
 	
 	/**
 	 * <p>
-	 * Builds the query component string from the builder's URI query parameter components after replacing the parameters with the string
-	 * representation of the specified values.
+	 * Builds the query component string from the builder's URI query parameter components after replacing the parameters with the string representation of the specified values.
 	 * </p>
 	 *
 	 * <p>
-	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 *
-	 * @param values a list of values to replace the path components parameters
+	 * @param values a list of values to replace the components parameters
 	 *
 	 * @return a query string
 	 *
@@ -620,13 +601,11 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
-	 * Builds the query component string from the builder's URI query parameter components after replacing the parameters with the string
-	 * representation of the specified values.
+	 * Builds the query component string from the builder's URI query parameter components after replacing the parameters with the string representation of the specified values.
 	 * </p>
 	 *
 	 * <p>
-	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 *
 	 * @param values a map of values to replace the components parameters
@@ -647,6 +626,70 @@ public interface URIBuilder extends Cloneable {
 	 * @throws URIBuilderException if there was an error building the URI
 	 */
 	String buildRawQuery() throws URIBuilderException;
+
+	/**
+	 * <p>
+	 * Builds the fragment component string from the builder's URI fragment component after replacing the parameters with the string representation of the specified values.
+	 * </p>
+	 *
+	 * <p>
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * </p>
+	 *
+	 * @param values a list of values to replace the component parameters
+	 *
+	 * @return a fragment string
+	 *
+	 * @throws URIBuilderException if there was an error building the URI
+	 */
+	default String buildFragment(Object... values) throws URIBuilderException {
+		return this.buildFragment(List.of(values));
+	}
+
+	/**
+	 * <p>
+	 * Builds the fragment component string from the builder's URI fragment component after replacing the parameters with the string representation of the specified values.
+	 * </p>
+	 *
+	 * <p>
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * </p>
+	 *
+	 * @param values a list of values to replace the components parameters
+	 *
+	 * @return a query string
+	 *
+	 * @throws URIBuilderException if there was an error building the URI
+	 */
+	String buildFragment(List<Object> values) throws URIBuilderException;
+
+	/**
+	 * <p>
+	 * Builds the fragment component string from the builder's URI fragment component after replacing the parameters with the string representation of the specified values.
+	 * </p>
+	 *
+	 * <p>
+	 * Note that the resulting value is percent encoded as defined by <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * </p>
+	 *
+	 * @param values a map of values to replace the components parameters
+	 *
+	 * @return a query string
+	 *
+	 * @throws URIBuilderException if there was an error building the URI
+	 */
+	String buildFragment(Map<String, ?> values) throws URIBuilderException;
+
+	/**
+	 * <p>
+	 * Builds the fragment component raw string from the builder's fragment component.
+	 * </p>
+	 *
+	 * @return a raw fragment string
+	 *
+	 * @throws URIBuilderException if there was an error building the URI
+	 */
+	String buildRawFragment() throws URIBuilderException;
 
 	/**
 	 * <p>

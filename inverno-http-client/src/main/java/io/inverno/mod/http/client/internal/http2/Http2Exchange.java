@@ -33,7 +33,7 @@ import reactor.core.publisher.Sinks;
  * Http/2 {@link Exchange} implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @param <A> The exchange context type
@@ -44,8 +44,9 @@ public class Http2Exchange<A extends ExchangeContext> extends AbstractHttp2Excha
 	 * <p>
 	 * Creates an Http/2 exchange.
 	 * </p>
-	 * 
-	 * @param configuration      the HTTP client configurartion
+	 *
+	 * @param state              the state
+	 * @param configuration      the HTTP client configuration
 	 * @param sink               the exchange sink
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
@@ -54,6 +55,7 @@ public class Http2Exchange<A extends ExchangeContext> extends AbstractHttp2Excha
 	 * @param request            the Http/2 request
 	 */
 	public Http2Exchange(
+			Object state,
 			HttpClientConfiguration configuration, 
 			Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink, 
 			HeaderService headerService, 
@@ -61,7 +63,7 @@ public class Http2Exchange<A extends ExchangeContext> extends AbstractHttp2Excha
 			A context, 
 			Http2ConnectionStream connectionStream, 
 			EndpointRequest request) {
-		super(configuration, sink, headerService, parameterConverter, context, connectionStream, new Http2Request(headerService, parameterConverter, connectionStream, request, configuration.http2_validate_headers()));
+		super(state, configuration, sink, headerService, parameterConverter, context, connectionStream, new Http2Request(headerService, parameterConverter, connectionStream, request, configuration.http2_validate_headers()));
 	}
 	
 	@Override

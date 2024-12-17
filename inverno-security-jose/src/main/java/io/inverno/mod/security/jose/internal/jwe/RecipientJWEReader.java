@@ -56,7 +56,7 @@ public class RecipientJWEReader<A> extends GenericJWEReader<A> {
 	 * @param jweHeader             the recipient JWE header
 	 * @param aad                   the additional authentication data
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public RecipientJWEReader(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type, Publisher<? extends JWK> keys, List<JWEZip> zips, GenericJWEHeader jweHeader, byte[] aad) {
 		super(mapper, dataConversionService, jwkService, type, keys, zips);
 		this.jweHeader = jweHeader;

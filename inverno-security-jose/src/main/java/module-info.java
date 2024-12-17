@@ -1,20 +1,3 @@
-import java.security.cert.PKIXParameters;
-import java.util.concurrent.ExecutorService;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.inverno.mod.base.converter.MediaTypeConverter;
-import io.inverno.mod.base.resource.ResourceService;
-import io.inverno.mod.security.jose.jwe.JWEService;
-import io.inverno.mod.security.jose.jwe.JWEZip;
-import io.inverno.mod.security.jose.jwk.JWKKeyResolver;
-import io.inverno.mod.security.jose.jwk.JWKService;
-import io.inverno.mod.security.jose.jwk.JWKStore;
-import io.inverno.mod.security.jose.jwk.JWKURLResolver;
-import io.inverno.mod.security.jose.jwk.X509JWKCertPathValidator;
-import io.inverno.mod.security.jose.jws.JWSService;
-import io.inverno.mod.security.jose.jwt.JWTService;
-
 /*
  * Copyright 2022 Jeremy KUHN
  *
@@ -48,49 +31,63 @@ import io.inverno.mod.security.jose.jwt.JWTService;
  * <li><a href="https://datatracker.ietf.org/doc/html/rfc8037">RFC8037</a> CFRG Elliptic Curve Diffie-Hellman (ECDH) and Signatures in JSON Object Signing and Encryption (JOSE)</li>
  * <li><a href="https://datatracker.ietf.org/doc/html/rfc8812">RFC8812</a> CBOR Object Signing and Encryption (COSE) and JSON Object Signing and Encryption (JOSE) Registrations for Web Authentication (WebAuthn) Algorithms</li>
  * </ul>
- * 
+ *
  * <p>
  * It defines the following sockets:
  * </p>
  * 
  * <dl>
+ * <dt><b>mediaTypeConverters (required)</b></dt>
+ * <dd>A list of {@link io.inverno.mod.base.converter.MediaTypeConverter} used to encode/decode JOSE objects payloads</dd>
  * <dt><b>configuration</b></dt>
  * <dd>the JOSE module configuration</dd>
- * <dt><b>jwkKeyResolver</b></dt>
- * <dd>A {@link JWKKeyResolver} used to resolve private and public (X.509 certificate) keys from a key store based on Key ids or X.509 thumbprints.</dd>
- * <dt><b>jwkURLResolver</b></dt>
- * <dd>A {@link JWKURLResolver} used to resolve JWK Set URLs.</dd>
- * <dt><b>jwkStore</b></dt>
- * <dd>A {@link JWKStore} used to store and cache JWKs.</dd>
- * <dt><b>jwkPKIXParameters</b></dt>
- * <dd>{@link PKIXParameters} providing the parameters used to validate X.509 certificate paths.</dd>
- * <dt><b>jwkX509CertPathValidator</b></dt>
- * <dd>An {@code X509JWKCertPathValidator} used to validate X.509 certificate paths.</dd>
  * <dt><b>jweZips</b></dt>
- * <dd>A set of {@link JWEZip} used to compress/decompress JWE payloads.</dd>
- * <dt><b>mediaTypeConverters (required)</b></dt>
- * <dd>A list of {@link MediaTypeConverter} used to encode/decode JOSE objects payloads.</dd>
+ * <dd>A set of {@link io.inverno.mod.security.jose.jwe.JWEZip} used to compress/decompress JWE payloads</dd>
+ * <dt><b>jwkFactories</b></dt>
+ * <dd>extend the signature and encryption capabilities with a list of custom {@link io.inverno.mod.security.jose.jwk.JWKFactory}</dd>
+ * <dt><b>jwkKeyResolver</b></dt>
+ * <dd>A {@link io.inverno.mod.security.jose.jwk.JWKKeyResolver} used to resolve private and public (X.509 certificate) keys from a key store based on Key ids or X.509 thumbprints</dd>
+ * <dt><b>jwkPKIXParameters</b></dt>
+ * <dd>{@link java.security.cert.PKIXParameters} providing the parameters used to validate X.509 certificate paths</dd>
+ * <dt><b>jwkStore</b></dt>
+ * <dd>A {@link io.inverno.mod.security.jose.jwk.JWKStore} used to store and cache JWKs</dd>
+ * <dt><b>jwkURLResolver</b></dt>
+ * <dd>A {@link io.inverno.mod.security.jose.jwk.JWKURLResolver} used to resolve JWK Set URLs</dd>
+ * <dt><b>jwkX509CertPathValidator</b></dt>
+ * <dd>An {@code X509JWKCertPathValidator} used to validate X.509 certificate paths</dd>
  * <dt><b>resourceService</b></dt>
- * <dd>The {@link ResourceService} used to resolve external resources such as key store, JWK Set URL, X.509 URL...</dd>
+ * <dd>The {@link io.inverno.mod.base.resource.ResourceService} used to resolve external resources such as key store, JWK Set URL, X.509 URL...</dd>
  * <dt><b>objectMapper</b></dt>
- * <dd>The {@link ObjectMapper} used to serialize/deserialize JSON.</dd>
+ * <dd>The {@link com.fasterxml.jackson.databind.ObjectMapper} used to serialize/deserialize JSON</dd>
  * <dt><b>workerPool</b></dt>
- * <dd>The {@link ExecutorService} used to execute blocking operations.</dd>
+ * <dd>The {@link java.util.concurrent.ExecutorService} used to execute blocking operations</dd>
  * </dl>
  * 
  * <p>
  * It exposes the following beans:
  * </p>
- * 
+ *
  * <dl>
- * <dt><b>jwkService</b></dt>
- * <dd>A {@link JWKService} used to build, resolve, generate, store or load JSON Web Keys.</dd>
- * <dt><b>jwsService</b></dt>
- * <dd>A {@link JWSService} used to build and read JSON Web Signatures.</dd>
+ * <dt><b>configuration</b></dt>
+ * <dd>the JOSE module configuration</dd>
+ * <dt><b>joseJsonStringMediaTypeConverter</b></dt>
+ * <dd>a {@code String} {@code application/jose+json} media type converter</dd>
+ * <dt><b>joseStringMediaTypeConverter</b></dt>
+ * <dd>a {@code String} {@code application/jose} media type converter</dd>
  * <dt><b>jweService</b></dt>
- * <dd>A {@link JWEService} used to build and read JSON Web Encryptions.</dd>
+ * <dd>A {@link io.inverno.mod.security.jose.jwe.JWEService} used to build and read JSON Web Encryptions.</dd>
+ * <dt><b>jwkJsonMediaTypeConverter</b></dt>
+ * <dd>a {@code String} {@code application/jwk+json} media type converter</dd>
+ * <dt><b>jwkService</b></dt>
+ * <dd>A {@link io.inverno.mod.security.jose.jwk.JWKService} used to build, resolve, generate, store or load JSON Web Keys.</dd>
+ * <dt><b>jwkSetJsonMediaTypeConverter</b></dt>
+ * <dd>a {@code String} {@code application/jwk-set+json} media type converter</dd>
+ * <dt><b>jwsService</b></dt>
+ * <dd>A {@link io.inverno.mod.security.jose.jws.JWSService} used to build and read JSON Web Signatures.</dd>
  * <dt><b>jwtService</b></dt>
- * <dd>A {@link JWTService} used to build and read JSON Web Tokens.</dd>
+ * <dd>A {@link io.inverno.mod.security.jose.jwt.JWTService} used to build and read JSON Web Tokens.</dd>
+ * <dt><b>jwtStringMediaTypeConverter</b></dt>
+ * <dd>a {@code String} {@code application/jwt} media type converter</dd>
  * </dl>
  * 
  * <p>The JOSE module can be started as follows:</p>

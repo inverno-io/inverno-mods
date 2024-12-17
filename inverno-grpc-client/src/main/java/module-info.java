@@ -24,10 +24,12 @@
  * </p>
  * 
  * <dl>
- * <dt><b>configuration</b></dt>
- * <dd>the gRPC client module configuration</dd>
  * <dt><b>netService (required)</b></dt>
  * <dd>the Net service providing the ByteBuf allocator</dd>
+ * <dt><b>configuration</b></dt>
+ * <dd>the gRPC client module configuration</dd>
+ * <dt><b>extensionRegistry</b></dt>
+ * <dd>the Protocol buffer extension registry</dd>
  * <dt><b>messageCompressors</b></dt>
  * <dd>custom gRPC message compressors</dd>
  * </dl>

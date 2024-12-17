@@ -15,7 +15,6 @@
  */
 package io.inverno.mod.http.base;
 
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -35,7 +34,7 @@ public class NotAcceptableException extends HttpException {
 	/**
 	 * The list of media types accepted by the requested resource.
 	 */
-	private final Optional<Set<String>> acceptableMediaTypes;
+	private final Set<String> acceptableMediaTypes;
 	
 	/**
 	 * <p>
@@ -44,7 +43,7 @@ public class NotAcceptableException extends HttpException {
 	 */
 	public NotAcceptableException() {
 		super(Status.NOT_ACCEPTABLE);
-		this.acceptableMediaTypes = Optional.empty();
+		this.acceptableMediaTypes = null;
 	}
 
 	/**
@@ -56,7 +55,7 @@ public class NotAcceptableException extends HttpException {
 	 */
 	public NotAcceptableException(String message) {
 		super(Status.NOT_ACCEPTABLE, message);
-		this.acceptableMediaTypes = Optional.empty();
+		this.acceptableMediaTypes = null;
 	}
 
 	/**
@@ -68,7 +67,7 @@ public class NotAcceptableException extends HttpException {
 	 */
 	public NotAcceptableException(Throwable cause) {
 		super(Status.NOT_ACCEPTABLE, cause);
-		this.acceptableMediaTypes = Optional.empty();
+		this.acceptableMediaTypes = null;
 	}
 
 	/**
@@ -81,7 +80,7 @@ public class NotAcceptableException extends HttpException {
 	 */
 	public NotAcceptableException(String message, Throwable cause) {
 		super(Status.NOT_ACCEPTABLE, message, cause);
-		this.acceptableMediaTypes = Optional.empty();
+		this.acceptableMediaTypes = null;
 	}
 	
 	/**
@@ -93,7 +92,7 @@ public class NotAcceptableException extends HttpException {
 	 */
 	public NotAcceptableException(Set<String> acceptableMediaTypes) {
 		super(Status.NOT_ACCEPTABLE);
-		this.acceptableMediaTypes = Optional.ofNullable(acceptableMediaTypes);
+		this.acceptableMediaTypes = acceptableMediaTypes;
 	}
 
 	/**
@@ -106,7 +105,7 @@ public class NotAcceptableException extends HttpException {
 	 */
 	public NotAcceptableException(Set<String> acceptableMediaTypes, String message) {
 		super(Status.NOT_ACCEPTABLE, message);
-		this.acceptableMediaTypes = Optional.ofNullable(acceptableMediaTypes);
+		this.acceptableMediaTypes = acceptableMediaTypes;
 	}
 
 	/**
@@ -119,7 +118,7 @@ public class NotAcceptableException extends HttpException {
 	 */
 	public NotAcceptableException(Set<String> acceptableMediaTypes, Throwable cause) {
 		super(Status.NOT_ACCEPTABLE, cause);
-		this.acceptableMediaTypes = Optional.ofNullable(acceptableMediaTypes);
+		this.acceptableMediaTypes = acceptableMediaTypes;
 	}
 
 	/**
@@ -133,7 +132,7 @@ public class NotAcceptableException extends HttpException {
 	 */
 	public NotAcceptableException(Set<String> acceptableMediaTypes, String message, Throwable cause) {
 		super(Status.NOT_ACCEPTABLE, message, cause);
-		this.acceptableMediaTypes = Optional.ofNullable(acceptableMediaTypes);
+		this.acceptableMediaTypes = acceptableMediaTypes;
 	}
 	
 	/**
@@ -141,9 +140,9 @@ public class NotAcceptableException extends HttpException {
 	 * Returns the list of media types accepted by the requested resource.
 	 * </p>
 	 * 
-	 * @return the list of acceptable media types
+	 * @return the set of acceptable media types or null if none was specified
 	 */
-	public Optional<Set<String>> getAcceptableMediaTypes() {
+	public Set<String> getAcceptableMediaTypes() {
 		return acceptableMediaTypes;
 	}
 }

@@ -21,7 +21,6 @@ import io.inverno.mod.security.authentication.Authentication;
 import io.inverno.mod.security.authentication.InvalidCredentialsException;
 import io.inverno.mod.security.authentication.TokenAuthentication;
 import io.inverno.mod.security.jose.JOSEProcessingException;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -44,7 +43,7 @@ public class JWEAuthentication<A extends Authentication> implements TokenAuthent
 	/**
 	 * The security error resulting from a JOSE processing error.
 	 */
-	private final Optional<SecurityException> cause;
+	private final SecurityException cause;
 
 	/**
 	 * <p>
@@ -55,7 +54,7 @@ public class JWEAuthentication<A extends Authentication> implements TokenAuthent
 	 */
 	public JWEAuthentication(JWE<A> jwe) {
 		this.jwe = jwe;
-		this.cause = Optional.empty();
+		this.cause = null;
 	}
 	
 	/**
@@ -67,7 +66,7 @@ public class JWEAuthentication<A extends Authentication> implements TokenAuthent
 	 */
 	public JWEAuthentication(SecurityException cause) {
 		this.jwe = null;
-		this.cause = Optional.ofNullable(cause);
+		this.cause = cause;
 	}
 	
 	/**
@@ -79,7 +78,7 @@ public class JWEAuthentication<A extends Authentication> implements TokenAuthent
 	 */
 	JWEAuthentication(JOSEProcessingException cause) {
 		this.jwe = null;
-		this.cause = Optional.ofNullable(cause).map(e -> new InvalidCredentialsException("Invalid token", e));
+		this.cause = cause != null ? new InvalidCredentialsException("Invalid token", cause) : null;
 	}
 
 	/**
@@ -116,6 +115,6 @@ public class JWEAuthentication<A extends Authentication> implements TokenAuthent
 		if(this.jwe != null) {
 			return this.jwe.getPayload().getCause();
 		}
-		return this.cause;
+		return Optional.ofNullable(this.cause);
 	}
 }

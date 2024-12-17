@@ -30,7 +30,7 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * ByteBuf {@code application/json} media type converter.
+ * {@code ByteBuf} {@code application/json} media type converter.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -45,7 +45,7 @@ public class JsonByteBufMediaTypeConverter extends AbstractJsonByteBufMediaTypeC
 	private static final ByteBuf JSON_ARRAY_SEPARATOR = Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(new byte[] {','}));
 	private static final ByteBuf JSON_ARRAY_END = Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(new byte[] {']'}));
 
-	private static final Mono<ByteBuf> JSON_ARRAY_START_MONO = Mono.fromSupplier(() -> JSON_ARRAY_START.duplicate());
+	private static final Mono<ByteBuf> JSON_ARRAY_START_MONO = Mono.fromSupplier(JSON_ARRAY_START::duplicate);
 	
 	/**
 	 * <p>
@@ -83,7 +83,7 @@ public class JsonByteBufMediaTypeConverter extends AbstractJsonByteBufMediaTypeC
 		@Override
 		public Iterator<ByteBuf> iterator() {
 			
-			return new Iterator<ByteBuf>() {
+			return new Iterator<>() {
 				
 				private ByteBuf current = Unpooled.EMPTY_BUFFER;
 

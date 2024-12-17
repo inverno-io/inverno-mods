@@ -59,13 +59,13 @@ public class InMemoryLoginCredentialsResolver implements CredentialsResolver<Log
 	public InMemoryLoginCredentialsResolver(List<LoginCredentials> credentials) {
 		this.credentials = new ConcurrentHashMap<>();
 		if(credentials != null) {
-			credentials.stream().forEach(c -> this.credentials.put(c.getUsername(), c));
+			credentials.forEach(c -> this.credentials.put(c.getUsername(), c));
 		}
 	}
 	
 	/**
 	 * <p>
-	 * Adds/Sets the login credentials identified by the secified username.
+	 * Adds/Sets the login credentials identified by the specified username.
 	 * </p>
 	 * 
 	 * @param username a username

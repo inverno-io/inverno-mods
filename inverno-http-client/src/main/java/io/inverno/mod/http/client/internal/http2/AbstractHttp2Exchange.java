@@ -39,7 +39,7 @@ import reactor.core.publisher.Sinks;
  * Base Http/2 {@link Exchange} implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 abstract class AbstractHttp2Exchange<A extends ExchangeContext, B extends HttpConnectionRequest> extends AbstractExchange<A, B, Http2Response, Http2Headers> {
@@ -50,10 +50,11 @@ abstract class AbstractHttp2Exchange<A extends ExchangeContext, B extends HttpCo
 
 	/**
 	 * <p>
-	 * Creates an Http/2 exchane.
+	 * Creates an Http/2 exchange.
 	 * </p>
-	 * 
-	 * @param configuration      the HTTP client configurartion
+	 *
+	 * @param state              the state
+	 * @param configuration      the HTTP client configuration
 	 * @param sink               the exchange sink
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
@@ -62,6 +63,7 @@ abstract class AbstractHttp2Exchange<A extends ExchangeContext, B extends HttpCo
 	 * @param request            the Http/2 request
 	 */
 	public AbstractHttp2Exchange(
+			Object state,
 			HttpClientConfiguration configuration, 
 			Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink, 
 			HeaderService headerService, 
@@ -70,7 +72,7 @@ abstract class AbstractHttp2Exchange<A extends ExchangeContext, B extends HttpCo
 			Http2ConnectionStream connectionStream, 
 			B request
 		) {
-		super(configuration, sink, headerService, parameterConverter, context, request);
+		super(state, configuration, sink, headerService, parameterConverter, context, request);
 		this.connectionStream = connectionStream;
 	}
 	

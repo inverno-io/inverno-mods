@@ -163,7 +163,7 @@ public interface HeaderService {
 	 * 
 	 * @return true if the character is a header token character, false otherwise
 	 */
-	public static boolean isTokenCharacter(char character) {
+	static boolean isTokenCharacter(char character) {
 		return Character.isLetterOrDigit(character) || 
 				character == '!' || 
 				character == '#' ||
@@ -190,8 +190,8 @@ public interface HeaderService {
 	 * 
 	 * @return true if the value is a header token, false otherwise
 	 */
-	public static boolean isToken(String value) {
-		if(value == null || value.length() == 0) {
+	static boolean isToken(String value) {
+		if(value == null || value.isEmpty()) {
 			return false;
 		}
 		for(int i=0;i<value.length();i++) {
@@ -211,7 +211,7 @@ public interface HeaderService {
 	 *
 	 * @return true if the character is a header token68 character, false otherwise
 	 */
-	public static boolean isB64TokenCharacter(char character) {
+	static boolean isB64TokenCharacter(char character) {
 		return Character.isLetterOrDigit(character) || 
 				character == '-' || 
 				character == '.' ||
@@ -230,8 +230,8 @@ public interface HeaderService {
 	 *
 	 * @return true if the value is a header base64 token, false otherwise
 	 */
-	public static boolean isB64Token(String value) {
-		if(value == null || value.length() == 0) {
+	static boolean isB64Token(String value) {
+		if(value == null || value.isEmpty()) {
 			return false;
 		}
 		for(int i=0;i<value.length();i++) {
@@ -261,7 +261,7 @@ public interface HeaderService {
 	 * 
 	 * @return true if the character is a header content character, false otherwise
 	 */
-	public static boolean isContentCharacter(char character) {
+	static boolean isContentCharacter(char character) {
 		return (character > 31 && character < 127) || character == 9;
 	}
 	
@@ -275,8 +275,8 @@ public interface HeaderService {
 	 * 
 	 * @return true if the value is a header content, false otherwise
 	 */
-	public static boolean isContent(String value) {
-		if(value == null || value.length() == 0) {
+	static boolean isContent(String value) {
+		if(value == null || value.isEmpty()) {
 			return false;
 		}
 		

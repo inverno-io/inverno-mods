@@ -15,7 +15,7 @@
  */
 /**
  * <p>
- * Annotations for creating Web controllers.
+ * Inverno Web server annotations.
  * </p>
  */
 package io.inverno.mod.web.server.annotation;

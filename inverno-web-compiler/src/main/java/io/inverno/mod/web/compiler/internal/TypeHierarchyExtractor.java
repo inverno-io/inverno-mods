@@ -37,9 +37,9 @@ import javax.lang.model.util.Types;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class TypeHierarchyExtractor {
+public class TypeHierarchyExtractor {
 
-	private Types typeUtils;
+	private final Types typeUtils;
 	
 	/**
 	 * <p>
@@ -62,11 +62,10 @@ class TypeHierarchyExtractor {
 	 * @return a list of type elements ordered from the nearest to further
 	 */
 	public List<TypeElement> extractTypeHierarchy(TypeElement typeElement) {
-		List<TypeElement> typeHierarchy = this.getTypeElementWrappers(typeElement, 0, 0).stream()
-				.sorted()
-				.map(SortableTypeElementWrapper::getTypeElement)
-				.collect(Collectors.toList());
-		return typeHierarchy;
+		return this.getTypeElementWrappers(typeElement, 0, 0).stream()
+			.sorted()
+			.map(SortableTypeElementWrapper::getTypeElement)
+			.collect(Collectors.toList());
 	}
 
 	private List<SortableTypeElementWrapper> getTypeElementWrappers(TypeElement typeElement, int absoluteLevel, int extendsLevel) {

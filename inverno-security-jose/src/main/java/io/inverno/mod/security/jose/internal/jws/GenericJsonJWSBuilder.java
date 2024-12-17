@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -61,7 +60,7 @@ public class GenericJsonJWSBuilder<A> extends AbstractJsonJOSEObjectBuilder<A, J
 	 * @param jwkService            a JWK service
 	 * @param type                  the payload type
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public GenericJsonJWSBuilder(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type) {
 		super(mapper, dataConversionService, jwkService, type);
 		this.signatureInfos = new LinkedList<>();
@@ -249,7 +248,7 @@ public class GenericJsonJWSBuilder<A> extends AbstractJsonJOSEObjectBuilder<A, J
 				
 				Set<String> overlappingParameters = this.signatureProtectedJWSHeader.stopRecordOverlap();
 				if(overlappingParameters != null && !overlappingParameters.isEmpty()) {
-					throw new JWSBuildException("Signature protected headers and enclosing JSON JWS protected headers must be disjoint: " + overlappingParameters.stream().collect(Collectors.joining(", ")));
+					throw new JWSBuildException("Signature protected headers and enclosing JSON JWS protected headers must be disjoint: " + String.join(", ", overlappingParameters));
 				}
 			}
 			
@@ -270,13 +269,13 @@ public class GenericJsonJWSBuilder<A> extends AbstractJsonJOSEObjectBuilder<A, J
 				Set<String> overlappingParameters = this.signatureUnprotectedJWSHeader.stopRecordOverlap();
 				
 				if(overlappingParameters != null && !overlappingParameters.isEmpty()) {
-					throw new JWSBuildException("Signature unprotected headers and enclosing JSON JWS unprotected headers must be disjoint: " + overlappingParameters.stream().collect(Collectors.joining(", ")));
+					throw new JWSBuildException("Signature unprotected headers and enclosing JSON JWS unprotected headers must be disjoint: " + String.join(", ", overlappingParameters));
 				}
 			}
 			
 			Set<String> overlappingParameters = this.jwsHeader.stopRecordOverlap();
 			if(!overlappingParameters.isEmpty()) {
-				throw new JWSBuildException("Protected and unprotected headers must be disjoint: " + overlappingParameters.stream().collect(Collectors.joining(", ")));
+				throw new JWSBuildException("Protected and unprotected headers must be disjoint: " + String.join(", ", overlappingParameters));
 			}
 			
 			if(this.signatureUnprotectedJWSHeader != null) {

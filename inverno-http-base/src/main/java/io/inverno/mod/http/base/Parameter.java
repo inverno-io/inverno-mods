@@ -16,6 +16,7 @@
 package io.inverno.mod.http.base;
 
 import io.inverno.mod.base.converter.Convertible;
+import java.lang.reflect.Type;
 
 /**
  * <p>
@@ -59,5 +60,36 @@ public interface Parameter extends Convertible<String> {
 		 * @return a new parameter
 		 */
 		<T> Parameter create(String name, T value);
+
+		/**
+		 * <p>
+		 * Creates a parameter with the specified name and value.
+		 * </p>
+		 *
+		 * @param <T>   the value type
+		 * @param name  the name
+		 * @param value the value
+		 * @param type  the value type
+		 *
+		 * @return a new parameter
+		 */
+		default <T> Parameter create(String name, T value, Class<T> type) {
+			return this.create(name, value, (Type)type);
+		}
+
+		/**
+		 * <p>
+		 * Creates a parameter with the specified name and value.
+		 * </p>
+		 *
+		 * @param <T>   the value type
+		 * @param name  the name
+		 * @param value the value
+		 * @param type  the value type
+		 *
+		 * @return a new parameter
+		 */
+		<T> Parameter create(String name, T value, Type type);
+
 	}
 }

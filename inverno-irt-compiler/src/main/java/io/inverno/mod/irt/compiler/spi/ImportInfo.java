@@ -19,32 +19,31 @@ package io.inverno.mod.irt.compiler.spi;
  * <p>
  * An import info corresponds to an import statement in a template set source file.
  * </p>
- * 
+ *
  * <p>
- * An import statement is like a regular java imports, it is used to declare the
- * classes and methods (static imports) to consider when compiling the template
- * and the generated template class. These imports statements will be output in
- * the generated template class.
+ * An import statement is like a regular java imports, it is used to declare the classes and methods (static imports) to consider when compiling the template and the generated template class. These
+ * imports statements will be output in the generated template class.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public interface ImportInfo {
 
 	/**
-	 * <p>Determines whether this import statement is static.</p>
-	 * 
+	 * <p>
+	 * Determines whether this import statement is static.
+	 * </p>
+	 *
 	 * @return true if this is a static import, false otherwise
 	 */
 	boolean isStatic();
-	
+
 	/**
 	 * <p>
 	 * Returns the name of the import which may end with a wildcard.
 	 * </p>
-	 * 
+	 *
 	 * @return a name info
 	 */
 	NameInfo getName();

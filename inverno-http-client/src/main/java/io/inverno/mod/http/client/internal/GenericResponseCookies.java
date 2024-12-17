@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  * Generic response cookies implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class GenericResponseCookies implements InboundSetCookies {
@@ -69,7 +69,7 @@ public class GenericResponseCookies implements InboundSetCookies {
 	public Optional<SetCookieParameter> get(String name) {
 		return Optional.ofNullable(this.getAll(name)).map(setCookies ->  {
 			if(!setCookies.isEmpty()) {
-				return setCookies.get(0);
+				return setCookies.getFirst();
 			}
 			return null;
 		});

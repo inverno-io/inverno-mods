@@ -20,7 +20,7 @@ package io.inverno.mod.http.server;
  * Base exception class used to report HTTP server errors.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public class HttpServerException extends RuntimeException {
@@ -37,7 +37,7 @@ public class HttpServerException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a HTTP server exception.
+	 * Creates an HTTP server exception.
 	 * </p>
 	 * 
 	 * @param message the message
@@ -48,7 +48,7 @@ public class HttpServerException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a HTTP server exception.
+	 * Creates an HTTP server exception.
 	 * </p>
 	 * 
 	 * @param message the message
@@ -60,7 +60,7 @@ public class HttpServerException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a HTTP server exception.
+	 * Creates an HTTP server exception.
 	 * </p>
 	 * 
 	 * @param cause the cause

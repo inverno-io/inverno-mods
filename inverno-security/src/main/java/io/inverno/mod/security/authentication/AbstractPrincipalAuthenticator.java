@@ -30,7 +30,7 @@ import reactor.core.publisher.Mono;
  * </p>
  *
  * <p>
- * Implementators must implement the {@link #createAuthenticated(io.inverno.mod.security.authentication.Credentials) } and 
+ * Implementors must implement the {@link #createAuthenticated(io.inverno.mod.security.authentication.Credentials) } and
  * {@link #createDenied(io.inverno.mod.security.authentication.PrincipalCredentials, io.inverno.mod.security.authentication.AuthenticationException) } methods which creates the resulting
  * authentication in case of successful or failed authentication.
  * </p>
@@ -47,12 +47,12 @@ public abstract class AbstractPrincipalAuthenticator<A extends PrincipalCredenti
 	private static final Logger LOGGER = LogManager.getLogger(AbstractPrincipalAuthenticator.class);
 	
 	/**
-	 * The credentials resolver.
+	 * The credentials' resolver.
 	 */
 	protected final CredentialsResolver<? extends B> credentialsResolver;
 	
 	/**
-	 * The credentials matcher.
+	 * The credentials' matcher.
 	 */
 	protected final CredentialsMatcher<? super A, ? super B> credentialsMatcher;
 	

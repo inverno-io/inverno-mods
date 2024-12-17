@@ -19,9 +19,7 @@ import java.nio.charset.Charset;
 
 /**
  * <p>
- * A URI component representing the host part of an URI as defined by
- * <a href="https://tools.ietf.org/html/rfc3986#section-3.2.2">RFC 3986 Section
- * 3.2.2</a>.
+ * A URI component representing the host part of an URI as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.2.2">RFC 3986 Section 3.2.2</a>.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

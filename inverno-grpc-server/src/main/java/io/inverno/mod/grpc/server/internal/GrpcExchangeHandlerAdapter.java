@@ -33,7 +33,7 @@ import reactor.core.publisher.Mono;
  * A {@link GrpcExchangeHandler} to {@link ExchangeHandler} adapter.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public class GrpcExchangeHandlerAdapter<A extends ExchangeContext, B extends Exchange<A>, C extends Message, D extends Message, E extends GrpcRequest<C>, F extends GrpcResponse<D>, G extends GrpcExchange<A, C, D, E, F>> implements ExchangeHandler<A, B> {
@@ -53,7 +53,7 @@ public class GrpcExchangeHandlerAdapter<A extends ExchangeContext, B extends Exc
 
 	/**
 	 * <p>
-	 * Creates a gRPC exchange handler adpater.
+	 * Creates a gRPC exchange handler adapter.
 	 * </p>
 	 * 
 	 * @param grpcExchangeHandler the gRPC exchange handler to adapt

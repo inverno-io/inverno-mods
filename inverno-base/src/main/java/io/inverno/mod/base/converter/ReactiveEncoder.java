@@ -51,8 +51,7 @@ public interface ReactiveEncoder<From, To> extends Encoder<From, To> {
 	
 	/**
 	 * <p>
-	 * Encodes a mono stream of values whose type is represented by the specified
-	 * class to a stream of values.
+	 * Encodes a mono stream of values whose type is represented by the specified class to a stream of values.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object
@@ -65,8 +64,7 @@ public interface ReactiveEncoder<From, To> extends Encoder<From, To> {
 	
 	/**
 	 * <p>
-	 * Encodes a mono stream of values whose type is the specified type to a stream
-	 * of values.
+	 * Encodes a mono stream of values whose type is the specified type to a stream of values.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object
@@ -91,8 +89,7 @@ public interface ReactiveEncoder<From, To> extends Encoder<From, To> {
 	
 	/**
 	 * <p>
-	 * Encodes a flux stream of values whose type is represented by the specified
-	 * class to a stream of values.
+	 * Encodes a flux stream of values whose type is represented by the specified class to a stream of values.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object
@@ -105,8 +102,7 @@ public interface ReactiveEncoder<From, To> extends Encoder<From, To> {
 
 	/**
 	 * <p>
-	 * Encodes a flux stream of values whose type is the specified type to a stream
-	 * of values.
+	 * Encodes a flux stream of values whose type is the specified type to a stream of values.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object

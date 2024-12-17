@@ -26,7 +26,7 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * An HTTP client exchange is obtained from an {@link Endpoint} and allows to build and send an HTTP request or to open a WebSocket to an HTTP server repesented by that endpoint. 
+ * An HTTP client exchange is obtained from an {@link Endpoint} and allows to build and send an HTTP request or to open a WebSocket to an HTTP server represented by that endpoint.
  * </p>
  * 
  * <p>
@@ -55,7 +55,7 @@ import reactor.core.publisher.Mono;
  *  .subscribe(wsExchange -> {}); // create a WebSocket connection
  * }</pre>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @see Endpoint
@@ -68,6 +68,18 @@ import reactor.core.publisher.Mono;
 public interface Exchange<A extends ExchangeContext> extends BaseExchange<A, Request, Mono<? extends Response>> {
 
 	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The connection is created and the request sent when the returned publisher is subscribed.
+	 * </p>
+	 *
+	 * @throws IllegalStateException if the exchange is not bound to an endpoint
+	 */
+	@Override
+	Mono<? extends Response> response() throws IllegalStateException;
+
+	/**
 	 * <p>
 	 * Returns a WebSocket exchange publisher.
 	 * </p>
@@ -77,8 +89,10 @@ public interface Exchange<A extends ExchangeContext> extends BaseExchange<A, Req
 	 * </p>
 	 * 
 	 * @return a WebSocket exchange mono
+	 *
+	 * @throws IllegalStateException if the exchange is not bound to an endpoint
 	 */
-	default Mono<? extends WebSocketExchange<A>> webSocket() {
+	default Mono<? extends WebSocketExchange<A>> webSocket() throws IllegalStateException {
 		return this.webSocket(null);
 	}
 
@@ -94,6 +108,8 @@ public interface Exchange<A extends ExchangeContext> extends BaseExchange<A, Req
 	 * @param subProtocol the subprotocol requested to the server by the client.
 	 * 
 	 * @return a WebSocket exchange mono
+	 *
+	 * @throws IllegalStateException if the exchange is not bound to an endpoint
 	 */
-	Mono<? extends WebSocketExchange<A>> webSocket(String subProtocol);
+	Mono<? extends WebSocketExchange<A>> webSocket(String subProtocol) throws IllegalStateException;
 }

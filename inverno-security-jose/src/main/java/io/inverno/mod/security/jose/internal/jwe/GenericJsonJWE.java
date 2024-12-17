@@ -70,7 +70,7 @@ public class GenericJsonJWE<A, B extends JsonJWE.Recipient<A>> extends AbstractJ
 	 * @param iv                the Base64URL encoded initialization vector without padding
 	 * @param aad               the Base64URL encoded additional authentication data without padding
 	 * @param cipherText        the Base64URL encoded cipher text without padding
-	 * @param tag               the Base64URL encoded authenticationt tag without padding
+	 * @param tag               the Base64URL encoded authentication tag without padding
 	 * @param recipients        the list of JSON JWE recipients
 	 * @param mapper            an object mapper
 	 */
@@ -142,9 +142,9 @@ public class GenericJsonJWE<A, B extends JsonJWE.Recipient<A>> extends AbstractJ
 	@Override
 	public String toJson() throws JOSEProcessingException {
 		if(this.recipients.size() == 1) {
-			AbstractRecipient<?> recipient = (AbstractRecipient<?>)this.recipients.get(0);
+			AbstractRecipient<?> recipient = (AbstractRecipient<?>)this.recipients.getFirst();
 			try {
-				Map<String, Object> flattenedJsonJWE = new HashMap<String, Object>();
+				Map<String, Object> flattenedJsonJWE = new HashMap<>();
 				
 				String protected0 = this.getEncodedProtectedHeader();
 				if(protected0 != null) {

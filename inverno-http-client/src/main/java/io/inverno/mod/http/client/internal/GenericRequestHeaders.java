@@ -16,7 +16,6 @@
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.base.converter.ObjectConverter;
-import io.inverno.mod.http.base.InboundCookies;
 import io.inverno.mod.http.base.OutboundCookies;
 import io.inverno.mod.http.base.OutboundRequestHeaders;
 import io.inverno.mod.http.base.Parameter;
@@ -25,6 +24,7 @@ import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericParameter;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  * Base {@link OutboundRequestHeaders} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.8
  */
 public class GenericRequestHeaders<A extends GenericRequestHeaders<A>> implements OutboundRequestHeaders {
@@ -65,10 +65,10 @@ public class GenericRequestHeaders<A extends GenericRequestHeaders<A>> implement
 	
 	/**
 	 * <p>
-	 * Returns the underlyinh headers.
+	 * Returns the underlying headers.
 	 * </p>
 	 * 
-	 * @return the underlyinh headers
+	 * @return the underlying headers
 	 */
 	public LinkedHttpHeaders getUnderlyingHeaders() {
 		return this.underlyingHeaders;
@@ -80,6 +80,7 @@ public class GenericRequestHeaders<A extends GenericRequestHeaders<A>> implement
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public A contentType(String contentType) {
 		this.underlyingHeaders.set((CharSequence)Headers.NAME_CONTENT_TYPE, contentType);
 		return (A)this;
@@ -94,19 +95,38 @@ public class GenericRequestHeaders<A extends GenericRequestHeaders<A>> implement
 	public Headers.ContentType getContentTypeHeader() {
 		return this.<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
 	}
-	
+
 	@Override
+	@SuppressWarnings("unchecked")
+	public A accept(String accept) {
+		this.underlyingHeaders.set((CharSequence)Headers.NAME_ACCEPT, accept);
+		return (A)this;
+	}
+
+	@Override
+	public String getAccept() {
+		return this.underlyingHeaders.get((CharSequence)Headers.NAME_ACCEPT);
+	}
+
+	@Override
+	public Headers.Accept getAcceptHeader() {
+		return Headers.Accept.merge(this.getAllHeader(Headers.NAME_ACCEPT)).orElse(null);
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
 	public A contentLength(long contentLength) {
-		this.underlyingHeaders.setLong((CharSequence)Headers.NAME_CONTENT_LENGTH, contentLength);
+		this.underlyingHeaders.setLong(Headers.NAME_CONTENT_LENGTH, contentLength);
 		return (A)this;
 	}
 	
 	@Override
 	public Long getContentLength() {
-		return this.underlyingHeaders.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
+		return this.underlyingHeaders.getLong(Headers.NAME_CONTENT_LENGTH);
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public A cookies(Consumer<OutboundCookies> cookiesConfigurer) {
 		cookiesConfigurer.accept(this.cookies());
 		this.requestCookies.commit();
@@ -123,12 +143,24 @@ public class GenericRequestHeaders<A extends GenericRequestHeaders<A>> implement
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public A add(CharSequence name, CharSequence value) {
 		this.underlyingHeaders.addCharSequence(name, value);
 		return (A)this;
 	}
 
 	@Override
+	public <T> A addParameter(CharSequence name, T value) {
+		return this.add(name, this.parameterConverter.encode(value));
+	}
+
+	@Override
+	public <T> OutboundRequestHeaders addParameter(CharSequence name, T value, Type type) {
+		return this.add(name, this.parameterConverter.encode(value, type));
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
 	public A add(Header... headers) {
 		for(Header header : headers) {
 			this.underlyingHeaders.addCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
@@ -137,12 +169,24 @@ public class GenericRequestHeaders<A extends GenericRequestHeaders<A>> implement
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public A set(CharSequence name, CharSequence value) {
 		this.underlyingHeaders.setCharSequence(name, value);
 		return (A)this;
 	}
 
 	@Override
+	public <T> A setParameter(CharSequence name, T value) {
+		return this.set(name, this.parameterConverter.encode(value));
+	}
+
+	@Override
+	public <T> OutboundRequestHeaders setParameter(CharSequence name, T value, Type type) {
+		return this.set(name, this.parameterConverter.encode(value, type));
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
 	public A set(Header... headers) {
 		for(Header header : headers) {
 			this.underlyingHeaders.setCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
@@ -151,6 +195,7 @@ public class GenericRequestHeaders<A extends GenericRequestHeaders<A>> implement
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public A remove(CharSequence... names) {
 		for(CharSequence name : names) {
 			this.underlyingHeaders.remove(name);
@@ -189,21 +234,6 @@ public class GenericRequestHeaders<A extends GenericRequestHeaders<A>> implement
 	}
 
 	@Override
-	public <T extends Header> Optional<T> getHeader(CharSequence name) {
-		return this.get(name).map(value -> this.headerService.<T>decode(name.toString(), value));
-	}
-
-	@Override
-	public <T extends Header> List<T> getAllHeader(CharSequence name) {
-		return this.getAll(name).stream().map(value -> this.headerService.<T>decode(name.toString(), value)).collect(Collectors.toList());
-	}
-
-	@Override
-	public List<Header> getAllHeader() {
-		return this.getAll().stream().map(e -> this.headerService.<Header>decode(e.getKey(), e.getValue())).collect(Collectors.toList());
-	}
-
-	@Override
 	public Optional<Parameter> getParameter(CharSequence name) {
 		return this.get(name).map(value -> new GenericParameter(name.toString(), value, this.parameterConverter));
 	}
@@ -217,7 +247,22 @@ public class GenericRequestHeaders<A extends GenericRequestHeaders<A>> implement
 	public List<Parameter> getAllParameter() {
 		return this.underlyingHeaders.entries().stream().map(e -> new GenericParameter(e.getKey(), e.getValue(), this.parameterConverter)).collect(Collectors.toList());
 	}
-	
+
+	@Override
+	public <T extends Header> Optional<T> getHeader(CharSequence name) {
+		return this.get(name).map(value -> this.headerService.decode(name.toString(), value));
+	}
+
+	@Override
+	public <T extends Header> List<T> getAllHeader(CharSequence name) {
+		return this.getAll(name).stream().map(value -> this.headerService.<T>decode(name.toString(), value)).collect(Collectors.toList());
+	}
+
+	@Override
+	public List<Header> getAllHeader() {
+		return this.getAll().stream().map(e -> this.headerService.<Header>decode(e.getKey(), e.getValue())).collect(Collectors.toList());
+	}
+
 	/**
 	 * <p>
 	 * Returns the value of the header with the specified name as a char sequence.

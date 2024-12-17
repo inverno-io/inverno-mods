@@ -27,12 +27,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * <p>
- * 
- * </p>
- * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 public class GrpcMessageWriterTest {
 

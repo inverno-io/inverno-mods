@@ -38,7 +38,7 @@ import reactor.core.publisher.MonoSink;
  * Base {@link ResponseBody} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.10
  * 
  * @param <A> the response headers type
@@ -114,10 +114,14 @@ public abstract class AbstractResponseBody<A extends AbstractResponseHeaders<?>,
 		
 		Publisher<ByteBuf> transformedData = this.transformer != null ? this.transformer.apply(data) : data;
 		if(transformedData instanceof Mono) {
-			transformedData = ((Mono<ByteBuf>)transformedData).doOnDiscard(ByteBuf.class, ByteBuf::release);
+			transformedData = ((Mono<ByteBuf>)transformedData)
+				.doOnSubscribe(ign -> this.subscribed = true)
+				.doOnDiscard(ByteBuf.class, ByteBuf::release);
 		}
 		else {
-			transformedData = Flux.from(transformedData).doOnDiscard(ByteBuf.class, ByteBuf::release);
+			transformedData = Flux.from(transformedData)
+				.doOnSubscribe(ign -> this.subscribed = true)
+				.doOnDiscard(ByteBuf.class, ByteBuf::release);
 		}
 		
 		if(this.dataEmitter != null) {
@@ -148,6 +152,7 @@ public abstract class AbstractResponseBody<A extends AbstractResponseHeaders<?>,
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public final B transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) throws IllegalArgumentException {
 		if(this.subscribed && this.dataSet) {
 			throw new IllegalStateException("Response data already sent");
@@ -174,7 +179,7 @@ public abstract class AbstractResponseBody<A extends AbstractResponseHeaders<?>,
 	@Override
 	public OutboundData<ByteBuf> raw() {
 		if(this.rawData == null) {
-			this.rawData = new AbstractResponseBody.RawOutboundData();
+			this.rawData = new RawOutboundData();
 		}
 		return this.rawData;
 	}
@@ -200,7 +205,7 @@ public abstract class AbstractResponseBody<A extends AbstractResponseHeaders<?>,
 	@SuppressWarnings("unchecked")
 	public <T extends CharSequence> OutboundData<T> string() {
 		if(this.stringData == null) {
-			this.stringData = new AbstractResponseBody.StringOutboundData();
+			this.stringData = new StringOutboundData();
 		}
 		return (OutboundData<T>)this.stringData;
 	}
@@ -236,7 +241,7 @@ public abstract class AbstractResponseBody<A extends AbstractResponseHeaders<?>,
 	@Override
 	public ResponseBody.Resource resource() {
 		if(this.resourceData == null) {
-			this.resourceData = new AbstractResponseBody.ResourceOutboundData();
+			this.resourceData = new ResourceOutboundData();
 		}
 		return this.resourceData;
 	}
@@ -272,9 +277,7 @@ public abstract class AbstractResponseBody<A extends AbstractResponseHeaders<?>,
 			}
 			
 			if(!AbstractResponseBody.this.headers.contains(Headers.NAME_LAST_MODIFIED)) {
-				resource.lastModified().ifPresent(lastModified -> {
-					AbstractResponseBody.this.headers.set(Headers.NAME_LAST_MODIFIED, Headers.FORMATTER_RFC_5322_DATE_TIME.format(lastModified.toInstant()));
-				});
+				resource.lastModified().ifPresent(lastModified -> AbstractResponseBody.this.headers.set(Headers.NAME_LAST_MODIFIED, Headers.FORMATTER_RFC_5322_DATE_TIME.format(lastModified.toInstant())));
 			}
 		}
 		
@@ -297,7 +300,7 @@ public abstract class AbstractResponseBody<A extends AbstractResponseHeaders<?>,
 	@Override
 	public ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> sse() {
 		if(this.sseData == null) {
-			this.sseData = new AbstractResponseBody.SseRawOutboundData();
+			this.sseData = new SseRawOutboundData();
 		}
 		return this.sseData;
 	}
@@ -398,7 +401,7 @@ public abstract class AbstractResponseBody<A extends AbstractResponseHeaders<?>,
 		 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 		 * @since 1.10
 		 */
-		protected final class GenericEvent implements ResponseBody.Sse.Event<ByteBuf> {
+		protected static final class GenericEvent implements ResponseBody.Sse.Event<ByteBuf> {
 			
 			private String id;
 			
@@ -456,9 +459,10 @@ public abstract class AbstractResponseBody<A extends AbstractResponseHeaders<?>,
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public ResponseBody.Sse<CharSequence, ResponseBody.Sse.Event<CharSequence>, ResponseBody.Sse.EventFactory<CharSequence, ResponseBody.Sse.Event<CharSequence>>> sseString() {
 		if(this.sseStringData == null) {
-			this.sseStringData = new AbstractResponseBody.SseStringOutboundData();
+			this.sseStringData = new SseStringOutboundData();
 		}
 		return this.sseStringData;
 	}
@@ -558,7 +562,7 @@ public abstract class AbstractResponseBody<A extends AbstractResponseHeaders<?>,
 		 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 		 * @since 1.10
 		 */
-		protected final class GenericEvent implements ResponseBody.Sse.Event<CharSequence> {
+		protected static final class GenericEvent implements ResponseBody.Sse.Event<CharSequence> {
 			
 			private String id;
 			

@@ -24,6 +24,7 @@
  */
 module io.inverno.mod.irt.compiler {
 	requires transitive io.inverno.core.compiler;
+
 	requires io.inverno.mod.base;
 	requires io.inverno.mod.irt;
 	

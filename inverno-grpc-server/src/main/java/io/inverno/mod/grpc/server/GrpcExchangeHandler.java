@@ -25,7 +25,7 @@ import reactor.core.publisher.Mono;
  * A gRPC exchange handler is used to handle gRPC server exchanges.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  * 
  * @param <A> The exchange context type 

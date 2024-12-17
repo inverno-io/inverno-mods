@@ -17,14 +17,10 @@ package io.inverno.mod.test.configuration;
 
 import io.inverno.mod.test.AbstractInvernoModTest;
 import java.io.IOException;
-import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;

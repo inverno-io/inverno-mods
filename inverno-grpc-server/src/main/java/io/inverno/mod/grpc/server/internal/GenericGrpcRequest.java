@@ -34,7 +34,7 @@ import reactor.core.publisher.Mono;
  * Generic {@link GrpcRequest} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public class GenericGrpcRequest<A extends Message> implements GrpcRequest.Unary<A>, GrpcRequest.Streaming<A> {
@@ -130,7 +130,7 @@ public class GenericGrpcRequest<A extends Message> implements GrpcRequest.Unary<
 		// When disposing the exchange errors are actually propagated to the request body sink so we can do that
 		return Flux.from(this.messageReader.apply(this.request.body().get().raw().stream()))
 			.onErrorMap(ResetStreamException.class, e -> {
-				GrpcStatus status = GrpcStatus.fromHttp2Code(((ResetStreamException)e).getErrorCode());
+				GrpcStatus status = GrpcStatus.fromHttp2Code(e.getErrorCode());
 				if(status != null) {
 					if(status == GrpcStatus.CANCELLED) {
 						return new GrpcException(status, "Request was cancelled", e);

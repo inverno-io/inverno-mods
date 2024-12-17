@@ -24,10 +24,12 @@
  * </p>
  * 
  * <dl>
- * <dt><b>configuration</b></dt>
- * <dd>the gRPC server module configuration</dd>
  * <dt><b>netService (required)</b></dt>
  * <dd>the Net service providing the ByteBuf allocator</dd>
+ * <dt><b>configuration</b></dt>
+ * <dd>the gRPC server module configuration</dd>
+ * <dt><b>extensionRegistry</b></dt>
+ * <dd>the Protocol buffer extension registry</dd>
  * <dt><b>messageCompressors</b></dt>
  * <dd>custom gRPC message compressors</dd>
  * </dl>
@@ -84,7 +86,6 @@ module io.inverno.mod.grpc.server {
 	
 	requires transitive com.google.protobuf;
 	requires io.netty.buffer;
-	requires io.netty.codec.http2;
 	requires org.apache.logging.log4j;
 	requires transitive org.reactivestreams;
 	requires transitive reactor.core;

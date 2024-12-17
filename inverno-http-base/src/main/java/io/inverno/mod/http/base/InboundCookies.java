@@ -28,10 +28,10 @@ import java.util.Set;
  * </p>
  * 
  * <p>
- * Inbound cookies are recevieved by a server in a request in a server exchange.
+ * Inbound cookies are received by a server in a request in a server exchange.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @see Cookie
@@ -55,7 +55,7 @@ public interface InboundCookies {
 	 * Returns the names of the cookies.
 	 * </p>
 	 * 
-	 * @return a list of cookie names
+	 * @return a set of cookie names
 	 */
 	Set<String> getNames();
 	

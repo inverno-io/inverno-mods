@@ -28,8 +28,8 @@ import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.test.web.webroute.dto.GenericMessage;
+import io.inverno.mod.web.base.annotation.FormParam;
 import io.inverno.mod.web.server.WebExchange;
-import io.inverno.mod.web.server.annotation.FormParam;
 import io.inverno.mod.web.server.annotation.WebController;
 import io.inverno.mod.web.server.annotation.WebRoute;
 

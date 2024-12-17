@@ -24,7 +24,7 @@ package io.inverno.mod.http.client;
  * A request times out when no response data has been received for the timeout limit ({@link HttpClientConfiguration#request_timeout()}).
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @see HttpClientConfiguration

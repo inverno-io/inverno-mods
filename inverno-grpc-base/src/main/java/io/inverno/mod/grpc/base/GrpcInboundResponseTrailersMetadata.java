@@ -30,7 +30,7 @@ import java.util.Optional;
  * An inbound response is received by a client in a client exchange, the trailers metadata are received last and terminates the gRPC exchange.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public interface GrpcInboundResponseTrailersMetadata extends GrpcInboundMetadata {

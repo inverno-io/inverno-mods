@@ -1,1 +1,2 @@
-io.inverno.mod.web.compiler.internal.WebServerControllerConfigurerCompilerPlugin
+io.inverno.mod.web.compiler.internal.server.WebServerCompilerPlugin
+io.inverno.mod.web.compiler.internal.client.WebClientCompilerPlugin

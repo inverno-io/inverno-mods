@@ -424,9 +424,7 @@ public class JWTClaimsSet {
 	public final void setValidators(List<JWTClaimsSetValidator> validators) {
 		this.validators.clear();
 		if(validators != null) {
-			for(JWTClaimsSetValidator validator : validators) {
-				this.validators.add(validator);
-			}
+			this.validators.addAll(validators);
 		}
 	}
 
@@ -453,7 +451,7 @@ public class JWTClaimsSet {
 	 * @throws InvalidJWTException if the JWT claims set is invalid
 	 */
 	protected void validate() throws InvalidJWTException {
-		this.validators.stream().forEach(validator -> validator.validate(this));
+		this.validators.forEach(validator -> validator.validate(this));
 	}
 	
 	/**
@@ -605,7 +603,7 @@ public class JWTClaimsSet {
 	
 	/**
 	 * <p>
-	 * A generic {@link JWTClaim} implementation using an {@link ObjectDecoder} to convert the value.
+	 * A generic {@link JWTClaimsSet.Claim} implementation using an {@link ObjectDecoder} to convert the value.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

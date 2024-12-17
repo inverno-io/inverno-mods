@@ -33,7 +33,7 @@ import reactor.core.publisher.Flux;
  * A {@link #context() context} is also attached to every exchange to provide contextual data and operation during during the processing of the exchange.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  * 
  * @param <A> The exchange context type 
@@ -92,7 +92,7 @@ public interface GrpcBaseExchange<A extends ExchangeContext, B, C> {
 	 * </p>
 	 *
 	 * <p>
-	 * Exchange disposal resulting or not from an error is usually catched in the request data publisher which can be bound to the response data publisher in which case, errors can then be catched by
+	 * Exchange disposal resulting or not from an error is usually caught in the request data publisher which can be bound to the response data publisher in which case, errors can then be caught by
 	 * defining {@link Flux#doOnError(java.util.function.Consumer) } on the response data publisher. When the request data publisher is not consumed, terminated and not bound to the response data
 	 * publisher, the response data publisher is disposed without error, this method gives access to the error when catching the exchange disposal by defining 
 	 * {@link Flux#doOnCancel(java.lang.Runnable) }.

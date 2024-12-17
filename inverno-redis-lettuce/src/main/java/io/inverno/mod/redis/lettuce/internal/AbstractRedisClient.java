@@ -75,6 +75,8 @@ import io.inverno.mod.redis.operations.Bound;
 import io.inverno.mod.redis.operations.Entries;
 import io.inverno.mod.redis.operations.EntryOptional;
 import io.inverno.mod.redis.operations.Keys;
+import io.inverno.mod.redis.operations.RedisKeyReactiveOperations;
+import io.inverno.mod.redis.operations.RedisScriptingReactiveOperations;
 import io.inverno.mod.redis.operations.Values;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.support.AsyncPool;
@@ -137,8 +139,8 @@ public abstract class AbstractRedisClient<A, B, C extends StatefulConnection<A, 
 	public <T> Publisher<T> connection(Function<RedisOperations<A, B>, Publisher<T>> function) {
 		return Flux.usingWhen(
 			this.operations(), 
-			function, 
-			operations -> operations.close()
+			function,
+			StatefulRedisConnectionOperations::close
 		);
 	}
 
@@ -148,13 +150,10 @@ public abstract class AbstractRedisClient<A, B, C extends StatefulConnection<A, 
 			this.operations().doOnNext(o -> o.getCommands().setAutoFlushCommands(false)), 
 			// the mergeSequential concurrency here is an issue when batching many commands ending with a deadlock
 			// we have to flush commands by block: 256 is the default mergeSequential() concurrency
-			operations -> {
-				return Flux.from(function.apply(operations))
-					.buffer(Queues.SMALL_BUFFER_SIZE) // use default mergeSequential() concurrency size: 256
-					.flatMap(commands -> {
-						return Flux.mergeSequential(commands).mergeWith(Mono.<T>empty().doOnSubscribe(ign -> operations.getCommands().flushCommands()));
-					});
-			},
+			operations -> Flux.from(function.apply(operations))
+				.buffer(Queues.SMALL_BUFFER_SIZE) // use default mergeSequential() concurrency size: 256
+				.flatMap(commands -> Flux.mergeSequential(commands).mergeWith(Mono.<T>empty().doOnSubscribe(ign -> operations.getCommands().flushCommands())))
+			,
 			operations -> {
 				// restore default and close operations
 				operations.getCommands().setAutoFlushCommands(true);
@@ -555,7 +554,7 @@ public abstract class AbstractRedisClient<A, B, C extends StatefulConnection<A, 
 
 	@Override
 	public Mono<A> randomkey() {
-		return Mono.from(this.connection(o -> o.randomkey()));
+		return Mono.from(this.connection(RedisKeyReactiveOperations::randomkey));
 	}
 
 	@Override
@@ -910,7 +909,7 @@ public abstract class AbstractRedisClient<A, B, C extends StatefulConnection<A, 
 
 	@Override
 	public Mono<String> scriptFlush() {
-		return Mono.from(this.connection(o -> o.scriptFlush()));
+		return Mono.from(this.connection(RedisScriptingReactiveOperations::scriptFlush));
 	}
 
 	@Override
@@ -920,7 +919,7 @@ public abstract class AbstractRedisClient<A, B, C extends StatefulConnection<A, 
 
 	@Override
 	public Mono<String> scriptKill() {
-		return Mono.from(this.connection(o -> o.scriptKill()));
+		return Mono.from(this.connection(RedisScriptingReactiveOperations::scriptKill));
 	}
 
 	@Override

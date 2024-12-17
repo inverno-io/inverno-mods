@@ -1,7 +1,3 @@
-import io.inverno.mod.web.server.WebRouterConfigurer;
-import io.inverno.mod.web.server.annotation.WebController;
-import io.inverno.mod.web.server.annotation.WebRoutes;
-
 /*
  * Copyright 2020 Jeremy KUHN
  *
@@ -20,34 +16,39 @@ import io.inverno.mod.web.server.annotation.WebRoutes;
 
 /**
  * <p>
- * The Inverno framework web compiler module provides an Inverno compiler plugin to
- * generate a {@link WebRouterConfigurer} implementation that aggregates all web
- * controller beans and web router configurer beans defined in the module.
+ * The Inverno framework web compiler module provides an Inverno compiler plugin to generate a {@link io.inverno.mod.web.server.WebServer} bean that aggregates all web controller beans and web router
+ * configurer beans defined in the module.
  * </p>
  * 
  * <p>
- * This generated web router configurer bean can then be used to configure the
- * web router of a web server module instance.
+ * This generated web router configurer bean can then be used to configure the web router of a web server module instance.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see WebController
- * @see WebRoutes
+ * @see io.inverno.mod.web.server.annotation.WebController
+ * @see io.inverno.mod.web.server.annotation.WebRoutes
  */
 module io.inverno.mod.web.compiler {
 	requires transitive io.inverno.core.compiler;
+
 	requires io.inverno.mod.base;
-	requires transitive io.inverno.mod.http.base;
+	requires io.inverno.mod.http.base;
+	requires io.inverno.mod.http.client;
 	requires io.inverno.mod.http.server;
+	requires io.inverno.mod.web.base;
+	requires io.inverno.mod.web.client;
 	requires io.inverno.mod.web.server;
-	
+
+	requires jdk.javadoc;
+	requires org.apache.commons.lang3;
 	requires org.apache.commons.text;
 	requires org.reactivestreams;
 	requires reactor.core;
-	
+
 	exports io.inverno.mod.web.compiler.spi;
-	
-	provides io.inverno.core.compiler.spi.plugin.CompilerPlugin with io.inverno.mod.web.compiler.internal.WebServerControllerConfigurerCompilerPlugin;
+	exports io.inverno.mod.web.compiler.spi.server;
+
+	provides io.inverno.core.compiler.spi.plugin.CompilerPlugin with io.inverno.mod.web.compiler.internal.client.WebClientCompilerPlugin, io.inverno.mod.web.compiler.internal.server.WebServerCompilerPlugin;
 }

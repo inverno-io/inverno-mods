@@ -15,22 +15,20 @@
  */
 package io.inverno.mod.configuration.internal;
 
+import io.inverno.mod.configuration.ConfigurationLoader;
+import io.inverno.mod.configuration.ConfigurationLoaderException;
+import io.inverno.mod.configuration.ConfigurationQuery;
+import io.inverno.mod.configuration.ConfigurationQueryResult;
+import io.inverno.mod.configuration.ExecutableConfigurationQuery;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import io.inverno.mod.configuration.ConfigurationLoader;
-import io.inverno.mod.configuration.ConfigurationLoaderException;
-import io.inverno.mod.configuration.ConfigurationQuery;
-import io.inverno.mod.configuration.ConfigurationQueryResult;
-import io.inverno.mod.configuration.ExecutableConfigurationQuery;
 import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Mono;
 
@@ -81,7 +79,7 @@ public class ConfiguratorTypeConfigurationLoader<A, B> extends AbstractReflectiv
 		List<ConfiguratorQuery> configuratorQueries = new LinkedList<>();
 		ExecutableConfigurationQuery<?,?> configurationQuery = this.visitConfiguratorType(this.configuratorType, "", null, configuratorQueries);
 		if(configurationQuery == null) {
-			return Mono.just(null);
+			return Mono.empty();
 		}
 		return configurationQuery.execute()
 			.collectList()
@@ -101,7 +99,7 @@ public class ConfiguratorTypeConfigurationLoader<A, B> extends AbstractReflectiv
 						boolean empty = true;
 						for (int k = 0; k < configuratorQuery.nestedCount; k++) {
 							i++;
-							empty = empty && !results.get(j).getResult().isPresent();
+							empty = empty && results.get(j).isEmpty();
 							if (!configuratorQueries.get(configuratorsFrom + k).nested) {
 								j++;
 							}
@@ -111,20 +109,23 @@ public class ConfiguratorTypeConfigurationLoader<A, B> extends AbstractReflectiv
 						if (!empty) {
 							configuratorQuery.method.invoke(configurator, this.createConfigurer(configuratorQuery.type, configuratorQueries.subList(configuratorsFrom, configuratorsTo), results.subList(propertiesFrom, propertiesTo)));
 						}
-					} 
-					else if (results.get(j).getResult().isPresent()) {
-						if(configuratorQuery.array) {
-							configuratorQuery.method.invoke(configurator, new Object[] {results.get(j).getResult().get().asArrayOf(configuratorQuery.componentType).orElse(null)});
-						}
-						else if(configuratorQuery.collection || configuratorQuery.list) {
-							configuratorQuery.method.invoke(configurator, new Object[] {results.get(j).getResult().get().asListOf(configuratorQuery.componentType).orElse(null)});
-						}
-						else if(configuratorQuery.set) {
-							configuratorQuery.method.invoke(configurator, new Object[] {results.get(j).getResult().get().asSetOf(configuratorQuery.componentType).orElse(null)});
-						}
-						else {
-							Optional<?> arg = results.get(j).getResult().get().as(configuratorQuery.type);
-							configuratorQuery.method.invoke(configurator, new Object[] {arg.isPresent() ? arg.get() : ConfiguratorTypeConfigurationLoader.getDefaultValue(configuratorQuery.type)});
+					}
+					else {
+						ConfigurationQueryResult result = results.get(j);
+						if(result.isPresent()) {
+							if(configuratorQuery.array) {
+								configuratorQuery.method.invoke(configurator, new Object[] { result.asArrayOf(configuratorQuery.componentType, null) });
+							}
+							else if(configuratorQuery.collection || configuratorQuery.list) {
+								configuratorQuery.method.invoke(configurator, result.asListOf(configuratorQuery.componentType, null));
+							}
+							else if(configuratorQuery.set) {
+								configuratorQuery.method.invoke(configurator, result.asSetOf(configuratorQuery.componentType, null));
+							}
+							else {
+								Object value = result.as(configuratorQuery.type, null);
+								configuratorQuery.method.invoke(configurator, value != null ? value : ConfiguratorTypeConfigurationLoader.getDefaultValue(configuratorQuery.type));
+							}
 						}
 					}
 				}
@@ -136,7 +137,7 @@ public class ConfiguratorTypeConfigurationLoader<A, B> extends AbstractReflectiv
 	}
 	
 	private ExecutableConfigurationQuery<?,?> visitConfiguratorType(Class<?> configuratorType, String prefix, ConfigurationQuery<?,?> configurationQuery, List<ConfiguratorQuery> accumulator) throws ConfigurationLoaderException, IllegalArgumentException {
-		ExecutableConfigurationQuery<?,?> exectuableConfigurationQuery = null;
+		ExecutableConfigurationQuery<?,?> executableConfigurationQuery = null;
 		for(Method method : configuratorType.getMethods()) {
 			if(method.getParameters().length == 1 && method.getReturnType().equals(configuratorType)) {
 				ConfiguratorQuery configuratorQuery;
@@ -149,37 +150,29 @@ public class ConfiguratorTypeConfigurationLoader<A, B> extends AbstractReflectiv
 				accumulator.add(configuratorQuery);
 				if(configuratorQuery.nested) {
 					int initialCount = accumulator.size();
-					exectuableConfigurationQuery = this.visitConfiguratorType(configuratorQuery.type, configuratorQuery.name, exectuableConfigurationQuery != null ? exectuableConfigurationQuery.and() : configurationQuery, accumulator);
+					executableConfigurationQuery = this.visitConfiguratorType(configuratorQuery.type, configuratorQuery.name, executableConfigurationQuery != null ? executableConfigurationQuery.and() : configurationQuery, accumulator);
 					configuratorQuery.nestedCount = accumulator.size() - initialCount;
 				}
 				else {
-					exectuableConfigurationQuery = (exectuableConfigurationQuery != null ? exectuableConfigurationQuery.and().get(configuratorQuery.name) : configurationQuery != null ? configurationQuery.get(configuratorQuery.name) : this.source.get(configuratorQuery.name)).withParameters(ConfiguratorTypeConfigurationLoader.this.parameters);
+					executableConfigurationQuery = (executableConfigurationQuery != null ? executableConfigurationQuery.and().get(configuratorQuery.name) : configurationQuery != null ? configurationQuery.get(configuratorQuery.name) : this.source.get(configuratorQuery.name)).withParameters(ConfiguratorTypeConfigurationLoader.this.parameters);
 				}
 			}
 		}
-		return exectuableConfigurationQuery;
+		return executableConfigurationQuery;
 	}
 
-	private class ConfiguratorQuery {
+	private static class ConfiguratorQuery {
 		
-		private Method method;
-		
-		private String name;
-		
-		private Class<?> type;
+		private final Method method;
+		private final String name;
+		private final Class<?> type;
+		private final boolean nested;
 		
 		private Class<?> componentType;
-		
 		private boolean array;
-		
 		private boolean collection;
-		
 		private boolean list;
-		
 		private boolean set;
-		
-		private boolean nested;
-		
 		private int nestedCount;
 		
 		private ConfiguratorQuery(String prefix, Method method) throws ClassNotFoundException {

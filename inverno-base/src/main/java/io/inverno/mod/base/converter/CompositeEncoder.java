@@ -22,14 +22,11 @@ import java.util.Map;
 
 /**
  * <p>
- * A composite encoder relies on multiple {@link CompoundEncoder} to encode
- * objects.
+ * A composite encoder relies on multiple {@link CompoundEncoder} to encode objects.
  * </p>
  * 
  * <p>
- * Such implementation makes it possible to create extensible encoder able to
- * encode various type of objects by composition of many specific compound
- * encoders.
+ * Such implementation makes it possible to create extensible encoder able to encode various type of objects by composition of many specific compound encoders.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -70,8 +67,7 @@ public class CompositeEncoder<To> implements Encoder<Object, To> {
 	
 	/**
 	 * <p>
-	 * Sets a default encoder to use when no compound encoder is able to encode an
-	 * object.
+	 * Sets a default encoder to use when no compound encoder is able to encode an object.
 	 * </p>
 	 * 
 	 * @param defaultEncoder the default decoder
@@ -89,6 +85,7 @@ public class CompositeEncoder<To> implements Encoder<Object, To> {
 	 * @param type the type to encode
 	 * 
 	 * @return a compound encoder
+	 *
 	 * @throws EncoderNotFoundException if no encoder can encode the specified type
 	 */
 	@SuppressWarnings("unchecked")
@@ -122,14 +119,13 @@ public class CompositeEncoder<To> implements Encoder<Object, To> {
 		return this.encode(value, (Type)type);
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public <T> To encode(T value, Type type) throws ConverterException {
 		if(value == null) {
 			return null;
 		}
 		try {
-			return ((CompoundEncoder<T, To>)this.getEncoder(type)).encode(value);
+			return this.getEncoder(type).encode(value);
 		}
 		catch(EncoderNotFoundException e) {
 			if(this.defaultEncoder != null) {

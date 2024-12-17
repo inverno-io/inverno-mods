@@ -20,9 +20,7 @@ import java.util.function.Predicate;
 
 /**
  * <p>
- * A URI component representing the port part of an URI as defined by
- * <a href="https://tools.ietf.org/html/rfc3986#section-3.2.3">RFC 3986 Section
- * 3.2.3</a>.
+ * A URI component representing the port part of an URI as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.2.3">RFC 3986 Section 3.2.3</a>.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -32,9 +30,7 @@ import java.util.function.Predicate;
  */
 class PortComponent extends AbstractParameterizedURIComponent {
 	
-	private static final Predicate<Integer> ALLOWED_CHARACTERS =  b -> {
-		return Character.isDigit(b);
-	};
+	private static final Predicate<Integer> ALLOWED_CHARACTERS = Character::isDigit;
 	
 	/**
 	 * <p>

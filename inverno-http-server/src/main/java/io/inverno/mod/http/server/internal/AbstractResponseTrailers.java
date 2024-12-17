@@ -18,13 +18,14 @@ package io.inverno.mod.http.server.internal;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.OutboundHeaders;
 import io.inverno.mod.http.base.header.HeaderService;
+import java.lang.reflect.Type;
 
 /**
  * <p>
  * Base {@link OutboundHeaders} response trailers implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.10
  * 
  * @param <A> the response trailers type
@@ -54,7 +55,27 @@ public abstract class AbstractResponseTrailers<A extends AbstractResponseTrailer
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 	}
-	
+
+	@Override
+	public <T> A addParameter(CharSequence name, T value) {
+		return this.add(name, this.parameterConverter.encode(value));
+	}
+
+	@Override
+	public <T> A addParameter(CharSequence name, T value, Type type) {
+		return this.add(name, this.parameterConverter.encode(value, type));
+	}
+
+	@Override
+	public <T> A setParameter(CharSequence name, T value) {
+		return this.set(name, this.parameterConverter.encode(value));
+	}
+
+	@Override
+	public <T> A setParameter(CharSequence name, T value, Type type) {
+		return this.set(name, this.parameterConverter.encode(value, type));
+	}
+
 	/**
 	 * <p>
 	 * Flags the trailers to have been written.

@@ -18,7 +18,6 @@ package io.inverno.mod.security.jose.internal.jwk;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Overridable;
 import io.inverno.core.annotation.Provide;
-import io.inverno.mod.security.jose.JOSEConfiguration;
 import io.inverno.mod.security.jose.jwk.JWKResolveException;
 import io.inverno.mod.security.jose.jwk.X509JWKCertPathValidator;
 import java.security.InvalidAlgorithmParameterException;
@@ -42,7 +41,7 @@ import reactor.core.scheduler.Schedulers;
  * </p>
  * 
  * <p>
- * This is an overridable bean which can be overriden by injecting a custom {@link X509JWKCertPathValidator} instance when building the JOSE module.
+ * This is an overridable bean which can be overridden by injecting a custom {@link X509JWKCertPathValidator} instance when building the JOSE module.
  * </p>
  * 
  * <p>
@@ -83,7 +82,7 @@ public class GenericX509JWKCertPathValidator implements @Provide X509JWKCertPath
 				CertPathValidator cpv = CertPathValidator.getInstance("PKIX");
 				cpv.validate(certChain, this.pkixParameters);
 
-				return (X509Certificate)certificates.get(0);
+				return certificates.getFirst();
 			}
 			catch(CertificateException | NoSuchAlgorithmException | InvalidAlgorithmParameterException | CertPathValidatorException e) {
 				throw new JWKResolveException("Error validating X.509 certificate: ", e);

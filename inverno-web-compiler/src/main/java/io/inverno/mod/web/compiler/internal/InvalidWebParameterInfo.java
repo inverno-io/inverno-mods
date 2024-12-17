@@ -28,11 +28,11 @@ import io.inverno.mod.web.compiler.spi.WebParameterQualifiedName;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class InvalidWebParameterInfo extends AbstractWebParameterInfo {
+public class InvalidWebParameterInfo extends AbstractWebParameterInfo {
 
 	/**
 	 * <p>
-	 * Creates an invalid web parameter info.
+	 * Creates an invalid Web parameter info.
 	 * </p>
 	 *
 	 * @param name             the parameter qualified name

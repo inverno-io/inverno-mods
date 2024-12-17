@@ -33,7 +33,7 @@ import io.inverno.mod.http.client.Exchange;
  * A WebSocket exchange is created when the WebSocket exchange publisher returned by {@link Exchange#webSocket() } is subscribed.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @param <A> the type of the exchange context

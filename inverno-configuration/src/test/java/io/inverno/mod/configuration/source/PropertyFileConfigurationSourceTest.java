@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 public class PropertyFileConfigurationSourceTest {
 
@@ -60,36 +60,36 @@ public class PropertyFileConfigurationSourceTest {
 		Iterator<ConfigurationQueryResult> resultIterator = results.iterator();
 		
 		ConfigurationQueryResult current = resultIterator.next();
-		Assertions.assertTrue(current.getResult().isPresent());
-		Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
-		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("test", 5), Parameter.of("tutu", "plop"))));
-		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals(563, current.getResult().get().asInteger().get());
+		Assertions.assertTrue(current.isPresent());
+		Assertions.assertEquals("tata.toto", current.get().getKey().getName());
+		Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("test", 5), Parameter.of("tutu", "plop"))));
+		Assertions.assertTrue(current.get().isPresent());
+		Assertions.assertEquals(563, current.get().asInteger().get());
 		
 		current = resultIterator.next();
-		Assertions.assertTrue(current.getResult().isPresent());
-		Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
-		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("tutu", "plop"))));
-		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals(65432, current.getResult().get().asInteger().get());
+		Assertions.assertTrue(current.isPresent());
+		Assertions.assertEquals("tata.toto", current.get().getKey().getName());
+		Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("tutu", "plop"))));
+		Assertions.assertTrue(current.get().isPresent());
+		Assertions.assertEquals(65432, current.get().asInteger().get());
 		
 		current = resultIterator.next();
-		Assertions.assertTrue(current.getResult().isPresent());
-		Assertions.assertEquals("url", current.getResult().get().getKey().getName());
-		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals(new URI("https://localhost:8443"), current.getResult().get().asURI().get());
+		Assertions.assertTrue(current.isPresent());
+		Assertions.assertEquals("url", current.get().getKey().getName());
+		Assertions.assertTrue(current.get().isPresent());
+		Assertions.assertEquals(new URI("https://localhost:8443"), current.get().asURI().get());
 		
 		current = resultIterator.next();
-		Assertions.assertTrue(current.getResult().isPresent());
-		Assertions.assertEquals("table", current.getResult().get().getKey().getName());
-		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertArrayEquals(new String[] {"a","b","c"}, current.getResult().get().asArrayOf(String.class).get());
+		Assertions.assertTrue(current.isPresent());
+		Assertions.assertEquals("table", current.get().getKey().getName());
+		Assertions.assertTrue(current.get().isPresent());
+		Assertions.assertArrayEquals(new String[] {"a","b","c"}, current.get().asArrayOf(String.class).get());
 		
 		current = resultIterator.next();
-		Assertions.assertTrue(current.getResult().isPresent());
-		Assertions.assertEquals("some_string", current.getResult().get().getKey().getName());
-		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals("toto\ntata", current.getResult().get().asString().get());
+		Assertions.assertTrue(current.isPresent());
+		Assertions.assertEquals("some_string", current.get().getKey().getName());
+		Assertions.assertTrue(current.get().isPresent());
+		Assertions.assertEquals("toto\ntata", current.get().asString().get());
 	}
 	
 	@Test
@@ -133,5 +133,30 @@ public class PropertyFileConfigurationSourceTest {
 			), 
 			result.stream().map(p -> p.toString()).collect(Collectors.toSet())
 		);
+	}
+
+	@Test
+	public void testWithParameters() throws URISyntaxException {
+		PropertyFileConfigurationSource src = new PropertyFileConfigurationSource(new ClasspathResource(URI.create("classpath:/test-configuration.properties"))).withParameters("tutu", "plop", "test", 5);
+		List<ConfigurationQueryResult> results = src
+			.get("tata.toto")
+			.execute()
+			.collectList()
+			.block();
+
+//		results.stream().forEach(queryResult -> {
+//			System.out.println(queryResult.getQueryKey() + " -> " + queryResult.getResult().orElse(null));
+//		});
+
+		Assertions.assertEquals(1, results.size());
+
+		Iterator<ConfigurationQueryResult> resultIterator = results.iterator();
+
+		ConfigurationQueryResult current = resultIterator.next();
+		Assertions.assertTrue(current.isPresent());
+		Assertions.assertEquals("tata.toto", current.get().getKey().getName());
+		Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("test", 5), Parameter.of("tutu", "plop"))));
+		Assertions.assertTrue(current.get().isPresent());
+		Assertions.assertEquals(563, current.get().asInteger().get());
 	}
 }

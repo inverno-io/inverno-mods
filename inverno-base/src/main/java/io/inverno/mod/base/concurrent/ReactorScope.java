@@ -62,8 +62,7 @@ public abstract class ReactorScope<T> extends Scope<T> {
 	 * </p>
 	 * 
 	 * <p>
-	 * If no instance is bound to the key, a new instance is created and kept in the
-	 * scope.
+	 * If no instance is bound to the key, a new instance is created and kept in the scope.
 	 * </p>
 	 * 
 	 * @return the instance
@@ -97,13 +96,11 @@ public abstract class ReactorScope<T> extends Scope<T> {
 	
 	/**
 	 * <p>
-	 * {@link FastThreadLocal} implementation that delegates the creation of its inital to the enclosing {@link ReactorScope}.
+	 * {@link FastThreadLocal} implementation that delegates the creation of its initial to the enclosing {@link ReactorScope}.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.2
-	 * 
-	 * @param <T> the type of the thread-local variable
 	 */
 	private class ReactorThreadLocal extends FastThreadLocal<T> {
 		

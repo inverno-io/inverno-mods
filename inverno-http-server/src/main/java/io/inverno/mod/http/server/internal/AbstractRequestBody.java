@@ -35,7 +35,7 @@ import reactor.core.publisher.Sinks;
  * Base {@link RequestBody} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.10
  * 
  * @param <A> the request headers type
@@ -160,7 +160,7 @@ public abstract class AbstractRequestBody<A extends AbstractRequestHeaders> impl
 
 	@Override
 	public InboundData<ByteBuf> raw() throws IllegalStateException {
-		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
+		// We don't need to check whether another data method has been invoked since the data Flux is a unicast Flux, an IllegalStateException will be thrown if multiple subscriptions are made
 		if(this.rawData == null) {
 			this.rawData = new RawInboundData();
 		}
@@ -169,7 +169,7 @@ public abstract class AbstractRequestBody<A extends AbstractRequestHeaders> impl
 
 	@Override
 	public InboundData<CharSequence> string() throws IllegalStateException {
-		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
+		// We don't need to check whether another data method has been invoked since the data Flux is a unicast Flux, an IllegalStateException will be thrown if multiple subscriptions are made
 		if(this.stringData == null) {
 			this.stringData = new StringInboundData();
 		}
@@ -178,7 +178,7 @@ public abstract class AbstractRequestBody<A extends AbstractRequestHeaders> impl
 
 	@Override
 	public UrlEncoded urlEncoded() throws IllegalStateException {
-		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
+		// We don't need to check whether another data method has been invoked since the data Flux is a unicast Flux, an IllegalStateException will be thrown if multiple subscriptions are made
 		if(this.urlEncodedData == null) {
 			this.urlEncodedData = new UrlEncodedInboundData(this.urlEncodedBodyDecoder.decode(this.data, this.headers.getContentTypeHeader()));
 		}
@@ -187,7 +187,7 @@ public abstract class AbstractRequestBody<A extends AbstractRequestHeaders> impl
 	
 	@Override
 	public Multipart<? extends Part> multipart() throws IllegalStateException {
-		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
+		// We don't need to check whether another data method has been invoked since the data Flux is a unicast Flux, an IllegalStateException will be thrown if multiple subscriptions are made
 		if(this.multipartData == null) {
 			this.multipartData = new MultipartInboundData(this.multipartBodyDecoder.decode(this.data, this.headers.getContentTypeHeader()));
 		}
@@ -241,7 +241,7 @@ public abstract class AbstractRequestBody<A extends AbstractRequestHeaders> impl
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.10
 	 */
-	protected class UrlEncodedInboundData implements RequestBody.UrlEncoded {
+	protected static class UrlEncodedInboundData implements RequestBody.UrlEncoded {
 
 		private final Publisher<Parameter> parameters;
 		
@@ -281,7 +281,7 @@ public abstract class AbstractRequestBody<A extends AbstractRequestHeaders> impl
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.10
 	 */
-	protected class MultipartInboundData implements RequestBody.Multipart<Part> {
+	protected static class MultipartInboundData implements RequestBody.Multipart<Part> {
 
 		private final Publisher<Part> parts;
 		
@@ -290,7 +290,7 @@ public abstract class AbstractRequestBody<A extends AbstractRequestHeaders> impl
 		 * Creates a multipart/form-data consumer with the specified source of parts.
 		 * </p>
 		 * 
-		 * @param parameters the parameter publisher
+		 * @param parts the parts publisher
 		 */
 		public MultipartInboundData(Publisher<Part> parts) {
 			this.parts = parts;

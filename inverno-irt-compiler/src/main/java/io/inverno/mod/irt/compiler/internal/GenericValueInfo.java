@@ -29,7 +29,6 @@ import io.inverno.mod.irt.compiler.spi.ValueInfo;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class GenericValueInfo extends BaseInfo implements ValueInfo {
 
@@ -51,7 +50,7 @@ public class GenericValueInfo extends BaseInfo implements ValueInfo {
 		super(range);
 		this.name = Optional.ofNullable(name);
 		this.expression = Optional.ofNullable(expression);
-		this.pipes = pipes.stream().toArray(PipeInfo[]::new);
+		this.pipes = pipes.toArray(PipeInfo[]::new);
 	}
 
 	@Override

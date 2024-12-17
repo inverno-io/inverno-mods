@@ -20,9 +20,7 @@ import java.util.function.Predicate;
 
 /**
  * <p>
- * A URI component representing the query part of an URI as defined by
- * <a href="https://tools.ietf.org/html/rfc3986#section-3.4">RFC 3986 Section
- * 3.4</a>.
+ * A URI component representing the query part of an URI as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.4">RFC 3986 Section 3.4</a>.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -32,14 +30,13 @@ import java.util.function.Predicate;
  */
 class QueryComponent extends AbstractParameterizedURIComponent {
 	
-	public static final Predicate<Integer> ESCAPED_CHARACTERS =  b -> {
-		return !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '&' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == '=' || b == ':' || b == '@' || b == '/' || b == '?');
-	};
-	
+	public static final Predicate<Integer> ESCAPED_CHARACTERS =  b -> !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '&' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == '=' || b == ':' || b == '@' || b == '/' || b == '?');
+
 	/**
 	 * <p>
 	 * Creates a query component with the specified flags, charset and raw value.
-	 * 
+	 * </p>
+	 *
 	 * @param flags    URI flags
 	 * @param charset  a charset
 	 * @param rawValue a raw value

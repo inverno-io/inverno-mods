@@ -22,6 +22,7 @@ import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericParameter;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-// TODO Relying on Header by default is not performant so this needs to be refactored as well as the MultiparBodyDecoder
+// TODO Relying on Header by default is not performant so this needs to be refactored as well as the MultipartBodyDecoder
 class PartHeaders implements InboundRequestHeaders {
 
 	private final ObjectConverter<String> parameterConverter;
@@ -60,17 +61,30 @@ class PartHeaders implements InboundRequestHeaders {
 	
 	@Override
 	public String getContentType() {
-		return Optional.ofNullable(this.headers.get(Headers.NAME_CONTENT_TYPE)).filter(l -> !l.isEmpty()).map(l -> l.get(0).getHeaderValue()).orElse(null);
+		return Optional.ofNullable(this.headers.get(Headers.NAME_CONTENT_TYPE)).filter(l -> !l.isEmpty()).map(l -> l.getFirst().getHeaderValue()).orElse(null);
 	}
 	
 	@Override
 	public Headers.ContentType getContentTypeHeader() {
-		return (Headers.ContentType)Optional.ofNullable(this.headers.get(Headers.NAME_CONTENT_TYPE)).filter(l -> !l.isEmpty()).map(l -> l.get(0)).orElse(null);
+		return (Headers.ContentType)Optional.ofNullable(this.headers.get(Headers.NAME_CONTENT_TYPE)).filter(l -> !l.isEmpty()).map(List::getFirst).orElse(null);
+	}
+
+	@Override
+	public String getAccept() {
+		return Optional.ofNullable(this.headers.get(Headers.NAME_ACCEPT)).filter(l -> !l.isEmpty()).map(l -> l.getFirst().getHeaderValue()).orElse(null);
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public Headers.Accept getAcceptHeader() {
+		return Optional.ofNullable(this.headers.get(Headers.NAME_ACCEPT)).filter(l -> !l.isEmpty())
+			.flatMap(l -> Headers.Accept.merge((List<Headers.Accept>) l))
+			.orElse(null);
 	}
 
 	@Override
 	public Long getContentLength() {
-		return Optional.ofNullable(this.headers.get(Headers.NAME_CONTENT_LENGTH)).filter(l -> !l.isEmpty()).map(l -> l.get(0).getHeaderValue()).map(Long::parseLong).orElse(null);
+		return Optional.ofNullable(this.headers.get(Headers.NAME_CONTENT_LENGTH)).filter(l -> !l.isEmpty()).map(l -> l.getFirst().getHeaderValue()).map(Long::parseLong).orElse(null);
 	}
 
 	@Override
@@ -106,7 +120,7 @@ class PartHeaders implements InboundRequestHeaders {
 	public Optional<String> get(CharSequence name) {
 		return Optional.ofNullable(this.headers.get(name.toString())).map(allHeaders -> {
 			if(!allHeaders.isEmpty()) {
-				return allHeaders.get(0).getHeaderValue();
+				return allHeaders.getFirst().getHeaderValue();
 			}
 			return null;
 		});
@@ -116,7 +130,7 @@ class PartHeaders implements InboundRequestHeaders {
 	public List<String> getAll(CharSequence name) {
 		List<? extends Header> allHeaders = this.headers.get(name.toString());
 		if(allHeaders != null) {
-			return allHeaders.stream().map(h -> h.getHeaderValue()).collect(Collectors.toList());
+			return allHeaders.stream().map(Header::getHeaderValue).collect(Collectors.toList());
 		}
 		return Collections.emptyList();
 	}
@@ -131,7 +145,7 @@ class PartHeaders implements InboundRequestHeaders {
 	public <T extends Header> Optional<T> getHeader(CharSequence name) {
 		return Optional.ofNullable(this.headers.get(name.toString())).map(allHeaders -> {
 			if(!allHeaders.isEmpty()) {
-				return (T)allHeaders.get(0);
+				return (T)allHeaders.getFirst();
 			}
 			return null;
 		});
@@ -149,14 +163,14 @@ class PartHeaders implements InboundRequestHeaders {
 
 	@Override
 	public List<Header> getAllHeader() {
-		return this.headers.values().stream().flatMap(l -> l.stream()).collect(Collectors.toList());
+		return this.headers.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
 	}
 
 	@Override
 	public Optional<Parameter> getParameter(CharSequence name) {
 		return Optional.ofNullable(this.headers.get(name.toString())).map(allHeaders -> {
 			if(!allHeaders.isEmpty()) {
-				return new GenericParameter(allHeaders.get(0).getHeaderName(), allHeaders.get(0).getHeaderValue(), this.parameterConverter);
+				return new GenericParameter(allHeaders.getFirst().getHeaderName(), allHeaders.getFirst().getHeaderValue(), this.parameterConverter);
 			}
 			return null;
 		});

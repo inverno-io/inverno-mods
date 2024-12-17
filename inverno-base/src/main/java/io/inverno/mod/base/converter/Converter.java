@@ -16,7 +16,9 @@
 package io.inverno.mod.base.converter;
 
 /**
- * <p>A converter decodes and encodes between two types of object.</p>
+ * <p>
+ * A converter decodes and encodes between two types of object.
+ * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

@@ -19,18 +19,16 @@ import java.util.concurrent.TimeUnit;
 
 import io.vertx.core.impl.VertxThread;
 import io.vertx.core.spi.VertxThreadFactory;
-import reactor.core.scheduler.NonBlocking;
 
 /**
  * <p>
- * {@link VertxThreadFactory} implementation that creates {@link NonBlocking}
- * Vertx threads in order to prevent blocking calls from the Reactor APIs.
+ * {@link VertxThreadFactory} implementation that creates {@link reactor.core.scheduler.NonBlocking NonBlocking} Vertx threads in order to prevent blocking calls from the Reactor APIs.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see NonBlocking
+ * @see reactor.core.scheduler.NonBlocking NonBlocking
  */
 class ReactorVertxThreadFactory implements VertxThreadFactory {
 

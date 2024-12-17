@@ -31,7 +31,7 @@ import java.util.List;
  * An outbound request is sent by a client in a client exchange.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public interface GrpcOutboundRequestMetadata extends GrpcInboundRequestMetadata, GrpcOutboundMetadata<GrpcOutboundRequestMetadata> {

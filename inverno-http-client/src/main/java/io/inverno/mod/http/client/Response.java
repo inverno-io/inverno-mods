@@ -22,7 +22,7 @@ import io.inverno.mod.http.base.BaseResponse;
  * Represents a client response in a client exchange.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @see Exchange

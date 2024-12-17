@@ -27,7 +27,7 @@ import io.inverno.mod.grpc.base.GrpcOutboundResponseTrailersMetadata;
  * Generic {@link GrpcOutboundResponseTrailersMetadata} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public class GenericGrpcResponseTrailersMetadata extends AbstractGrpcResponseMetadata<GrpcOutboundResponseTrailersMetadata> implements GrpcOutboundResponseTrailersMetadata {
@@ -57,7 +57,7 @@ public class GenericGrpcResponseTrailersMetadata extends AbstractGrpcResponseMet
 	
 	@Override
 	public int getStatusCode() {
-		return this.headers.get(GrpcHeaders.NAME_GRPC_STATUS).map(value -> Integer.valueOf(value)).orElse(GrpcStatus.OK.getCode());
+		return this.headers.get(GrpcHeaders.NAME_GRPC_STATUS).map(Integer::valueOf).orElse(GrpcStatus.OK.getCode());
 	}
 
 	@Override

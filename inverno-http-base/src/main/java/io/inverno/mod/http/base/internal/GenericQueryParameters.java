@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * A generic {@link QueryParameters} implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class GenericQueryParameters implements QueryParameters {
@@ -71,7 +71,7 @@ public class GenericQueryParameters implements QueryParameters {
 	
 	@Override
 	public Optional<Parameter> get(String name) {
-		return Optional.ofNullable(this.queryParameters.get(name)).filter(p -> !p.isEmpty()).map(p -> new GenericParameter(name, p.get(0), this.parameterConverter));
+		return Optional.ofNullable(this.queryParameters.get(name)).filter(p -> !p.isEmpty()).map(p -> new GenericParameter(name, p.getFirst(), this.parameterConverter));
 	}
 	
 	@Override

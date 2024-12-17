@@ -26,10 +26,11 @@ import io.inverno.mod.http.base.ws.WebSocketFrame;
 import io.inverno.mod.http.base.ws.WebSocketMessage;
 import io.inverno.mod.test.web.websocket.dto.GenericMessage;
 import io.inverno.mod.test.web.websocket.dto.Message;
-import io.inverno.mod.web.server.Web2SocketExchange;
+import io.inverno.mod.web.base.ws.BaseWeb2SocketExchange;
 import io.inverno.mod.web.server.annotation.WebController;
 import io.inverno.mod.web.server.annotation.WebRoute;
 import io.inverno.mod.web.server.annotation.WebSocketRoute;
+import io.inverno.mod.web.server.ws.Web2SocketExchange;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import reactor.core.publisher.Flux;
@@ -42,7 +43,7 @@ import reactor.core.publisher.Mono;
 @WebController
 public class WebSocketController {
 
-  @WebRoute(path = "/no_ws", method = Method.GET)
+	@WebRoute(path = "/no_ws", method = Method.GET)
 	public String no_ws() {
 	  return "no_ws";
 	}
@@ -54,7 +55,7 @@ public class WebSocketController {
 	
 	@WebSocketRoute( path = "/ws2", messageType = WebSocketMessage.Kind.TEXT )
 	public Publisher<ByteBuf> ws2(Web2SocketExchange<? extends ExchangeContext> exchange) {
-		return Flux.concat(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("ws2", Charsets.DEFAULT))), Flux.from(exchange.inbound().frames()).map(WebSocketFrame::getBinaryData));
+		return Flux.concat(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("ws2", Charsets.DEFAULT))), Flux.from(exchange.inbound().frames()).map(WebSocketFrame::getRawData));
 	}
 	
 	@WebSocketRoute( path = "/ws3", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
@@ -64,7 +65,7 @@ public class WebSocketController {
 	
 	@WebSocketRoute( path = "/ws4", messageType = WebSocketMessage.Kind.TEXT )
 	public Flux<ByteBuf> ws4(Web2SocketExchange<? extends ExchangeContext> exchange) {
-		return Flux.concat(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("ws4", Charsets.DEFAULT))), Flux.from(exchange.inbound().frames()).map(WebSocketFrame::getBinaryData));
+		return Flux.concat(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("ws4", Charsets.DEFAULT))), Flux.from(exchange.inbound().frames()).map(WebSocketFrame::getRawData));
 	}
 	
 	@WebSocketRoute( path = "/ws5", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
@@ -77,7 +78,7 @@ public class WebSocketController {
 		return Mono.from(exchange.inbound().frames()).map(frame -> {
 			ByteBuf buf = Unpooled.unreleasableBuffer(Unpooled.buffer());
 			buf.writeCharSequence("ws6", Charsets.DEFAULT);
-			buf.writeBytes(frame.getBinaryData());
+			buf.writeBytes(frame.getRawData());
 			frame.release();
 			return buf;
 		});
@@ -91,9 +92,9 @@ public class WebSocketController {
 	public StringBuilder ws8 = new StringBuilder();
 	
 	@WebSocketRoute( path = "/ws8", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws8(Web2SocketExchange.Inbound inbound) {
+	public void ws8(BaseWeb2SocketExchange.Inbound inbound) {
 		Flux.from(inbound.frames()).subscribe(frame -> {
-			this.ws8.append(frame.getTextData());
+			this.ws8.append(frame.getStringData());
 			frame.release();
 		});
 	}
@@ -156,8 +157,8 @@ public class WebSocketController {
 	}
 	
 	@WebSocketRoute( path = "/ws15", messageType = WebSocketMessage.Kind.TEXT )
-	public Publisher<ByteBuf> ws15(Web2SocketExchange.Inbound inbound) {
-		return Flux.concat(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("ws15", Charsets.DEFAULT))), Flux.from(inbound.frames()).map(WebSocketFrame::getBinaryData));
+	public Publisher<ByteBuf> ws15(BaseWeb2SocketExchange.Inbound inbound) {
+		return Flux.concat(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("ws15", Charsets.DEFAULT))), Flux.from(inbound.frames()).map(WebSocketFrame::getRawData));
 	}
 	
 	@WebSocketRoute( path = "/ws16", messageType = WebSocketMessage.Kind.TEXT )
@@ -191,7 +192,7 @@ public class WebSocketController {
 	}
 	
 	@WebSocketRoute( path = "/ws22", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public Publisher<Message> ws22(Web2SocketExchange.Inbound inbound) {
+	public Publisher<Message> ws22(BaseWeb2SocketExchange.Inbound inbound) {
 		return Flux.concat(Mono.just(new Message("ws22")), inbound.decodeTextMessages(Message.class));
 	}
 	
@@ -247,8 +248,8 @@ public class WebSocketController {
 	}
 	
 	@WebSocketRoute( path = "/ws29", messageType = WebSocketMessage.Kind.TEXT )
-	public Flux<ByteBuf> ws29(Web2SocketExchange.Inbound inbound) {
-		return Flux.concat(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("ws29", Charsets.DEFAULT))), Flux.from(inbound.textMessages()).flatMap(WebSocketMessage::binary));
+	public Flux<ByteBuf> ws29(BaseWeb2SocketExchange.Inbound inbound) {
+		return Flux.concat(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("ws29", Charsets.DEFAULT))), Flux.from(inbound.textMessages()).flatMap(WebSocketMessage::raw));
 	}
 	
 	@WebSocketRoute( path = "/ws30", messageType = WebSocketMessage.Kind.TEXT )
@@ -282,7 +283,7 @@ public class WebSocketController {
 	}
 	
 	@WebSocketRoute( path = "/ws36", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public Flux<Message> ws36(Web2SocketExchange.Inbound inbound) {
+	public Flux<Message> ws36(BaseWeb2SocketExchange.Inbound inbound) {
 		return Flux.concat(Mono.just(new Message("ws36")), inbound.decodeTextMessages(Message.class));
 	}
 	
@@ -338,11 +339,11 @@ public class WebSocketController {
 	}
 	
 	@WebSocketRoute( path = "/ws43", messageType = WebSocketMessage.Kind.TEXT )
-	public Mono<ByteBuf> ws43(Web2SocketExchange.Inbound inbound) {
+	public Mono<ByteBuf> ws43(BaseWeb2SocketExchange.Inbound inbound) {
 		return Mono.from(inbound.frames()).map(frame -> {
 			ByteBuf buf = Unpooled.unreleasableBuffer(Unpooled.buffer());
 			buf.writeCharSequence("ws43", Charsets.DEFAULT);
-			buf.writeBytes(frame.getBinaryData());
+			buf.writeBytes(frame.getRawData());
 			frame.release();
 			return buf;
 		});
@@ -412,7 +413,7 @@ public class WebSocketController {
 	}
 	
 	@WebSocketRoute( path = "/ws50", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public Mono<Message> ws50(Web2SocketExchange.Inbound inbound) {
+	public Mono<Message> ws50(BaseWeb2SocketExchange.Inbound inbound) {
 		return Mono.from(inbound.decodeTextMessages(Message.class)).doOnNext(message -> message.setMessage("ws50" + message.getMessage()));
 	}
 	
@@ -468,42 +469,42 @@ public class WebSocketController {
 	}
 	
 	@WebSocketRoute( path = "/ws57", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws57(Web2SocketExchange.Inbound inbound, Web2SocketExchange.Outbound outbound) {
+	public void ws57(BaseWeb2SocketExchange.Inbound inbound, BaseWeb2SocketExchange.Outbound outbound) {
 		outbound.frames(factory -> Flux.concat(Mono.just(factory.text("ws57")), inbound.frames()));
 	}
 	
 	@WebSocketRoute( path = "/ws58", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws58(Publisher<ByteBuf> inbound, Web2SocketExchange.Outbound outbound) {
+	public void ws58(Publisher<ByteBuf> inbound, BaseWeb2SocketExchange.Outbound outbound) {
 		outbound.frames(factory -> Flux.concat(Mono.just(factory.text("ws58")), Flux.from(inbound).map(factory::text)));
 	}
 	
 	@WebSocketRoute( path = "/ws59", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws59(Publisher<Message> inbound, Web2SocketExchange.Outbound outbound) {
+	public void ws59(Publisher<Message> inbound, BaseWeb2SocketExchange.Outbound outbound) {
 		outbound.encodeTextMessages(Flux.concat(Mono.just(new Message("ws59")), inbound), Message.class);
 	}
 	
 	@WebSocketRoute( path = "/ws60", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws60(Flux<ByteBuf> inbound, Web2SocketExchange.Outbound outbound) {
+	public void ws60(Flux<ByteBuf> inbound, BaseWeb2SocketExchange.Outbound outbound) {
 		outbound.frames(factory -> Flux.concat(Mono.just(factory.text("ws60")), inbound.map(factory::text)));
 	}
 	
 	@WebSocketRoute( path = "/ws61", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws61(Flux<Message> inbound, Web2SocketExchange.Outbound outbound) {
+	public void ws61(Flux<Message> inbound, BaseWeb2SocketExchange.Outbound outbound) {
 		outbound.encodeTextMessages(Flux.concat(Mono.just(new Message("ws61")), inbound), Message.class);
 	}
 	
 	@WebSocketRoute( path = "/ws62", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws62(Mono<ByteBuf> inbound, Web2SocketExchange.Outbound outbound) {
+	public void ws62(Mono<ByteBuf> inbound, BaseWeb2SocketExchange.Outbound outbound) {
 		outbound.frames(factory -> Flux.concat(Mono.just(factory.text("ws62")), inbound.map(factory::text)));
 	}
 	
 	@WebSocketRoute( path = "/ws63", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws63(Mono<Message> inbound, Web2SocketExchange.Outbound outbound) {
+	public void ws63(Mono<Message> inbound, BaseWeb2SocketExchange.Outbound outbound) {
 		outbound.encodeTextMessages(Flux.concat(Mono.just(new Message("ws63")), inbound), Message.class);
 	}
 	
 	@WebSocketRoute( path = "/ws64", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws64(Web2SocketExchange.Inbound inbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
+	public void ws64(BaseWeb2SocketExchange.Inbound inbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
 		exchange.outbound().frames(factory -> Flux.concat(Mono.just(factory.text("ws64")), inbound.frames()));
 	}
 	
@@ -538,8 +539,8 @@ public class WebSocketController {
 	}
 	
 	@WebSocketRoute( path = "/ws71", messageType = WebSocketMessage.Kind.TEXT )
-	public Publisher<ByteBuf> ws71(Web2SocketExchange.Inbound inbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
-		return Flux.concat(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("ws71", Charsets.DEFAULT))), Flux.from(inbound.frames()).map(WebSocketFrame::getBinaryData));
+	public Publisher<ByteBuf> ws71(BaseWeb2SocketExchange.Inbound inbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
+		return Flux.concat(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("ws71", Charsets.DEFAULT))), Flux.from(inbound.frames()).map(WebSocketFrame::getRawData));
 	}
 	
 	@WebSocketRoute( path = "/ws72", messageType = WebSocketMessage.Kind.TEXT )
@@ -573,7 +574,7 @@ public class WebSocketController {
 	}
 	
 	@WebSocketRoute( path = "/ws78", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public Publisher<Message> ws78(Web2SocketExchange.Inbound inbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
+	public Publisher<Message> ws78(BaseWeb2SocketExchange.Inbound inbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
 		return Flux.concat(Mono.just(new Message("ws78")), inbound.decodeTextMessages(Message.class));
 	}
 	
@@ -629,8 +630,8 @@ public class WebSocketController {
 	}
 	
 	@WebSocketRoute( path = "/ws85", messageType = WebSocketMessage.Kind.TEXT )
-	public Flux<ByteBuf> ws85(Web2SocketExchange.Inbound inbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
-		return Flux.concat(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("ws85", Charsets.DEFAULT))), Flux.from(inbound.frames()).map(WebSocketFrame::getBinaryData));
+	public Flux<ByteBuf> ws85(BaseWeb2SocketExchange.Inbound inbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
+		return Flux.concat(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("ws85", Charsets.DEFAULT))), Flux.from(inbound.frames()).map(WebSocketFrame::getRawData));
 	}
 	
 	@WebSocketRoute( path = "/ws86", messageType = WebSocketMessage.Kind.TEXT )
@@ -664,7 +665,7 @@ public class WebSocketController {
 	}
 	
 	@WebSocketRoute( path = "/ws92", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public Flux<Message> ws92(Web2SocketExchange.Inbound inbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
+	public Flux<Message> ws92(BaseWeb2SocketExchange.Inbound inbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
 		return Flux.concat(Mono.just(new Message("ws92")), inbound.decodeTextMessages(Message.class));
 	}
 	
@@ -720,11 +721,11 @@ public class WebSocketController {
 	}
 	
 	@WebSocketRoute( path = "/ws99", messageType = WebSocketMessage.Kind.TEXT )
-	public Mono<ByteBuf> ws99(Web2SocketExchange.Inbound inbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
+	public Mono<ByteBuf> ws99(BaseWeb2SocketExchange.Inbound inbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
 		return Mono.from(inbound.frames()).map(frame -> {
 			ByteBuf buf = Unpooled.unreleasableBuffer(Unpooled.buffer());
 			buf.writeCharSequence("ws99", Charsets.DEFAULT);
-			buf.writeBytes(frame.getBinaryData());
+			buf.writeBytes(frame.getRawData());
 			frame.release();
 			return buf;
 		});
@@ -794,7 +795,7 @@ public class WebSocketController {
 	}
 	
 	@WebSocketRoute( path = "/ws106", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public Mono<Message> ws106(Web2SocketExchange.Inbound inbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
+	public Mono<Message> ws106(BaseWeb2SocketExchange.Inbound inbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
 		return Mono.from(inbound.decodeTextMessages(Message.class)).doOnNext(message -> message.setMessage("ws106" + message.getMessage()));
 	}
 	
@@ -850,37 +851,37 @@ public class WebSocketController {
 	}
 	
 	@WebSocketRoute( path = "/ws113", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws113(Web2SocketExchange.Inbound inbound, Web2SocketExchange.Outbound outbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
+	public void ws113(BaseWeb2SocketExchange.Inbound inbound, BaseWeb2SocketExchange.Outbound outbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
 		outbound.frames(factory -> Flux.concat(Mono.just(factory.text("ws113")), inbound.frames()));
 	}
 	
 	@WebSocketRoute( path = "/ws114", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws114(Publisher<ByteBuf> inbound, Web2SocketExchange.Outbound outbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
+	public void ws114(Publisher<ByteBuf> inbound, BaseWeb2SocketExchange.Outbound outbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
 		outbound.frames(factory -> Flux.concat(Mono.just(factory.text("ws114")), Flux.from(inbound).map(factory::text)));
 	}
 	
 	@WebSocketRoute( path = "/ws115", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws115(Publisher<Message> inbound, Web2SocketExchange.Outbound outbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
+	public void ws115(Publisher<Message> inbound, BaseWeb2SocketExchange.Outbound outbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
 		outbound.encodeTextMessages(Flux.concat(Mono.just(new Message("ws115")), inbound), Message.class);
 	}
 	
 	@WebSocketRoute( path = "/ws116", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws116(Flux<ByteBuf> inbound, Web2SocketExchange.Outbound outbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
+	public void ws116(Flux<ByteBuf> inbound, BaseWeb2SocketExchange.Outbound outbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
 		outbound.frames(factory -> Flux.concat(Mono.just(factory.text("ws116")), inbound.map(factory::text)));
 	}
 	
 	@WebSocketRoute( path = "/ws117", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws117(Flux<Message> inbound, Web2SocketExchange.Outbound outbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
+	public void ws117(Flux<Message> inbound, BaseWeb2SocketExchange.Outbound outbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
 		outbound.encodeTextMessages(Flux.concat(Mono.just(new Message("ws117")), inbound), Message.class);
 	}
 	
 	@WebSocketRoute( path = "/ws118", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws118(Mono<ByteBuf> inbound, Web2SocketExchange.Outbound outbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
+	public void ws118(Mono<ByteBuf> inbound, BaseWeb2SocketExchange.Outbound outbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
 		outbound.frames(factory -> Flux.concat(Mono.just(factory.text("ws118")), inbound.map(factory::text)));
 	}
 	
 	@WebSocketRoute( path = "/ws119", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws119(Mono<Message> inbound, Web2SocketExchange.Outbound outbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
+	public void ws119(Mono<Message> inbound, BaseWeb2SocketExchange.Outbound outbound, Web2SocketExchange<? extends ExchangeContext> exchange) {
 		outbound.encodeTextMessages(Flux.concat(Mono.just(new Message("ws119")), inbound), Message.class);
 	}
 	
@@ -1056,24 +1057,24 @@ public class WebSocketController {
 	}
 	
 	@WebSocketRoute( path = "/ws136", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public Publisher<ByteBuf> ws136(Web2SocketExchange.Outbound outbound) {
+	public Publisher<ByteBuf> ws136(BaseWeb2SocketExchange.Outbound outbound) {
 		return null;
 	}
 	
 	@WebSocketRoute( path = "/ws137", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public Publisher<ByteBuf> ws137(Web2SocketExchange.Inbound inbound1, Publisher<ByteBuf> inbound2) {
+	public Publisher<ByteBuf> ws137(BaseWeb2SocketExchange.Inbound inbound1, Publisher<ByteBuf> inbound2) {
 		return null;
 	}
 	
 	@WebSocketRoute( path = "/ws138", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws138(Web2SocketExchange.Outbound oubound1, Web2SocketExchange.Outbound oubound2) {
+	public void ws138(BaseWeb2SocketExchange.Outbound oubound1, BaseWeb2SocketExchange.Outbound oubound2) {
 	}
 	
 	@WebSocketRoute( path = "/ws_clash", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws139(Web2SocketExchange.Inbound inbound, Web2SocketExchange.Outbound oubound) {
+	public void ws139(BaseWeb2SocketExchange.Inbound inbound, BaseWeb2SocketExchange.Outbound oubound) {
 	}
 	
 	@WebSocketRoute( path = "/ws_clash", subprotocol = "json", messageType = WebSocketMessage.Kind.TEXT )
-	public void ws140(Web2SocketExchange.Inbound inbound, Web2SocketExchange.Outbound oubound) {
+	public void ws140(BaseWeb2SocketExchange.Inbound inbound, BaseWeb2SocketExchange.Outbound oubound) {
 	}*/
 }

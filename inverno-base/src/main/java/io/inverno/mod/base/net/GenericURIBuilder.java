@@ -18,14 +18,12 @@ package io.inverno.mod.base.net;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -44,6 +42,7 @@ class GenericURIBuilder implements URIBuilder {
 	private final URIFlags flags;
 	
 	private SchemeComponent scheme;
+	private AuthorityComponent authority;
 	private UserInfoComponent userInfo;
 	private HostComponent host;
 	private PortComponent port;
@@ -86,12 +85,12 @@ class GenericURIBuilder implements URIBuilder {
 			int fragmentIndex = -1;
 			
 			switch(requestTargetForm) {
-				case ABSOLUTE:
+				case PATH:
 					break;
-				case ORIGIN_EXTENDED: fragmentIndex = requestTarget.indexOf('#');
-				case ORIGIN: queryIndex = requestTarget.indexOf('?');
+				case PATH_QUERY_FRAGMENT: fragmentIndex = requestTarget.indexOf('#');
+				case PATH_QUERY: queryIndex = requestTarget.indexOf('?');
 					if(this.flags.isPathPattern()) {
-						throw new URIBuilderException(URIs.RequestTargetForm.ORIGIN + " form request-target is incompatible with " + URIs.Option.PATH_PATTERN + " option");
+						throw new URIBuilderException(URIs.RequestTargetForm.PATH_QUERY + " form request-target is incompatible with " + URIs.Option.PATH_PATTERN + " option");
 					}
 					break;
 			}
@@ -132,18 +131,10 @@ class GenericURIBuilder implements URIBuilder {
 		this.queryParameters = new LinkedList<>();
 		if(uri != null) {
 			this.scheme(uri.getScheme());
-			
 			if(uri.isOpaque()) {
 				// I have a scheme-specific part which correspond to path-rootless + fragment according to RFC3986
-				String path = uri.getRawSchemeSpecificPart();
-				int queryIndex = path.indexOf('?');
-				if(queryIndex > 0) {
-					this.path(path.substring(0, queryIndex), ignoreTrailingSlash);
-					this.parseRawQuery(path.substring(queryIndex + 1));
-				}
-				else {
-					this.path(path, ignoreTrailingSlash);
-				}
+				// We'll consider that the authority is the scheme specific part if for some reason we want to have an opaque URI with path and query we can use the fragment do urn:abc#/path/to/resource?p1=v1&p2=v2
+				this.authority(URIs.decodeURIComponent(uri.getRawSchemeSpecificPart(), this.charset));
 				if(uri.getRawFragment() != null) {
 					this.fragment(URIs.decodeURIComponent(uri.getRawFragment(), this.charset));
 				}
@@ -181,14 +172,12 @@ class GenericURIBuilder implements URIBuilder {
 		for(String queryParameter : queryParameterParts) {
 			String[] queryParameterNameValue = queryParameter.split("=");
 			if(queryParameterNameValue.length == 1) {
-				if(queryParameterNameValue[0].length() == 0) {
-					continue;
-				}
-				else if(queryParameterParts.length == 1) {
-					this.query = new QueryComponent(this.flags, this.charset, URIs.decodeURIComponent(rawQuery, this.charset));
-				}
-				else {
-					parsedQueryParameters.add(new QueryParameterComponent(this.flags, this.charset, URIs.decodeURIComponent(queryParameterNameValue[0], this.charset), ""));
+				if(!queryParameterNameValue[0].isEmpty()) {
+					if (queryParameterParts.length == 1) {
+						this.query = new QueryComponent(this.flags, this.charset, URIs.decodeURIComponent(rawQuery, this.charset));
+					} else {
+						parsedQueryParameters.add(new QueryParameterComponent(this.flags, this.charset, URIs.decodeURIComponent(queryParameterNameValue[0], this.charset), ""));
+					}
 				}
 			}
 			else {
@@ -210,9 +199,24 @@ class GenericURIBuilder implements URIBuilder {
 		}
 		return this;
 	}
-	
+
+	@Override
+	public URIBuilder authority(String authority) {
+		this.userInfo = null;
+		this.host = null;
+		this.port = null;
+		if(StringUtils.isNotBlank(authority)) {
+			this.authority = new AuthorityComponent(this.flags, this.charset, authority);
+		}
+		else {
+			this.authority = null;
+		}
+		return this;
+	}
+
 	@Override
 	public URIBuilder userInfo(String userInfo) {
+		this.authority = null;
 		if(StringUtils.isNotBlank(userInfo)) {
 			this.userInfo = new UserInfoComponent(this.flags, this.charset, userInfo);
 		}
@@ -224,6 +228,7 @@ class GenericURIBuilder implements URIBuilder {
 	
 	@Override
 	public URIBuilder host(String host) {
+		this.authority = null;
 		if(StringUtils.isNotBlank(host)) {
 			this.host = new HostComponent(this.flags, this.charset, host);
 		}
@@ -235,6 +240,7 @@ class GenericURIBuilder implements URIBuilder {
 	
 	@Override
 	public URIBuilder port(Integer port) {
+		this.authority = null;
 		if(port != null && port > -1) {
 			this.port = new PortComponent(this.flags, this.charset, port.toString());
 		}
@@ -246,6 +252,7 @@ class GenericURIBuilder implements URIBuilder {
 	
 	@Override
 	public URIBuilder port(String port) {
+		this.authority = null;
 		if(StringUtils.isNotBlank(port)) {
 			this.port = new PortComponent(this.flags, this.charset, port);
 		}
@@ -285,27 +292,26 @@ class GenericURIBuilder implements URIBuilder {
 				// '.' or '..' as a result, normalization will also take place during the build of
 				// a parameterized URI
 				String nextSegmentValue = nextSegment.getRawValue();
-				if(nextSegmentValue.equals(".")) {
-					// Segment is ignored
-				}
-				else if(nextSegmentValue.equals("..")) {
-					// We have to remove the previous segment if it is not '..' OR keep that segment if there's no previous segment
-					if(!this.segments.isEmpty()) {
-						SegmentComponent lastSegment = this.segments.peekLast();
-						String lastSegmentValue = lastSegment.getRawValue();
-						if(lastSegmentValue.equals("..") || (this.segments.size() == 1 && lastSegmentValue.equals(""))) {
-							this.segments.add(nextSegment);
+				if(!nextSegmentValue.equals(".")) {
+					if(nextSegmentValue.equals("..")) {
+						// We have to remove the previous segment if it is not '..' OR keep that segment if there's no previous segment
+						if(!this.segments.isEmpty()) {
+							SegmentComponent lastSegment = this.segments.peekLast();
+							String lastSegmentValue = lastSegment.getRawValue();
+							if(lastSegmentValue.equals("..") || (this.segments.size() == 1 && lastSegmentValue.isEmpty())) {
+								this.segments.add(nextSegment);
+							}
+							else {
+								this.segments.removeLast();
+							}
 						}
 						else {
-							this.segments.removeLast();
+							this.segments.add(nextSegment);
 						}
 					}
 					else {
 						this.segments.add(nextSegment);
 					}
-				}
-				else {
-					this.segments.add(nextSegment);
 				}
 			}
 			else {
@@ -446,7 +452,14 @@ class GenericURIBuilder implements URIBuilder {
 		if(this.scheme != null && this.scheme.isPresent()) {
 			uriBuilder.append(this.scheme.getValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.scheme.getParameters().size()), values.size())))).append(":");
 		}
-		if(this.host != null && this.host.isPresent()) {
+		if(this.authority != null && this.authority.isPresent()) {
+			abempty = true;
+			if(this.authority.isAbsolute()) {
+				uriBuilder.append("/");
+			}
+			uriBuilder.append(this.authority.getValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.authority.getParameters().size()), values.size()))));
+		}
+		else if(this.host != null && this.host.isPresent()) {
 			abempty = true;
 			uriBuilder.append("//");
 			if(this.userInfo != null && this.userInfo.isPresent()) {
@@ -474,29 +487,28 @@ class GenericURIBuilder implements URIBuilder {
 					LinkedList<String> segmentValues = new LinkedList<>();
 					for(SegmentComponent segment : this.segments) {
 						String nextSegmentValue = segment.getValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(segment.getParameters().size()), values.size())), escapeSlash);
-						if(nextSegmentValue.equals(".")) {
-							// Segment is ignored
-						}
-						else if(nextSegmentValue.equals("..")) {
-							// We have to remove the previous segment if it is not '..' OR keep that segment if there's no previous segment
-							if(!segmentValues.isEmpty()) {
-								String lastSegmentValue = segmentValues.peekLast();
-								if(lastSegmentValue.equals("..") || (segmentValues.size() == 1 && lastSegmentValue.equals(""))) {
-									segmentValues.add(nextSegmentValue);
+						if(!nextSegmentValue.equals(".")) {
+							if(nextSegmentValue.equals("..")) {
+								// We have to remove the previous segment if it is not '..' OR keep that segment if there's no previous segment
+								if(!segmentValues.isEmpty()) {
+									String lastSegmentValue = segmentValues.peekLast();
+									if(lastSegmentValue.equals("..") || (segmentValues.size() == 1 && lastSegmentValue.isEmpty())) {
+										segmentValues.add(nextSegmentValue);
+									}
+									else {
+										segmentValues.removeLast();
+									}
 								}
 								else {
-									segmentValues.removeLast();
+									segmentValues.add(nextSegmentValue);
 								}
 							}
 							else {
 								segmentValues.add(nextSegmentValue);
 							}
 						}
-						else {
-							segmentValues.add(nextSegmentValue);
-						}
 					}
-					uriBuilder.append(segmentValues.stream().collect(Collectors.joining("/")));
+					uriBuilder.append(String.join("/", segmentValues));
 				}
 				else {
 					uriBuilder.append(this.segments.stream()
@@ -532,8 +544,14 @@ class GenericURIBuilder implements URIBuilder {
 		if(this.scheme != null && this.scheme.isPresent()) {
 			uriBuilder.append(this.scheme.getValue(values)).append(":");
 		}
-
-		if(this.host != null && this.host.isPresent()) {
+		if(this.authority != null && this.authority.isPresent()) {
+			abempty = true;
+			if(this.authority.isAbsolute()) {
+				uriBuilder.append("/");
+			}
+			uriBuilder.append(this.authority.getValue(values));
+		}
+		else if(this.host != null && this.host.isPresent()) {
 			abempty = true;
 			uriBuilder.append("//");
 			if(this.userInfo != null && this.userInfo.isPresent()) {
@@ -561,29 +579,28 @@ class GenericURIBuilder implements URIBuilder {
 					LinkedList<String> segmentValues = new LinkedList<>();
 					for(SegmentComponent segment : this.segments) {
 						String nextSegmentValue = segment.getValue(values, escapeSlash);
-						if(nextSegmentValue.equals(".")) {
-							// Segment is ignored
-						}
-						else if(nextSegmentValue.equals("..")) {
-							// We have to remove the previous segment if it is not '..' OR keep that segment if there's no previous segment
-							if(!segmentValues.isEmpty()) {
-								String lastSegmentValue = segmentValues.peekLast();
-								if(lastSegmentValue.equals("..") || (segmentValues.size() == 1 && lastSegmentValue.equals(""))) {
-									segmentValues.add(nextSegmentValue);
+						if(!nextSegmentValue.equals(".")) {
+							if(nextSegmentValue.equals("..")) {
+								// We have to remove the previous segment if it is not '..' OR keep that segment if there's no previous segment
+								if(!segmentValues.isEmpty()) {
+									String lastSegmentValue = segmentValues.peekLast();
+									if(lastSegmentValue.equals("..") || (segmentValues.size() == 1 && lastSegmentValue.isEmpty())) {
+										segmentValues.add(nextSegmentValue);
+									}
+									else {
+										segmentValues.removeLast();
+									}
 								}
 								else {
-									segmentValues.removeLast();
+									segmentValues.add(nextSegmentValue);
 								}
 							}
 							else {
 								segmentValues.add(nextSegmentValue);
 							}
 						}
-						else {
-							segmentValues.add(nextSegmentValue);
-						}
 					}
-					uriBuilder.append(segmentValues.stream().collect(Collectors.joining("/")));
+					uriBuilder.append(String.join("/", segmentValues));
 				}
 				else {
 					uriBuilder.append(this.segments.stream().map(segment -> segment.getValue(values, escapeSlash)).collect(Collectors.joining("/")));
@@ -616,8 +633,14 @@ class GenericURIBuilder implements URIBuilder {
 		if(this.scheme != null && this.scheme.isPresent()) {
 			uriBuilder.append(this.scheme.getRawValue()).append(":");
 		}
-
-		if(this.host != null && this.host.isPresent()) {
+		if(this.authority != null && this.authority.isPresent()) {
+			abempty = true;
+			if(this.authority.isAbsolute()) {
+				uriBuilder.append("/");
+			}
+			uriBuilder.append(this.authority.getRawValue());
+		}
+		else if(this.host != null && this.host.isPresent()) {
 			abempty = true;
 			uriBuilder.append("//");
 			if(this.userInfo != null && this.userInfo.isPresent()) {
@@ -639,7 +662,7 @@ class GenericURIBuilder implements URIBuilder {
 				if(abempty && !firstSegmentEmpty) {
 					uriBuilder.append("/");
 				}
-				uriBuilder.append(this.segments.stream().map(segment -> segment.getRawValue()).collect(Collectors.joining("/")));
+				uriBuilder.append(this.segments.stream().map(SegmentComponent::getRawValue).collect(Collectors.joining("/")));
 			}
 		}
 		
@@ -648,7 +671,7 @@ class GenericURIBuilder implements URIBuilder {
 		}
 		else if(this.queryParameters != null && !this.queryParameters.isEmpty()) {
 			uriBuilder.append("?");
-			uriBuilder.append(this.queryParameters.stream().map(queryParameter -> queryParameter.getRawValue()).collect(Collectors.joining("&")));
+			uriBuilder.append(this.queryParameters.stream().map(QueryParameterComponent::getRawValue).collect(Collectors.joining("&")));
 		}
 		
 		if(this.fragment != null && this.fragment.isPresent()) {
@@ -680,29 +703,28 @@ class GenericURIBuilder implements URIBuilder {
 					LinkedList<String> segmentValues = new LinkedList<>();
 					for(SegmentComponent segment : this.segments) {
 						String nextSegmentValue = segment.getValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(segment.getParameters().size()), values.size())), escapeSlash);
-						if(nextSegmentValue.equals(".")) {
-							// Segment is ignored
-						}
-						else if(nextSegmentValue.equals("..")) {
-							// We have to remove the previous segment if it is not '..' OR keep that segment if there's no previous segment
-							if(!segmentValues.isEmpty()) {
-								String lastSegmentValue = segmentValues.peekLast();
-								if(lastSegmentValue.equals("..") || (segmentValues.size() == 1 && lastSegmentValue.equals(""))) {
-									segmentValues.add(nextSegmentValue);
+						if(!nextSegmentValue.equals(".")) {
+							if(nextSegmentValue.equals("..")) {
+								// We have to remove the previous segment if it is not '..' OR keep that segment if there's no previous segment
+								if(!segmentValues.isEmpty()) {
+									String lastSegmentValue = segmentValues.peekLast();
+									if(lastSegmentValue.equals("..") || (segmentValues.size() == 1 && lastSegmentValue.isEmpty())) {
+										segmentValues.add(nextSegmentValue);
+									}
+									else {
+										segmentValues.removeLast();
+									}
 								}
 								else {
-									segmentValues.removeLast();
+									segmentValues.add(nextSegmentValue);
 								}
 							}
 							else {
 								segmentValues.add(nextSegmentValue);
 							}
 						}
-						else {
-							segmentValues.add(nextSegmentValue);
-						}
 					}
-					pathBuilder.append(segmentValues.stream().collect(Collectors.joining("/")));
+					pathBuilder.append(String.join("/", segmentValues));
 				}
 				else {
 					pathBuilder.append(this.segments.stream()
@@ -740,29 +762,28 @@ class GenericURIBuilder implements URIBuilder {
 					LinkedList<String> segmentValues = new LinkedList<>();
 					for(SegmentComponent segment : this.segments) {
 						String nextSegmentValue = segment.getValue(values, escapeSlash);
-						if(nextSegmentValue.equals(".")) {
-							// Segment is ignored
-						}
-						else if(nextSegmentValue.equals("..")) {
-							// We have to remove the previous segment if it is not '..' OR keep that segment if there's no previous segment
-							if(!segmentValues.isEmpty()) {
-								String lastSegmentValue = segmentValues.peekLast();
-								if(lastSegmentValue.equals("..") || (segmentValues.size() == 1 && lastSegmentValue.equals(""))) {
-									segmentValues.add(nextSegmentValue);
+						if(!nextSegmentValue.equals(".")) {
+							if(nextSegmentValue.equals("..")) {
+								// We have to remove the previous segment if it is not '..' OR keep that segment if there's no previous segment
+								if(!segmentValues.isEmpty()) {
+									String lastSegmentValue = segmentValues.peekLast();
+									if(lastSegmentValue.equals("..") || (segmentValues.size() == 1 && lastSegmentValue.isEmpty())) {
+										segmentValues.add(nextSegmentValue);
+									}
+									else {
+										segmentValues.removeLast();
+									}
 								}
 								else {
-									segmentValues.removeLast();
+									segmentValues.add(nextSegmentValue);
 								}
 							}
 							else {
 								segmentValues.add(nextSegmentValue);
 							}
 						}
-						else {
-							segmentValues.add(nextSegmentValue);
-						}
 					}
-					pathBuilder.append(segmentValues.stream().collect(Collectors.joining("/")));
+					pathBuilder.append(String.join("/", segmentValues));
 				}
 				else {
 					pathBuilder.append(this.segments.stream().map(segment -> segment.getValue(values, escapeSlash)).collect(Collectors.joining("/")));
@@ -775,7 +796,7 @@ class GenericURIBuilder implements URIBuilder {
 	@Override
 	public String buildRawPath() {
 		if(!this.segments.isEmpty()) {
-			return this.segments.stream().map(segment -> segment.getRawValue()).collect(Collectors.joining("/"));
+			return this.segments.stream().map(SegmentComponent::getRawValue).collect(Collectors.joining("/"));
 		}
 		return "";
 	}
@@ -804,7 +825,6 @@ class GenericURIBuilder implements URIBuilder {
 			queryBuilder.append(this.query.getValue(values));
 		}
 		else if(this.queryParameters != null && !this.queryParameters.isEmpty()) {
-			queryBuilder.append("?");
 			queryBuilder.append(this.queryParameters.stream()
 				.map(queryParameter -> queryParameter.getValue(values))
 				.collect(Collectors.joining("&"))
@@ -820,11 +840,39 @@ class GenericURIBuilder implements URIBuilder {
 			queryBuilder.append(this.query.getRawValue());
 		}
 		else if(this.queryParameters != null && !this.queryParameters.isEmpty()) {
-			queryBuilder.append(this.queryParameters.stream().map(queryParameter -> queryParameter.getRawValue()).collect(Collectors.joining("&")));
+			queryBuilder.append(this.queryParameters.stream().map(QueryParameterComponent::getRawValue).collect(Collectors.joining("&")));
 		}
 		return queryBuilder.toString();
 	}
-	
+
+	@Override
+	public String buildFragment(List<Object> values) throws URIBuilderException {
+		Objects.requireNonNull(values);
+		StringBuilder fragmentBuilder = new StringBuilder();
+		if(this.fragment != null) {
+			fragmentBuilder.append(this.fragment.getValue(values));
+		}
+		return fragmentBuilder.toString();
+	}
+
+	@Override
+	public String buildFragment(Map<String, ?> values) throws URIBuilderException {
+		StringBuilder fragmentBuilder = new StringBuilder();
+		if(this.fragment != null) {
+			fragmentBuilder.append(this.fragment.getValue(values));
+		}
+		return fragmentBuilder.toString();
+	}
+
+	@Override
+	public String buildRawFragment() throws URIBuilderException {
+		StringBuilder fragmentBuilder = new StringBuilder();
+		if(this.fragment != null) {
+			fragmentBuilder.append(this.fragment.getRawValue());
+		}
+		return fragmentBuilder.toString();
+	}
+
 	@Override
 	public URIPattern buildPattern(boolean matchTrailingSlash) {
 		StringBuilder patternBuilder = new StringBuilder("^");
@@ -834,6 +882,15 @@ class GenericURIBuilder implements URIBuilder {
 		if(this.scheme != null && this.scheme.isPresent()) {
 			patternBuilder.append(this.scheme.getPattern()).append(":");
 			rawValueBuilder.append(this.scheme.getRawValue()).append(":");
+		}
+		if(this.authority != null && this.authority.isPresent()) {
+			abempty = true;
+			if(this.authority.isAbsolute()) {
+				patternBuilder.append("/");
+				rawValueBuilder.append("/");
+			}
+			patternBuilder.append(this.authority.getPattern());
+			rawValueBuilder.append(this.authority.getRawValue());
 		}
 		if(this.host != null && this.host.isPresent()) {
 			abempty = true;
@@ -865,7 +922,7 @@ class GenericURIBuilder implements URIBuilder {
 				patternBuilder.append(
 					this.segments.stream()
 						.map(segment -> {
-							if(segment.isDirectories() && patternBuilder.length() > 0) {
+							if(segment.isDirectories() && !patternBuilder.isEmpty()) {
 								return "?" + segment.getPattern();
 							}
 							else {
@@ -874,7 +931,7 @@ class GenericURIBuilder implements URIBuilder {
 						})
 						.collect(Collectors.joining("/"))
 				);
-				rawValueBuilder.append(this.segments.stream().map(segment -> segment.getRawValue()).collect(Collectors.joining("/")));
+				rawValueBuilder.append(this.segments.stream().map(SegmentComponent::getRawValue).collect(Collectors.joining("/")));
 				if(matchTrailingSlash) {
 					patternBuilder.append("/?");
 				}
@@ -887,8 +944,8 @@ class GenericURIBuilder implements URIBuilder {
 		else if(this.queryParameters != null && !this.queryParameters.isEmpty()) {
 			patternBuilder.append("\\?");
 			rawValueBuilder.append("?");
-			patternBuilder.append(this.queryParameters.stream().map(queryParameter -> queryParameter.getPattern()).collect(Collectors.joining("&")));
-			rawValueBuilder.append(this.queryParameters.stream().map(queryParameter -> queryParameter.getRawValue()).collect(Collectors.joining("&")));
+			patternBuilder.append(this.queryParameters.stream().map(QueryParameterComponent::getPattern).collect(Collectors.joining("&")));
+			rawValueBuilder.append(this.queryParameters.stream().map(QueryParameterComponent::getRawValue).collect(Collectors.joining("&")));
 		}
 		if(this.fragment != null && this.fragment.isPresent()) {
 			patternBuilder.append("#").append(this.fragment.getPattern());
@@ -899,6 +956,9 @@ class GenericURIBuilder implements URIBuilder {
 		List<String> groupNames = new LinkedList<>();
 		if(this.scheme != null) {
 			groupNames.addAll(this.scheme.getPatternGroupNames());
+		}
+		if(this.authority != null) {
+			groupNames.addAll(this.authority.getPatternGroupNames());
 		}
 		if(this.userInfo != null) {
 			groupNames.addAll(this.userInfo.getPatternGroupNames());
@@ -945,7 +1005,7 @@ class GenericURIBuilder implements URIBuilder {
 				pathPatternBuilder.append(
 					this.segments.stream()
 						.map(segment -> {
-							if(segment.isDirectories() && pathPatternBuilder.length() > 0) {
+							if(segment.isDirectories() && !pathPatternBuilder.isEmpty()) {
 								return "?" + segment.getPattern();
 							}
 							else {
@@ -957,7 +1017,7 @@ class GenericURIBuilder implements URIBuilder {
 				if(matchTrailingSlash) {
 					pathPatternBuilder.append("/?");
 				}
-				rawValue = this.segments.stream().map(segment -> segment.getRawValue()).collect(Collectors.joining("/"));
+				rawValue = this.segments.stream().map(SegmentComponent::getRawValue).collect(Collectors.joining("/"));
 			}
 		}
 		pathPatternBuilder.append("$");
@@ -971,20 +1031,22 @@ class GenericURIBuilder implements URIBuilder {
 	}
 	
 	@Override
+	@SuppressWarnings("MethodDoesntCallSuperMethod")
 	public URIBuilder clone() {
 		GenericURIBuilder copy = new GenericURIBuilder(this.charset, this.flags.getOptions());
-		
-		copy.fragment = this.fragment;
+
+		copy.scheme = this.scheme;
+		copy.authority = this.authority;
+		copy.userInfo = this.userInfo;
 		copy.host = this.host;
 		copy.port = this.port;
+		copy.segments.addAll(this.segments);
 		copy.query = this.query;
 		if(this.queryParameters != null) {
 			copy.queryParameters = new LinkedList<>(this.queryParameters);
 		}
-		copy.scheme = this.scheme;
-		copy.segments.addAll(this.segments);
-		copy.userInfo = this.userInfo;
-		
+		copy.fragment = this.fragment;
+
 		return copy;
 	}
 	

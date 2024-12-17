@@ -43,7 +43,7 @@ abstract class AbstractJsonByteBufMediaTypeConverter implements MediaTypeConvert
 	 * Creates a base JSON ByteBuf media type converter.
 	 * </p>
 	 * 
-	 * @param jsonByteBufConverter the underlyong JSON ByteBuf converter
+	 * @param jsonByteBufConverter the underlying JSON ByteBuf converter
 	 */
 	public AbstractJsonByteBufMediaTypeConverter(ReactiveConverter<ByteBuf, Object> jsonByteBufConverter) {
 		this.jsonByteBufConverter = jsonByteBufConverter;

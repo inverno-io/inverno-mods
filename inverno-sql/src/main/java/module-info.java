@@ -16,8 +16,7 @@
 
 /**
  * <p>
- * The Inverno framework SQL module defines the reactive SQL client API used to
- * query RDBMS using SQL.
+ * The Inverno framework SQL module defines the reactive SQL client API used to query RDBMS using SQL.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -26,9 +25,9 @@
 module io.inverno.mod.sql {
 	requires transitive reactor.core;
 	requires transitive org.reactivestreams;
-	
-	requires io.netty.common;
+
 	requires transitive io.netty.buffer;
-	
+	requires io.netty.common;
+
 	exports io.inverno.mod.sql;
 }

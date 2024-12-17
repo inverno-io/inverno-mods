@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.sql.vertx.internal;
 
+import io.vertx.sqlclient.SqlResult;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -79,7 +80,7 @@ public abstract class AbstractSqlOperations implements SqlOperations, UnsafeSqlO
 				.execute(Tuple.from(args))
 				.toCompletionStage()
 			)
-			.flatMapMany(rowSet -> Flux.fromIterable(rowSet).map(row -> new GenericRow(row)));
+			.flatMapMany(rowSet -> Flux.fromIterable(rowSet).map(GenericRow::new));
 	}
 	
 	@Override
@@ -114,16 +115,14 @@ public abstract class AbstractSqlOperations implements SqlOperations, UnsafeSqlO
 		BatchedSqlOperations batchedOperations = new BatchedSqlOperations();
 		return Flux.from(function.apply(batchedOperations))
 			.buffer(Queues.SMALL_BUFFER_SIZE) // use default mergeSequential() concurrency size: 256
-			.flatMap(queries -> {
-				return Flux.create(sink -> {
-					// group is not always implemented in Vertx which is why this is considered unsafe operation
-					((SqlClientInternal)this.client).group(c -> {
-						batchedOperations.setClient(c);
-						// We must subscribe here and return the result
-						Flux.mergeSequential(queries).subscribe(sink::next, sink::error, sink::complete);
-					});
+			.flatMap(queries -> Flux.create(sink -> {
+				// group is not always implemented in Vertx which is why this is considered unsafe operation
+				((SqlClientInternal)this.client).group(c -> {
+					batchedOperations.setClient(c);
+					// We must subscribe here and return the result
+					Flux.mergeSequential(queries).subscribe(sink::next, sink::error, sink::complete);
 				});
-			});
+			}));
 	}
 	
 	@Override
@@ -134,7 +133,7 @@ public abstract class AbstractSqlOperations implements SqlOperations, UnsafeSqlO
 				.execute(Tuple.from(args))
 				.toCompletionStage()
 			)
-			.map(rowSet -> rowSet.rowCount());
+			.map(SqlResult::rowCount);
 	}
 	
 	@Override
@@ -145,7 +144,7 @@ public abstract class AbstractSqlOperations implements SqlOperations, UnsafeSqlO
 				.executeBatch(args.stream().map(Tuple::from).collect(Collectors.toList()))
 				.toCompletionStage()
 			)
-			.map(rowSet -> rowSet.rowCount());
+			.map(SqlResult::rowCount);
 	}
 	
 	@Override
@@ -156,7 +155,7 @@ public abstract class AbstractSqlOperations implements SqlOperations, UnsafeSqlO
 				.executeBatch(args.map(Tuple::from).collect(Collectors.toList()))
 				.toCompletionStage()
 			)
-			.map(rowSet -> rowSet.rowCount());
+			.map(SqlResult::rowCount);
 	}
 	
 	/**

@@ -22,8 +22,6 @@ import io.inverno.mod.base.converter.ConverterException;
 import io.inverno.mod.base.converter.MediaTypeConverter;
 import io.inverno.mod.base.converter.ReactiveConverter;
 import io.inverno.mod.base.resource.MediaTypes;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import java.lang.reflect.Type;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -42,8 +40,6 @@ import reactor.core.publisher.Mono;
 @Bean( name = "ndJsonStringMediaTypeConverter")
 public class NdJsonStringMediaTypeConverter implements @Provide MediaTypeConverter<String> {
 
-	private static final ByteBuf NEW_LINE = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(new byte[] {'\n'}));
-	
 	private final ReactiveConverter<String, Object> jsonStringConverter;
 	
 	/**

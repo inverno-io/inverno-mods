@@ -15,7 +15,6 @@
  */
 package io.inverno.mod.http.base.header;
 
-import io.inverno.mod.base.Charsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -26,14 +25,11 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
 import io.inverno.mod.http.base.header.Headers.AcceptLanguage;
 import io.inverno.mod.http.base.internal.header.AcceptCodec;
 import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
 import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 /**
  * 
@@ -41,14 +37,6 @@ import io.netty.buffer.Unpooled;
  *
  */
 public class AcceptCodecTest {
-	
-	@Test
-	public void test() {
-		ByteBuf buffer = Unpooled.wrappedBuffer("*".getBytes(Charsets.UTF_8));
-		System.out.println(buffer.maxCapacity());
-//		buffer.writeByte(HeaderCodec.LF);
-//		System.out.println(buffer.readableBytes());
-	}
 
 //	@Test
 	public void testAcceptCodec() {

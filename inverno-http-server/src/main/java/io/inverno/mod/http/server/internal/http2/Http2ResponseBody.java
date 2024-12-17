@@ -23,7 +23,7 @@ import io.inverno.mod.http.server.internal.AbstractResponseBody;
  * Http/2 {@link ResponseBody} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.10
  */
 class Http2ResponseBody extends AbstractResponseBody<Http2ResponseHeaders, Http2ResponseBody> {

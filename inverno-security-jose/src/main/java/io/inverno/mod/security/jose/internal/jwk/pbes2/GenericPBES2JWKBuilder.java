@@ -79,15 +79,11 @@ public class GenericPBES2JWKBuilder extends AbstractJWKBuilder<GenericPBES2JWK, 
 
 	@Override
 	protected void set(String field, Object value) throws JWKReadException {
-		switch(field) {
-			case "p": {
-				this.password((String)value);
-				break;
-			}
-			default: {
-				super.set(field, value);
-				break;
-			}
+		if(field.equals("p")) {
+			this.password((String) value);
+		}
+		else {
+			super.set(field, value);
 		}
 	}
 	

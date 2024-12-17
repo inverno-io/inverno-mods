@@ -85,7 +85,7 @@ public class CORSInterceptorTest {
 		
 		// Rejected CORS request: origins don't match
 		Mockito.when(mockExchange.request().headers().get(Headers.NAME_ORIGIN)).thenReturn(Optional.of("http://127.0.0.1"));
-		Assertions.assertEquals("Rejected CORS: http://127.0.0.1 is not auhorized to access resources", Assertions.assertThrows(ForbiddenException.class, () -> CORSInterceptor.builder("http://localhost").build().intercept(mockExchange).block()).getMessage());
+		Assertions.assertEquals("Rejected CORS: http://127.0.0.1 is not authorized to access resources", Assertions.assertThrows(ForbiddenException.class, () -> CORSInterceptor.builder("http://localhost").build().intercept(mockExchange).block()).getMessage());
 		
 		Mockito.clearInvocations(mockExchange.request().headers(), mockExchange.response().headers());
 		

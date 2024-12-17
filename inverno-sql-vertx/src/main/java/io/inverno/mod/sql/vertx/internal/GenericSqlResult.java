@@ -52,7 +52,7 @@ public class GenericSqlResult implements SqlResult {
 
 	@Override
 	public Mono<Integer> rowsUpdated() {
-		return Mono.fromSupplier(() -> this.rowSet.rowCount());
+		return Mono.fromSupplier(this.rowSet::rowCount);
 	}
 	
 	@Override
@@ -65,6 +65,6 @@ public class GenericSqlResult implements SqlResult {
 	
 	@Override
 	public Publisher<Row> rows() {
-		return Flux.fromIterable(this.rowSet).map(row -> new GenericRow(row));
+		return Flux.fromIterable(this.rowSet).map(GenericRow::new);
 	}
 }

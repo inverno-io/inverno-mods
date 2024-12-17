@@ -1,12 +1,12 @@
 /*
  * Copyright 2022 Jeremy KUHN
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.client.ConnectionTimeoutException;
 import io.inverno.mod.http.client.ExchangeInterceptor;
 import io.inverno.mod.http.client.HttpClientConfiguration;
-import io.inverno.mod.http.client.InterceptableExchange;
+import io.inverno.mod.http.client.InterceptedExchange;
 import io.inverno.mod.http.client.Part;
 import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
 import io.netty.channel.EventLoop;
@@ -36,12 +36,17 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.cert.Certificate;
 import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
+import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Flux;
@@ -58,21 +63,21 @@ import reactor.core.publisher.Sinks;
  * </p>
  *
  * <p>
- * Connections follow following lifecyle:
+ * Connections follow following lifecycle:
  * </p>
  *
  * <ol>
  * <li>connection is created if the pool is not full whenever number of inflight requests exceeds existing connections capacity (sum of max concurrent requests) and there's no parked connections.</li>
  * <li>connection is parked whenever the number of inflight requests could be handled by fewer connections. A parked connection can be put back into the active pool if needed on new requests.</li>
- * <li>conncetion is closed when it has been parked for more than the connection keep alive timeout.<li>
+ * <li>connection is closed when it has been parked for more than the connection keep alive timeout.<li>
  * </ol>
  *
  * <li>
  * In case, the amount of requests exceeds the pool's capacity (sum of concurrent requests for maximum number of connections allowed in the pool), requests are buffered up to the pool buffer size
- * beyonf which requests start being rejected.
+ * beyond which requests start being rejected.
  * </li>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  *
  * @param <A> the exchange context type
@@ -80,34 +85,33 @@ import reactor.core.publisher.Sinks;
 public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<A> {
 
 	private static final Logger LOGGER = LogManager.getLogger(PooledEndpoint.class);
-	
+
 	private final Reactor reactor;
 	private final EventLoop eventLoop;
-	
+
 	private final int maxSize;
 	private final Integer bufferSize;
 	private final long cleanPeriod;
 	private final long connectTimeout;
-	
-	private final CommandExecutor<PooledEndpoint<A>> commandExecutor;
-	private final PooledEndpoint.PooledHttpConnection[] connections;
-	private final Deque<PooledEndpoint.PooledHttpConnection> parkedConnections;
-	private final PooledEndpoint.ConnectionRequestBuffer requestBuffer;
+	private final float connectLoadThreshold;
+	private final int connectChoiceCount;
 
-	// This could go in a subclass to provide different strategy or in a dedicated strategy
-	// Note that the strategy will probably also include parking selection and eviction strategy
-	private int activeIndex;
+	private final CommandExecutor<PooledEndpoint<A>> commandExecutor;
+	private final PooledHttpConnection[] connections;
+	private final Deque<PooledHttpConnection> parkedConnections;
+	private final ConnectionRequestBuffer requestBuffer;
+
 	private volatile int size;
 	private volatile int connecting;
-	
+
 	private volatile long totalCapacity;
 	private volatile long capacity;
-	
+
+	private ScheduledFuture<?> cleanFuture;
+
 	private volatile boolean closing;
 	private volatile boolean closed;
 
-	private ScheduledFuture<?> cleanFuture;
-	
 	/**
 	 * <p>
 	 * Creates a pooled endpoint.
@@ -128,119 +132,155 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 	 * @param partFactory           the part factory
 	 * @param exchangeInterceptor   an optional exchange interceptor
 	 */
+	@SuppressWarnings("unchecked")
 	public PooledEndpoint(
-			Reactor reactor,
-			NetService netService, 
-			SslContextProvider sslContextProvider,
-			EndpointChannelConfigurer channelConfigurer,
-			InetSocketAddress localAddress,
-			InetSocketAddress remoteAddress, 
-			HttpClientConfiguration configuration, 
-			NetClientConfiguration netConfiguration,
-			HeaderService headerService, 
-			ObjectConverter<String> parameterConverter,
-			MultipartEncoder<Parameter> urlEncodedBodyEncoder,
-			MultipartEncoder<Part<?>> multipartBodyEncoder, 
-			Part.Factory partFactory,
-			ExchangeInterceptor<? super A, InterceptableExchange<A>> exchangeInterceptor) {
+		Reactor reactor,
+		NetService netService,
+		SslContextProvider sslContextProvider,
+		EndpointChannelConfigurer channelConfigurer,
+		InetSocketAddress localAddress,
+		InetSocketAddress remoteAddress,
+		HttpClientConfiguration configuration,
+		NetClientConfiguration netConfiguration,
+		HeaderService headerService,
+		ObjectConverter<String> parameterConverter,
+		MultipartEncoder<Parameter> urlEncodedBodyEncoder,
+		MultipartEncoder<Part<?>> multipartBodyEncoder,
+		Part.Factory partFactory,
+		ExchangeInterceptor<A, InterceptedExchange<A>> exchangeInterceptor) {
 		super(netService, sslContextProvider, channelConfigurer, localAddress, remoteAddress, configuration, netConfiguration, headerService, parameterConverter, urlEncodedBodyEncoder, multipartBodyEncoder, partFactory, exchangeInterceptor);
-		
-		this.maxSize = this.configuration.pool_max_size();
+
+		this.maxSize = Math.max(1, this.configuration.pool_max_size());
 		this.bufferSize = this.configuration.pool_buffer_size();
 		this.cleanPeriod = this.configuration.pool_clean_period();
 		this.connectTimeout = this.configuration.pool_connect_timeout();
-		
-		if(this.maxSize <= 0) {
-			throw new IllegalArgumentException("pool_max_size must be a greater than 1");
-		}
-		
+		this.connectLoadThreshold = Math.max(0, Math.min(1f, this.configuration.pool_select_connection_load_threshold()));
+		this.connectChoiceCount = Math.max(1, Math.min(this.configuration.pool_select_choice_count(), this.maxSize));
+
 		this.commandExecutor = new CommandExecutor<>(this);
 		this.connections = new PooledEndpoint.PooledHttpConnection[this.maxSize];
 		this.parkedConnections = new ArrayDeque<>();
-		this.requestBuffer = new PooledEndpoint.ConnectionRequestBuffer();
-		
+		this.requestBuffer = new ConnectionRequestBuffer();
+
 		this.reactor = reactor;
 		this.eventLoop = reactor.getEventLoop();
-		this.scheduleClean();
 	}
 
 	@Override
-	public Mono<HttpConnection> connection() {
+	public Mono<HttpConnection.Handle> connection() {
 		return Mono.defer(() -> {
 			if(this.closing || this.closed) {
 				return Mono.error(new ConnectionPoolException("Pool closed"));
 			}
-			PooledEndpoint.ConnectionRequest request = new PooledEndpoint.ConnectionRequest(this.connectTimeout);
+			ConnectionRequest request = new ConnectionRequest(this.connectTimeout);
 			this.acquire(request);
-			return request.get();
+			return request.asMono();
 		});
 	}
-	
+
+	@Override
+	public long getActiveRequests() {
+		return this.connecting + (this.totalCapacity - this.capacity) + this.bufferSize;
+	}
+
+	@Override
+	public float getLoadFactor() {
+		float totalConnectionLoad = 0;
+		for(PooledHttpConnection connection : this.connections) {
+			if(connection != null) {
+				totalConnectionLoad += connection.getLoadFactor();
+			}
+		}
+		return totalConnectionLoad / this.maxSize;
+	}
+
 	/**
 	 * <p>
 	 * Selects a connection from the pool.
 	 * </p>
-	 * 
-	 * @return a pooled connection or null if there's no capacity left
+	 *
+	 * <p>
+	 * It select the connection with the minimum load factor from a set of {@code configuration.} randomly selected connections in the pool, that connection is returned when its load factor is less
+	 * than {@link HttpClientConfiguration#pool_select_connection_load_threshold()} ()} or strictly less than {@code 1} and no additional connection can be created in the pool, otherwise {@code null}
+	 * is returned to indicate that a new connection must be created if possible or the request must be buffered.
+	 * </p>
+	 *
+	 * @return a pooled connection or {@code null} if there's not enough capacity left
 	 */
-	protected PooledHttpConnection selectConnection() {
-		// Select next with better capacity
+	@SuppressWarnings("unchecked")
+	private PooledHttpConnection selectConnection() {
+		// This could go in a subclass to provide different strategy or in a dedicated strategy
+		// Note that the strategy will probably also include parking selection and eviction strategy
 		if(this.size == 0 || this.capacity == 0) {
 			return null;
 		}
-		
-		PooledHttpConnection currentConnection = this.connections[this.activeIndex];
-		float loadFactor = currentConnection.getLoadFactor();
-		for(int i=1;i<this.size;i++) {
-			int currentIndex = (this.activeIndex + i) % this.size;
-			PooledHttpConnection connection = this.connections[currentIndex];
-			float currentLoadFactor = connection.getLoadFactor();
-			if(currentLoadFactor < loadFactor) {
-				this.activeIndex = currentIndex;
-				return connection;
+
+//		LOGGER.debug(() -> "Snap: " + IntStream.range(0, this.size).mapToObj(i -> this.connections[i].allocated + "").collect(Collectors.joining(",")));
+
+		ThreadLocalRandom random = ThreadLocalRandom.current();
+		BitSet bs = new BitSet(this.size);
+		int cardinality = 0;
+		while(cardinality < this.connectChoiceCount && cardinality < this.size) {
+			int randomIndex = random.nextInt(this.size);
+			if(!bs.get(randomIndex)) {
+				bs.set(randomIndex);
+				cardinality++;
 			}
 		}
-		if(loadFactor == 1) {
-			// There's no capacity left
+
+		PooledHttpConnection connection = bs.stream().mapToObj(i -> connections[i]).min(Comparator.comparing(PooledHttpConnection::getLoadFactor)).orElse(null);
+		if(connection == null) {
 			return null;
 		}
-		return currentConnection;
+		float loadFactor = connection.getLoadFactor();
+
+		if(loadFactor == 1 || (loadFactor > this.connectLoadThreshold && size + connecting < this.maxSize)) {
+			return null;
+		}
+		else {
+			return connection;
+		}
 	}
 
 	/**
 	 * <p>
 	 * Selects parked connection sorted by load factor (from smallest to largest).
 	 * </p>
-	 * 
+	 *
 	 * @return a deque of parked connections
 	 */
 	@SuppressWarnings("unchecked")
-	protected Deque<PooledEndpoint.PooledHttpConnection> selectParkable() {
-		Deque<PooledEndpoint.PooledHttpConnection>[] buckets = new Deque[10];
+	private Deque<PooledHttpConnection> selectParkable() {
+		Deque<PooledHttpConnection>[] buckets = new Deque[10];
 
+		long correctedTotalCapacity = 0;
+		long correctedInflights = 0;
 		// Sort connections in load factor buckets
-		// Maybe we could maintain this globally in the pool 
+		// Maybe we could maintain this globally in the pool
 		for(int i=0;i<this.size;i++) {
-			PooledEndpoint.PooledHttpConnection connection = this.connections[i];
-			int loadIndex = Math.min(9, (int)Math.floor(connection.getLoadFactor() * 10f));
-			Deque<PooledEndpoint.PooledHttpConnection> bucket = buckets[loadIndex];
-			if(bucket == null) {
-				bucket = buckets[loadIndex] = new ArrayDeque<>(this.size);
+			PooledHttpConnection connection = this.connections[i];
+			if(connection.getLoadFactor() <= this.connectLoadThreshold) {
+				correctedTotalCapacity += connection.capacity;
+				correctedInflights += connection.allocated;
+
+				int loadIndex = Math.min(9, (int)Math.floor(connection.getLoadFactor() * 10f));
+				Deque<PooledHttpConnection> bucket = buckets[loadIndex];
+				if(bucket == null) {
+					bucket = buckets[loadIndex] = new ArrayDeque<>(this.size);
+				}
+				bucket.add(connection);
 			}
-			bucket.add(connection);
 		}
-		
-		Deque<PooledEndpoint.PooledHttpConnection> parkableConnections = null;
-		long newTotalCapacity = this.totalCapacity;
-		long inflights = this.totalCapacity - this.capacity;
-		
+
+		Deque<PooledHttpConnection> parkableConnections = null;
+
 		bucketLoop:
 		for(int i=0;i<10;i++) {
-			Deque<PooledEndpoint.PooledHttpConnection> bucket = buckets[i];
+			Deque<PooledHttpConnection> bucket = buckets[i];
 			if(bucket != null) {
 				for(PooledHttpConnection connection : bucket) {
-					newTotalCapacity -= connection.capacity;
-					if(newTotalCapacity < inflights) {
+					correctedTotalCapacity -= connection.capacity;
+					if(correctedTotalCapacity < correctedInflights) {
 						break bucketLoop;
 					}
 					else {
@@ -254,7 +294,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 		}
 		return parkableConnections;
 	}
-	
+
 	/**
 	 * <p>
 	 * Clean the pool by closing parked inactive connections that exceed connection keep alive timeout.
@@ -267,18 +307,28 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 				return;
 			}
 			try {
-				LOGGER.debug("Clean: size=" + pool.size + ", capacity=" + pool.capacity + ", totalCapacity=" + pool.totalCapacity + ", parked=" + pool.parkedConnections.size() + ", buffered=" + pool.requestBuffer.size + ", connecting=" + pool.connecting);
+				LOGGER.debug(
+					"Clean: size={}, connecting={}, parked={}, capacity={}, allocated={}, totalCapacity={}, buffered={}",
+					() -> pool.size,
+					() -> pool.connecting,
+					() -> pool.parkedConnections.size(),
+					() -> pool.capacity,
+					() -> (Stream.concat(Arrays.stream(pool.connections), pool.parkedConnections.stream()).filter(Objects::nonNull).mapToLong(c -> c.allocated).sum()),
+					() -> pool.totalCapacity,
+					() -> pool.requestBuffer.size
+				);
 				// We can just close expired connections from the parked list
 				Deque<Mono<Void>> expiredConnections = null;
-				for(Iterator<PooledEndpoint.PooledHttpConnection> iterator = pool.parkedConnections.iterator();iterator.hasNext();) {
-					PooledEndpoint.PooledHttpConnection parkedConnection = iterator.next();
+				for(Iterator<PooledHttpConnection> iterator = pool.parkedConnections.iterator(); iterator.hasNext();) {
+					PooledHttpConnection parkedConnection = iterator.next();
 					if(parkedConnection.isExpired()) {
 						iterator.remove();
 						if(expiredConnections == null) {
 							expiredConnections = new ArrayDeque<>();
 						}
+
 						expiredConnections.add(parkedConnection.shutdown()
-							.doOnError(e -> LOGGER.warn("Error shutting down pooled connection", e))
+							.doOnError(e -> LOGGER.warn(() -> "Error shutting down pooled connection", e))
 							.onErrorResume(e -> true, e -> Mono.empty())
 						);
 					}
@@ -289,7 +339,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 				}
 
 				// we should park connection and then try to close
-				Deque<PooledEndpoint.PooledHttpConnection> parkableConnections = this.selectParkable();
+				Deque<PooledHttpConnection> parkableConnections = this.selectParkable();
 
 				if(parkableConnections != null) {
 					parkableConnections.forEach(this::park);
@@ -299,55 +349,39 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 				LOGGER.fatal("Failed to clean pool", e);
 			}
 			finally {
+				this.cleanFuture = null;
 				this.scheduleClean();
 			}
 		});
 	}
-	
+
 	/**
 	 * <p>
 	 * Schedules the clean task.
 	 * </p>
 	 */
 	private void scheduleClean() {
-		this.cleanFuture = this.eventLoop.schedule(this::clean, this.cleanPeriod, TimeUnit.MILLISECONDS);
+		if(this.cleanFuture == null && !this.closed && !this.closing && (this.size > 0 || this.connecting > 0 || !this.parkedConnections.isEmpty())) {
+			this.cleanFuture = this.eventLoop.schedule(this::clean, this.cleanPeriod, TimeUnit.MILLISECONDS);
+		}
 	}
-	
-	/**
-	 * <p>
-	 * Cancels a connection request.
-	 * </p>
-	 * 
-	 * @param request the connection request to cancel
-	 */
-	private void cancelRequest(PooledEndpoint.ConnectionRequest request) {
-		this.commandExecutor.execute(pool -> {
-			if(this.closing || this.closed) {
-				return;
-			}
-			// The command might execute after the connection success command, this is handled in the pendingConnection 
-			pool.requestBuffer.remove(request);
-		});
-	}
-	
+
 	/**
 	 * <p>
 	 * Tries to acquire a connection.
 	 * </p>
-	 * 
+	 *
 	 * @param request a connection request
 	 */
-	private void acquire(PooledEndpoint.ConnectionRequest request) {
+	@SuppressWarnings("NonAtomicOperationOnVolatileField") // handled by the command executor
+	private void acquire(ConnectionRequest request) {
 		this.commandExecutor.execute(pool -> {
 			if(pool.closing || pool.closed) {
 				request.error(new ConnectionPoolException("Pool closed"));
 			}
-
 			// 1. Select a connection
 			PooledHttpConnection connection = pool.selectConnection();
 			if(connection != null) {
-				connection.allocated++;
-				pool.capacity--;
 				request.success(connection);
 			}
 			else if(pool.connecting + pool.size < pool.maxSize) {
@@ -365,32 +399,33 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 				// 4. Fail
 				request.error(new ConnectionPoolException("Maximum pending connections exceeded"));
 			}
+			this.scheduleClean();
 		});
 	}
-	
+
 	/**
 	 * <p>
 	 * Restores a parked connection or creates a new one.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * The acquired connection is assigned to the request and its capacity decreased by one.
 	 * </p>
-	 * 
+	 *
 	 * @param request a connection request
 	 */
-	private void connect(PooledEndpoint.ConnectionRequest request) {
+	@SuppressWarnings("NonAtomicOperationOnVolatileField") // handled by the command executor
+	private void connect(ConnectionRequest request) {
 		// Try to recover a parked connection
 		if(!this.parkedConnections.isEmpty()) {
-			for(Iterator<PooledEndpoint.PooledHttpConnection> iterator = this.parkedConnections.iterator();iterator.hasNext();) {
-				PooledEndpoint.PooledHttpConnection parkedConnection = iterator.next();
+			for(Iterator<PooledHttpConnection> iterator = this.parkedConnections.iterator(); iterator.hasNext();) {
+				PooledHttpConnection parkedConnection = iterator.next();
 				if(!parkedConnection.isExpired() && parkedConnection.allocated < parkedConnection.capacity) {
 					this.connecting--;
 					// restore the connection
-					this.activeIndex = parkedConnection.index = this.size++;
+					parkedConnection.index = this.size++;
 					this.connections[parkedConnection.index] = parkedConnection;
 					this.totalCapacity += parkedConnection.capacity;
-					parkedConnection.allocated++;
 					this.capacity += (parkedConnection.capacity - parkedConnection.allocated);
 					parkedConnection.parked = false;
 					iterator.remove();
@@ -399,41 +434,34 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 				}
 			}
 		}
-		
+
 		request.startTimeout();
 		// Create a new connection
 		this.createConnection().subscribe(
-			connection -> {
-				this.commandExecutor.execute(pool -> {
-					pool.connecting--;
-					if(pool.closing || pool.closed) {
-						request.error(new ConnectionPoolException("Pool closed"));
-						connection.shutdown().subscribe();
-					}
-					else {
-						// we have a new connection
-						PooledHttpConnection pooledConnection = new PooledHttpConnection(pool.size, connection);
-						pool.connections[pool.size++] = pooledConnection;
-						pool.activeIndex = pooledConnection.index;
-						pool.totalCapacity += pooledConnection.capacity;
-						pool.capacity += pooledConnection.capacity - 1;
-						pooledConnection.allocated++;
-						request.success(pooledConnection);
-						this.drainBuffer();
-					}
-				});
-			},
-			e -> {
-				this.commandExecutor.execute(pool -> {
-					pool.connecting--;
-					request.error(e);
-				});
-			},
-			() -> {
-			}
+			connection -> this.commandExecutor.execute(pool -> {
+				pool.connecting--;
+				if(pool.closing || pool.closed) {
+					request.error(new ConnectionPoolException("Pool closed"));
+					connection.shutdown().subscribe();
+				}
+				else {
+					// we have a new connection
+					PooledHttpConnection pooledConnection = new PooledHttpConnection(pool.size, connection);
+					pool.connections[pool.size++] = pooledConnection;
+					pool.totalCapacity += pooledConnection.capacity;
+					pool.capacity += pooledConnection.capacity;
+					request.success(pooledConnection);
+					this.drainBuffer();
+				}
+			}),
+			e -> this.commandExecutor.execute(pool -> {
+				pool.connecting--;
+				request.error(e);
+			}),
+			() -> {}
 		);
 	}
-	
+
 	/**
 	 * <p>
 	 * Drains buffered connection requests and tries to acquire as many connections as possible.
@@ -443,51 +471,51 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 		this.commandExecutor.execute(pool -> {
 			// if we have capacity we should use it
 			// if we don't we should just connect with the first request
-			PooledEndpoint.ConnectionRequest request = null;
+			ConnectionRequest request;
 			for(int i=0;i<pool.capacity && (request = pool.requestBuffer.poll()) != null;i++) {
 				pool.acquire(request);
 			}
 		});
 	}
-	
+
 	/**
 	 * <p>
-	 * Recycles the specified connection.
+	 * Parks a connection.
 	 * </p>
-	 * 
-	 * <p>
-	 * This basically increments connection's capacity by 1.
-	 * </p>
-	 * 
-	 * @param connection 
+	 *
+	 * @param connection the connection to park
 	 */
-	private void recycle(PooledHttpConnection connection) {
+	@SuppressWarnings("NonAtomicOperationOnVolatileField") // handled by the command executor
+	private void park(PooledHttpConnection connection) {
+		// Remove the connection from the pool and park it
 		this.commandExecutor.execute(pool -> {
-			if(!pool.closing && !pool.closed) {
-				LOGGER.debug("Recyle connection...");
-				connection.touch();
-				connection.allocated--;
-				if(!connection.parked && !connection.removed) {
-					ConnectionRequest request = pool.requestBuffer.poll();
-					if(request != null) {
-						connection.allocated++;
-						request.success(connection);
-					}
-					else {
-						pool.capacity++;
-					}
-				}
+			if(!connection.removed && !connection.parked && !pool.closing && !pool.closed && pool.connections[connection.index] == connection) {
+				LOGGER.debug("Park connection...");
+				PooledHttpConnection last = pool.connections[--pool.size];
+				last.index = connection.index;
+				pool.connections[connection.index] = last;
+				pool.connections[pool.size] = null;
+				pool.totalCapacity -= connection.capacity;
+				pool.capacity -= (connection.capacity - connection.allocated);
+				pool.parkedConnections.addFirst(connection);
+
+				connection.index = -1;
+				connection.parked = true;
+
+				// this should result in a noop as this would basically mean we parked a connection while we actually needed it
+				pool.drainBuffer();
 			}
 		});
 	}
-	
+
 	/**
 	 * <p>
 	 * Removes a connection from the pool.
 	 * </p>
-	 * 
+	 *
 	 * @param connection the connection to remove
 	 */
+	@SuppressWarnings("NonAtomicOperationOnVolatileField") // handled by the command executor
 	private void remove(PooledHttpConnection connection) {
 		// Remove the connection from the pool
 		this.commandExecutor.execute(pool -> {
@@ -506,10 +534,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 					pool.connections[pool.size] = null;
 					pool.totalCapacity -= connection.capacity;
 					pool.capacity -= (connection.capacity - connection.allocated);
-					
-					if(pool.activeIndex == pool.size) {
-						pool.activeIndex = 0;
-					}
+
 					connection.index = -1;
 					connection.removed = true;
 
@@ -518,49 +543,16 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 			}
 		});
 	}
-	
-	/**
-	 * <p>
-	 * Parks a connection.
-	 * </p>
-	 * 
-	 * @param connection the connection to park
-	 */
-	private void park(PooledHttpConnection connection) {
-		// Remove the connection from the pool and park it
-		this.commandExecutor.execute(pool -> {
-			if(!connection.removed && !connection.parked && !pool.closing && !pool.closed && pool.connections[connection.index] == connection) {
-				LOGGER.debug("Park connection...");
-				PooledHttpConnection last = pool.connections[--pool.size];
-				last.index = connection.index;
-				pool.connections[connection.index] = last;
-				pool.connections[pool.size] = null;
-				pool.totalCapacity -= connection.capacity;
-				pool.capacity -= (connection.capacity - connection.allocated);
-				
-				if(pool.activeIndex == pool.size) {
-					pool.activeIndex = 0;
-				}
-				
-				pool.parkedConnections.addFirst(connection);
-				
-				connection.index = -1;
-				connection.parked = true;
-				
-				// this should result in a noop as this would basically mean we parked a connection while we actually needed it
-				pool.drainBuffer();
-			}
-		});
-	}
-	
+
 	/**
 	 * <p>
 	 * Changes current connection capacity taking inflight requests into account.
 	 * </p>
-	 * 
+	 *
 	 * @param connection the connection to update
 	 * @param capacity   the new capacity
 	 */
+	@SuppressWarnings("NonAtomicOperationOnVolatileField") // handled by the command executor
 	private void setCapacity(PooledHttpConnection connection, long capacity) {
 		this.commandExecutor.execute(pool -> {
 			LOGGER.debug("Set connection capacity... ");
@@ -578,27 +570,35 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 
 	@Override
 	public Mono<Void> shutdown() {
-		if(this.closing || this.closed) {
-			return Mono.empty();
-		}
 		return Mono.defer(() -> {
-			LOGGER.debug("Shutting down: size=" + this.size + ", capacity=" + this.capacity + ", totalCapacity=" + this.totalCapacity + ", parked=" + this.parkedConnections.size() + ", buffered=" + this.requestBuffer.size + ", connecting=" + this.connecting);
+			LOGGER.debug(
+				"Shutting down: size={}, connecting={}, parked={}, capacity={}, allocated={}, totalCapacity={}, buffered={}",
+				() -> this.size,
+				() -> this.connecting,
+				() -> this.parkedConnections.size(),
+				() -> this.capacity,
+				() -> (Stream.concat(Arrays.stream(this.connections), this.parkedConnections.stream()).filter(Objects::nonNull).mapToLong(c -> c.allocated).sum()),
+				() -> this.totalCapacity,
+				() -> this.requestBuffer.size
+			);
 			this.closing = true;
-			this.cleanFuture.cancel(false);
-			Sinks.Many<PooledEndpoint.PooledHttpConnection> sink = Sinks.many().unicast().onBackpressureBuffer();
+			if(this.cleanFuture != null) {
+				this.cleanFuture.cancel(false);
+			}
+			Sinks.Many<PooledHttpConnection> sink = Sinks.many().unicast().onBackpressureBuffer();
 			this.commandExecutor.execute(pool -> {
 				for(int i=0;i<pool.size;i++) {
 					sink.tryEmitNext(pool.connections[i]);
 					pool.connections[i] = null;
 				}
 				pool.size = 0;
-				PooledEndpoint.PooledHttpConnection parkedConnection;
+				PooledHttpConnection parkedConnection;
 				while( (parkedConnection = pool.parkedConnections.poll()) != null) {
 					sink.tryEmitNext(parkedConnection);
 				}
 				sink.tryEmitComplete();
 			});
-			
+
 			return sink.asFlux()
 				.flatMap(connection -> connection.shutdown()
 					.doOnError(e -> LOGGER.warn("Error shutting down pooled connection", e))
@@ -614,27 +614,35 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 
 	@Override
 	public Mono<Void> shutdownGracefully() {
-		if(this.closing || this.closed) {
-			return Mono.empty();
-		}
 		return Mono.defer(() -> {
-			LOGGER.debug("Shutting down gracefully: size=" + this.size + ", capacity=" + this.capacity + ", totalCapacity=" + this.totalCapacity + ", parked=" + this.parkedConnections.size() + ", buffered=" + this.requestBuffer.size + ", connecting=" + this.connecting);
+			LOGGER.debug(
+				"Shutting down gracefully: size={}, connecting={}, parked={}, capacity={}, allocated={}, totalCapacity={}, buffered={}",
+				() -> this.size,
+				() -> this.connecting,
+				() -> this.parkedConnections.size(),
+				() -> this.capacity,
+				() -> (Stream.concat(Arrays.stream(this.connections), this.parkedConnections.stream()).filter(Objects::nonNull).mapToLong(c -> c.allocated).sum()),
+				() -> this.totalCapacity,
+				() -> this.requestBuffer.size
+			);
 			this.closing = true;
-			this.cleanFuture.cancel(false);
-			Sinks.Many<PooledEndpoint.PooledHttpConnection> sink = Sinks.many().unicast().onBackpressureBuffer();
+			if(this.cleanFuture != null) {
+				this.cleanFuture.cancel(false);
+			}
+			Sinks.Many<PooledHttpConnection> sink = Sinks.many().unicast().onBackpressureBuffer();
 			this.commandExecutor.execute(pool -> {
 				for(int i=0;i<pool.size;i++) {
 					sink.tryEmitNext(pool.connections[i]);
 					pool.connections[i] = null;
 				}
 				pool.size = 0;
-				PooledEndpoint.PooledHttpConnection parkedConnection;
+				PooledHttpConnection parkedConnection;
 				while( (parkedConnection = pool.parkedConnections.poll()) != null) {
 					sink.tryEmitNext(parkedConnection);
 				}
 				sink.tryEmitComplete();
 			});
-			
+
 			return sink.asFlux()
 				.flatMap(connection -> connection.shutdownGracefully()
 					.doOnError(e -> LOGGER.warn("Error shutting down pooled connection", e))
@@ -647,96 +655,58 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 				.then();
 		});
 	}
-	
+
 	/**
 	 * <p>
 	 * Represents a request for a connection (see {@link AbstractEndpoint#connection() }).
 	 * </p>
-	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 */
-	protected class ConnectionRequest implements Supplier<Mono<HttpConnection>> {
-		
-		private final Sinks.One<HttpConnection> connectionSink;
-		
+	private class ConnectionRequest implements HttpConnection.Handle {
+
+		private final Sinks.One<HttpConnection.Handle> connectionSink;
+
+		private PooledHttpConnection connection;
+
 		private long timeout;
-		private Optional<EventLoop> requestEventLoop;
 		private ScheduledFuture<?> timeoutFuture;
-		
+
 		ConnectionRequest next;
 		ConnectionRequest previous;
-		
+
+		boolean canceled;
+		boolean recycled;
+
 		boolean queued;
-		
+
 		/**
 		 * <p>
 		 * Creates a dummy connection request with no connection sink.
 		 * </p>
-		 * 
+		 *
 		 * <p>
-		 * This is used to represent connection request buffers's head.
+		 * This is used to represent connection request buffers head.
 		 * </p>
 		 */
 		public ConnectionRequest() {
 			this.connectionSink = null;
 		}
-		
+
 		/**
 		 * <p>
 		 * Creates a connection request with the specified connection timeout.
 		 * <p>
-		 * 
+		 *
 		 * @param timeout a timeout
 		 */
 		public ConnectionRequest(long timeout) {
 			this.connectionSink = Sinks.one();
-			
+
 			this.timeout = timeout;
-			this.requestEventLoop = PooledEndpoint.this.reactor.eventLoop();
 		}
-		
-		/**
-		 * <p>
-		 * Returns the connection.
-		 * </p>
-		 * 
-		 * @return a mono emitting the acquired connection or an error mono if no connection could be acquired
-		 */
-		@Override
-		public Mono<HttpConnection> get() {
-			return this.connectionSink.asMono()
-				.doOnCancel(() -> {
-					PooledEndpoint.this.cancelRequest(this);
-				});
-		}
-		
-		/**
-		 * <p>
-		 * Emits the acquired connection to the connection sink.
-		 * </p>
-		 * 
-		 * @param connection an acquired connection
-		 */
-		public void success(PooledHttpConnection connection) {
-			this.cancelTimeout();
-			if(this.connectionSink.tryEmitValue(connection) != Sinks.EmitResult.OK) {
-				PooledEndpoint.this.recycle(connection);
-			}
-		}
-		
-		/**
-		 * <p>
-		 * Fails the connection sink with the specified error.
-		 * </p>
-		 * 
-		 * @param t an error
-		 */
-		public void error(Throwable t) {
-			this.cancelTimeout();
-			this.connectionSink.tryEmitError(t);
-		}
-		
+
 		/**
 		 * <p>
 		 * Starts the connection timeout.
@@ -744,8 +714,8 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 		 */
 		public void startTimeout() {
 			if(this.timeoutFuture == null) {
-				this.timeoutFuture = this.requestEventLoop
-					.orElse(PooledEndpoint.this.reactor.getEventLoop())
+				this.timeoutFuture =  PooledEndpoint.this.reactor.eventLoop()
+					.orElseGet(PooledEndpoint.this.reactor::getEventLoop)
 					.schedule(
 						() -> {
 							this.timeoutFuture = null;
@@ -756,7 +726,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 					);
 			}
 		}
-		
+
 		/**
 		 * <p>
 		 * Cancels the connection timeout.
@@ -767,21 +737,112 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 				this.timeoutFuture.cancel(false);
 			}
 		}
+
+		/**
+		 * <p>
+		 * Returns the connection handle publisher.
+		 * </p>
+		 *
+		 * @return a mono emitting the connection handle when a connection has been acquired or an error mono if no connection could be acquired
+		 */
+		public Mono<HttpConnection.Handle> asMono() {
+			return this.connectionSink.asMono()
+				.doOnCancel(() -> PooledEndpoint.this.commandExecutor.execute(pool -> {
+						if(pool.closing || pool.closed) {
+							return;
+						}
+						this.cancelTimeout();
+						this.release();
+						// The command might execute after the connection success command, this is handled in the pendingConnection
+						pool.requestBuffer.remove(this);
+						this.canceled = true;
+					})
+				);
+		}
+
+		/**
+		 * <p>
+		 * Emits the acquired connection to the connection sink.
+		 * </p>
+		 *
+		 * @param connection an acquired connection
+		 */
+		@SuppressWarnings("NonAtomicOperationOnVolatileField") // handled by the command executor
+		public void success(PooledHttpConnection connection) {
+			if(!this.canceled) {
+				this.cancelTimeout();
+				this.connection = connection;
+				connection.allocated++;
+				PooledEndpoint.this.capacity--;
+				if(this.connectionSink.tryEmitValue(this) != Sinks.EmitResult.OK) {
+					this.release();
+				}
+			}
+		}
+
+		/**
+		 * <p>
+		 * Fails the connection sink with the specified error.
+		 * </p>
+		 *
+		 * @param t an error
+		 */
+		public void error(Throwable t) {
+			this.cancelTimeout();
+			this.connectionSink.tryEmitError(t);
+		}
+
+		/**
+		 * <p>
+		 * Releases the underlying pooled connection and give it back to the pool.
+		 * </p>
+		 *
+		 * <p>
+		 * The connection is reassigned to a buffered request, if any, otherwise it is returned to the pool.
+		 * </p>
+		 */
+		@SuppressWarnings("NonAtomicOperationOnVolatileField") // handled by the command executor
+		public void release() {
+			PooledEndpoint.this.commandExecutor.execute(pool -> {
+				if(this.connection != null && !this.recycled) {
+					if(!pool.closing && !pool.closed) {
+						connection.touch();
+						connection.allocated--;
+						if(!connection.parked && !connection.removed) {
+							ConnectionRequest request = pool.requestBuffer.poll();
+							pool.capacity++;
+							if(request != null) {
+								request.success(connection);
+							}
+						}
+					}
+					this.recycled = true;
+				}
+			});
+		}
+
+		@Override
+		public <T extends ExchangeContext> Mono<HttpConnectionExchange<T, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> send(EndpointExchange<T> endpointExchange) {
+			if(this.connection == null) {
+				throw new IllegalStateException();
+			}
+			return this.connection.send(endpointExchange, this);
+		}
 	}
-	
+
 	/**
 	 * <p>
 	 * The connection request buffer used when pool's capacity has been reached.
 	 * </p>
-	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 */
 	private class ConnectionRequestBuffer implements Iterable<ConnectionRequest> {
 
 		private final ConnectionRequest head;
 		private int size;
-		
+
 		/**
 		 * Creates a connection request buffer.
 		 */
@@ -789,12 +850,12 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 			this.head = new ConnectionRequest();
 			this.head.previous = this.head.next = this.head;
 		}
-		
+
 		/**
 		 * <p>
 		 * Returns an remove the head of the buffer.
 		 * </p>
-		 * 
+		 *
 		 * @return a connection request or null of the buffer is empty
 		 */
 		public ConnectionRequest poll() {
@@ -805,12 +866,12 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 			this.remove(request);
 			return request;
 		}
-		
+
 		/**
 		 * <p>
 		 * Adds a request to the head of the buffer.
 		 * </p>
-		 * 
+		 *
 		 * @param request a connection request
 		 */
 		public void addFirst(ConnectionRequest request) {
@@ -823,12 +884,12 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 			this.head.next = this.head.next.previous = request;
 			this.size++;
 		}
-		
+
 		/**
 		 * <p>
 		 * Adds a request to the end of the buffer.
 		 * </p>
-		 * 
+		 *
 		 * @param request a connection request
 		 */
 		public void addLast(ConnectionRequest request) {
@@ -841,21 +902,21 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 			this.head.previous = this.head.previous.next = request;
 			this.size++;
 		}
-		
+
 		/**
 		 * <p>
 		 * Removes the request from the buffer
 		 * </p>
-		 * 
+		 *
 		 * @param request a connection request
-		 * 
+		 *
 		 * @return true if the connection request was removed, false otherwise
 		 */
 		public boolean remove(ConnectionRequest request) {
 			if(request == null || !request.queued) {
 				return false;
 			}
-			
+
 			request.next.previous = request.previous;
 			request.previous.next = request.next;
 			request.next = request.previous = null;
@@ -863,44 +924,44 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 			this.size--;
 			return true;
 		}
-		
+
 		/**
 		 * <p>
 		 * Returns the size of the buffer.
 		 * </p>
-		 * 
+		 *
 		 * @return the buffer size
 		 */
 		public int size() {
 			return this.size;
 		}
-		
+
 		/**
 		 * <p>
 		 * Determines whether the buffer is empty.
 		 * </p>
-		 * 
+		 *
 		 * @return true if the buffer is empty, false otherwise
 		 */
 		public boolean isEmpty() {
 			return this.size > 0;
 		}
-		
+
 		@Override
 		public Iterator<ConnectionRequest> iterator() {
-			return new Iterator<ConnectionRequest>() {
-				
-				ConnectionRequest cursor = ConnectionRequestBuffer.this.head;
-				
+			return new Iterator<>() {
+
+				ConnectionRequest cursor = PooledEndpoint.ConnectionRequestBuffer.this.head;
+
 				@Override
 				public boolean hasNext() {
-					return this.cursor.next != ConnectionRequestBuffer.this.head;
+					return this.cursor.next != PooledEndpoint.ConnectionRequestBuffer.this.head;
 				}
 
 				@Override
 				public ConnectionRequest next() {
 					this.cursor = this.cursor.next;
-					if(this.cursor == ConnectionRequestBuffer.this.head) {
+					if(this.cursor == PooledEndpoint.ConnectionRequestBuffer.this.head) {
 						throw new NoSuchElementException();
 					}
 					return this.cursor;
@@ -908,34 +969,34 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 			};
 		}
 	}
-	
+
 	/**
 	 * <p>
 	 * A pooled HTTP connection wrapper.
 	 * </p>
-	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 */
-	protected class PooledHttpConnection implements HttpConnection, HttpConnection.Handler {
+	private class PooledHttpConnection implements HttpConnection, HttpConnection.Handler {
 
 		HttpConnection connection;
 		final Long keepAliveTimeout;
-		
-		int index;		
+
+		int index;
 		boolean parked;
 		boolean removed;
-		
+
 		Long expirationTime;
-		
+
 		long allocated;
 		long capacity;
-		
+
 		/**
 		 * <p>
 		 * Creates a pooled HTTP connection wrapping specified connection.
 		 * </p>
-		 * 
+		 *
 		 * @param index      the index of the connection on the pool
 		 * @param connection the HTTP connection to wrap
 		 */
@@ -944,17 +1005,17 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 			this.connection = connection;
 			this.keepAliveTimeout = PooledEndpoint.this.configuration.pool_keep_alive_timeout();
 			this.expirationTime = this.keepAliveTimeout != null ? System.currentTimeMillis() + this.keepAliveTimeout : null;
-			
+
 			Long mcr = connection.getMaxConcurrentRequests();
 			this.capacity = mcr != null ? mcr : Long.MAX_VALUE;
-			
+
 			this.init();
 		}
-		
+
 		private void init() {
 			this.connection.setHandler(this);
 		}
-		
+
 		@Override
 		public boolean isTls() {
 			return this.connection.isTls();
@@ -989,29 +1050,29 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 		public Long getMaxConcurrentRequests() {
 			return this.connection.getMaxConcurrentRequests();
 		}
-		
+
 		/**
 		 * <p>
 		 * Returns current connection load factor (number of allocations / capacity).
 		 * </p>
-		 * 
+		 *
 		 * @return the load factor
 		 */
 		public float getLoadFactor() {
 			return (float)(Math.min(this.allocated, this.capacity)) / (float)this.capacity;
 		}
-		
+
 		/**
 		 * <p>
 		 * Determines whether the connection is expired.
 		 * </p>
-		 * 
-		 * @return 
+		 *
+		 * @return true if the connection is expired false otherwise
 		 */
 		public boolean isExpired() {
 			return this.expirationTime != null && this.allocated == 0 && System.currentTimeMillis() > this.expirationTime;
 		}
-		
+
 		/**
 		 * <p>
 		 * Touches the connection to reset expiration time.
@@ -1020,15 +1081,15 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 		public void touch() {
 			this.expirationTime =  this.keepAliveTimeout != null ? System.currentTimeMillis() + this.keepAliveTimeout : null;
 		}
-		
+
 		@Override
 		public void setHandler(Handler handler) {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public <A extends ExchangeContext> Mono<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> send(EndpointExchange<A> endpointExchange) {
-			return this.connection.send(endpointExchange);
+		public <T extends ExchangeContext> Mono<HttpConnectionExchange<T, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> send(EndpointExchange<T> endpointExchange, Object state) {
+			return this.connection.send(endpointExchange, state);
 		}
 
 		@Override
@@ -1036,7 +1097,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 			return this.connection.shutdown()
 				.doFirst(() -> {
 					// Let's try to remove the connection from the pool first
-					// This is best effort to prevent the connection from being acquierd as this might be executed by another thread after the connection is actually closed.
+					// This is best effort to prevent the connection from being acquired as this might be executed by another thread after the connection is actually closed.
 					PooledEndpoint.this.remove(this);
 				});
 		}
@@ -1046,7 +1107,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 			return this.connection.shutdownGracefully()
 				.doFirst(() -> {
 					// Let's try to remove the connection from the pool first
-					// This is best effort to prevent the connection from being acquierd as this might be executed by another thread after the connection is actually closed.
+					// This is best effort to prevent the connection from being acquired as this might be executed by another thread after the connection is actually closed.
 					PooledEndpoint.this.remove(this);
 				});
 		}
@@ -1055,26 +1116,27 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 		public boolean isClosed() {
 			return this.connection.isClosed();
 		}
-		
+
 		@Override
 		public void onUpgrade(HttpConnection upgradedConnection) {
 			this.connection = upgradedConnection;
 			this.connection.setHandler(this);
 			PooledEndpoint.this.setCapacity(this, upgradedConnection.getMaxConcurrentRequests());
 		}
-		
+
 		@Override
 		public void onSettingsChange(long maxConcurrentRequests) {
 			PooledEndpoint.this.setCapacity(this, maxConcurrentRequests);
 		}
 
 		@Override
-		public void recycle() {
-			PooledEndpoint.this.recycle(this);
+		@SuppressWarnings("unchecked")
+		public void onRelease(Object state) {
+			((ConnectionRequest)state).release();
 		}
-		
+
 		@Override
-		public void close() {
+		public void onClose() {
 			PooledEndpoint.this.remove(this);
 		}
 	}

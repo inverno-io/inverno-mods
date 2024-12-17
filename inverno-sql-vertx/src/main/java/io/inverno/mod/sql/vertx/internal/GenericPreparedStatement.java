@@ -46,8 +46,7 @@ public class GenericPreparedStatement extends AbstractPreparedStatement {
 	
 	/**
 	 * <p>
-	 * Creates a prepared statement with the specified Vert.x SQL client and SQL
-	 * operation.
+	 * Creates a prepared statement with the specified Vert.x SQL client and SQL operation.
 	 * </p>
 	 * 
 	 * @param client a Vert.x SQL client

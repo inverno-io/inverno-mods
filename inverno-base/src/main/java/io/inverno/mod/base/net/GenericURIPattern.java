@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
@@ -62,8 +63,7 @@ class GenericURIPattern implements URIPattern {
 	
 	/**
 	 * <p>
-	 * Creates a generic URI pattern with the specified raw value, regular
-	 * expression and list of group names.
+	 * Creates a generic URI pattern with the specified raw value, regular expression and list of group names.
 	 * </p>
 	 * 
 	 * <p>
@@ -137,8 +137,8 @@ class GenericURIPattern implements URIPattern {
 	 * Lists of segments must be normalized (see {@link #normalizeSegments(java.util.List) }.
 	 * </p>
 	 * 
-	 * @param p1Segments a non null normalized list of segments
-	 * @param p2Segments a non null normalized list of segments
+	 * @param p1Segments a non-null normalized list of segments
+	 * @param p2Segments a non-null normalized list of segments
 	 * 
 	 * @return an inclusion state
 	 */
@@ -206,12 +206,9 @@ class GenericURIPattern implements URIPattern {
 								return Inclusion.INDETERMINATE;
 							}
 						}
-						return Inclusion.DISJOINT;
 					}
-					else {
-						// We are disjoint
-						return Inclusion.DISJOINT;
-					}
+					// We are disjoint
+					return Inclusion.DISJOINT;
 				}
 				else {
 					// We have to compare segments
@@ -242,7 +239,7 @@ class GenericURIPattern implements URIPattern {
 			}
 			
 			// otherwise we have to check if p2 has segments other than directories patterns or custom patterns
-			// custom patterns can match "" which matches p1 as well 
+			// A custom pattern can match "" which matches p1 as well
 			for(;j<p2Segments.size();j++) {
 				SegmentComponent s2 = p2Segments.get(j);
 				if(!s2.isDirectories() && !s2.isCustom()) {
@@ -286,19 +283,19 @@ class GenericURIPattern implements URIPattern {
 	 *
 	 * <p>
 	 * The sequence must not contain directories or custom patterns and preceded by a directories pattern or a custom pattern that can consumed the target. The directories flag indicate whether a
-	 * dierctories pattern directly precedes the sequence (otherwise it has to be a custom pattern).
+	 * directories pattern directly precedes the sequence (otherwise it has to be a custom pattern).
 	 * </p>
 	 *
-	 * @param sequence
-	 * @param target
-	 * @param directories true to indicate a preceding directories pattern, false to indicate a perceding custom pattern.
+	 * @param sequence    the sequence of segments
+	 * @param target      the target sequence of segments
+	 * @param directories true to indicate a preceding directories pattern, false to indicate a preceding custom pattern.
 	 *
 	 * @return A list of indices of the last segments in the target list of segments where the sequence has been found with corresponding inclusion state: {@link URIPattern.Inclusion#INCLUDED} or
 	 *         {@link URIPattern.Inclusion#INDETERMINATE}
 	 */
 	private List<Map.Entry<Integer, Inclusion>> findSequence(List<SegmentComponent> sequence, List<SegmentComponent> target, boolean directories) {
 		if(sequence.isEmpty()) {
-			// the sequence is precedeed by a directories pattern and apparently there's no more segment so we match the target for sure
+			// the sequence is preceded by a directories pattern and apparently there's no more segment so we match the target for sure
 			return List.of(Map.entry(target.size() - 1 , Inclusion.INCLUDED));
 		}
 		Set<Integer> included_result = new TreeSet<>();
@@ -372,7 +369,7 @@ class GenericURIPattern implements URIPattern {
 						}
 					}
 					else {
-						// we have a directories pattern that can be ignored ie. we are included we can continue
+						// we have a directories pattern that can be ignored i.e. we are included we can continue
 						inclusion_index = j;
 						// we have actually found the sequence here already since /** matches everything
 						indeterminate_result.add(inclusion_index - 1);
@@ -420,11 +417,12 @@ class GenericURIPattern implements URIPattern {
 	 * 
 	 * <p>
 	 * A normalized list of segments, is a list where redundant directories pattern segment {@code /**} are removed and appears first in a sequence with wildcard {@code /*} segments. For instance,
-	 * <code>/a/{@literal *}/{@literal **}/{@literal *}/{@literal *}/{@literal **}/b/c</code> is normalized to <code>/a/{@literal **}/{@literal *}/{@literal *}/{@literal *}/b/c</code>.
+	 * <code>/a&#47;*&#47;**&#47;*&#47;*&#47;**&#47;b/c</code> is normalized to <code>/a&#47;**&#47;*&#47;*&#47;*&#47;b/c</code>.
 	 * </p>
 	 * 
-	 * @param segments
-	 * @return 
+	 * @param segments a list of segments
+	 *
+	 * @return the normalized list of segments
 	 */
 	private List<SegmentComponent> normalizeSegments(List<SegmentComponent> segments) {
 		List<SegmentComponent> result = new ArrayList<>();
@@ -469,36 +467,18 @@ class GenericURIPattern implements URIPattern {
 		}
 		return segments;
 	}
-	
+
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((groupNames == null) ? 0 : groupNames.hashCode());
-		result = prime * result + ((regex == null) ? 0 : regex.hashCode());
-		return result;
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		GenericURIPattern that = (GenericURIPattern) o;
+		return Objects.equals(regex, that.regex) && Objects.equals(groupNames, that.groupNames);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		GenericURIPattern other = (GenericURIPattern) obj;
-		if (groupNames == null) {
-			if (other.groupNames != null)
-				return false;
-		} else if (!groupNames.equals(other.groupNames))
-			return false;
-		if (regex == null) {
-			if (other.regex != null)
-				return false;
-		} else if (!regex.equals(other.regex))
-			return false;
-		return true;
+	public int hashCode() {
+		return Objects.hash(regex, groupNames);
 	}
 
 	@Override

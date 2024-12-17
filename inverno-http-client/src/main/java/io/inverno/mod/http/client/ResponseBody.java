@@ -29,7 +29,7 @@ import org.reactivestreams.Publisher;
  * The response body basically provides multiple ways to consume the payload depending on the response content type.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @see Response

@@ -11,7 +11,7 @@
 
 # gRPC Client
 
-The Inverno *grpc-client* module allows to creates reactive gRPC clients as described by the [gRPC over HTTP/2][grpc-protocol] protocol on top of the [http-client](#http-client) module.
+The Inverno *grpc-client* module allows to create reactive gRPC clients as described by the [gRPC over HTTP/2][grpc-protocol] protocol on top of the [http-client](#http-client) module.
 
 It provides an API to transform HTTP client exchanges into gRPC exchanges supporting the gRPC protocol. A gRPC exchange basically supports:
 
@@ -58,12 +58,10 @@ Using Maven:
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.inverno.mod:inverno-boot:${VERSION_INVERNO_MODS}'
 compile 'io.inverno.mod:inverno-http-client:${VERSION_INVERNO_MODS}'
 compile 'io.inverno.mod:inverno-grpc-client:${VERSION_INVERNO_MODS}'
-...
 ```
 
 A gRPC service is basically invoked by converting an HTTP/2 client exchange into a unary, client streaming, server streaming or bidirectional streaming gRPC exchange using the `GrpcClient` bean:
@@ -86,7 +84,7 @@ import io.inverno.mod.http.client.HttpClientConfigurationLoader;
 import java.util.Set;
 
 public class Main {
-
+	
     @Bean
     public static class Greeter {
 
@@ -138,7 +136,7 @@ public class Main {
 }
 ```
 
-In above example, module *app_grpc_client* creates the `Greeter` bean which uses the `HttpClient` to obtain an `Endpoint` to connect to `localhost` in plain HTTP/2. When invoking the `sayHello()` method, an HTTP client exchange is created, it is converted to a unary gRPC exchange which allows to set the request message and to return the response message. The request is sent when the response publisher is subscribed, the gRPC response message is eventually returned and displayed to the standard output before the module is finally stopped.
+In above example, module *app_grpc_client* creates the `Greeter` bean which uses the `HttpClient` to obtain an `Endpoint` to connect to `localhost` in plain HTTP/2. When invoking the `sayHello()` method, an HTTP client exchange is created, it is converted to a unary gRPC exchange which allows to set the request message and to return the response message. The request is sent when the response publisher is subscribed, the gRPC response message is eventually returned and displayed to the standard output and the module finally stopped.
 
 > Note that the gRPC protocol is built on top of HTTP/2 and as such the underlying connection should be an HTTP/2 connection, trying to convey gRPC messages over an HTTP/1.x connection, although possible in theory, is discouraged as it will break interoperability and might lead to unpredictable behaviours.
 
@@ -210,48 +208,116 @@ service Greeter {
 }
 ```
 
-The plugin generates bean `GreeterGrpcClient` implementing boiler plate code and greetly simplifies the application above application:
+The plugin generates class `GreeterGrpcClient` implementing boilerplate code and greatly simplifies above application. The generated class provide two base implementations for creating gRPC client bean. The `GreeterGrpcClient.Http` class is based on the `HttpClient` and uses a dedicated `Endpoint` (i.e. a dedicated connection pool) to connect to the server. The `GreeterGrpcClient.Web` is based on the `WebClient` which provides transparent service discovery and connection management. Depending on the needs of an application, one can create a bean implementing one, the other or both:
 
 ```java
 package io.inverno.example.app_grpc_client;
 
+import examples.GreeterGrpcClient;
 import examples.HelloReply;
 import examples.HelloRequest;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.v1.Application;
-import io.inverno.mod.grpc.base.GrpcServiceName;
+import io.inverno.mod.discovery.ServiceID;
 import io.inverno.mod.grpc.client.GrpcClient;
-import io.inverno.mod.grpc.client.GrpcExchange;
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.base.HttpVersion;
-import io.inverno.mod.http.client.Endpoint;
 import io.inverno.mod.http.client.HttpClient;
-import io.inverno.mod.http.client.HttpClientConfigurationLoader;
-import java.util.Set;
+import io.inverno.mod.web.client.WebClient;
 
 public class Main {
 
-    public static void main(String[] args) {
-        App_grpc_client app_grpc_client = Application.run(new App_grpc_client.Builder());
-        try {
-            try(GreeterGrpcClient.Stub<ExchangeContext> stub = app.greeterGrpcClient().createStub("localhost", 8080)) {
-                HelloReply response = stub
-                    .sayHello(HelloRequest.newBuilder()
-                        .setName("Bob")
-                        .build()
-                    )
-                    .block();
-                System.out.println("Received: " + response.getMessage());
-            }
-        }
-        finally {
-            app_grpc_client.stop();
-        }
-    }
+	@Bean
+	public static class HttpGreeterGrpcClient extends GreeterGrpcClient.Http {
+
+		public HttpGreeterGrpcClient(HttpClient httpClient, GrpcClient grpcClient) {
+			super(httpClient, grpcClient);
+		}
+	}
+
+	@Bean
+	public static class WebGreeterGrpcClient extends GreeterGrpcClient.Web<ExchangeContext> {
+
+		public WebGreeterGrpcClient(WebClient<? extends ExchangeContext> webClient, GrpcClient grpcClient) {
+			super(ServiceID.of("http://127.0.0.1:8080"), webClient, grpcClient);
+		}
+	}
+
+	public static void main(String[] args) {
+		App_grpc_client app_grpc_client = Application.run(new App_grpc_client.Builder());
+		try {
+			// Using the HttpClient based implementation, the stub must be closed explicitly to close connections
+			try(GreeterGrpcClient.HttpClientStub<ExchangeContext> stub = app_grpc_client.httpGreeterGrpcClient().createStub("127.0.0.1", 8080)) {
+				HelloReply response = stub
+					.sayHello(HelloRequest.newBuilder()
+						.setName("Bob")
+						.build()
+					)
+					.block();
+			}
+
+			// Using the WebClient based implementation, connections are closed by the WebClient when the application module is stopped
+			HelloReply response = app_grpc_client.webGreeterGrpcClient()
+				.sayHello(HelloRequest.newBuilder()
+					.setName("Bob")
+					.build()
+				)
+				.block();
+		}
+		finally {
+			app_grpc_client.stop();
+		}
+	}
 }
 ```
 
-> Note that in this example the endpoint is directly created by the `GreeterGrpcClient` and automatically closed at the end of the try-with-resources statement, it uses the `HttpClient` bean which must then be configured to connect with HTTP/2. It is also possible to create the endpoint instance and pass it to the stub instead.
+> Note that the `WebClient` based implementation requires the *web-client* module which must then be declared as a module dependency. 
+
+Using the `WebClient` based implementation is recommended in most cases as it abstracts service discovery and connection management which greatly simplifies the code. It also allows to specify an exchange context type that is aggregated in the global exchange context type generated by the Inverno Web compiler plugin in Web client module, the context can then be customized when invoking a gRPC service method.
+
+```java
+package io.inverno.example.app_grpc_client;
+
+import examples.GreeterGrpcClient;
+import examples.HelloReply;
+import examples.HelloRequest;
+import io.inverno.core.annotation.Bean;
+import io.inverno.core.v1.Application;
+import io.inverno.mod.discovery.ServiceID;
+import io.inverno.mod.grpc.client.GrpcClient;
+import io.inverno.mod.web.client.WebClient;
+
+public class Main {
+
+	@Bean
+	public static class WebGreeterGrpcClient extends GreeterGrpcClient.Web<ApiContext> {
+
+		public WebGreeterGrpcClient(WebClient<? extends ApiContext> webClient, GrpcClient grpcClient) {
+			super(ServiceID.of("http://127.0.0.1:8080"), webClient, grpcClient);
+		}
+	}
+
+	public static void main(String[] args) {
+		App_grpc_client app_grpc_client = Application.run(new App_grpc_client.Builder());
+		try {
+			HelloReply response = app_grpc_client.webGreeterGrpcClient()
+				.sayHello(
+					HelloRequest.newBuilder()
+                        .setName("Bob")
+                        .build(),
+                    context -> context.setApiKey("xxxxxxx")
+				)
+				.block();
+		}
+		finally {
+			app_grpc_client.stop();
+		}
+	}
+}
+```
+
+The `HttpClient` based implementation must be favoured whenever there is a need to control the underlying HTTP connections explicitly. Please refer to the *http-client* and *web-client* modules documentation to get a complete overview of the HTTP client and the Web client and to the [Inverno gRPC plugin][inverno-tools-grpc-protoc-plugin] documentation to get a detailed explanation on the generation of gRPC clients and servers.
+
+> When using the `HttpClient` implementation, the endpoint can be created implicitly inside the `GreeterGrpcClient` by providing a hostname and a port, as in above example. It is automatically closed at the end of the try-with-resources statement. But it is also possible to create the endpoint explicitly and pass it to the stub instead, in which case the code creating it is also responsible for closing it and as a result it will not be closed at the end of the try-with-resource statement. In any cases, the `HttpClient` bean must be configured to connect with HTTP/2.
 
 ## Configuration
 
@@ -276,7 +342,7 @@ public interface App_grpc_clientConfiguration {
 }
 ```
 
-This should be enough for exposing a configuration bean in the *app_grpc_client* module that let us setup the client:
+This should be enough for exposing a configuration bean in the *app_grpc_client* module that let us set up the client:
 
 ```java
 package io.inverno.example.app_grpc_client;
@@ -322,7 +388,7 @@ In above code, we have set:
 - the client to connect using HTTP/2 protocol only (required by gRPC protocol)
 - the request timeout to 10 minutes
 
-> It is important to be aware that the HTTP client will terminate requests that exceeds the request timeout (i.e. take longer than the timeout to complete). Increasing the request timeout can then be required if you intend to invoke long running gRPC services like server or bidirectional streaming service methods which might take longer than the default 60 seconds to complete. Implementing reconnection mechanism is also highly recommended for long polling use cases.
+> It is important to be aware that the HTTP client will terminate requests that exceeds the request timeout (i.e. take longer than the timeout to complete). Increasing the request timeout can then be required if you intend to invoke long-running gRPC services like server or bidirectional streaming service methods which might take longer than the default 60 seconds to complete. Implementing reconnection mechanism is also highly recommended for long polling use cases.
 
 The support for native transport or TLS secured connection is provided by the [HTTP client](#http-client) which must be configured accordingly. Although nothing prevents to send gRPC messages over an HTTP/1.x connection, this is discouraged and might as it will break interoperability and might result in unpredictable behaviours, particular care must be taken to ensure the client is properly configured to create HTTP/2 connections.
 
@@ -344,7 +410,7 @@ The service name and the request method can be obtained as follows:
 
 ```java
 endpoint.exchange()
-    .map(exhange -> grpcClient...) // converts HTTP exchange to gRPC exchange
+    .map(exchange -> grpcClient...) // converts HTTP exchange to gRPC exchange
     .flatMap(grpcExchange -> {
         // <package>.<service>
         GrpcServiceName serviceName = grpcExchange.request().getServiceName();
@@ -358,11 +424,11 @@ endpoint.exchange()
     ...
 ```
 
-Standard or custom request metadata including protocol buffer binary data endoded in Base64 can be provided as follows:
+Standard or custom request metadata including protocol buffer binary data encoded in Base64 can be provided as follows:
 
 ```java
 endpoint.exchange()
-    .map(exhange -> grpcClient...) // converts HTTP exchange to gRPC exchange
+    .map(exchange -> grpcClient...) // converts HTTP exchange to gRPC exchange
     .flatMap(grpcExchange -> {
         grpcExchange.request()
             .metadata(metadata -> metadata
@@ -381,7 +447,7 @@ When considering a unary or server streaming exchange, the request message can b
 
 ```java
 endpoint.exchange()
-    .map(exhange -> grpcClient...) // converts HTTP exchange to a unary or server streaming gRPC exchange
+    .map(exchange -> grpcClient...) // converts HTTP exchange to a unary or server streaming gRPC exchange
     .flatMap(grpcExchange -> {
         // set the request message
         grpcExchange.request().value(SingleHelloRequest.newBuilder().setName("Bob").build());
@@ -398,7 +464,7 @@ When considering a client streaming or bidirectional streaming exchange, the req
 
 ```java
 endpoint.exchange()
-    .map(exhange -> grpcClient...) // converts HTTP exchange to a client streaming or bidirectional streaming gRPC exchange
+    .map(exchange -> grpcClient...) // converts HTTP exchange to a client streaming or bidirectional streaming gRPC exchange
     .flatMap(grpcExchange -> {
         grpcExchange.request().stream(
             Flux.just("Bob", "Bill", "Jane")
@@ -418,7 +484,7 @@ Standard or custom response metadata including protocol buffer binary data encod
 
 ```java
 endpoint.exchange()
-    .map(exhange -> grpcClient...) // converts HTTP exchange to gRPC exchange
+    .map(exchange -> grpcClient...) // converts HTTP exchange to gRPC exchange
     .flatMap(grpcExchange ->
         // set the request
         ...
@@ -440,7 +506,7 @@ Response trailers metadata are available after the complete response have been r
 
 ```java
 endpoint.exchange()
-    .map(exhange -> grpcClient...) // converts HTTP exchange to a unary or client streaming gRPC exchange
+    .map(exchange -> grpcClient...) // converts HTTP exchange to a unary or client streaming gRPC exchange
     .flatMap(grpcExchange ->
         // set the request
         ...
@@ -459,7 +525,7 @@ When considering a unary or a client streaming exchange, the response message is
 
 ```java
 Reply reply = endpoint.exchange()
-    .map(exhange -> grpcClient...) // converts HTTP exchange to a unary or client streaming gRPC exchange
+    .map(exchange -> grpcClient...) // converts HTTP exchange to a unary or client streaming gRPC exchange
     .flatMap(grpcExchange -> {
         // set the request
         ...
@@ -473,7 +539,7 @@ When considering a unary or a client streaming exchange, the response messages a
 
 ```java
 List<Reply> replies = endpoint.exchange()
-    .map(exhange -> grpcClient...) // converts HTTP exchange to a server streaming or bidirectional streaming gRPC exchange
+    .map(exchange -> grpcClient...) // converts HTTP exchange to a server streaming or bidirectional streaming gRPC exchange
     .flatMap(grpcExchange -> {
         // set the request
         ...
@@ -494,15 +560,15 @@ The context is inherited from the HTTP client, it is used to convey contextual i
 
 ### Unary gRPC exchange
 
-A unary gRPC exchange corresponds to the request/response paradigm where a client sends exactly one message and receives exacly one message from the server.
+A unary gRPC exchange corresponds to the request/response paradigm where a client sends exactly one message and receives exactly one message from the server.
 
 The following example shows how to invoke a unary service method:
 
 ```java
 Endpoint<ExchangeContext> endpoint = ...
 SingleHelloReply reply = endpoint.exchange()
-    .<GrpcExchange.Unary<ExchangeContext, SingleHelloRequest, SingleHelloReply>>map(exhange -> grpcClient.unary(
-        exhange,
+    .<GrpcExchange.Unary<ExchangeContext, SingleHelloRequest, SingleHelloReply>>map(exchange -> grpcClient.unary(
+        exchange,
         GrpcServiceName.of("examples", "HelloService"),
         "SayHello",
         SingleHelloRequest.getDefaultInstance(),
@@ -527,8 +593,8 @@ The following example shows how to invoke a client streaming service method:
 ```java
 Endpoint<ExchangeContext> endpoint = ...
 GroupHelloReply reply = endpoint.exchange()
-    .<GrpcExchange.ClientStreaming<ExchangeContext, SingleHelloRequest, GroupHelloReply>>map(exhange -> grpcClient.clientStreaming(
-        exhange,
+    .<GrpcExchange.ClientStreaming<ExchangeContext, SingleHelloRequest, GroupHelloReply>>map(exchange -> grpcClient.clientStreaming(
+        exchange,
         GrpcServiceName.of("examples", "HelloService"),
         "SayHelloToEverybody",
         SingleHelloRequest.getDefaultInstance(),
@@ -557,8 +623,8 @@ The following example shows how to invoke a server streaming service method:
 ```java
 Endpoint<ExchangeContext> endpoint = ...
 List<SingleHelloReply> replies = endpoint.exchange()
-    .<GrpcExchange.ServerStreaming<ExchangeContext, GroupHelloRequest, SingleHelloReply>>map(exhange -> grpcClient.serverStreaming(
-        exhange,
+    .<GrpcExchange.ServerStreaming<ExchangeContext, GroupHelloRequest, SingleHelloReply>>map(exchange -> grpcClient.serverStreaming(
+        exchange,
         GrpcServiceName.of("examples", "HelloService"),
         "SayHelloToEveryoneInTheGroup",
         GroupHelloRequest.getDefaultInstance(),
@@ -586,8 +652,8 @@ The following example shows how to invoke a bidirectional streaming service meth
 ```java
 Endpoint<ExchangeContext> endpoint = ...
 List<SingleHelloReply> REPLIES = endpoint.exchange()
-    .<GrpcExchange.BidirectionalStreaming<ExchangeContext, SingleHelloRequest, SingleHelloReply>>map(exhange -> grpcClient.bidirectionalStreaming(
-        exhange,
+    .<GrpcExchange.BidirectionalStreaming<ExchangeContext, SingleHelloRequest, SingleHelloReply>>map(exchange -> grpcClient.bidirectionalStreaming(
+        exchange,
         GrpcServiceName.of("examples", "HelloService"),
         "sayHelloToEveryone",
         SingleHelloRequest.getDefaultInstance(),
@@ -614,7 +680,7 @@ A client can decide to cancel a gRPC when it is no longer interested in the resu
 
 ```java
 endpoint.exchange()
-    .map(exhange -> grpcClient...) // converts HTTP exchange to a server streaming or bidirectional streaming gRPC exchange
+    .map(exchange -> grpcClient...) // converts HTTP exchange to a server streaming or bidirectional streaming gRPC exchange
     .flatMapMany(grpcExchange -> {
         // set the request
         ...
@@ -635,7 +701,7 @@ A gRPC client exchange is also canceled when a `GrpcException` with a `CANCELLED
 
 ```java
 Disposable disposable = endpoint.exchange()
-    .map(exhange -> grpcClient...) // converts HTTP exchange to a server streaming or bidirectional streaming gRPC exchange
+    .map(exchange -> grpcClient...) // converts HTTP exchange to a server streaming or bidirectional streaming gRPC exchange
     .flatMapMany(grpcExchange -> {
         // set the request
         ...

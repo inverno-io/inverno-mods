@@ -35,7 +35,7 @@ import java.util.Optional;
  * This is used as a proxy between the exchange and the connection and abstracts the stream to the exchange.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.10
  */
 class Http2ConnectionStream {
@@ -50,7 +50,7 @@ class Http2ConnectionStream {
 	AbstractHttp2Exchange exchange;
 	
 	/**
-	 * The error code that was received or sent in a RST_STREAM frame or null if the stream was not reset.
+	 * The error code that was received or sent in an RST_STREAM frame or null if the stream was not reset.
 	 */
 	private Long errorCode;
 	
@@ -593,7 +593,7 @@ class Http2ConnectionStream {
 	 * This method executes on the connection event loop and delegates the error handling to the responding exchange (see {@link AbstractHttp2Exchange#handleError(java.lang.Throwable) }).
 	 * </p>
 	 * 
-	 * @param throwable the error
+	 * @param error the error
 	 */
 	public void onExchangeError(Throwable error) {
 		if(this.channelContext.executor().inEventLoop()) {

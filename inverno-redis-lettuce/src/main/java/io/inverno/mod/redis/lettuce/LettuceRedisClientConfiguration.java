@@ -151,7 +151,7 @@ public interface LettuceRedisClientConfiguration {
 	 * @return the connection timeout
 	 */
 	default long timeout() {
-		return 60000l;
+		return 60000L;
 	}
 	
 	/**

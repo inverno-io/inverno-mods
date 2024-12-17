@@ -17,7 +17,7 @@ package io.inverno.mod.web.compiler.spi;
 
 /**
  * <p>
- * Describes a HTTP cookie parameter in a route.
+ * Describes an HTTP cookie parameter in a route.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

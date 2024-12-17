@@ -30,13 +30,11 @@ import java.util.stream.Stream;
 
 /**
  * <p>
- * {@link ResourceProvider} implementation used to resolve resources on the
- * file system (ie. {@code file:/path/to/resource}).
+ * {@link ResourceProvider} implementation used to resolve resources on the file system (ie. {@code file:/path/to/resource}).
  * </p>
  * 
  * <p>
- * This implementation supports path patterns and can then resolve multiple
- * resources matching a given URI pattern.
+ * This implementation supports path patterns and can then resolve multiple resources matching a given URI pattern.
  * </p>
  * 
  * <pre>{@code

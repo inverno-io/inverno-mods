@@ -15,6 +15,12 @@
  */
 package io.inverno.mod.configuration.internal;
 
+import io.inverno.mod.configuration.Configuration;
+import io.inverno.mod.configuration.ConfigurationLoader;
+import io.inverno.mod.configuration.ConfigurationLoaderException;
+import io.inverno.mod.configuration.ConfigurationQuery;
+import io.inverno.mod.configuration.ConfigurationQueryResult;
+import io.inverno.mod.configuration.ExecutableConfigurationQuery;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationHandler;
@@ -28,13 +34,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import io.inverno.mod.configuration.Configuration;
-import io.inverno.mod.configuration.ConfigurationLoader;
-import io.inverno.mod.configuration.ConfigurationLoaderException;
-import io.inverno.mod.configuration.ConfigurationQuery;
-import io.inverno.mod.configuration.ConfigurationQueryResult;
-import io.inverno.mod.configuration.ExecutableConfigurationQuery;
 import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Mono;
 
@@ -58,7 +57,7 @@ import reactor.core.publisher.Mono;
  */
 public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveConfigurationLoader<A, ConfigurationTypeConfigurationLoader<A>> {
 
-	private Class<A> configurationType;
+	private final Class<A> configurationType;
 	
 	/**
 	 * <p>
@@ -83,7 +82,7 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 		ExecutableConfigurationQuery<?,?> configurationQuery = this.visitConfigurationType(this.configurationType, "", null, proxyQueries);
 
 		if(configurationQuery == null) {
-			return Mono.just(null);
+			return Mono.empty();
 		}
 		
 		return configurationQuery.execute()
@@ -96,20 +95,21 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 						properties.put(proxyQuery.name, Proxy.newProxyInstance(proxyQuery.type.getClassLoader(), new Class[] {proxyQuery.type}, new ConfigurationProxyInvocationHandler(properties, proxyQuery.name))); 
 					}
 					else {
-						resultsIterator.next().getResult().ifPresent(result -> {
+						ConfigurationQueryResult result = resultsIterator.next();
+						if(result.isPresent()) {
 							if(proxyQuery.array) {
-								properties.put(proxyQuery.name, result.asArrayOf(proxyQuery.componentType).orElse(null));
+								properties.put(proxyQuery.name, result.asArrayOf(proxyQuery.componentType, null));
 							}
 							else if(proxyQuery.collection || proxyQuery.list) {
-								properties.put(proxyQuery.name, result.asListOf(proxyQuery.componentType).orElse(null));
+								properties.put(proxyQuery.name, result.asListOf(proxyQuery.componentType, null));
 							}
 							else if(proxyQuery.set) {
-								properties.put(proxyQuery.name, result.asSetOf(proxyQuery.componentType).orElse(null));
+								properties.put(proxyQuery.name, result.asSetOf(proxyQuery.componentType, null));
 							}
 							else {
-								properties.put(proxyQuery.name, result.as(proxyQuery.type).orElse(null));
+								properties.put(proxyQuery.name, result.as(proxyQuery.type, null));
 							}
-						});
+						}
 					}
 				}
 				return (A)Proxy.newProxyInstance(configurationType.getClassLoader(), new Class<?>[] { this.configurationType }, new ConfigurationProxyInvocationHandler(properties, ""));
@@ -117,7 +117,7 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 	}
 	
 	private ExecutableConfigurationQuery<?,?> visitConfigurationType(Class<?> configurationType, String prefix, ConfigurationQuery<?,?> configurationQuery, List<ConfigurationProxyQuery> accumulator) throws ConfigurationLoaderException, IllegalArgumentException {
-		ExecutableConfigurationQuery<?,?> exectuableConfigurationQuery = null;
+		ExecutableConfigurationQuery<?,?> executableConfigurationQuery = null;
 		for(Method method : configurationType.getMethods()) {
 			if(method.getParameters().length == 0) {
 				ConfigurationProxyQuery query;
@@ -129,41 +129,32 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 				}
 				accumulator.add(query);
 				if(query.nested) {
-					exectuableConfigurationQuery = this.visitConfigurationType(query.type, query.name, exectuableConfigurationQuery != null ? exectuableConfigurationQuery.and() : configurationQuery, accumulator);
+					executableConfigurationQuery = this.visitConfigurationType(query.type, query.name, executableConfigurationQuery != null ? executableConfigurationQuery.and() : configurationQuery, accumulator);
 				}
 				else {
-					exectuableConfigurationQuery = (exectuableConfigurationQuery != null ? exectuableConfigurationQuery.and().get(query.name) : configurationQuery != null ? configurationQuery.get(query.name) : this.source.get(query.name)).withParameters(ConfigurationTypeConfigurationLoader.this.parameters);
+					executableConfigurationQuery = (executableConfigurationQuery != null ? executableConfigurationQuery.and().get(query.name) : configurationQuery != null ? configurationQuery.get(query.name) : this.source.get(query.name)).withParameters(ConfigurationTypeConfigurationLoader.this.parameters);
 				}
 			}
 		}
-		return exectuableConfigurationQuery;
+		return executableConfigurationQuery;
 	}
 	
-	private class ConfigurationProxyQuery {
+	private static class ConfigurationProxyQuery {
 		
-		private final Method method;
-		
-		private String name;
-		
-		private Class<?> type;
-		
+		private final String name;
+		private final Class<?> type;
+		private final boolean array;
+		private final boolean collection;
+		private final boolean list;
+		private final boolean set;
+		private final boolean nested;
+
 		private Class<?> componentType;
 		
-		private boolean array;
-		
-		private boolean collection;
-		
-		private boolean list;
-		
-		private boolean set;
-		
-		private boolean nested;
-		
 		private ConfigurationProxyQuery(String prefix, Method method) throws ClassNotFoundException {
-			this.method = method;
 			this.name = (StringUtils.isNotEmpty(prefix) ? prefix + "." : "") + method.getName();
 			
-			this.type = this.method.getReturnType();
+			this.type = method.getReturnType();
 			
 			this.array = this.type.isArray();
 			this.collection = Collection.class.equals(this.type);
@@ -176,7 +167,7 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 				this.componentType = this.type.getComponentType();
 			}
 			else if(this.collection || this.list || this.set) {
-				this.componentType = Class.forName(((ParameterizedType)this.method.getGenericReturnType()).getActualTypeArguments()[0].getTypeName());
+				this.componentType = Class.forName(((ParameterizedType)method.getGenericReturnType()).getActualTypeArguments()[0].getTypeName());
 			}
 		}
 	}

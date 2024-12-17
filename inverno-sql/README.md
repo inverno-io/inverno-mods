@@ -7,11 +7,10 @@ This module only exposes the API and a proper implementation module must be cons
 In order to use the Inverno *SQL client* module, we need to declare a dependency to the API and at least one implementation in the module descriptor:
 
 ```java
+@io.inverno.core.annotation.Module
 module io.inverno.example.app {
-    ...
     requires io.inverno.mod.sql; // this is actually optional since implementations should already define a transitive dependency
     requires io.inverno.mod.sql.vertx; // Vert.x implementation
-    ...
 }
 ```
 
@@ -36,11 +35,9 @@ Using Maven:
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.inverno.mod:inverno-sql:${VERSION_INVERNO_MODS}'
 compile 'io.inverno.mod:inverno-sql-vertx:${VERSION_INVERNO_MODS}'
-...
 ```
 
 ## SQL client API
@@ -267,7 +264,7 @@ affectedRows.subscribe(...);
 
 Some `SqlClient` implementations backed by a connection pool for instance can be used to execute multiple SQL statements on a single connection released once the resulting publisher terminates (either closed or returned to the pool).
 
-For instance we can execute multiple statements on a single connection as follows:
+For instance, we can execute multiple statements on a single connection as follows:
 
 ```java
 SqlClient client = ...

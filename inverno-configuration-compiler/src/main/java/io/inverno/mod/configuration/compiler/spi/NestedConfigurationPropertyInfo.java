@@ -17,13 +17,11 @@ package io.inverno.mod.configuration.compiler.spi;
 
 /**
  * <p>
- * A nested configuration property info describes a configuration property
- * nested in another configuration property (that can itself be nested).
+ * A nested configuration property info describes a configuration property nested in another configuration property (that can itself be nested).
  * </p>
  * 
  * <p>
- * Note that the type of a nested property info must be a configuration type and
- * therefore correspond to a configuration info.
+ * Note that the type of a nested property info must be a configuration type and therefore correspond to a configuration info.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

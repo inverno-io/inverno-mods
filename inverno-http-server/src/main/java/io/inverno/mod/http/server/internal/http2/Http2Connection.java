@@ -72,7 +72,7 @@ import reactor.core.scheduler.Schedulers;
  * A {@link Http2ConnectionStream} is created to handle exchange on each server streams, it basically proxies the connection and abstract the stream to the exchange.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 public class Http2Connection extends Http2ConnectionHandler implements HttpConnection, Http2FrameListener, io.netty.handler.codec.http2.Http2Connection.Listener {
@@ -317,7 +317,8 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 		super.channelInactive(ctx);
-		// each stream should be closed individually so disposal whould be handled in #onStreamClosed()
+		this.closed = true;
+		// each stream should be closed individually so disposal would be handled in #onStreamClosed()
 	}
 	
 	@Override

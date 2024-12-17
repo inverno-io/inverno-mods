@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * Generic {@link GrpcInboundRequestMetadata} implementation
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public class GenericGrpcRequestMetadata extends AbstractGrpcMetadata<InboundRequestHeaders> implements GrpcInboundRequestMetadata {

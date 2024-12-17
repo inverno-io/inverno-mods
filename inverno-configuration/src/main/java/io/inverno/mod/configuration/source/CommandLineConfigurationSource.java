@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.configuration.source;
 
+import io.inverno.mod.configuration.ConfigurationKey;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -24,7 +25,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
-import io.inverno.mod.configuration.AbstractHashConfigurationSource;
+import io.inverno.mod.configuration.internal.AbstractHashConfigurationSource;
 import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.DefaultingStrategy;
 import io.inverno.mod.configuration.internal.JavaStringConverter;
@@ -86,7 +87,7 @@ public class CommandLineConfigurationSource extends AbstractHashConfigurationSou
 
 	private static final Logger LOGGER = LogManager.getLogger(CommandLineConfigurationSource.class);
 	
-	private List<String> args;
+	private final List<String> args;
 	
 	/**
 	 * <p>
@@ -117,20 +118,50 @@ public class CommandLineConfigurationSource extends AbstractHashConfigurationSou
 
 	/**
 	 * <p>
-	 * Creates a command line configuration source from the specified initial source and using the specified defaulting strategy.
+	 * Creates a command line configuration source from the specified original source which applies the specified default parameters.
 	 * </p>
 	 *
-	 * @param initial            the initial configuration source.
+	 * @param original           the original configuration source
+	 * @param defaultParameters  the default parameters to apply
+	 */
+	private CommandLineConfigurationSource(CommandLineConfigurationSource original, List<ConfigurationKey.Parameter> defaultParameters) {
+		this(original, defaultParameters, original.defaultingStrategy);
+	}
+
+	/**
+	 * <p>
+	 * Creates a command line configuration source from the specified original source which uses the specified defaulting strategy.
+	 * </p>
+	 *
+	 * @param original           the original configuration source
 	 * @param defaultingStrategy a defaulting strategy
 	 */
-	private CommandLineConfigurationSource(CommandLineConfigurationSource initial, DefaultingStrategy defaultingStrategy) {
-		super(initial, defaultingStrategy);
-		this.args = initial.args;
+	private CommandLineConfigurationSource(CommandLineConfigurationSource original, DefaultingStrategy defaultingStrategy) {
+		this(original, original.defaultParameters, defaultingStrategy);
 	}
-	
+
+	/**
+	 * <p>
+	 * Creates a command line configuration source from the specified original source which applies the specified default parameters and uses the specified defaulting strategy.
+	 * </p>
+	 *
+	 * @param original           the original configuration source
+	 * @param defaultParameters  the default parameters to apply
+	 * @param defaultingStrategy a defaulting strategy
+	 */
+	private CommandLineConfigurationSource(CommandLineConfigurationSource original, List<ConfigurationKey.Parameter> defaultParameters, DefaultingStrategy defaultingStrategy) {
+		super(original, defaultParameters, defaultingStrategy);
+		this.args = original.args;
+	}
+
+	@Override
+	public CommandLineConfigurationSource withParameters(List<ConfigurationKey.Parameter> parameters) throws IllegalArgumentException {
+		return new CommandLineConfigurationSource(this, parameters);
+	}
+
 	@Override
 	public CommandLineConfigurationSource withDefaultingStrategy(DefaultingStrategy defaultingStrategy) {
-		return new CommandLineConfigurationSource(this.initial != null ? this.initial : this, defaultingStrategy);
+		return new CommandLineConfigurationSource(this, defaultingStrategy);
 	}
 	
 	@Override

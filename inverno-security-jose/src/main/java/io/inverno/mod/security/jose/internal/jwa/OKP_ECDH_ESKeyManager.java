@@ -129,7 +129,7 @@ public class OKP_ECDH_ESKeyManager extends AbstractECDH_ESKeyManager<XECPublicKe
 				String crv = (String)epk.get("crv");
 				String x = (String)epk.get("x");
 
-				if(kty == null || !OKPJWK.KEY_TYPE.equals(kty)) {
+				if(!OKPJWK.KEY_TYPE.equals(kty)) {
 					throw new JWAProcessingException("Invalid ephemeral key type: " + kty);
 				}
 

@@ -1,6 +1,3 @@
-import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.http.base.header.HeaderService;
-
 /*
  * Copyright 2021 Jeremy KUHN
  *
@@ -19,8 +16,7 @@ import io.inverno.mod.http.base.header.HeaderService;
 
 /**
  * <p>
- * The Inverno framework HTTP base module defines the base APIs and services for
- * HTTP client and server implementations.
+ * The Inverno framework HTTP base module defines base APIs and services for HTTP client and server implementations.
  * </p>
  * 
  * <p>
@@ -29,9 +25,9 @@ import io.inverno.mod.http.base.header.HeaderService;
  * 
  * <dl>
  * <dt><b>headerCodecs</b></dt>
- * <dd>extend the extends header service capabilities with a list of custom header codecs</dd>
+ * <dd>extend the header service capabilities with a list of custom header codecs</dd>
  * <dt><b>parameterConverter</b></dt>
- * <dd>override the default parameter converter used in {@link Parameter} instances to convert their values</dd>
+ * <dd>override the default parameter converter used in {@link io.inverno.mod.http.base.Parameter} instances to convert their values</dd>
  * </dl>
  * 
  * <p>
@@ -40,7 +36,7 @@ import io.inverno.mod.http.base.header.HeaderService;
  * 
  * <dl>
  * <dt><b>headerService</b></dt>
- * <dd>A {@link HeaderService} used to decode and encode HTTP header fields.</dd>
+ * <dd>a {@link io.inverno.mod.http.base.header.HeaderService} used to decode and encode HTTP header fields</dd>
  * </dl>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -58,13 +54,16 @@ module io.inverno.mod.http.base {
 	requires io.netty.codec;
 	requires io.netty.codec.http;
 	requires io.netty.codec.http2;
+	requires org.apache.logging.log4j;
 
 	exports io.inverno.mod.http.base;
 	exports io.inverno.mod.http.base.header;
+	exports io.inverno.mod.http.base.router;
+	exports io.inverno.mod.http.base.router.link;
 	exports io.inverno.mod.http.base.ws;
 
 	exports io.inverno.mod.http.base.internal to io.inverno.mod.http.client, io.inverno.mod.http.server;
-	exports io.inverno.mod.http.base.internal.header to io.inverno.mod.http.client, io.inverno.mod.http.server, io.inverno.mod.web.server;
+	exports io.inverno.mod.http.base.internal.header to io.inverno.mod.http.client, io.inverno.mod.http.server, io.inverno.mod.web.client, io.inverno.mod.web.server;
 	exports io.inverno.mod.http.base.internal.netty to io.inverno.mod.http.client, io.inverno.mod.http.server;
 	exports io.inverno.mod.http.base.internal.ws to io.inverno.mod.http.client, io.inverno.mod.http.server;
 }

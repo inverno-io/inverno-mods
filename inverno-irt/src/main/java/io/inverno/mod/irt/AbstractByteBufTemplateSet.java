@@ -23,8 +23,7 @@ import io.netty.buffer.Unpooled;
 
 /**
  * <p>
- * A {@link TemplateSet} base implementation template sets which renders data in
- * a ByteBuf.
+ * A {@link TemplateSet} base implementation template sets which renders data in a ByteBuf.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

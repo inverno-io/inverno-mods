@@ -330,7 +330,7 @@ public class LDAPAuthenticator implements Authenticator<LoginCredentials, LDAPAu
 		
 		return authentication.onErrorMap(LDAPException.class, e -> {
 			if(e.getErrorCode() != null) {
-				String message = "LDAP " + (e.getErrorCode() != null ? " (" + ((LDAPException)e).getErrorCode() + "): " : ": ") + (e.getErrorDescription() != null ? ((LDAPException)e).getErrorDescription() : "");
+				String message = "LDAP " + (e.getErrorCode() != null ? " (" + e.getErrorCode() + "): " : ": ") + (e.getErrorDescription() != null ? e.getErrorDescription() : "");
 				switch(e.getErrorCode()) {
 					case LDAPClient.CODE_INVALID_CREDENTIALS: 
 						return new InvalidCredentialsException(message, e);

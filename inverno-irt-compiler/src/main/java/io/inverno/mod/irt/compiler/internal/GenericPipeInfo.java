@@ -29,7 +29,6 @@ import io.inverno.mod.irt.compiler.spi.ApplyInfo.ArgumentInfo;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class GenericPipeInfo extends BaseInfo implements PipeInfo {
 
@@ -53,7 +52,7 @@ public class GenericPipeInfo extends BaseInfo implements PipeInfo {
 		super(range);
 		this.expression = Optional.ofNullable(expression);
 		this.name = Optional.ofNullable(name);
-		this.arguments = Optional.ofNullable(arguments).map(l -> l.stream().toArray(ArgumentInfo[]::new))
+		this.arguments = Optional.ofNullable(arguments).map(l -> l.toArray(ArgumentInfo[]::new))
 				.filter(arr -> arr.length > 0);
 	}
 	

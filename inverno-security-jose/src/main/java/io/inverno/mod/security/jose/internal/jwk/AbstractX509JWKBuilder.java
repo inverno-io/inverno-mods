@@ -405,7 +405,7 @@ public abstract class AbstractX509JWKBuilder<A extends PublicKey, B extends Priv
 	private Mono<Void> resolveX5u() throws JWKBuildException, JWKResolveException, JWKProcessingException {
 		return this.urlResolver.resolveX509CertificateURL(this.x5u)
 			.filter(certs -> !certs.isEmpty())
-			.flatMap(certs -> this.configuration.validate_certificate() ? this.certPathValidator.validate(certs) : Mono.just(certs.get(0)))
+			.flatMap(certs -> this.configuration.validate_certificate() ? this.certPathValidator.validate(certs) : Mono.just(certs.getFirst()))
 			.flatMap(tmpCert -> this.resolveCertificate(tmpCert).doOnSuccess(ign -> this.certificate = tmpCert));
 	}
 	
@@ -435,7 +435,7 @@ public abstract class AbstractX509JWKBuilder<A extends PublicKey, B extends Priv
 					for(String encodedCert : certs) {
 						certificates.add((X509Certificate)cf.generateCertificate(new ByteArrayInputStream(Base64.getDecoder().decode(encodedCert))));
 					}
-					return this.configuration.validate_certificate() ? this.certPathValidator.validate(certificates) : Mono.just(certificates.get(0));
+					return this.configuration.validate_certificate() ? this.certPathValidator.validate(certificates) : Mono.just(certificates.getFirst());
 				}
 				catch(CertificateException e) {
 					throw new JWKBuildException("Error resolving X.509 certificate chain", e);

@@ -67,7 +67,7 @@ public class URLResource extends AbstractAsyncResource {
 	 * 
 	 * @param uri the resource URI
 	 * 
-	 * throws {@link IllegalArgumentException} if the URI can't be converted to a URL
+	 * @throws IllegalArgumentException if the URI can't be converted to a URL
 	 */
 	public URLResource(URI uri) throws IllegalArgumentException {
 		this(uri, null);
@@ -79,8 +79,8 @@ public class URLResource extends AbstractAsyncResource {
 	 * </p>
 	 * 
 	 * @param url the resource URL
-	 * 
-	 * throws {@link IllegalArgumentException} if the URL can't be converted to a URI
+	 *
+	 * @throws IllegalArgumentException if the URL can't be converted to a URI
 	 */
 	public URLResource(URL url) throws IllegalArgumentException {
 		this(url, null);
@@ -94,7 +94,7 @@ public class URLResource extends AbstractAsyncResource {
 	 * @param uri the resource URI
 	 * @param mediaTypeService a media type service
 	 * 
-	 * throws {@link IllegalArgumentException} if the URI can't be converted to a URL
+	 * @throws IllegalArgumentException if the URI can't be converted to a URL
 	 */
 	public URLResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
@@ -115,7 +115,7 @@ public class URLResource extends AbstractAsyncResource {
 	 * @param url the resource URL
 	 * @param mediaTypeService a media type service
 	 * 
-	 * throws {@link IllegalArgumentException} if the URL can't be converted to a URI
+	 * @throws IllegalArgumentException if the URL can't be converted to a URI
 	 */
 	public URLResource(URL url, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);

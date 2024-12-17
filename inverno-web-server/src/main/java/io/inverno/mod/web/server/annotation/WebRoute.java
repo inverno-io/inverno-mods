@@ -15,37 +15,35 @@
  */
 package io.inverno.mod.web.server.annotation;
 
-import io.inverno.mod.base.converter.MediaTypeConverter;
-import io.inverno.mod.base.net.URIBuilder;
-import io.inverno.mod.base.resource.Resource;
-import io.inverno.mod.http.base.InternalServerErrorException;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.web.server.WebExchange;
-import io.inverno.mod.web.server.WebResponseBody;
-import io.netty.buffer.ByteBuf;
+import io.inverno.mod.web.base.annotation.Body;
+import io.inverno.mod.web.base.annotation.CookieParam;
+import io.inverno.mod.web.base.annotation.FormParam;
+import io.inverno.mod.web.base.annotation.HeaderParam;
+import io.inverno.mod.web.base.annotation.PathParam;
+import io.inverno.mod.web.base.annotation.QueryParam;
 import java.lang.annotation.Documented;
-import static java.lang.annotation.ElementType.METHOD;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
-import static java.lang.annotation.RetentionPolicy.SOURCE;
 import java.lang.annotation.Target;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 /**
  * <p>
- * Specifies a web route in a web controller.
+ * Specifies a Web route in a Web controller.
  * </p>
  *
  * <p>
- * A web route is an annotated method in a web controller which basically implements the exchange handler logic. The method parameters can be bound to the request parameters or the request body using
+ * A Web route is an annotated method in a Web controller which basically implements the exchange handler logic. The method parameters can be bound to the request parameters or the request body using
  * annotations like  {@link CookieParam @CookieParam}, {@link FormParam @FormParam},
  * {@link HeaderParam @HeaderParam}, {@link PathParam @PathParam},
  * {@link QueryParam @QueryParam} and {@link Body @Body}.
  * </p>
  *
  * <p>
- * Some specific method parameter can also be specified when needed like the exchange being processed declared as {@link Exchange} or {@link WebExchange} and a server-sent event factory as described
- * by {@link SseEventFactory}.
+ * Some specific method parameter can also be specified when needed like the exchange being processed declared as {@code Exchange} or {@code WebExchange} and a server-sent event factory as described
+ * by {@code SseEventFactory}.
  * </p>
  *
  * <p>
@@ -54,24 +52,23 @@ import java.lang.annotation.Target;
  *
  * <ul>
  * <li>{@code void} to produce an empty response</li>
- * <li>{@link ByteBuf}, {@code Mono<ByteBuf>}, {@code Flux<ByteBuf>} or {@code Publisher<ByteBuf>} to produce raw data</li>
- * <li>{@code Mono<T>}, {@code Flux<T>} or {@code Publisher<T>} where type {@code T} is a super type of {@link WebResponseBody.SseEncoder.Event
- * WebResponseBody.SseEncoder.Event&lt;ByteBuf&gt;} to produce server-sent events with raw data</li>
- * <li>{@code Mono<T>}, {@code Flux<T>} or {@code Publisher<T>} where type {@code T} is a super type of {@link WebResponseBody.SseEncoder.Event
- * WebResponseBody.SseEncoder.Event&lt;U&gt;} and U not a {@link ByteBuf} to produce server-sent events with encoded data based on the media type specified by the
- * {@link SseEventFactory @SseEventFactory} annotated method parameter</li>
- * <li>{@link Resource} to produce a static resource</li>
+ * <li>{@link io.netty.buffer.ByteBuf}, {@code Mono<ByteBuf>}, {@code Flux<ByteBuf>} or {@code Publisher<ByteBuf>} to produce raw data</li>
+ * <li>{@code Mono<T>}, {@code Flux<T>} or {@code Publisher<T>} where type {@code T} is a super type of {@code WebResponseBody.SseEncoder.Event WebResponseBody.SseEncoder.Event&lt;ByteBuf&gt;} to
+ * produce server-sent events with raw data</li>
+ * <li>{@code Mono<T>}, {@code Flux<T>} or {@code Publisher<T>} where type {@code T} is a super type of {@code WebResponseBody.SseEncoder.Event WebResponseBody.SseEncoder.Event&lt;U&gt;} and U not a
+ * {@link io.netty.buffer.ByteBuf} to produce server-sent events with encoded data based on the media type specified by the {@code SseEventFactory @SseEventFactory} annotated method parameter</li>
+ * <li>{@link io.inverno.mod.base.resource.Resource} to produce a static resource</li>
  * <li>{@code T}, {@code Mono<T>}, {@code Flux<T>} or {@code Publisher<T>} where {@code T} is none of the above to produce encoded data based on the content type of the response</li>
  * </ul>
  *
  * <p>
- * A response payload is encoded using one of the {@link MediaTypeConverter} injected in the web server module and corresponding to the content type of the response which is automatically set in case of
+ * A response payload is encoded using one of the {@link io.inverno.mod.base.converter.MediaTypeConverter} injected in the Web server module and corresponding to the content type of the response which is automatically set in case of
  * successful content negotiation, basically when there's a match between the media type produced by the route and what the client accepts, otherwise the response content type must be set explicitly
- * or an {@link InternalServerErrorException} stating that no media was specified will be thrown.
+ * or an {@link io.inverno.mod.http.base.InternalServerErrorException} stating that no media was specified will be thrown.
  * </p>
  *
  * <p>
- * A simple web route can be defined as follows in a web controller bean:
+ * A simple Web route can be defined as follows in a Web controller bean:
  * </p>
  *
  * <pre>{@code
@@ -88,8 +85,6 @@ import java.lang.annotation.Target;
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- *
- * @see WebController
  */
 @Documented
 @Retention(SOURCE)
@@ -112,7 +107,7 @@ public @interface WebRoute {
 	 * </p>
 	 *
 	 * <p>
-	 * A path can be a parameterized path parameters as defined by {@link URIBuilder}.
+	 * A path can be a parameterized path parameters as defined by {@link io.inverno.mod.base.net.URIBuilder}.
 	 * </p>
 	 *
 	 * <p>

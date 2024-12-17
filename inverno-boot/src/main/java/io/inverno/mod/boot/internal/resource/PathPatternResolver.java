@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -64,7 +63,7 @@ final class PathPatternResolver {
 	 * </p>
 	 *
 	 * <p>
-	 * The base path is deduced from the path pattern: if it is absolute, the base path is the root directory (ie. <code>'/'</code>), otherwise it is the current directory (ie. <code>'./'</code>).
+	 * The base path is deduced from the path pattern: if it is absolute, the base path is the root directory (ie. {@code '/'}), otherwise it is the current directory (ie. {@code './'}</code>).
 	 * </p>
 	 *
 	 * @param pathPattern a path pattern
@@ -81,7 +80,7 @@ final class PathPatternResolver {
 	 * </p>
 	 *
 	 * <p>
-	 * The base path is deduced from the path pattern: if it is absolute, the base path is the root directory (ie. <code>'/'</code>), otherwise it is the current directory (ie. <code>'./'</code>).
+	 * The base path is deduced from the path pattern: if it is absolute, the base path is the root directory (ie. {@code '/'}), otherwise it is the current directory (ie. {@code './'}).
 	 * </p>
 	 *
 	 * @param <T> the type of object returned by the mapper
@@ -275,18 +274,19 @@ final class PathPatternResolver {
 			throw new ResourceException("Error resolving paths from pattern: " + pathPattern, e);
 		}
 	}
-	
+
 	/**
 	 * <p>
 	 * Returns the path pattern relative to the specified base path.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * This method only returns a value when the path pattern and the base path shares a common root i.e. when there's a match possibility otherwise {@code null} is returned.
 	 * </p>
-	 * 
-	 * @param pathPattern
-	 * @param basePath
+	 *
+	 * @param pathPattern the path pattern
+	 * @param basePath    the base path
+	 *
 	 * @return the relative path pattern or null if the specified pattern can't match the base path
 	 */
 	private static PathPattern relativizePathPattern(PathPattern pathPattern, Path basePath) {
@@ -459,11 +459,11 @@ final class PathPatternResolver {
 						}
 						this.segments.add(segment);
 					}
-					else if(this.segments.get(this.segments.size() - 1).equals("..")) {
+					else if(this.segments.getLast().equals("..")) {
 						this.segments.add(segment);
 					}
 					else {
-						this.segments.remove(this.segments.size() - 1);
+						this.segments.removeLast();
 					}
 				}
 				else if(!segment.equals(".")) {
@@ -559,7 +559,7 @@ final class PathPatternResolver {
 		
 		/**
 		 * <p>
-		 * Returns a relative path oattern that is a subsequence of the segments of this path pattern.
+		 * Returns a relative path pattern that is a subsequence of the segments of this path pattern.
 		 * </p>
 		 * 
 		 * @param beginIndex the index of the first segment (inclusive)
@@ -573,7 +573,7 @@ final class PathPatternResolver {
 
 		@Override
 		public String toString() {
-			return (this.isAbsolute() ? this.root.replace('\\', '/') : "") +this.segments.stream().collect(Collectors.joining("/"));
+			return (this.isAbsolute() ? this.root.replace('\\', '/') : "") + String.join("/", this.segments);
 		}
 	}
 }

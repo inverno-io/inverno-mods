@@ -44,7 +44,6 @@ import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -120,7 +119,7 @@ public class ByteBufConverterTest {
 		Assertions.assertEquals("EUR", buffer.toString(Charsets.DEFAULT));
 		
 		buffer = CONVERTER.encode(Locale.FRANCE);
-		Assertions.assertEquals("fr_FR", buffer.toString(Charsets.DEFAULT));
+		Assertions.assertEquals("fr-FR", buffer.toString(Charsets.DEFAULT));
 		
 		buffer = CONVERTER.encode(new File("/abc.txt"));
 		Assertions.assertEquals(File.separator + "abc.txt", buffer.toString(Charsets.DEFAULT));

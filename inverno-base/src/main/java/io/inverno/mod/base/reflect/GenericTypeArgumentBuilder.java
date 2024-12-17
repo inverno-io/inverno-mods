@@ -50,14 +50,12 @@ class GenericTypeArgumentBuilder<A> implements TypeArgumentBuilder<A> {
 	
 	/**
 	 * <p>
-	 * Creates a generic type argument builder with the specified parent, raw type
-	 * and resulting type injector.
+	 * Creates a generic type argument builder with the specified parent, raw type and resulting type injector.
 	 * </p>
 	 * 
 	 * @param parentBuilder the parent builder
 	 * @param rawType       the erased type
-	 * @param typeInjector  the resulting type injector to invoke when the builder
-	 *                      is finalized.
+	 * @param typeInjector  the resulting type injector to invoke when the builder is finalized.
 	 */
 	public GenericTypeArgumentBuilder(A parentBuilder, Class<?> rawType, Consumer<Type> typeInjector) {
 		Objects.requireNonNull(rawType, "rawType");
@@ -149,7 +147,7 @@ class GenericTypeArgumentBuilder<A> implements TypeArgumentBuilder<A> {
 			this.typeInjector.accept(this.rawType);
 		}
 		else {
-			this.typeInjector.accept(new ParameterizedTypeImpl(this.rawType, this.typeArguments.toArray(new Type[this.typeArguments.size()]), this.ownerType));
+			this.typeInjector.accept(new ParameterizedTypeImpl(this.rawType, this.typeArguments.toArray(Type[]::new), this.ownerType));
 		}
 		return this.parentBuilder;
 	}

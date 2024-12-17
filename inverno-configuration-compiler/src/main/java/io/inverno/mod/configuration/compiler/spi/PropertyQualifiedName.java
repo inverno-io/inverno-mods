@@ -29,14 +29,14 @@ import io.inverno.core.compiler.spi.QualifiedNameFormatException;
  */
 public class PropertyQualifiedName extends BeanQualifiedName {
 
-	private BeanQualifiedName beanQName;
+	private final BeanQualifiedName beanQName;
 	
 	/**
 	 * <p>
 	 * The name of the property.
 	 * </p>
 	 */
-	private String name;
+	private final String name;
 
 	/**
 	 * <p>
@@ -111,7 +111,7 @@ public class PropertyQualifiedName extends BeanQualifiedName {
 	 */
 	public static PropertyQualifiedName valueOf(ModuleQualifiedName moduleQName, String qname)
 			throws QualifiedNameFormatException {
-		String[] qnameParts = qname.split(".");
+		String[] qnameParts = qname.split("\\.");
 		if (qnameParts.length < 2) {
 			throw new QualifiedNameFormatException(
 					"Invalid qname " + qname + ", was expecting: <beanName>.<propertyName>");

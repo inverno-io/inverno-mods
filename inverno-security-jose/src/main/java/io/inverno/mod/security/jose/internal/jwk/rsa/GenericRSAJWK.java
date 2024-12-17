@@ -85,7 +85,7 @@ public class GenericRSAJWK extends AbstractX509JWK<RSAPublicKey, RSAPrivateKey> 
 	private RSAAlgorithm rsaAlg;
 	
 	private RSAPublicKey publicKey;
-	private Optional<RSAPrivateKey> privateKey;
+	private RSAPrivateKey privateKey;
 	
 	private Map<RSAAlgorithm, JWASigner> signers;
 	private Map<RSAAlgorithm, JWAKeyManager> keyManagers;
@@ -162,7 +162,7 @@ public class GenericRSAJWK extends AbstractX509JWK<RSAPublicKey, RSAPrivateKey> 
 	 * @param certificate an X.509 certificate
 	 */
 	public GenericRSAJWK(String n, String e, String d, X509Certificate certificate) {
-		this(n, e, d, null, null, false);
+		this(n, e, d, null, certificate, false);
 	}
 	
 	/**
@@ -182,7 +182,7 @@ public class GenericRSAJWK extends AbstractX509JWK<RSAPublicKey, RSAPrivateKey> 
 		this.n = n;
 		this.e = e;
 		this.d = d;
-		this.privateKey = key != null ? Optional.of(key) : null;
+		this.privateKey = key;
 	}
 
 	/**
@@ -323,69 +323,67 @@ public class GenericRSAJWK extends AbstractX509JWK<RSAPublicKey, RSAPrivateKey> 
 	@Override
 	public RSAPublicKey toPublicKey() throws JWKProcessingException {
 		if(this.publicKey == null) {
-			this.publicKey = this.certificate
-				.map(cert -> (RSAPublicKey)cert.getPublicKey())
-				.orElseGet(() -> {
-					try {
-						RSAPublicKeySpec rsaPublicKeySpec = new RSAPublicKeySpec(
-							new BigInteger(1, Base64.getUrlDecoder().decode(this.n)), 
-							new BigInteger(1, Base64.getUrlDecoder().decode(this.e))
-						);
-						return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(rsaPublicKeySpec);
-					} 
-					catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-						throw new JWKProcessingException("Error creating verifier", e);
-					}
-				});
+			if(this.certificate == null) {
+				try {
+					RSAPublicKeySpec rsaPublicKeySpec = new RSAPublicKeySpec(
+						new BigInteger(1, Base64.getUrlDecoder().decode(this.n)),
+						new BigInteger(1, Base64.getUrlDecoder().decode(this.e))
+					);
+					this.publicKey = (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(rsaPublicKeySpec);
+				}
+				catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+					throw new JWKProcessingException("Error creating verifier", e);
+				}
+			}
+			else {
+				this.publicKey = (RSAPublicKey)this.certificate.getPublicKey();
+			}
 		}
 		return this.publicKey;
 	}
 
 	@Override
 	public Optional<RSAPrivateKey> toPrivateKey() throws JWKProcessingException {
-		if(this.privateKey == null) {
-			this.privateKey = Optional.ofNullable(this.d)
-				.map(pe -> {
-					try {
-						BigInteger modulus = new BigInteger(1, Base64.getUrlDecoder().decode(this.n));
-						BigInteger privateExponent = new BigInteger(1, Base64.getUrlDecoder().decode(pe));
+		if(this.privateKey == null && this.d != null) {
+			try {
+				BigInteger modulus = new BigInteger(1, Base64.getUrlDecoder().decode(this.n));
+				BigInteger privateExponent = new BigInteger(1, Base64.getUrlDecoder().decode(this.d));
 
-						final RSAPrivateKeySpec rsaPrivateKeySpec;
-						if(this.getFirstPrimeFactor() != null) {
-							BigInteger publicExponent = new BigInteger(1, Base64.getUrlDecoder().decode(this.e));
-							BigInteger primeP = new BigInteger(1, Base64.getUrlDecoder().decode(this.p));
-							BigInteger primeQ = new BigInteger(1, Base64.getUrlDecoder().decode(this.q));
-							BigInteger primeExponentP = new BigInteger(1, Base64.getUrlDecoder().decode(this.dp));
-							BigInteger primeExponentQ = new BigInteger(1, Base64.getUrlDecoder().decode(this.dq));
-							BigInteger crtCoefficient = new BigInteger(1, Base64.getUrlDecoder().decode(this.qi));
-							RSAOtherPrimeInfo[] otherPrimeInfo = null;
-							if(this.getOtherPrimesInfo() != null) {
-								otherPrimeInfo = this.getOtherPrimesInfo().stream()
-									.map(o -> new RSAOtherPrimeInfo(
-										new BigInteger(1, Base64.getUrlDecoder().decode(o.getPrimeFactor())), 
-										new BigInteger(1, Base64.getUrlDecoder().decode(o.getExponent())), 
-										new BigInteger(1, Base64.getUrlDecoder().decode(o.getCoefficient())))
-									)
-									.toArray(RSAOtherPrimeInfo[]::new);
-							}
-							rsaPrivateKeySpec = new RSAMultiPrimePrivateCrtKeySpec(modulus, publicExponent, privateExponent, primeP, primeQ, primeExponentP, primeExponentQ, crtCoefficient, otherPrimeInfo);
-						}
-						else {
-							rsaPrivateKeySpec = new RSAPrivateKeySpec(modulus, privateExponent);
-						}
-						return (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(rsaPrivateKeySpec);
-					} 
-					catch(NoSuchAlgorithmException | InvalidKeySpecException e) {
-						throw new JWKProcessingException("Error creating signer", e);
+				final RSAPrivateKeySpec rsaPrivateKeySpec;
+				if(this.getFirstPrimeFactor() != null) {
+					BigInteger publicExponent = new BigInteger(1, Base64.getUrlDecoder().decode(this.e));
+					BigInteger primeP = new BigInteger(1, Base64.getUrlDecoder().decode(this.p));
+					BigInteger primeQ = new BigInteger(1, Base64.getUrlDecoder().decode(this.q));
+					BigInteger primeExponentP = new BigInteger(1, Base64.getUrlDecoder().decode(this.dp));
+					BigInteger primeExponentQ = new BigInteger(1, Base64.getUrlDecoder().decode(this.dq));
+					BigInteger crtCoefficient = new BigInteger(1, Base64.getUrlDecoder().decode(this.qi));
+					RSAOtherPrimeInfo[] otherPrimeInfo = null;
+					if(this.getOtherPrimesInfo() != null) {
+						otherPrimeInfo = this.getOtherPrimesInfo().stream()
+							.map(o -> new RSAOtherPrimeInfo(
+								new BigInteger(1, Base64.getUrlDecoder().decode(o.getPrimeFactor())),
+								new BigInteger(1, Base64.getUrlDecoder().decode(o.getExponent())),
+								new BigInteger(1, Base64.getUrlDecoder().decode(o.getCoefficient())))
+							)
+							.toArray(RSAOtherPrimeInfo[]::new);
 					}
-				});
+					rsaPrivateKeySpec = new RSAMultiPrimePrivateCrtKeySpec(modulus, publicExponent, privateExponent, primeP, primeQ, primeExponentP, primeExponentQ, crtCoefficient, otherPrimeInfo);
+				}
+				else {
+					rsaPrivateKeySpec = new RSAPrivateKeySpec(modulus, privateExponent);
+				}
+				this.privateKey = (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(rsaPrivateKeySpec);
+			}
+			catch(NoSuchAlgorithmException | InvalidKeySpecException e) {
+				throw new JWKProcessingException("Error creating signer", e);
+			}
 		}
-		return this.privateKey;
+		return Optional.ofNullable(this.privateKey);
 	}
 	
 	@Override
 	public RSAJWK toPublicJWK() {
-		GenericRSAJWK jwk = new GenericRSAJWK(this.n, this.e, this.certificate.orElse(null));
+		GenericRSAJWK jwk = new GenericRSAJWK(this.n, this.e, this.certificate);
 		jwk.publicKey = this.publicKey;
 		jwk.setPublicKeyUse(this.use);
 		jwk.setKeyOperations(this.key_ops);
@@ -401,7 +399,7 @@ public class GenericRSAJWK extends AbstractX509JWK<RSAPublicKey, RSAPrivateKey> 
 
 	@Override
 	public RSAJWK minify() {
-		GenericRSAJWK jwk = new GenericRSAJWK(this.n, this.e, this.d, (RSAPrivateKey)this.key, this.certificate.orElse(null), this.trusted);
+		GenericRSAJWK jwk = new GenericRSAJWK(this.n, this.e, this.d, (RSAPrivateKey)this.key, this.certificate, this.trusted);
 		jwk.publicKey = this.publicKey;
 		
 		return jwk;

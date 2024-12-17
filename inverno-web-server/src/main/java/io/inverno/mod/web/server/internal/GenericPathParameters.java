@@ -51,7 +51,7 @@ import io.inverno.mod.web.server.WebRequest;
  * 
  * @see WebRequest
  */
-class GenericPathParameters implements MutablePathParameters {
+public class GenericPathParameters implements PathParameters {
 
 	private final ObjectConverter<String> parameterConverter;
 	
@@ -59,7 +59,7 @@ class GenericPathParameters implements MutablePathParameters {
 	
 	/**
 	 * <p>
-	 * Creates generic path parameters with the specified parameter value converter.
+	 * Creates generic path parameters.
 	 * </p>
 	 * 
 	 * @param parameterConverter a string object converter
@@ -68,13 +68,48 @@ class GenericPathParameters implements MutablePathParameters {
 		this.parameterConverter = parameterConverter;
 		this.parameters = new HashMap<>();
 	}
-	
-	@Override
+
+	/**
+	 * <p>
+	 * Creates generic path parameters initialized with the specified parameters.
+	 * </p>
+	 *
+	 * @param parameterConverter a string object converter
+	 * @param parameters         the initial parameters
+	 */
+	public GenericPathParameters(ObjectConverter<String> parameterConverter, Map<String, String> parameters) {
+		this.parameterConverter = parameterConverter;
+		this.parameters = new HashMap<>();
+		this.putAll(parameters);
+	}
+
+	/**
+	 * <p>
+	 * Sets the specified parameter.
+	 * </p>
+	 *
+	 * <p>
+	 * When the specified value is empty, it is considered null (i.e. missing).
+	 * </p>
+	 *
+	 * @param name  the parameter name
+	 * @param value the parameter value
+	 */
 	public void put(String name, String value) {
 		this.parameters.put(name, value != null && !value.isEmpty() ? new GenericPathParameter(name, value) : null);
 	}
-	
-	@Override
+
+	/**
+	 * <p>
+	 * Sets all specified parameters.
+	 * </p>
+	 *
+	 * <p>
+	 * When a specified value is empty, it is considered null (i.e. missing).
+	 * </p>
+	 *
+	 * @param parameters a map of parameters
+	 */
 	public void putAll(Map<String, String> parameters) {
 		for(Map.Entry<String, String> e : parameters.entrySet()) {
 			String name = e.getKey();
@@ -82,8 +117,16 @@ class GenericPathParameters implements MutablePathParameters {
 			this.parameters.put(name, value != null && !value.isEmpty() ? new GenericPathParameter(name, value) : null);
 		}
 	}
-	
-	@Override
+
+	/**
+	 * <p>
+	 * Removes the parameter with the specified name.
+	 * </p>
+	 *
+	 * @param name the parameter name
+	 *
+	 * @return the removed value or null if no value was removed
+	 */
 	public String remove(String name) {
 		Parameter removedParameter = this.parameters.remove(name);
 		return removedParameter != null ? removedParameter.getValue() : null;
@@ -114,9 +157,9 @@ class GenericPathParameters implements MutablePathParameters {
 	 */
 	private class GenericPathParameter implements Parameter {
 
-		private String name;
+		private final String name;
 		
-		private String value;
+		private final String value;
 		
 		/**
 		 * <p>

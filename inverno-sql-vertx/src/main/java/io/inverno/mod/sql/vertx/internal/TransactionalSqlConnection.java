@@ -27,8 +27,7 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * Committing or rolling back the transaction also closes the underlying Vert.x
- * connection.
+ * Committing or rolling back the transaction also closes the underlying Vert.x connection.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -42,8 +41,7 @@ public class TransactionalSqlConnection extends AbstractSqlOperations implements
 	
 	/**
 	 * <p>
-	 * Creates transactional operations with the specified underlying Vert.x SQL
-	 * connection and transaction.
+	 * Creates transactional operations with the specified underlying Vert.x SQL connection and transaction.
 	 * </p>
 	 * 
 	 * @param connection a Vert.x SQL connection with an opened transaction

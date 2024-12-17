@@ -31,7 +31,7 @@ import org.reactivestreams.Publisher;
  * The request body basically provides multiple ways to specify the payload.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.8
  */
 public interface RequestBody {
@@ -101,7 +101,7 @@ public interface RequestBody {
 	 *     )
 	 * ));
 	 * }</pre>
-	 * 
+	 *
 	 * @param <T> the type of char sequence
 	 * 
 	 * @return a string outbound data
@@ -169,8 +169,8 @@ public interface RequestBody {
 	 * 
 	 * @return a Multipart form data producer
 	 */
-	RequestBody.Multipart<Part.Factory, Part<?>> multipart();
-	
+	RequestBody.Multipart<? extends Part.Factory, Part<?>> multipart();
+
 	/**
 	 * <p>
 	 * A resource data producer.

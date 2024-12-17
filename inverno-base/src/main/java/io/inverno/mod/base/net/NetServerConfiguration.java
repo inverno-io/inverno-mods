@@ -21,7 +21,7 @@ package io.inverno.mod.base.net;
  * Net server configuration.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public interface NetServerConfiguration extends NetConfiguration {
@@ -32,7 +32,7 @@ public interface NetServerConfiguration extends NetConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 1024.
+	 * Defaults to {@code 1024}.
 	 * </p>
 	 * 
 	 * @return the accept backlog

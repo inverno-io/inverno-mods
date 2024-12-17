@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2024 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,74 +16,140 @@
 package io.inverno.mod.web.server;
 
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.web.server.spi.Router;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * <p>
- * A web router is used to handle HTTP requests.
+ * Entry point for configuring the Web routes used to route Web exchanges to a matching Web exchange handlers.
  * </p>
  *
  * <p>
- * It determines the web exchange handler to invoke based on the parameters of the request including the absolute path, the method, the content type and the accepted content type and language.
+ * It is implemented by the {@link WebServer}. Handlers are defined using a {@link WebRouteManager} or {@link WebSocketRouteManager} which allows to specify the criteria a Web exchange must match to
+ * be processed by the Web exchange handler defined in the route.
  * </p>
  *
  * <p>
- * An web router is itself an exchange handler that can be used as root handler of a HTTP server.
+ * When defining a route, the Web route interceptors defined in an intercepted Web server and matching the route's criteria are applied to the Web exchange handler.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.12
  *
- * @see WebExchange
- * @see WebRoute
  * @see WebRouteManager
+ * @see WebServer
  *
- * @param <A> the type of the exchange context
+ * @param <A> the exchange context type
  */
-public interface WebRouter<A extends ExchangeContext> extends 
-	Router<A, WebExchange<A>, WebRouter<A>, WebInterceptedRouter<A>, WebRouteManager<A, WebRouter<A>>, WebRouteManager<A, WebInterceptedRouter<A>>, WebInterceptorManager<A, WebInterceptedRouter<A>>, WebRoute<A>>, 
-	WebRoutable<A, WebRouter<A>>, 
-	WebInterceptable<A, WebInterceptedRouter<A>> {
-	
+public interface WebRouter<A extends ExchangeContext> extends BaseWebRouter {
+
 	/**
 	 * <p>
-	 * Configures the web router using the specified configurer and returns it.
+	 * Returns a new route manager for defining a Web route.
 	 * </p>
-	 * 
-	 * <p>
-	 * If the specified configurer is null this method is a noop.
-	 * </p>
-	 * 
-	 * @param configurer a web router configurer
-	 * 
-	 * @return the web router
+	 *
+	 * @return a new Web route manager
 	 */
-	@SuppressWarnings("unchecked")
-	default WebRouter<A> configure(WebRouterConfigurer<? super A> configurer) {
-		configurer.configure((WebRouter)this);
+	WebRouteManager<A, ? extends WebRouter<A>> route();
+
+	/**
+	 * <p>
+	 * Configures a Web route and returns the originating Web router.
+	 * </p>
+	 *
+	 * @param configurer a Web route configurer function
+	 *
+	 * @return the originating Web router
+	 */
+	default WebRouter<A> route(Consumer<WebRouteManager<A, ? extends WebRouter<A>>> configurer) {
+		configurer.accept(this.route());
 		return this;
 	}
-	
+
 	/**
 	 * <p>
-	 * Configures the web router using the specified configurers and returns it.
+	 * Returns a new route manager for defining a WebSocket route.
 	 * </p>
-	 * 
-	 * <p>
-	 * If the specified list of configurers is null or empty this method is a noop.
-	 * </p>
-	 * 
-	 * @param configurers a list of web router configurers
-	 * 
-	 * @return the web router
+	 *
+	 * @return a new WebSocket route manager
 	 */
-	default WebRouter<A> configure(List<WebRouterConfigurer<? super A>> configurers) {
-		if(configurers != null) {
-			for(WebRouterConfigurer<? super A> configurer : configurers) {
-				this.configure(configurer);
-			}
-		}
+	WebSocketRouteManager<A, ? extends WebRouter<A>> webSocketRoute();
+
+	/**
+	 * <p>
+	 * Configures a WebSocket route and returns the originating Web router.
+	 * </p>
+	 *
+	 * @param configurer a WebSocket route configurer function
+	 *
+	 * @return the originating Web router
+	 */
+	default WebRouter<A> webSocketRoute(Consumer<WebSocketRouteManager<A, ? extends WebRouter<A>>> configurer) {
+		configurer.accept(this.webSocketRoute());
 		return this;
+	}
+
+	/**
+	 * <p>
+	 * Configures multiple Web routes or WebSocket routes and returns the originating Web router.
+	 * </p>
+	 *
+	 * @param configurer a Web route configurer
+	 *
+	 * @return the originating Web router
+	 */
+	WebRouter<A> configureRoutes(WebRouter.Configurer<? super A> configurer);
+
+	/**
+	 * <p>
+	 * Configures multiple Web routes or WebSocket routes and returns the originating Web router.
+	 * </p>
+	 *
+	 * @param configurers a list of Web route configurers
+	 *
+	 * @return the originating Web router
+	 */
+	WebRouter<A> configureRoutes(List<WebRouter.Configurer<? super A>> configurers);
+
+	/**
+	 * <p>
+	 * Returns the Web routes defined in the router.
+	 * </p>
+	 *
+	 * @return a set of Web routes
+	 */
+	Set<WebRoute<A>> getRoutes();
+
+	/**
+	 * <p>
+	 * Returns the WebSocket routes defined in the router.
+	 * </p>
+	 *
+	 * @return a set of WebSocket routes
+	 */
+	Set<WebSocketRoute<A>> getWebSocketRoutes();
+
+	/**
+	 * <p>
+	 * A configurer used to configure Web routes in a Web server.
+	 * </p>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.12
+	 *
+	 * @param <A> the type of the exchange context
+	 */
+	@FunctionalInterface
+	interface Configurer<A extends ExchangeContext> {
+
+		/**
+		 * <p>
+		 * Configures routes.
+		 * </p>
+		 *
+		 * @param routes the Web router to use to define Web routes or WebSocket routes
+		 */
+		void configure(WebRouter<A> routes);
 	}
 }

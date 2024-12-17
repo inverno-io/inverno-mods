@@ -21,10 +21,9 @@ import java.util.Optional;
  * <p>
  * A template set info holds the data of a template set source file.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public interface TemplateSetInfo {
 
@@ -32,32 +31,30 @@ public interface TemplateSetInfo {
 	 * <p>
 	 * Returns the template set declared package.
 	 * </p>
-	 * 
-	 * @return an optional returning the package info or an empty optional for the
-	 *         default package
+	 *
+	 * @return an optional returning the package info or an empty optional for the default package
 	 */
 	Optional<PackageInfo> getPackage();
-	
+
 	/**
 	 * <p>
 	 * Returns the list of import statements defined in the template set.
 	 * </p>
-	 * 
-	 * @return a list of import info
+	 *
+	 * @return an array of import info
 	 */
 	ImportInfo[] getImports();
-	
+
 	/**
 	 * <p>
 	 * Returns the list of include statements defined in the template set.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * An include statement is used to specify a template to include in the template
-	 * set.
+	 * An include statement is used to specify a template to include in the template set.
 	 * </p>
-	 * 
-	 * @return a list of include info
+	 *
+	 * @return an array of include info
 	 */
 	IncludeInfo[] getIncludes();
 
@@ -65,30 +62,30 @@ public interface TemplateSetInfo {
 	 * <p>
 	 * Returns the list of option statements defined in the template set.
 	 * </p>
-	 * 
-	 * @return a list of option info
+	 *
+	 * @return an array of option info
 	 */
 	OptionInfo[] getOptions();
-	
+
 	/**
 	 * <p>
 	 * Returns the list of templates defined in the template set.
 	 * </p>
-	 * 
-	 * @return a list of tempate info
+	 *
+	 * @return an array of template info
 	 */
 	TemplateInfo[] getTemplates();
-	
+
 	/**
 	 * <p>
 	 * Accepts the specified template set info visitor.
 	 * </p>
-	 * 
+	 *
 	 * @param <R>     the type of the visitor result
 	 * @param <P>     the type of the visitor parameter
 	 * @param visitor the visitor to invoke
 	 * @param p       the parameter
-	 * 
+	 *
 	 * @return the visitor result
 	 */
 	<R, P> R accept(TemplateSetInfoVisitor<R, P> visitor, P p);

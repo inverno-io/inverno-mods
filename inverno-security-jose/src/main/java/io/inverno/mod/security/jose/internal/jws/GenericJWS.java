@@ -72,9 +72,6 @@ public class GenericJWS<A> extends AbstractJOSEObject<A, JWSHeader, AbstractJOSE
 				}
 				compactBuilder.append(this.payload.getRaw());
 			}
-			else {
-				compactBuilder.append("");
-			}
 			compactBuilder.append(".");
 			if(this.signature != null) {
 				compactBuilder.append(this.signature);

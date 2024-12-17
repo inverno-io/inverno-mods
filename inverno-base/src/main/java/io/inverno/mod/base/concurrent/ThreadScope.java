@@ -61,8 +61,7 @@ public abstract class ThreadScope<T> extends Scope<T> {
 	 * </p>
 	 * 
 	 * <p>
-	 * If no instance is bound to the key, a new instance is created and kept in the
-	 * scope.
+	 * If no instance is bound to the key, a new instance is created and kept in the scope.
 	 * </p>
 	 * 
 	 * @return the instance

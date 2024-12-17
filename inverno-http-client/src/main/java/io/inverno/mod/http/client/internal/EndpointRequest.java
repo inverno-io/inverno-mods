@@ -42,7 +42,7 @@ import java.util.Optional;
  * Once the request has been sent, it becomes a proxy to the actual request. At this point the request becomes immutable.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @version 1.8
  */
 public class EndpointRequest implements Request  {
@@ -60,7 +60,7 @@ public class EndpointRequest implements Request  {
 	private String pathAbsolute;
 	private String queryString;
 	private GenericQueryParameters queryParameters;
-	private Optional<EndpointRequestBody> requestBody;
+	private EndpointRequestBody requestBody;
 	
 	private HttpConnectionRequest connectedRequest;
 
@@ -109,7 +109,7 @@ public class EndpointRequest implements Request  {
 	
 	/**
 	 * <p>
-	 * Injects either the request sent to the endpoint or this request or the interceptable request when the request was intercepted (i.e. interceptor returned an empty publisher).
+	 * Injects either the request sent to the endpoint or this request or the intercepted request when the request was intercepted (i.e. interceptor returned an empty publisher).
 	 * </p>
 	 * 
 	 * @param connectedRequest the retained request
@@ -125,7 +125,7 @@ public class EndpointRequest implements Request  {
 
 	@Override
 	public Optional<Certificate[]> getLocalCertificates() {
-		return this.connectedRequest != null && this.connectedRequest != this ? this.connectedRequest.getLocalCertificates(): null;
+		return this.connectedRequest != null && this.connectedRequest != this ? this.connectedRequest.getLocalCertificates(): Optional.empty();
 	}
 
 	@Override
@@ -135,7 +135,7 @@ public class EndpointRequest implements Request  {
 
 	@Override
 	public Optional<Certificate[]> getRemoteCertificates() {
-		return this.connectedRequest != null && this.connectedRequest != this ? this.connectedRequest.getRemoteCertificates(): null;
+		return this.connectedRequest != null && this.connectedRequest != this ? this.connectedRequest.getRemoteCertificates(): Optional.empty();
 	}
 	
 	@Override
@@ -174,6 +174,8 @@ public class EndpointRequest implements Request  {
 		// TODO make sure this is a path with no scheme or authority
 		this.primaryPathBuilder = URIs.uri(path, false, URIs.Option.NORMALIZED);
 		this.pathAbsolute = null;
+		this.queryString = null;
+		this.queryParameters = null;
 		return this;
 	}
 	
@@ -188,7 +190,7 @@ public class EndpointRequest implements Request  {
 			return this.connectedRequest.getPathAbsolute();
 		}
 		if(this.pathAbsolute == null) {
-			this.pathAbsolute = this.primaryPathBuilder.buildRawString();
+			this.pathAbsolute = this.primaryPathBuilder.buildRawPath();
 		}
 		return this.pathAbsolute;
 	}
@@ -222,7 +224,7 @@ public class EndpointRequest implements Request  {
 	
 	@Override
 	public boolean isHeadersWritten() {
-		return this.connectedRequest != null && this.connectedRequest != this ? this.connectedRequest.isHeadersWritten() : false;
+		return this.connectedRequest != null && this.connectedRequest != this && this.connectedRequest.isHeadersWritten();
 	}
 
 	@Override
@@ -244,21 +246,13 @@ public class EndpointRequest implements Request  {
 	}
 	
 	@Override
-	public Optional<EndpointRequestBody> body() throws IllegalStateException {
+	public EndpointRequestBody body() throws IllegalStateException {
 		this.checkNotConnected();
 		if(this.requestBody == null) {
-			switch(this.getMethod()) {
-				case POST:
-				case PUT:
-				case PATCH:
-				case DELETE: {
-					this.requestBody = Optional.of(new EndpointRequestBody(this.requestHeaders, this.parameterConverter, this.urlEncodedBodyEncoder, this.multipartBodyEncoder, this.partFactory));
-					break;
-				}
-				default: {
-					this.requestBody = Optional.empty();
-				}
+			if(!this.getMethod().isBodyAllowed()) {
+				throw new IllegalStateException("Request method " + this.getMethod() + " does not allow a body");
 			}
+			this.requestBody = new EndpointRequestBody(this.requestHeaders, this.parameterConverter, this.urlEncodedBodyEncoder, this.multipartBodyEncoder, this.partFactory);
 		}
 		return this.requestBody;
 	}
@@ -268,13 +262,10 @@ public class EndpointRequest implements Request  {
 	 * Returns the endpoint request body.
 	 * </p>
 	 * 
-	 * @return the request body or null if none was specified or if the method doesn't allow any body.
+	 * @return the request body or null if none was specified or if the method doesn't allow a body.
 	 */
 	public EndpointRequestBody getBody() {
-		if(this.requestBody != null && this.requestBody.isPresent()) {
-			return (EndpointRequestBody)this.requestBody.get();
-		}
-		return null;
+		return this.requestBody;
 	}
 
 	/**

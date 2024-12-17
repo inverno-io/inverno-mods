@@ -19,12 +19,14 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.client.Endpoint;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.ExchangeInterceptor;
 import io.inverno.mod.http.client.HttpClientException;
-import io.inverno.mod.http.client.InterceptableExchange;
+import io.inverno.mod.http.client.InterceptedExchange;
 import io.inverno.mod.http.client.ResetStreamException;
 import io.inverno.mod.http.client.Response;
+import io.inverno.mod.http.client.UnboundExchange;
 import io.inverno.mod.http.client.ws.WebSocketExchange;
 import java.util.Optional;
 import reactor.core.publisher.Mono;
@@ -44,50 +46,91 @@ import reactor.core.publisher.Mono;
  * operations. 
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.8
  */
-public class EndpointExchange<A extends ExchangeContext> implements Exchange<A> {
+public class EndpointExchange<A extends ExchangeContext> implements UnboundExchange<A> {
 
-	private final AbstractEndpoint<A> endpoint;
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	private final A exchangeContext;
 	private final EndpointRequest request;
-	private final ExchangeInterceptor<? super A, InterceptableExchange<A>> exchangeInterceptor;
-	
+
+	private AbstractEndpoint<A> endpoint;
+	private ExchangeInterceptor<A, InterceptedExchange<A>> exchangeInterceptor;
+
 	private HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse> connectedExchange;
-	private WebSocketConnectionExchange<A> connectectWSExchange;
+	private WebSocketConnectionExchange<A> connectedWSExchange;
 	
 	private Long resetCode;
-	private Optional<Throwable> cancelCause;
-	
+
 	/**
 	 * <p>
-	 * Creates an Endpoint exchange.
+	 * Creates an unbound Endpoint exchange.
 	 * </p>
 	 *
-	 * @param endpoint            the endpoint
 	 * @param headerService       the header service
 	 * @param parameterConverter  the parameter converter
 	 * @param exchangeContext     the exchange context
 	 * @param request             the request
-	 * @param exchangeInterceptor an optional exchange interceptor
 	 */
-	public EndpointExchange(AbstractEndpoint<A> endpoint, 
-		HeaderService headerService, 
-		ObjectConverter<String> parameterConverter, 
-		A exchangeContext, 
-		EndpointRequest request, 
-		ExchangeInterceptor<? super A, InterceptableExchange<A>> exchangeInterceptor) {
-		this.endpoint = endpoint;
+	public EndpointExchange(
+			HeaderService headerService,
+			ObjectConverter<String> parameterConverter,
+			A exchangeContext,
+			EndpointRequest request) {
+		this(headerService, parameterConverter, null, exchangeContext, request);
+	}
+
+	/**
+	 * <p>
+	 * Creates a Endpoint exchange bound to the specified endpoint.
+	 * </p>
+	 *
+	 * @param headerService       the header service
+	 * @param parameterConverter  the parameter converter
+	 * @param endpoint            the endpoint
+	 * @param exchangeContext     the exchange context
+	 * @param request             the request
+	 */
+	public EndpointExchange(
+		HeaderService headerService,
+		ObjectConverter<String> parameterConverter,
+		AbstractEndpoint<A> endpoint,
+		A exchangeContext,
+		EndpointRequest request) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
+		this.endpoint = endpoint;
 		this.exchangeContext = exchangeContext;
 		this.request = request;
-		this.exchangeInterceptor = exchangeInterceptor;
 	}
-	
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public UnboundExchange<A> intercept(ExchangeInterceptor<? super A, ? extends InterceptedExchange<A>> interceptor) {
+		if(this.exchangeInterceptor == null) {
+			this.exchangeInterceptor = (ExchangeInterceptor<A, InterceptedExchange<A>>)interceptor;
+		}
+		else {
+			this.exchangeInterceptor = this.exchangeInterceptor.andThen((ExchangeInterceptor<A, InterceptedExchange<A>>)interceptor);
+		}
+		return this;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public Exchange<A> bind(Endpoint<? super A> endpoint) throws IllegalArgumentException, IllegalStateException {
+		if(this.endpoint != null) {
+			throw new IllegalArgumentException("Exchange already bound");
+		}
+		if(!(endpoint instanceof AbstractEndpoint)) {
+			throw new IllegalArgumentException("Invalid endpoint which was not created with provided HttpClient");
+		}
+		this.endpoint = (AbstractEndpoint<A>)endpoint;
+		return this;
+	}
+
 	/**
 	 * <p>
 	 * Injects the HTTP connection exchange after the request has been sent.
@@ -105,16 +148,16 @@ public class EndpointExchange<A extends ExchangeContext> implements Exchange<A> 
 	 * Injects the WebSocket connection exchange after the request has been sent.
 	 * </p>
 	 * 
-	 * @param connectectWSExchange the connected WebSocket exchange
+	 * @param connectedWSExchange the connected WebSocket exchange
 	 */
-	public void setConnectedExchange(WebSocketConnectionExchange<A> connectectWSExchange) {
-		this.request.setConnectedRequest(connectectWSExchange.request());
-		this.connectectWSExchange = connectectWSExchange;
+	public void setConnectedExchange(WebSocketConnectionExchange<A> connectedWSExchange) {
+		this.request.setConnectedRequest(connectedWSExchange.request());
+		this.connectedWSExchange = connectedWSExchange;
 	}
 	
 	@Override
 	public HttpVersion getProtocol() {
-		return this.connectedExchange != null ? this.connectedExchange.getProtocol() : this.connectectWSExchange != null ? HttpVersion.HTTP_1_1 : HttpVersion.HTTP;
+		return this.connectedExchange != null ? this.connectedExchange.getProtocol() : this.connectedWSExchange != null ? HttpVersion.HTTP_1_1 : HttpVersion.HTTP;
 	}
 
 	@Override
@@ -126,16 +169,27 @@ public class EndpointExchange<A extends ExchangeContext> implements Exchange<A> 
 	public EndpointRequest request() {
 		return this.request;
 	}
-	
+
 	@Override
-	public Mono<? extends Response> response() {
+	public Mono<? extends Response> response() throws IllegalStateException {
 		return Mono.defer(() -> {
+			if(this.endpoint == null) {
+				throw new IllegalStateException("Exchange is not bound to an endpoint");
+			}
 			if(this.resetCode != null) {
 				return Mono.empty();
 			}
-			else if(this.exchangeInterceptor != null) {
-				EndpointInterceptableExchange<A> interceptableExchange = new EndpointInterceptableExchange<>(this.headerService, this.parameterConverter, this);
-				return this.exchangeInterceptor.intercept(interceptableExchange)
+			else if(this.endpoint.getExchangeInterceptor() != null || this.exchangeInterceptor != null) {
+				ExchangeInterceptor<A, InterceptedExchange<A>> interceptor;
+				if(this.endpoint.getExchangeInterceptor() != null) {
+					interceptor = this.exchangeInterceptor != null ? this.endpoint.getExchangeInterceptor().andThen(this.exchangeInterceptor) : this.endpoint.getExchangeInterceptor();
+				}
+				else {
+					interceptor = this.exchangeInterceptor;
+				}
+
+				EndpointInterceptedExchange<A> interceptedExchange = new EndpointInterceptedExchange<>(this.headerService, this.parameterConverter, this);
+				return interceptor.intercept(interceptedExchange)
 					.flatMap(ign -> this.endpoint.connection()
 						.flatMap(connection -> connection.send(this))
 						.map(exchange -> {
@@ -143,8 +197,8 @@ public class EndpointExchange<A extends ExchangeContext> implements Exchange<A> 
 							return (Response)exchange.response();
 						})
 					)
-					.switchIfEmpty(Mono.just(interceptableExchange.response()))
-					.doOnNext(response -> interceptableExchange.response().setConnectedResponse(response));
+					.switchIfEmpty(Mono.just(interceptedExchange.response()))
+					.doOnNext(response -> interceptedExchange.response().setConnectedResponse(response));
 			}
 			else {
 				return this.endpoint.connection()
@@ -158,21 +212,24 @@ public class EndpointExchange<A extends ExchangeContext> implements Exchange<A> 
 	}
 
 	@Override
-	public Mono<? extends WebSocketExchange<A>> webSocket(String subProtocol) {
+	public Mono<? extends WebSocketExchange<A>> webSocket(String subProtocol) throws IllegalStateException {
 		return Mono.defer(() -> {
+			if(this.endpoint == null) {
+				throw new IllegalStateException("Exchange is not bound to an endpoint");
+			}
 			if(this.resetCode != null) {
 				return Mono.empty();
 			}
-			else if(this.exchangeInterceptor != null) {
-				EndpointInterceptableExchange<A> interceptableExchange = new EndpointInterceptableExchange<>(this.headerService, this.parameterConverter, this);
-				return this.exchangeInterceptor.intercept(interceptableExchange)
+			else if(endpoint.getExchangeInterceptor() != null) {
+				EndpointInterceptedExchange<A> interceptedExchange = new EndpointInterceptedExchange<>(this.headerService, this.parameterConverter, this);
+				return endpoint.getExchangeInterceptor().intercept(interceptedExchange)
 					.flatMap(ign -> this.endpoint.webSocketConnection()
 						.flatMap(wsConnection -> wsConnection.handshake(this, subProtocol))
 					)
 					.doOnNext(exchange -> {
 						this.setConnectedExchange(exchange);
-						// Make sure the interceptable response is flagged as connected from now on
-						interceptableExchange.response().setConnectedResponse(interceptableExchange.response());
+						// Make sure the intercepted response is flagged as connected from now on
+						interceptedExchange.response().setConnectedResponse(interceptedExchange.response());
 					})
 					.switchIfEmpty(Mono.error(() -> new HttpClientException("Can't open WebSocket on an intercepted exchange")));
 			}
@@ -189,29 +246,19 @@ public class EndpointExchange<A extends ExchangeContext> implements Exchange<A> 
 		if(this.connectedExchange != null) {
 			this.connectedExchange.reset(code);
 		}
-		else if(this.connectectWSExchange != null) {
-			// this is a noop a WS exchange is closed not canceled
-		}
-		else {
+		else if(this.connectedWSExchange == null) {
 			this.resetCode = code;
 		}
+		// otherwise this is a noop a WS exchange is closed not canceled
 	}
 
 	@Override
 	public Optional<Throwable> getCancelCause() {
-		if(this.cancelCause != null) {
-			return this.cancelCause;
+		if(this.resetCode != null) {
+			return Optional.of(new ResetStreamException(this.resetCode));
 		}
-		
 		if(this.connectedExchange != null) {
 			return this.connectedExchange.getCancelCause();
-		}
-		else if(this.connectectWSExchange != null) {
-			return Optional.empty();
-		}
-		else if(this.resetCode != null) {
-			this.cancelCause = Optional.of(new ResetStreamException(this.resetCode));
-			return this.cancelCause;
 		}
 		return Optional.empty();
 	}

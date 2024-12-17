@@ -23,8 +23,8 @@
  * @since 1.4
  */
 module io.inverno.mod.redis {
-	requires transitive reactor.core;
 	requires transitive org.reactivestreams;
+	requires transitive reactor.core;
 	
 	exports io.inverno.mod.redis;
 	exports io.inverno.mod.redis.operations;

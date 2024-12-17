@@ -67,6 +67,7 @@ class URIFlags {
 	/**
 	 * <p>
 	 * Returns when the {@link Option#NORMALIZED} was specified.
+	 * </p>
 	 * 
 	 * @return true if the normalized option is enabled, false otherwise
 	 */
@@ -101,7 +102,7 @@ class URIFlags {
 	 * Returns the underlying list of options.
 	 * </p>
 	 * 
-	 * @return a list of options
+	 * @return an array of options
 	 */
 	public URIs.Option[] getOptions() {
 		return this.options;

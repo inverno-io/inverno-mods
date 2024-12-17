@@ -233,7 +233,7 @@ public class JWTSAuthenticator<A extends JWTClaimsSet> implements Authenticator<
 	 * 
 	 * @return the JWTS authenticator
 	 */
-	public JWTSAuthenticator validate(JWTClaimsSetValidator validator) {
+	public JWTSAuthenticator<A> validate(JWTClaimsSetValidator validator) {
 		this.validators.add(validator);
 		return this;
 	}
@@ -248,9 +248,7 @@ public class JWTSAuthenticator<A extends JWTClaimsSet> implements Authenticator<
 	public void setValidators(List<JWTClaimsSetValidator> validators) {
 		this.validators.clear();
 		if(validators != null) {
-			for(JWTClaimsSetValidator validator : validators) {
-				this.validators.add(validator);
-			}
+			this.validators.addAll(validators);
 		}
 	}
 	

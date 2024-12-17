@@ -52,18 +52,15 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A {@link Converter} that encodes objects to {@link ByteBuf} and decodes
- * {@link ByteBuf} to objects.
+ * A {@link Converter} that encodes objects to {@link ByteBuf} and decodes {@link ByteBuf} to objects.
  * </p>
  * 
  * <p>
- * This implementation relies on a String {@link ObjectConverter} to convert the
- * string representation of an object from/to ByteBufs.
+ * This implementation relies on a String {@link ObjectConverter} to convert the string representation of an object from/to {@code ByteBufs}.
  * </p>
  * 
  * <p>
- * This converter is an object converter and as such it can convert collection
- * of objects using a customizable separator.
+ * This converter is an object converter and as such it can convert collection of objects using a customizable separator.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -102,8 +99,7 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 
 	/**
 	 * <p>
-	 * Creates a ByteBuf converter backed by the specified string converter, with
-	 * specified charset and array/list separator.
+	 * Creates a ByteBuf converter backed by the specified string converter, with specified charset and array/list separator.
 	 * </p>
 	 * 
 	 * @param stringConverter    A string converter
@@ -199,7 +195,7 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 			.skip(1)
 			.concatMap(scanner -> {
 				List<T> objects = new LinkedList<>();
-				T object = null;
+				T object;
 				while( (object = scanner.nextObject()) != null) {
 					objects.add(object);
 				}
@@ -268,7 +264,7 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 		scanner.feedInput(value);
 		scanner.endOfInput();
 		
-		T object = null;
+		T object;
 		while( (object = scanner.nextObject()) != null) {
 			result.add(object);
 		}
@@ -508,7 +504,7 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 	}
 
 	@Override
-	public Class<?> decodeClass(ByteBuf value) throws ConverterException {
+	public <T> Class<T> decodeClass(ByteBuf value) throws ConverterException {
 		if(value == null) {
 			return null;
 		}
@@ -638,7 +634,7 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 	
 	@Override
 	public <T> ByteBuf encodeList(List<T> value, Class<T> type) {
-		return this.encodeList(value, type);
+		return this.encodeList(value, (Type)type);
 	}
 	
 	@Override
@@ -882,101 +878,16 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
-	/*private class ObjectScanner<T> {
-		
-		private Type type;
-		
-		private boolean endOfInput;
-		
-		private int inputIndex;
-		private ByteBuf inputBuffer;
-		private ByteBuf keepBuffer;
-		
-		public ObjectScanner(Type type) {
-			this.type = type;
-		}
-		
-		@SuppressWarnings("unused")
-		public ObjectScanner(Class<T> type) {
-			this((Type)type);
-		}
-		
-		public void feedInput(ByteBuf chunk) {
-			if(this.inputBuffer != null) {
-				throw new IllegalStateException("Undecoded bytes remaining");
-			}
-			
-			if(this.keepBuffer != null && this.keepBuffer.isReadable()) {
-				this.inputBuffer = Unpooled.wrappedBuffer(this.keepBuffer, chunk);
-			}
-			else {
-				this.inputBuffer = chunk;
-			}
-			this.inputIndex= this.inputBuffer.readerIndex();
-		}
-		
-		public void endOfInput() {
-			this.endOfInput = true;
-		}
-		
-		public T nextObject() {
-			if(this.inputBuffer == null) {
-				if(this.endOfInput && this.keepBuffer != null && this.keepBuffer.isReadable()) {
-					try {
-						return ByteBufConverter.this.decode(this.keepBuffer, this.type);
-					}
-					finally {
-						this.keepBuffer.release();
-						this.keepBuffer = null;
-					}
-				}
-				return null;
-			}
-			
-			while(this.inputBuffer.isReadable()) {
-				byte nextByte = this.inputBuffer.readByte();
-				if(nextByte == ByteBufConverter.this.arrayListSeparator) {
-					T object = ByteBufConverter.this.decode(this.inputBuffer.retainedSlice(this.inputIndex, this.inputBuffer.readerIndex() - this.inputIndex -1), this.type);
-					this.inputIndex = this.inputBuffer.readerIndex();
-					return object;
-				}
-			}
-			
-			try {
-				if(this.inputIndex < this.inputBuffer.readerIndex()) {
-					if(this.endOfInput) {
-						try {
-							return ByteBufConverter.this.decode(this.inputBuffer.retainedSlice(this.inputIndex, this.inputBuffer.readerIndex() - this.inputIndex), this.type);
-						}
-						finally {
-							if(this.keepBuffer != null) {
-								this.keepBuffer.release();
-								this.keepBuffer = null;
-							}
-						}
-					}
-					else {
-						if(this.keepBuffer != null) {
-							this.keepBuffer.discardReadBytes();
-						}
-						else {
-							this.keepBuffer = Unpooled.unreleasableBuffer(Unpooled.buffer(this.inputBuffer.readerIndex() - this.inputIndex));
-						}
-						this.keepBuffer.writeBytes(this.inputBuffer.slice(this.inputIndex, this.inputBuffer.readerIndex() - this.inputIndex));
-					}
-				}
-				else {
-					this.keepBuffer.clear();
-				}
-				return null;
-			}
-			finally {
-				this.inputBuffer.release();
-				this.inputBuffer = null;
-			}
-		}
-	}*/
-	
+	/**
+	 * <p>
+	 * Object scanner used to decode objects from a stream of {@code ByteBufs}.
+	 * </p>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 *
+	 * @param <T> the object type
+	 */
 	private class ObjectScanner<T> {
 		
 		private final Type type;
@@ -984,16 +895,37 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 		private ByteBuf inputBuffer;
 		
 		private boolean endOfInput;
-		
+
+		/**
+		 * <p>
+		 * Creates an object scanner.
+		 * </p>
+		 *
+		 * @param type the object type
+		 */
 		@SuppressWarnings("unused")
 		public ObjectScanner(Class<T> type) {
 			this((Type)type);
 		}
-		
+
+		/**
+		 * <p>
+		 * Creates an object scanner.
+		 * </p>
+		 *
+		 * @param type the object type
+		 */
 		public ObjectScanner(Type type) {
 			this.type = type;
 		}
-		
+
+		/**
+		 * <p>
+		 * Submits the specified chunk.
+		 * </p>
+		 *
+		 * @param chunk a chunk of data
+		 */
 		public void feedInput(ByteBuf chunk) {
 			if(this.inputBuffer != null) {
 				this.inputBuffer = Unpooled.wrappedBuffer(this.inputBuffer, chunk);
@@ -1002,11 +934,23 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 				this.inputBuffer = chunk;
 			}
 		}
-		
+
+		/**
+		 * <p>
+		 * Notifies the end of the input stream.
+		 * </p>
+		 */
 		public void endOfInput() {
 			this.endOfInput = true;
 		}
-		
+
+		/**
+		 * <p>
+		 * Returns the next decoded object or {@code null} if no object has been decoded yet.
+		 * </p>
+		 *
+		 * @return an object or null
+		 */
 		public T nextObject() {
 			if(this.inputBuffer == null) {
 				return null;

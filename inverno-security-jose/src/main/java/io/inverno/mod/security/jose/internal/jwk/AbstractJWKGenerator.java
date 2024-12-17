@@ -24,7 +24,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 import reactor.core.publisher.Mono;
 
 /**
@@ -40,8 +39,8 @@ import reactor.core.publisher.Mono;
  */
 public abstract class AbstractJWKGenerator<A extends JWK, B extends AbstractJWKGenerator<A,B>> implements JWKGenerator<A, B> {
 
-	private static Set<String> SIG_OPERATIONS = Set.of(JWK.KEY_OP_SIGN, JWK.KEY_OP_VERIFY);
-	private static Set<String> ENC_OPERATIONS = Set.of(JWK.KEY_OP_ENCRYPT, JWK.KEY_OP_DECRYPT, JWK.KEY_OP_WRAP_KEY, JWK.KEY_OP_UNWRAP_KEY);
+	private static final Set<String> SIG_OPERATIONS = Set.of(JWK.KEY_OP_SIGN, JWK.KEY_OP_VERIFY);
+	private static final Set<String> ENC_OPERATIONS = Set.of(JWK.KEY_OP_ENCRYPT, JWK.KEY_OP_DECRYPT, JWK.KEY_OP_WRAP_KEY, JWK.KEY_OP_UNWRAP_KEY);
 	
 	/**
 	 * The Public Key Use parameter as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7517#section-4.2">RFC7517 Section 4.2</a>.
@@ -191,7 +190,7 @@ public abstract class AbstractJWKGenerator<A extends JWK, B extends AbstractJWKG
 	protected Mono<Void> verify() throws JWKGenerateException, JWKProcessingException {
 		return Mono.fromRunnable(() -> {
 			if(this.use != null && this.key_ops != null && !this.key_ops.isEmpty() && !(this.use.equals(JWK.USE_SIG) && SIG_OPERATIONS.containsAll(this.key_ops)) && !(this.use.equals(JWK.USE_ENC) && ENC_OPERATIONS.containsAll(this.key_ops)) ) {
-				throw new JWKGenerateException("Key operations [" + this.key_ops.stream().collect(Collectors.joining(", ")) +"] are inconsistent with public key use " + this.use);
+				throw new JWKGenerateException("Key operations [" + String.join(", ", this.key_ops) +"] are inconsistent with public key use " + this.use);
 			}
 		});
 	}

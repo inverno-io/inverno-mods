@@ -67,7 +67,7 @@ public interface WebSocketFrame {
 		/**
 		 * Indicates a {@code BINARY} data frame.
 		 */
-		BINARY;
+		BINARY
 	}
 	
 	/**
@@ -249,16 +249,16 @@ public interface WebSocketFrame {
 	
 	/**
 	 * <p>
-	 * Returns the frame's payload data.
+	 * Returns the frame's payload raw data.
 	 * </p>
 	 * 
 	 * @return the payload data
 	 */
-	ByteBuf getBinaryData();
+	ByteBuf getRawData();
 	
 	/**
 	 * <p>
-	 * Returns the frame's payload data as text.
+	 * Returns the frame's payload data as string.
 	 * </p>
 	 * 
 	 * <p>
@@ -267,7 +267,7 @@ public interface WebSocketFrame {
 	 * 
 	 * @return the payload data as UTF-8 text
 	 */
-	String getTextData();
+	String getStringData();
 	
 	/**
 	 * <p>

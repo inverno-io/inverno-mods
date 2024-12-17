@@ -111,7 +111,7 @@ public interface RequestBody {
 	 *
 	 * @param <A> the part type
 	 */
-	public static interface Multipart<A extends Part> extends InboundData<A> {
+	interface Multipart<A extends Part> extends InboundData<A> {
 	}
 	
 	/**
@@ -120,13 +120,13 @@ public interface RequestBody {
 	 * </p>
 	 *
 	 * <p>
-	 * Note that, unlike other the body decoders, parameters publishers are cached and can be subscribed by mutliple subscribers.
+	 * Note that, unlike other the body decoders, parameters publishers are cached and can be subscribed by multiple subscribers.
 	 * </p>
 	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	public static interface UrlEncoded extends InboundData<Parameter> {
+	interface UrlEncoded extends InboundData<Parameter> {
 		
 		/**
 		 * <p>

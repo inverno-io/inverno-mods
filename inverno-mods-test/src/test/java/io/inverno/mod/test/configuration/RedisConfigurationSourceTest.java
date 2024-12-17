@@ -15,12 +15,10 @@
  */
 package io.inverno.mod.test.configuration;
 
-import io.inverno.mod.base.resource.ClasspathResource;
 import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.ConfigurationQueryResult;
 import io.inverno.mod.configuration.ConfigurationUpdate;
 import io.inverno.mod.configuration.DefaultingStrategy;
-import io.inverno.mod.configuration.source.CPropsFileConfigurationSource;
 import io.inverno.mod.configuration.source.RedisConfigurationSource;
 import io.inverno.mod.redis.RedisTransactionalClient;
 import io.inverno.mod.redis.lettuce.PoolRedisClient;
@@ -33,11 +31,8 @@ import io.lettuce.core.support.BoundedAsyncPool;
 import io.lettuce.core.support.BoundedPoolConfig;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
@@ -161,61 +156,61 @@ public class RedisConfigurationSourceTest {
 			Iterator<ConfigurationQueryResult> resultIterator = results.iterator();
 
 			ConfigurationQueryResult current = resultIterator.next();
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(ConfigurationKey.Parameter.of("test", 5), ConfigurationKey.Parameter.of("tutu", "plop"))));
-			Assertions.assertTrue(current.getResult().get().isPresent());
-			Assertions.assertEquals(563, current.getResult().get().asInteger().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("tata.toto", current.get().getKey().getName());
+			Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(ConfigurationKey.Parameter.of("test", 5), ConfigurationKey.Parameter.of("tutu", "plop"))));
+			Assertions.assertTrue(current.get().isPresent());
+			Assertions.assertEquals(563, current.get().asInteger().get());
 
 			current = resultIterator.next();
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(ConfigurationKey.Parameter.of("tutu", "plop"))));
-			Assertions.assertTrue(current.getResult().get().isPresent());
-			Assertions.assertEquals(65432, current.getResult().get().asInteger().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("tata.toto", current.get().getKey().getName());
+			Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(ConfigurationKey.Parameter.of("tutu", "plop"))));
+			Assertions.assertTrue(current.get().isPresent());
+			Assertions.assertEquals(65432, current.get().asInteger().get());
 
 			current = resultIterator.next();
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("url", current.getResult().get().getKey().getName());
-			Assertions.assertTrue(current.getResult().get().isPresent());
-			Assertions.assertEquals(new URI("https://localhost:8443"), current.getResult().get().asURI().get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("url", current.get().getKey().getName());
+			Assertions.assertTrue(current.get().isPresent());
+			Assertions.assertEquals(new URI("https://localhost:8443"), current.get().asURI().get());
 
 			current = resultIterator.next();
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("table", current.getResult().get().getKey().getName());
-			Assertions.assertTrue(current.getResult().get().isPresent());
-			Assertions.assertArrayEquals(new String[] {"a","b","c"}, current.getResult().get().asArrayOf(String.class).get());
+			Assertions.assertTrue(current.isPresent());
+			Assertions.assertEquals("table", current.get().getKey().getName());
+			Assertions.assertTrue(current.get().isPresent());
+			Assertions.assertArrayEquals(new String[] {"a","b","c"}, current.get().asArrayOf(String.class).get());
 
 			current = resultIterator.next();
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("text_block", current.getResult().get().getKey().getName());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(ConfigurationKey.Parameter.of("context", "text_block"))));
-			Assertions.assertTrue(current.getResult().get().isPresent());
+			Assertions.assertTrue(current.get().isPresent());
+			Assertions.assertEquals("text_block", current.get().getKey().getName());
+			Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(ConfigurationKey.Parameter.of("context", "text_block"))));
+			Assertions.assertTrue(current.get().isPresent());
 			Assertions.assertEquals("\n" + 
 				"		Hey \n" + 
 				"		   This is \n" + 
 				"				a \n" + 
 				"			text 		block\n" + 
-				"	", current.getResult().get().asString().get());
+				"	", current.get().asString().get());
 
 			current = resultIterator.next();
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("plip.plap.json", current.getResult().get().getKey().getName());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
-			Assertions.assertTrue(current.getResult().get().isPresent());
+			Assertions.assertTrue(current.get().isPresent());
+			Assertions.assertEquals("plip.plap.json", current.get().getKey().getName());
+			Assertions.assertTrue(current.get().getKey().getParameters().isEmpty());
+			Assertions.assertTrue(current.get().isPresent());
 			Assertions.assertEquals("\n" + 
 				"		{\n" + 
 				"			\"title\":\"Some json\",\n" + 
 				"			table = [\"abc,\"bcd\"]\n" + 
 				"		}\n" + 
-				"	", current.getResult().get().asString().get());
+				"	", current.get().asString().get());
 
 			current = resultIterator.next();
-			Assertions.assertTrue(current.getResult().isPresent());
-			Assertions.assertEquals("some_string", current.getResult().get().getKey().getName());
-			Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
-			Assertions.assertTrue(current.getResult().get().isPresent());
-			Assertions.assertEquals("abc\ndef", current.getResult().get().asString().get());
+			Assertions.assertTrue(current.get().isPresent());
+			Assertions.assertEquals("some_string", current.get().getKey().getName());
+			Assertions.assertTrue(current.get().getKey().getParameters().isEmpty());
+			Assertions.assertTrue(current.get().isPresent());
+			Assertions.assertEquals("abc\ndef", current.get().asString().get());
 			
 		}
 		finally {
@@ -240,8 +235,8 @@ public class RedisConfigurationSourceTest {
 				.block();
 		
 			Assertions.assertEquals(1, results.size());
-			Assertions.assertTrue(results.get(0).getResult().isPresent());
-			Assertions.assertFalse(results.get(0).getResult().get().asString().isPresent());
+			Assertions.assertTrue(results.get(0).isPresent());
+			Assertions.assertFalse(results.get(0).get().asString().isPresent());
 			
 		}
 		finally {
@@ -266,8 +261,8 @@ public class RedisConfigurationSourceTest {
 				.block();
 		
 			Assertions.assertEquals(1, results.size());
-			Assertions.assertTrue(results.get(0).getResult().isPresent());
-			Assertions.assertTrue(results.get(0).getResult().get().isUnset());
+			Assertions.assertTrue(results.get(0).isPresent());
+			Assertions.assertTrue(results.get(0).get().isUnset());
 			
 		}
 		finally {
@@ -307,27 +302,27 @@ public class RedisConfigurationSourceTest {
 
 			ConfigurationQueryResult result = resultsIterator.next();
 			Assertions.assertEquals(ConfigurationKey.of("log.level", "environment", "prod", "name", "test1"), result.getQueryKey());
-			Assertions.assertEquals("ERROR", result.getResult().get().asString().get());
+			Assertions.assertEquals("ERROR", result.get().asString().get());
 
 			result = resultsIterator.next();
 			Assertions.assertEquals(ConfigurationKey.of("log.level", "environment", "prod", "name", "test2"), result.getQueryKey());
-			Assertions.assertEquals("WARN", result.getResult().get().asString().get());
+			Assertions.assertEquals("WARN", result.get().asString().get());
 
 			result = resultsIterator.next();
 			Assertions.assertEquals(ConfigurationKey.of("log.level", "environment", "dev", "name", "test1"), result.getQueryKey());
-			Assertions.assertEquals("INFO", result.getResult().get().asString().get());
+			Assertions.assertEquals("INFO", result.get().asString().get());
 
 			result = resultsIterator.next();
 			Assertions.assertEquals(ConfigurationKey.of("log.level", "environment", "prod"), result.getQueryKey());
-			Assertions.assertEquals("WARN", result.getResult().get().asString().get());
+			Assertions.assertEquals("WARN", result.get().asString().get());
 
 			result = resultsIterator.next();
 			Assertions.assertEquals(ConfigurationKey.of("log.level", "environment", "dev"), result.getQueryKey());
-			Assertions.assertEquals("INFO", result.getResult().get().asString().get());
+			Assertions.assertEquals("INFO", result.get().asString().get());
 
 			result = resultsIterator.next();
 			Assertions.assertEquals(ConfigurationKey.of("log.level"), result.getQueryKey());
-			Assertions.assertEquals("INFO", result.getResult().get().asString().get());
+			Assertions.assertEquals("INFO", result.get().asString().get());
 		}
 		finally {
 			client.close().block();

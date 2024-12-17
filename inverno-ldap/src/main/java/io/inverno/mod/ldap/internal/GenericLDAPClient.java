@@ -42,7 +42,7 @@ import reactor.core.scheduler.Schedulers;
 
 /**
  * <p>
- * Generic {@link LDAPClient} implemenation based on the JDK.
+ * Generic {@link LDAPClient} implementation based on the JDK.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

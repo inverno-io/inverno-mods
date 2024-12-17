@@ -27,7 +27,7 @@ import java.util.function.Consumer;
  * Base {@link Response} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
  * @param <A> the response headers type
@@ -35,7 +35,7 @@ import java.util.function.Consumer;
  * @param <C> the response trailers type
  * @param <D> the response type
  */
-public abstract class AbstractResponse<A extends AbstractResponseHeaders<?>, B extends AbstractResponseBody, C extends AbstractResponseTrailers<?>, D extends AbstractResponse<A, B, C, D>> implements Response {
+public abstract class AbstractResponse<A extends AbstractResponseHeaders<?>, B extends AbstractResponseBody<A, B>, C extends AbstractResponseTrailers<?>, D extends AbstractResponse<A, B, C, D>> implements Response {
 	
 	/**
 	 * The header service.
@@ -46,7 +46,7 @@ public abstract class AbstractResponse<A extends AbstractResponseHeaders<?>, B e
 	 */
 	protected final ObjectConverter<String> parameterConverter;
 	/**
-	 * Flag indicating whether the request is a {@link Method#HEAD} request.
+	 * Flag indicating whether the request is a {@link io.inverno.mod.http.base.Method#HEAD} request.
 	 */
 	protected final boolean head;
 	/**
@@ -55,9 +55,9 @@ public abstract class AbstractResponse<A extends AbstractResponseHeaders<?>, B e
 	protected final A headers;
 	
 	/**
-	 * The transferer length.
+	 * The transferred length.
 	 */
-	protected int transferedLength;
+	protected int transferredLength;
 
 	/**
 	 * <p>
@@ -94,11 +94,12 @@ public abstract class AbstractResponse<A extends AbstractResponseHeaders<?>, B e
 	}
 
 	@Override
-	public int getTransferedLength() {
-		return this.transferedLength;
+	public int getTransferredLength() {
+		return this.transferredLength;
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public D headers(Consumer<OutboundResponseHeaders> headersConfigurer) throws IllegalStateException {
 		if(this.headers.isWritten()) {
 			throw new IllegalStateException("Headers already written");
@@ -115,6 +116,7 @@ public abstract class AbstractResponse<A extends AbstractResponseHeaders<?>, B e
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public D trailers(Consumer<OutboundHeaders<?>> trailersConfigurer) {
 		if(this.trailers().isWritten()) {
 			throw new IllegalStateException("Trailers already written");

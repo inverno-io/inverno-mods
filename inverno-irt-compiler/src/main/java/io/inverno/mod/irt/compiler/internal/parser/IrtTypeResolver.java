@@ -38,7 +38,6 @@ import io.inverno.mod.irt.compiler.internal.Range;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class IrtTypeResolver {
 
@@ -56,7 +55,7 @@ public class IrtTypeResolver {
 	 */
 	private final Map<String, TypeElement> importedTypes;
 	/**
-	 * A set of wilddard imports
+	 * A set of wildcard imports
 	 */
 	private final Set<String> wildcardImports;
 
@@ -80,7 +79,7 @@ public class IrtTypeResolver {
 		this.importedTypes = new HashMap<>();
 		this.wildcardImports = new HashSet<>();
 
-		// java.lang is implicityl imported
+		// java.lang is implicitly imported
 		this.wildcardImports.add("java.lang.");
 	}
 
@@ -107,16 +106,16 @@ public class IrtTypeResolver {
 			throw new IllegalArgumentException("Import identifier is null or empty");
 		}
 
-		if (importParts.get(importParts.size() - 1).equals("*")) {
+		if (importParts.getLast().equals("*")) {
 			if (importParts.size() == 1) {
 				throw new IllegalArgumentException("Invalid import identifier: *");
 			}
-			this.wildcardImports.add(importParts.subList(0, importParts.size() - 1).stream().collect(Collectors.joining(".")) + ".");
+			this.wildcardImports.add(String.join(".", importParts.subList(0, importParts.size() - 1)) + ".");
 		} 
 		else {
-			TypeElement typeElement = this.elementUtils.getTypeElement(importParts.stream().collect(Collectors.joining(".")));
+			TypeElement typeElement = this.elementUtils.getTypeElement(String.join(".", importParts));
 			if (typeElement != null) {
-				this.importedTypes.put(importParts.get(importParts.size() - 1), typeElement);
+				this.importedTypes.put(importParts.getLast(), typeElement);
 			}
 		}
 	}
@@ -140,12 +139,12 @@ public class IrtTypeResolver {
 		}
 
 		// 1. Is type imported?
-		TypeElement resolvedType = this.importedTypes.get(nameParts.get(0));
+		TypeElement resolvedType = this.importedTypes.get(nameParts.getFirst());
 		if (resolvedType != null) {
 			if (nameParts.size() > 1) {
-				resolvedType = this.elementUtils.getTypeElement(resolvedType.getQualifiedName().toString() + "." + nameParts.subList(1, nameParts.size()).stream().collect(Collectors.joining(".")));
+				resolvedType = this.elementUtils.getTypeElement(resolvedType.getQualifiedName().toString() + "." + String.join(".", nameParts.subList(1, nameParts.size())));
 				if (resolvedType == null) {
-					throw new IrtCompilationException(nameParts.stream().collect(Collectors.joining(".")) + " cannot be resolved to a type", range);
+					throw new IrtCompilationException(String.join(".", nameParts) + " cannot be resolved to a type", range);
 				}
 			}
 		}
@@ -153,7 +152,7 @@ public class IrtTypeResolver {
 			// 2. Try wildcard imports package
 			for (String wildcardImport : this.wildcardImports) {
 				resolvedType = this.elementUtils
-						.getTypeElement(wildcardImport + nameParts.stream().collect(Collectors.joining(".")));
+						.getTypeElement(wildcardImport + String.join(".", nameParts));
 				if (resolvedType != null) {
 					break;
 				}
@@ -167,11 +166,11 @@ public class IrtTypeResolver {
 
 		// 4. Try fully qualified name
 		if (resolvedType == null) {
-			resolvedType = this.elementUtils.getTypeElement(nameParts.stream().collect(Collectors.joining(".")));
+			resolvedType = this.elementUtils.getTypeElement(String.join(".", nameParts));
 		}
 
 		if (resolvedType == null) {
-			throw new IrtCompilationException(nameParts.stream().collect(Collectors.joining(".")) + " cannot be resolved to a type", range);
+			throw new IrtCompilationException(String.join(".", nameParts) + " cannot be resolved to a type", range);
 		}
 
 		return resolvedType;

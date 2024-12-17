@@ -28,7 +28,7 @@ import io.inverno.mod.http.client.ws.WebSocketExchange;
  * Implementations shall depend on the protocol version.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.8
  */
 public interface WebSocketConnectionExchange<A extends ExchangeContext> extends WebSocketExchange<A> {

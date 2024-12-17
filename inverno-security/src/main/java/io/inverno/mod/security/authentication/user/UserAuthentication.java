@@ -74,7 +74,7 @@ public interface UserAuthentication<A extends Identity> extends PrincipalAuthent
 	 * </p>
 	 * 
 	 * <p>
-	 * This is a conveninence method that should be used with care and only used after a successful authentication to generate the resulting authentication.
+	 * This is a convenience method that should be used with care and only used after a successful authentication to generate the resulting authentication.
 	 * </p>
 	 * 
 	 * @param <A> the identity type
@@ -110,7 +110,7 @@ public interface UserAuthentication<A extends Identity> extends PrincipalAuthent
 	 * </p>
 	 * 
 	 * <p>
-	 * This is a conveninence method that should be used with care and only used after a successful authentication to generate the resulting authentication.
+	 * This is a convenience method that should be used with care and only used after a successful authentication to generate the resulting authentication.
 	 * </p>
 	 * 
 	 * @param <A> the identity type
@@ -129,7 +129,7 @@ public interface UserAuthentication<A extends Identity> extends PrincipalAuthent
 	 * </p>
 	 * 
 	 * <p>
-	 * This is a conveninence method that should be used with care and only used after a successful authentication to generate the resulting authentication.
+	 * This is a convenience method that should be used with care and only used after a successful authentication to generate the resulting authentication.
 	 * </p>
 	 * 
 	 * @param <A> the identity type
@@ -149,7 +149,7 @@ public interface UserAuthentication<A extends Identity> extends PrincipalAuthent
 	 * </p>
 	 * 
 	 * <p>
-	 * This is a conveninence method that should be used with care and only used after a successful authentication to generate the resulting authentication.
+	 * This is a convenience method that should be used with care and only used after a successful authentication to generate the resulting authentication.
 	 * </p>
 	 * 
 	 * @param <A> the identity type
@@ -169,7 +169,7 @@ public interface UserAuthentication<A extends Identity> extends PrincipalAuthent
 	 * </p>
 	 * 
 	 * <p>
-	 * This is a conveninence method that should be used with care. In order to respect the {@link Authentication} contract it is important to make sure that the specified user has been
+	 * This is a convenience method that should be used with care. In order to respect the {@link Authentication} contract it is important to make sure that the specified user has been
 	 * previously authenticated by an {@link Authenticator}.
 	 * </p>
 	 *
@@ -182,7 +182,6 @@ public interface UserAuthentication<A extends Identity> extends PrincipalAuthent
 	 * 
 	 * @return a new user authentication
 	 */
-	@SuppressWarnings("unchecked")
 	static <A extends Identity> UserAuthentication<A> of(User<A> user) {
 		return new GenericUserAuthentication<>(user.getUsername(), user.getIdentity(), user.getGroups(), !user.isLocked());
 	}

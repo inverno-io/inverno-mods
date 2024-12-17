@@ -37,10 +37,10 @@ import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * Http/1.x {@link Exchange} implementation supporting H2C upgrade.
+ * Http/1.x {@link io.inverno.mod.http.client.Exchange} implementation supporting H2C upgrade.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class Http1xUpgradingExchange<A extends ExchangeContext> extends Http1xExchange<A> {
@@ -53,7 +53,8 @@ public class Http1xUpgradingExchange<A extends ExchangeContext> extends Http1xEx
 	 * Creates an HTTP/1.x upgrading exchange.
 	 * </p>
 	 *
-	 * @param configuration      the HTTP client configurartion
+	 * @param state              the state
+	 * @param configuration      the HTTP client configuration
 	 * @param sink               the exchange sink
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
@@ -62,14 +63,15 @@ public class Http1xUpgradingExchange<A extends ExchangeContext> extends Http1xEx
 	 * @param endpointRequest    the endpoint request
 	 */
 	Http1xUpgradingExchange(
+			Object state,
 			HttpClientConfiguration configuration, 
 			Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink,
 			HeaderService headerService, 
-			ObjectConverter parameterConverter, 
+			ObjectConverter<String> parameterConverter,
 			A context, 
 			Http1xConnection connection,
 			EndpointRequest endpointRequest) {
-		super(configuration, null, headerService, parameterConverter, context, connection, endpointRequest);
+		super(state, configuration, null, headerService, parameterConverter, context, connection, endpointRequest);
 		this.upgradedSink = sink;
 	}
 	
@@ -126,7 +128,7 @@ public class Http1xUpgradingExchange<A extends ExchangeContext> extends Http1xEx
 	
 	/**
 	 * <p>
-	 * Returns the ugraded exchange sink.
+	 * Returns the upgraded exchange sink.
 	 * </p>
 	 * 
 	 * @return the upgraded exchange sink
@@ -140,7 +142,7 @@ public class Http1xUpgradingExchange<A extends ExchangeContext> extends Http1xEx
 	 * Returns the HTTP/2 upgraded connection.
 	 * </p>
 	 * 
-	 * @return the HTTP/2 uprgaded connection
+	 * @return the HTTP/2 upgraded connection
 	 */
 	public Http2Connection getUpgradedConnection() {
 		return upgradedConnection;

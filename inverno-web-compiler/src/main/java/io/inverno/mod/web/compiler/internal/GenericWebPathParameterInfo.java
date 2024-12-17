@@ -33,11 +33,11 @@ import io.inverno.mod.web.compiler.spi.WebPathParameterInfo;
  * 
  * @see AbstractWebParameterInfo
  */
-class GenericWebPathParameterInfo extends AbstractWebParameterInfo implements WebPathParameterInfo {
+public class GenericWebPathParameterInfo extends AbstractWebParameterInfo implements WebPathParameterInfo {
 
 	/**
 	 * <p>
-	 * Creates a generic web path parameter info.
+	 * Creates a generic Web path parameter info.
 	 * </p>
 	 *
 	 * @param name             the parameter qualified name

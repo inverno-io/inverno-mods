@@ -123,7 +123,7 @@ public class ECDH_ESKeyManager extends AbstractECDH_ESKeyManager<ECPublicKey, EC
 				String x = (String)epk.get("x");
 				String y = (String)epk.get("y");
 
-				if(kty == null || !ECJWK.KEY_TYPE.equals(kty)) {
+				if(!ECJWK.KEY_TYPE.equals(kty)) {
 					throw new JWAProcessingException("Invalid ephemeral key type: " + kty);
 				}
 

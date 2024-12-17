@@ -41,7 +41,6 @@ import io.inverno.mod.security.jose.jwk.JWKGenerateException;
 import io.inverno.mod.security.jose.jwk.JWKProcessingException;
 import io.inverno.mod.security.jose.jwk.JWKService;
 import io.inverno.mod.security.jose.jwk.oct.OCTJWK;
-import io.inverno.mod.security.jose.jws.JWSBuildException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -92,7 +91,7 @@ public class GenericJWEBuilder<A> extends AbstractJOSEObjectBuilder<A, JWEHeader
 	 * @param keys                  the keys to consider to secure the CEK
 	 * @param zips                  a list of supported JWE compression algorithms
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public GenericJWEBuilder(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type, Publisher<? extends JWK> keys, List<JWEZip> zips) {
 		super(mapper, dataConversionService, jwkService, type, keys);
 		this.zips = zips;
@@ -399,7 +398,7 @@ public class GenericJWEBuilder<A> extends AbstractJOSEObjectBuilder<A, JWEHeader
 	protected void amendJWEHeader(GenericJWEHeader header, Map<String, Object> moreHeaderParameters, Set<String> processedParameters) throws JWEBuildException, JOSEObjectBuildException, JOSEProcessingException {
 		try {
 			if(moreHeaderParameters != null) {
-				moreHeaderParameters.forEach((k, v) -> header.addCustomParameter(k, v));
+				moreHeaderParameters.forEach(header::addCustomParameter);
 			}
 			header.setExtraProcessedParameters(processedParameters);
 			header.setRaw(this.mapper.writeValueAsBytes(header));

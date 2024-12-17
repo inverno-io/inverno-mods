@@ -18,13 +18,15 @@ package io.inverno.mod.http.client.internal;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.InboundResponseHeaders;
 import io.inverno.mod.http.base.InboundSetCookies;
+import io.inverno.mod.http.base.OutboundResponseHeaders;
+import java.util.function.Consumer;
 
 /**
  * <p>
  * Base {@link InboundResponseHeaders} implementation representing the headers received from the connected remote endpoint.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.11
  */
 public abstract class AbstractResponseHeaders implements InboundResponseHeaders {
@@ -38,7 +40,7 @@ public abstract class AbstractResponseHeaders implements InboundResponseHeaders 
 
 	/**
 	 * <p>
-	 * Creates base Http response headers.
+	 * Creates base HTTP response headers.
 	 * </p>
 	 * 
 	 * @param parameterConverter the parameter converter
@@ -46,6 +48,8 @@ public abstract class AbstractResponseHeaders implements InboundResponseHeaders 
 	public AbstractResponseHeaders(ObjectConverter<String> parameterConverter) {
 		this.parameterConverter = parameterConverter;
 	}
+
+	protected abstract void configureInterceptedHeaders(Consumer<OutboundResponseHeaders> headersConfigurer);
 	
 	@Override
 	public InboundSetCookies cookies() {

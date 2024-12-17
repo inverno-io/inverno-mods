@@ -23,8 +23,7 @@ import org.reactivestreams.Publisher;
  * </p>
  * 
  * <p>
- * A statement doesn't protect against SQL injection, in which case
- * {@link PreparedStatement} should be prefered.
+ * A statement doesn't protect against SQL injection, in which case {@link PreparedStatement} should be prefered.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

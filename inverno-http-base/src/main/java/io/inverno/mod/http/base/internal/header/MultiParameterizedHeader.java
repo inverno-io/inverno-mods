@@ -86,7 +86,7 @@ public class MultiParameterizedHeader extends ParameterizedHeader {
 	
 	/**
 	 * <p>
-	 * Generic multi parmeterized {@link HeaderBuilder} implementation.
+	 * Generic multi parameterized {@link HeaderBuilder} implementation.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

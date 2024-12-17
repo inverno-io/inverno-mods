@@ -20,9 +20,7 @@ import java.util.function.Predicate;
 
 /**
  * <p>
- * A URI component representing the fragment part of an URI as defined by
- * <a href="https://tools.ietf.org/html/rfc3986#section-3.5">RFC 3986 Section
- * 3.5</a>.
+ * A URI component representing the fragment part of an URI as defined by <a href="https://tools.ietf.org/html/rfc3986#section-3.5">RFC 3986 Section 3.5</a>.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

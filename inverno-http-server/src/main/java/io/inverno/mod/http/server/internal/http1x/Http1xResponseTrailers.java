@@ -32,14 +32,14 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * Http/1.x {@link OutboundHeaders} implementation representing Http trailers.
+ * Http/1.x {@link OutboundHeaders} implementation representing HTTP trailers.
  * </p>
  * 
  * <p>
- * This implementation uses {@link LinkedHttpHeaders} instead of Netty's {@link DefaultHttpHeaders} as internal headers in order to increase performances.
+ * This implementation uses {@link LinkedHttpHeaders} instead of Netty's {@link io.netty.handler.codec.http.DefaultHttpHeaders DefaultHttpHeaders} as internal headers in order to increase performances.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 class Http1xResponseTrailers extends AbstractResponseTrailers<Http1xResponseTrailers> {
@@ -62,7 +62,7 @@ class Http1xResponseTrailers extends AbstractResponseTrailers<Http1xResponseTrai
 
 	/**
 	 * <p>
-	 * Returns the trailers to send as part of the Http response.
+	 * Returns the trailers to send as part of the HTTP response.
 	 * </p>
 	 * 
 	 * @return the wrapped trailers
@@ -154,7 +154,7 @@ class Http1xResponseTrailers extends AbstractResponseTrailers<Http1xResponseTrai
 
 	@Override
 	public <T extends Header> Optional<T> getHeader(CharSequence name) {
-		return this.get(name).map(value -> this.headerService.<T>decode(name.toString(), value));
+		return this.get(name).map(value -> this.headerService.decode(name.toString(), value));
 	}
 
 	@Override

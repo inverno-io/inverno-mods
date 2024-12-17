@@ -23,12 +23,12 @@ import io.inverno.mod.http.base.InboundResponseHeaders;
  * Base {@link HttpConnectionResponse} implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
- * @param <A> the Http response headers type
- * @param <B> the Http response body type
- * @param <A> the Http response trailers type
+ * @param <A> the HTTP response headers type
+ * @param <B> the HTTP response body type
+ * @param <C> the HTTP response trailers type
  * @param <D> the originating response trailers type
  */
 public abstract class AbstractResponse<A extends InboundResponseHeaders, B extends AbstractResponseBody, C extends InboundHeaders, D> implements HttpConnectionResponse {
@@ -101,12 +101,12 @@ public abstract class AbstractResponse<A extends InboundResponseHeaders, B exten
 	
 	/**
 	 * <p>
-	 * Creates the Http response trailers from the originating trailers.
+	 * Creates the HTTP response trailers from the originating trailers.
 	 * </p>
 	 * 
 	 * @param trailers the originating trailers
 	 * 
-	 * @return the Http response trailers
+	 * @return the HTTP response trailers
 	 */
 	protected abstract C createTrailers(D trailers);
 }

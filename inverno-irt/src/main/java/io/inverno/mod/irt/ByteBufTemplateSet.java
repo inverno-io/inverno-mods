@@ -34,8 +34,7 @@ public interface ByteBufTemplateSet extends TemplateSet {
 
 	/**
 	 * <p>
-	 * Creates a direct {@link ByteBuf} with the specified data encoded using the
-	 * specified charset.
+	 * Creates a direct {@link ByteBuf} with the specified data encoded using the specified charset.
 	 * </p>
 	 * 
 	 * @param data    the data

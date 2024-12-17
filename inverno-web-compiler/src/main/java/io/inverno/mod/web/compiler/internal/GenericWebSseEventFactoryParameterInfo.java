@@ -23,7 +23,7 @@ import javax.lang.model.type.TypeMirror;
 
 import io.inverno.core.compiler.spi.ReporterInfo;
 import io.inverno.mod.web.compiler.spi.WebParameterQualifiedName;
-import io.inverno.mod.web.compiler.spi.WebSseEventFactoryParameterInfo;
+import io.inverno.mod.web.compiler.spi.server.WebSseEventFactoryParameterInfo;
 
 /**
  * <p>
@@ -35,7 +35,7 @@ import io.inverno.mod.web.compiler.spi.WebSseEventFactoryParameterInfo;
  * 
  * @see AbstractWebParameterInfo
  */
-class GenericWebSseEventFactoryParameterInfo extends AbstractWebParameterInfo implements WebSseEventFactoryParameterInfo {
+public class GenericWebSseEventFactoryParameterInfo extends AbstractWebParameterInfo implements WebSseEventFactoryParameterInfo {
 
 	private final SseEventFactoryKind eventFactoryKind;
 	

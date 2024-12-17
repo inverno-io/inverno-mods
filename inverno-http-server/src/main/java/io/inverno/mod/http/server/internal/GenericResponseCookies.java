@@ -91,7 +91,7 @@ public class GenericResponseCookies implements OutboundSetCookies {
 		return Optional.ofNullable(this.getAll().get(name))
 			.map(setCookies -> {
 				if(!setCookies.isEmpty()) {
-					return setCookies.get(0);
+					return setCookies.getFirst();
 				}
 				return null;
 			});

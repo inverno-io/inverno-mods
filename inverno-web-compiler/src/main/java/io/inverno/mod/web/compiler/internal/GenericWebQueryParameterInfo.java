@@ -32,11 +32,11 @@ import io.inverno.mod.web.compiler.spi.WebQueryParameterInfo;
  * 
  * @see AbstractWebParameterInfo
  */
-class GenericWebQueryParameterInfo extends AbstractWebParameterInfo implements WebQueryParameterInfo {
+public class GenericWebQueryParameterInfo extends AbstractWebParameterInfo implements WebQueryParameterInfo {
 
 	/**
 	 * <p>
-	 * Creates a generic web query parameter info.
+	 * Creates a generic Web query parameter info.
 	 * </p>
 	 *
 	 * @param name             the parameter qualified name

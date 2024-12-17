@@ -31,10 +31,10 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * Http/2 {@link InboundHeaders} implementation to represent Http trailers.
+ * Http/2 {@link InboundHeaders} implementation to represent HTTP trailers.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class Http2ResponseTrailers implements InboundHeaders {
@@ -50,7 +50,7 @@ public class Http2ResponseTrailers implements InboundHeaders {
 	 *
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
-	 * @param trailers           the originating Http trailers
+	 * @param trailers           the originating HTTP trailers
 	 */
 	public Http2ResponseTrailers(HeaderService headerService, ObjectConverter<String> parameterConverter, Http2Headers trailers) {
 		this.headerService = headerService;
@@ -86,9 +86,7 @@ public class Http2ResponseTrailers implements InboundHeaders {
 	@Override
 	public List<Map.Entry<String, String>> getAll() {
 		List<Map.Entry<String, String>> result = new LinkedList<>();
-		this.trailers.forEach(e -> {
-			result.add(Map.entry(e.getKey().toString(), e.getValue().toString()));
-		});
+		this.trailers.forEach(e -> result.add(Map.entry(e.getKey().toString(), e.getValue().toString())));
 		return result;
 	}
 
@@ -105,9 +103,7 @@ public class Http2ResponseTrailers implements InboundHeaders {
 	@Override
 	public List<Parameter> getAllParameter() {
 		List<Parameter> result = new LinkedList<>();
-		this.trailers.forEach(e -> {
-			result.add(new GenericParameter(e.getKey().toString(), e.getValue().toString(), this.parameterConverter));
-		});
+		this.trailers.forEach(e -> result.add(new GenericParameter(e.getKey().toString(), e.getValue().toString(), this.parameterConverter)));
 		return result;
 	}
 	
@@ -124,9 +120,7 @@ public class Http2ResponseTrailers implements InboundHeaders {
 	@Override
 	public List<Header> getAllHeader() {
 		List<Header> result = new LinkedList<>();
-		this.trailers.forEach(e -> {
-			result.add(this.headerService.<Header>decode(e.getKey().toString(), e.getValue().toString()));
-		});
+		this.trailers.forEach(e -> result.add(this.headerService.decode(e.getKey().toString(), e.getValue().toString())));
 		return result;
 	}
 }

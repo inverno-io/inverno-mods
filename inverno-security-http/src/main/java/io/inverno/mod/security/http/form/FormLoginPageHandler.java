@@ -26,7 +26,7 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * An exhange handler that serves a whitelabel login HTML page.
+ * An exchange handler that serves a whitelabel login HTML page.
  * </p>
  *
  * <p>

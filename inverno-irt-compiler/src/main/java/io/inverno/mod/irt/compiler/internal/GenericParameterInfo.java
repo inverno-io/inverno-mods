@@ -26,7 +26,6 @@ import io.inverno.mod.irt.compiler.spi.ParameterInfo;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class GenericParameterInfo extends BaseInfo implements ParameterInfo {
 

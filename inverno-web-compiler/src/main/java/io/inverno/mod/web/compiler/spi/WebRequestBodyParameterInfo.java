@@ -17,14 +17,6 @@ package io.inverno.mod.web.compiler.spi;
 
 import javax.lang.model.type.TypeMirror;
 
-import org.reactivestreams.Publisher;
-
-import io.netty.buffer.ByteBuf;
-import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.web.server.WebPart;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
 /**
  * <p>
  * Describes the request body parameter in a route.
@@ -35,60 +27,6 @@ import reactor.core.publisher.Mono;
  */
 public interface WebRequestBodyParameterInfo extends WebParameterInfo {
 
-	/**
-	 * <p>
-	 * Indicates the kind of a request body.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
-	 */
-	public static enum RequestBodyKind {
-		/**
-		 * The actual request body type is {@link ByteBuf}.
-		 */
-		RAW,
-		/**
-		 * The actual request body type is a super type of {@link WebPart}.
-		 */
-		MULTIPART,
-		/**
-		 * The actual request body type is {@link Parameter}.
-		 */
-		URLENCODED,
-		/**
-		 * The actual request body type is none of the above.
-		 */
-		ENCODED;
-	}
-	
-	/**
-	 * <p>
-	 * Indicates the reactive kind of a request body.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
-	 */
-	public static enum RequestBodyReactiveKind {
-		/**
-		 * The body parameter is not of a reactive type.
-		 */
-		NONE,
-		/**
-		 * The body parameter is of type {@link Publisher Publisher&lt;T&gt;} where {@code T} represents the actual request body type.
-		 */
-		PUBLISHER,
-		/**
-		 * The body parameter is of type {@link Mono Mono&lt;T&gt;} where {@code T} represents the actual request body type.
-		 */
-		ONE,
-		/**
-		 * The body parameter is of type {@link Flux Flux&lt;T&gt;} where {@code T} represents the actual request body type.
-		 */
-		MANY;
-	}
-	
 	/**
 	 * <p>
 	 * Returns the request body kind.

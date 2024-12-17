@@ -33,9 +33,7 @@ In order to use the Inverno *security-http* module, we need to declare a depende
 
 ```java
 module io.inverno.example.app {
-    ...
     requires io.inverno.mod.security.http;
-    ...
 }
 ```
 
@@ -56,10 +54,8 @@ Using Maven:
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.inverno.mod:inverno-security-http:${VERSION_INVERNO_MODS}'
-...
 ```
 
 Let's quickly see how to secure a simple Web application exposing a single hello world service using basic authentication. The application might initially look like:
@@ -90,11 +86,9 @@ public class Main {
 
 We can run and test the application which should respond with `Hello world!` when requesting http://localhost:8080/hello:
 
-```java
+```plaintext
 $ mvn inverno:run
 ...
-[INFO] Running project: io.inverno.example.app_hello_security@1.0.0-SNAPSHOT...
- [═══════════════════════════════════════════════ 100 % ══════════════════════════════════════════════] 
 10:19:32.797 [main] INFO  io.inverno.core.v1.Application - Inverno is starting...
 
 
@@ -168,7 +162,7 @@ import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 import io.inverno.mod.security.identity.Identity;
 import io.inverno.mod.web.server.ErrorWebRouter;
 import io.inverno.mod.web.server.ErrorWebRouterConfigurer;
-import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebRouteInterceptor;
 import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 import java.util.List;
 
@@ -266,7 +260,7 @@ import io.inverno.mod.security.identity.PersonIdentity;
 import io.inverno.mod.security.identity.UserIdentityResolver;
 import io.inverno.mod.web.server.ErrorWebRouter;
 import io.inverno.mod.web.server.ErrorWebRouterConfigurer;
-import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebRouteInterceptor;
 import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 import java.util.List;
 
@@ -387,7 +381,7 @@ public class Main {
 }
 ```
 
-> You may have notice that we did not have to change the `/hello` route definition which can still declare `SecurityContext<? extends PersonIdentity, ? extends AccessController>` since it is assignable from the actual context type `SecurityContext<PersonIdentity, RoleBasedAccessController>` declared in the security configurer. Note that a compilation error would have been raised to report inconsistent exchange context types if we had not used upper bound wildcards.
+> You may have noticed that we did not have to change the `/hello` route definition which can still declare `SecurityContext<? extends PersonIdentity, ? extends AccessController>` since it is assignable from the actual context type `SecurityContext<PersonIdentity, RoleBasedAccessController>` declared in the security configurer. Note that a compilation error would have been raised to report inconsistent exchange context types if we had not used upper bound wildcards.
 
 We can now change the Web configurer to resolve the role-based access controller using a `GroupsRoleBasedAccessControllerResolver`.
 
@@ -413,7 +407,7 @@ import io.inverno.mod.security.identity.PersonIdentity;
 import io.inverno.mod.security.identity.UserIdentityResolver;
 import io.inverno.mod.web.server.ErrorWebRouter;
 import io.inverno.mod.web.server.ErrorWebRouterConfigurer;
-import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebRouteInterceptor;
 import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 import java.util.List;
 
@@ -481,7 +475,7 @@ content-length: 0
 
 ```
 
-Here we have decided to control access inside the `/vip/hello` route handler but we could have also globally restrict access to `/vip/**` routes to VIP users using an `AccessControlInterceptor` in the security configurer:
+Here we have decided to control access inside the `/vip/hello` route handler, but we could have also globally restrict access to `/vip/**` routes to VIP users using an `AccessControlInterceptor` in the security configurer:
 
 ```java
 package io.inverno.example.app_web_security;
@@ -506,7 +500,7 @@ import io.inverno.mod.security.identity.PersonIdentity;
 import io.inverno.mod.security.identity.UserIdentityResolver;
 import io.inverno.mod.web.server.ErrorWebRouter;
 import io.inverno.mod.web.server.ErrorWebRouterConfigurer;
-import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebRouteInterceptor;
 import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 import java.util.List;
 
@@ -556,7 +550,7 @@ public class Main {
 }
 ```
 
-> If you followed the *security* module documentation, and you should have, you might have noticed how the `SecurityInterceptor` is similar to the `SecurityManager`, they basically have the same role which is to authenticate a request and provide a security context which, although we had to create an exchange security context, is still the central component used to secure the application. As a result, securing a Web application is no different than securing a regular application and it should therefore be easy to create secured components and libraries that can be integrated in both.
+> If you followed the *security* module documentation, and you should have, you might have noticed how the `SecurityInterceptor` is similar to the `SecurityManager`, they basically have the same role which is to authenticate a request and provide a security context which, although we had to create an exchange security context, is still the central component used to secure the application. As a result, securing a Web application is no different from securing a regular application, and it should therefore be easy to create secured components and libraries that can be integrated in both.
 
 ## Security Interceptor
 
@@ -592,7 +586,7 @@ import io.inverno.mod.security.identity.IdentityResolver;
 import io.inverno.mod.security.http.CredentialsExtractor;
 import io.inverno.mod.security.http.SecurityInterceptor;
 import io.inverno.mod.security.http.context.InterceptingSecurityContext;
-import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebRouteInterceptor;
 import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 
 public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>> {
@@ -634,7 +628,7 @@ CredentialsExtractor<LoginCredentials> credentialsExtractor = exchange -> {
 
 When no credentials are returned, the security interceptor creates an anonymous security context.
 
-Mutliple credentials extractor can be chained in order to extract credentials from different location within the request by order of prefrerence. For instance, we can create a credentials extractor to extract `TokenCredentials` from an HTTP header, a cookie, or a query parameter in that order.
+Multiple credentials extractor can be chained in order to extract credentials from different location within the request by order of preference. For instance, we can create a credentials extractor to extract `TokenCredentials` from an HTTP header, a cookie, or a query parameter in that order.
 
 ```java
 CredentialsExtractor<TokenCredentials> headerTokenCredentialsExtractor = exchange -> {
@@ -660,11 +654,11 @@ The *security-http* module provides `io.inverno.mod.security.http.context.Securi
 
 It also provides the `io.inverno.mod.security.http.context.InterceptingSecurityContext` which extends `io.inverno.mod.security.http.context.SecurityContext` and exposes a single `setSecurityContext()` method. This is a mutable version of the `io.inverno.mod.security.http.context.SecurityContext` which enables security related interceptors or handlers, such as the `SecurityInterceptor`, to set the `io.inverno.mod.security.context.SecurityContext` in the security exchange context.
 
-> In the end, every `ExchangeContext` types should be implemented in the generated global `ExchangeContext` type which will basically implements both `io.inverno.mod.security.http.context.SecurityContext` and `io.inverno.mod.security.http.context.InterceptingSecurityContext`. However making sure `io.inverno.mod.security.http.context.SecurityContext` is used in applicative interceptors and handlers and only allow the `io.inverno.mod.security.http.context.InterceptingSecurityContext` in specific trusted security interceptors and handlers is a good way to control and protect the security context against untrustful modifications.
+> In the end, every `ExchangeContext` types should be implemented in the generated global `ExchangeContext` type which will basically implements both `io.inverno.mod.security.http.context.SecurityContext` and `io.inverno.mod.security.http.context.InterceptingSecurityContext`. However, making sure `io.inverno.mod.security.http.context.SecurityContext` is used in applicative interceptors and handlers and only allow the `io.inverno.mod.security.http.context.InterceptingSecurityContext` in specific trusted security interceptors and handlers is a good way to control and protect the security context against untrustful modifications.
 
 ## Access Control Interceptor
 
-As we just saw, the role of the security interceptor is to authenticate credentials and provides a security context but it does not actually control access. The security context can be anonymous, denied or authenticated, actual access control must then be done in a subsequent interceptors and/or directly in the route handler. An `AccessControlInterceptor` can be applied on secured routes to control access globally.
+As we just saw, the role of the security interceptor is to authenticate credentials and provides a security context, but it does not actually control access. The security context can be anonymous, denied or authenticated, actual access control must then be done in a subsequent interceptors and/or directly in the route handler. An `AccessControlInterceptor` can be applied on secured routes to control access globally.
 
 In the following example, `AccessControlInterceptor.authenticated()` is used to create an interceptor that restricts access to authenticated users.
 
@@ -680,7 +674,7 @@ import io.inverno.mod.security.http.AccessControlInterceptor;
 import io.inverno.mod.security.http.CredentialsExtractor;
 import io.inverno.mod.security.http.SecurityInterceptor;
 import io.inverno.mod.security.http.context.InterceptingSecurityContext;
-import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebRouteInterceptor;
 import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 import java.util.List;
 
@@ -704,7 +698,7 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
 }
 ```
 
-We can use `AccessControlInterceptor.anonymous()` to restrict access to anonymous users or we can also provide custom access control using `AccessControlInterceptor.verify()` as follows:
+We can use `AccessControlInterceptor.anonymous()` to restrict access to anonymous users, or we can also provide custom access control using `AccessControlInterceptor.verify()` as follows:
 
 ```java
 package io.inverno.example.app_web_security;
@@ -721,7 +715,7 @@ import io.inverno.mod.security.http.SecurityInterceptor;
 import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 import io.inverno.mod.security.identity.Identity;
 import io.inverno.mod.security.identity.IdentityResolver;
-import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebRouteInterceptor;
 import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 import java.util.List;
 
@@ -870,7 +864,7 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
 }
 ```
 
-As previously mentionned, digest credentials expire at a fixed datetime specified in the nonce, this is checked in the `DigestCredentialsMatcher` which fails authentication with a `ExpiredNonceException` when this happens.
+As previously mentioned, digest credentials expire at a fixed datetime specified in the nonce, this is checked in the `DigestCredentialsMatcher` which fails authentication with a `ExpiredNonceException` when this happens.
 
 The HTTP digest access authentication is based on a challenge-response mechanism as a result a digest authentication challenge must be generated server-side on an unauthorized access or expired nonce errors and sent to the client prior to authentication. This is done using a `DigestAuthenticationErrorInterceptor` on secured routes to intercept `UnauthorizedException` errors:
 
@@ -912,11 +906,11 @@ content-length: 0
 
 ### Token based authentication
 
-Token based authentication is a simple authentiation method based on the authentication of a token which was usually previously issued to the client by the server.
+Token based authentication is a simple authentication method based on the authentication of a token which was usually previously issued to the client by the server.
 
 A token must be ideally difficult to forge and easy to validate which is why cryptographic methods are often used to generate secured token but solution based on random numbers stored in a trusted data store (like a session store) can also be considered.
 
-A security context implementing token based authentication can be obtained by combining a `TokenCredentials` extractor with a compatible `Authenticator` implementation. The following example uses a `CookieTokenCredentialsExtractor` to extract `TokenCredentials` from a specific cookie and a simplistic highly unsecure authenticator which validates tokens against an hardcoded list of authorized tokens:
+A security context implementing token based authentication can be obtained by combining a `TokenCredentials` extractor with a compatible `Authenticator` implementation. The following example uses a `CookieTokenCredentialsExtractor` to extract `TokenCredentials` from a specific cookie and a simplistic highly unsecure authenticator which validates tokens against a hardcoded list of authorized tokens:
 
 ```java
 package io.inverno.example.app_web_security;
@@ -946,7 +940,7 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
 }
 ```
 
-> As already mentionned, a proper token must be ideally hard to forge and using cryptographic solution such as [JWS][rfc7515], [JWE][rfc7516] or [JWT][rfc7519] are highly recommended.
+> As already mentioned, a proper token must be ideally hard to forge and using cryptographic solution such as [JWS][rfc7515], [JWE][rfc7516] or [JWT][rfc7519] are highly recommended.
 
 ### Form based login
 
@@ -981,9 +975,9 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
 }
 ```
 
-> The login page is not different than a standard route and a custom login page can be easily used instead of the white label login page.
+> The login page is not different from a standard route and a custom login page can be easily used instead of the white label login page.
 
-The `LoginActionHandler` is a route handler that must be targeted by the login form to authentiate the user credentials. It relies on a `CredentialsExtractor` to extract credentials from the login request and a compatible `Authenticator` to authenticate them. Finally, it uses a `LoginSuccessHandler` and a `LoginFailureHandler` to determine what to do in case of successful or failed authentication. If no `LoginSuccessHandler` is defined, a blank response is returned on successful authentication. If no `LoginFailureHandler` is defined, a unauthorized (401) error is returned on failed authentication.
+The `LoginActionHandler` is a route handler that must be targeted by the login form to authenticate the user credentials. It relies on a `CredentialsExtractor` to extract credentials from the login request and a compatible `Authenticator` to authenticate them. Finally, it uses a `LoginSuccessHandler` and a `LoginFailureHandler` to determine what to do in case of successful or failed authentication. If no `LoginSuccessHandler` is defined, a blank response is returned on successful authentication. If no `LoginFailureHandler` is defined, an unauthorized (401) error is returned on failed authentication.
 
 In the following example, we decided to generate a [JWS][rfc7515] on successful authentication which requires to inject a `JWKService` to generate a JSON Web Key and a `JWSService` to create JWS tokens.
 
@@ -1049,7 +1043,7 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
 4. The authentication shall fail if the principal authenticator returns a denied authentication.
 5. The resulting `PrincipalAuthentication` is then wrapped into a `JWSAuthentication`. We don't have to check whether the authentication is authenticated before creating the JWS token since we used `failOnDenied()`.
 6. The `CookieTokenLoginSuccessHandler` is used to set the compact representation of the JWS token in a response cookie. The cookie name and the cookie path can be set when creating the login success handler (defaults to `AUTH-TOKEN` and `/`).
-7. The `RedirectLoginSuccessHandler` is then chained to redirect the user to the the page initially requested.
+7. The `RedirectLoginSuccessHandler` is then chained to redirect the user to the page initially requested.
 8. The `RedirectLoginFailureHandler` is used to redirect the user to the login page in case of failed authentication, the actual authentication error is specified in a query parameter (defaults to `error`) so it can be displayed in the login form.
 
 The login page and the login action handler are all set, we can now move on and configure a token based authentication to secure `/form/**` routes and restrict access to authenticated users. Since the login action handler sets a JWS token in a cookie we need to use a `CookieTokenCredentialsExtractor` to extract the `TokenCredentials` and a `JWSAuthenticator` to validate the JWS. The JWS actually wraps the original `PrincipalAuthentication` we can then unwrap it in order to restore the original authentication.
@@ -1084,7 +1078,7 @@ In above code, the JWS authenticator uses the JWS service to parse and validate 
 
 > Using a JWS token allows to restore the original authentication which can be very useful for resolving identity and/or access controller using regular authentication types (e.g. `PrincipalAuthentication`, `UserAuthentication`...).
 
-Accessing a protected resource with no token or an invalid token results in an `UnauthorizedException` error since the access is retricted to authenticated users. the client should then be redirected to the login page. This can be done applying the `FormAuthenticationErrorInterceptor` on `UnauthorizedException` errors on `/form/**` routes.
+Accessing a protected resource with no token or an invalid token results in an `UnauthorizedException` error since the access is restricted to authenticated users. the client should then be redirected to the login page. This can be done applying the `FormAuthenticationErrorInterceptor` on `UnauthorizedException` errors on `/form/**` routes.
 
 ```java
 package io.inverno.example.app_web_security;
@@ -1179,9 +1173,9 @@ import io.inverno.mod.security.jose.jws.JWSAuthenticator;
 import io.inverno.mod.security.jose.jws.JWSService;
 import io.inverno.mod.web.server.ErrorWebRouter;
 import io.inverno.mod.web.server.ErrorWebRouterConfigurer;
-import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebRouteInterceptor;
 import io.inverno.mod.web.server.WebInterceptorsConfigurer;
-import io.inverno.mod.web.server.WebRoutable;
+import io.inverno.mod.web.server.WebRouter;
 import io.inverno.mod.web.server.WebRoutesConfigurer;
 import java.util.List;
 import reactor.core.publisher.Mono;
@@ -1285,7 +1279,7 @@ After filling valid login credentials in the login form, we should be redirected
 
 <img class="shadow mb-4" src="doc/img/form_hello.png" alt="Form hello"/>
 
-> We described a basic form login flow but it can be extended to match more complex or specific security requirements.
+> We described a basic form login flow, but it can be extended to match more complex or specific security requirements.
 > 
 > For instance, two-factors authentication could be implemented quite easily by providing a custom login form that would include a second authentication factor in addition to the login credentials and a specific login credentials authenticator that would check that factor as well, it is even possible to use the standard `UserAuthenticator` and just chain another authenticator to validate the second factor.
 
@@ -1302,7 +1296,7 @@ package io.inverno.example.app_web_security;
 
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.security.http.cors.CORSInterceptor;
-import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebRouteInterceptor;
 import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 
 public class SecurityConfigurer implements WebInterceptorsConfigurer<ExchangeContext> {
@@ -1320,7 +1314,7 @@ The `CORSInterceptor` fully supports the CORS protocol, it allows to define allo
 
 ## Cross-site request forgery protection (CSRF)
 
-Cross-site request forgery attack consists for an attacker to make the Web browser of a victim perform unwanted action on a trusted Web site when the user is authenticated. This is made possible by the use of cookies holding authentication credentials and which are automatically included in the requests by the Web browser. As far as the server is concerned, it can not make the difference between a legitimate and a malicious request as long as it contains valid credentials.
+Cross-site request forgery attack consists for an attacker to make the Web browser of a victim perform unwanted action on a trusted Website when the user is authenticated. This is made possible by the use of cookies holding authentication credentials and which are automatically included in the requests by the Web browser. As far as the server is concerned, it can not make the difference between a legitimate and a malicious request as long as it contains valid credentials.
 
 The `CSRFDoubleSubmitCookieInterceptor` can be used to protect against CSRF attacks, it implements the double submit cookie method advised by [OWASP][csrf_owasp].
 
@@ -1331,7 +1325,7 @@ package io.inverno.example.app_web_security;
 
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.security.http.csrf.CSRFDoubleSubmitCookieInterceptor;
-import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebRouteInterceptor;
 import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 
 public class SecurityConfigurer implements WebInterceptorsConfigurer<ExchangeContext> {
@@ -1347,4 +1341,4 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<ExchangeCon
 
 The name of the reference cookie token is set to `XSRF-TOKEN`, on a `POST`, `PUT`, `PATCH` or `DELETE` request, the interceptor tries to compare its value to a header (`X-CSRF-TOKEN` by default) or, if missing, to a query parameter (`_csrf_token` by default). If the two values are matching, which basically means the client was able to read the cookie, the request can be safely authorized otherwise a forbidden (403) error shall be return to the client.
 
-> When using the `CSRFDoubleSubmitCookieInterceptor` with a Web application developped with [Angular][angular] or other any other framework that support double submit cookie, the `httpOnly` flag of the reference cookie must be set to `false`.
+> When using the `CSRFDoubleSubmitCookieInterceptor` with a Web application developed with [Angular][angular] or other any other framework that support double submit cookie, the `httpOnly` flag of the reference cookie must be set to `false`.

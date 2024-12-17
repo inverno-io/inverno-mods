@@ -13,14 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import io.inverno.mod.security.SecurityManager;
-import io.inverno.mod.security.accesscontrol.AccessController;
-import io.inverno.mod.security.accesscontrol.AccessControllerResolver;
-import io.inverno.mod.security.authentication.Authentication;
-import io.inverno.mod.security.authentication.Authenticator;
-import io.inverno.mod.security.context.SecurityContext;
-import io.inverno.mod.security.identity.Identity;
-import io.inverno.mod.security.identity.IdentityResolver;
 
 /**
  * <p>
@@ -42,24 +34,27 @@ import io.inverno.mod.security.identity.IdentityResolver;
  * 
  * <p>
  * The entity represents the originator of an access to the application, it can be external or internal. An application can secure the access to protected services or resources by authenticating the 
- * entity which must provide valid credentials. An {@link AccessController} can then be obtained from the resulting {@link Authentication} to fine-grained control the access to services and 
- * resources. The {@link Identity} of the authenticated entity might also be resolved from the authentication and used whenever strong identification is required.
+ * entity which must provide valid credentials. An {@link io.inverno.mod.security.accesscontrol.AccessController} can then be obtained from the resulting
+ * {@link io.inverno.mod.security.authentication.Authentication} to fine-grained control the access to services and resources. The {@link io.inverno.mod.security.identity.Identity} of the
+ * authenticated entity might also be resolved from the authentication and used whenever strong identification is required.
  * </p>
  *
  * <p>
- * It is important to understand that {@link Authentication}, {@link Identity} and {@link AccessController} are decorrelated even though they are all related to the authenticated entity. We can have 
- * an authentication without identification (e.g. OAuth2) and/or without access controller. 
+ * It is important to understand that {@link io.inverno.mod.security.authentication.Authentication}, {@link io.inverno.mod.security.identity.Identity} and
+ * {@link io.inverno.mod.security.accesscontrol.AccessController} are decorrelated even though they are all related to the authenticated entity. We can have an authentication without identification
+ * (e.g. OAuth2) and/or without access controller.
  * </p>
  * 
  * <p>
- * The {@link SecurityContext} is the central security component in an application, it is composed of above components and it should be created and used whenever there is a need to protect services 
- * or resources. It allows to verify whether an authenticated entity is accessing a protected service or resource and control whether the access should be granted based on its roles, permissions or 
- * any other access control method.
+ * The {@link io.inverno.mod.security.context.SecurityContext} is the central security component in an application, it is composed of above components and it should be created and used whenever there
+ * is a need to protect services or resources. It allows to verify whether an authenticated entity is accessing a protected service or resource and control whether the access should be granted based
+ * on its roles, permissions or any other access control method.
  * </p>
  * 
  * <p>
- * A {@link SecurityManager} can be used to authenticate credentials and create a security context for an entity, it is built from an {@link Authenticator}, an {@link IdentityResolver} and an
- * {@link AccessControllerResolver}.
+ * A {@link io.inverno.mod.security.SecurityManager} can be used to authenticate credentials and create a security context for an entity, it is built from an
+ * {@link io.inverno.mod.security.authentication.Authenticator}, an {@link io.inverno.mod.security.identity.IdentityResolver} and an
+ * {@link io.inverno.mod.security.accesscontrol.AccessControllerResolver}.
  * </p>
  * 
  * <p>

@@ -59,9 +59,7 @@ public interface LoginSuccessHandler<A extends Authentication, B extends Exchang
 	 * @return a composed login success handler that invokes in sequence this handler followed by the specified handler
 	 */
 	default LoginSuccessHandler<A, B, C> andThen(LoginSuccessHandler<? super A, ? super B, ?super C> after) {
-		return (exchange, authentication) -> {
-			return this.handleLoginSuccess(exchange, authentication).then(after.handleLoginSuccess(exchange, authentication));
-		};
+		return (exchange, authentication) -> this.handleLoginSuccess(exchange, authentication).then(after.handleLoginSuccess(exchange, authentication));
 	}
 	
 	/**
@@ -74,9 +72,7 @@ public interface LoginSuccessHandler<A extends Authentication, B extends Exchang
 	 * @return a composed login success handler that invokes in sequence the specified handler followed by this handler
 	 */
 	default LoginSuccessHandler<A, B, C> compose(LoginSuccessHandler<? super A, ? super B, ?super C> before) {
-		return (exchange, authentication) -> {
-			return before.handleLoginSuccess(exchange, authentication).then(this.handleLoginSuccess(exchange, authentication));
-		};
+		return (exchange, authentication) -> before.handleLoginSuccess(exchange, authentication).then(this.handleLoginSuccess(exchange, authentication));
 	}
 	
 	/**

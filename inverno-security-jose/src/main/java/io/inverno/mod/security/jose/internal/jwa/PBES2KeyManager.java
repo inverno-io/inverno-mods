@@ -124,7 +124,7 @@ public class PBES2KeyManager extends AbstractEncryptingJWAKeyManager<PBES2JWK, P
 				// Derive key
 				SecretKeyFactory skf = SecretKeyFactory.getInstance(this.algorithm.getJcaAlgorithm());
 				byte[] p2s = getP2s(parameters, false, secureRandom);
-				Integer p2c = getP2c(parameters, false);
+				int p2c = getP2c(parameters, false);
 				PBEKeySpec derivedKeySpec = new PBEKeySpec(new String(Base64.getUrlDecoder().decode(this.jwk.getPassword())).toCharArray(), computeSaltValue(this.algorithm, p2s), p2c, this.algorithm.getEncryptionKeyLength() * 8);
 				SecretKey derivedKey = new SecretKeySpec(skf.generateSecret(derivedKeySpec).getEncoded(), "AES") ;
 
@@ -153,7 +153,7 @@ public class PBES2KeyManager extends AbstractEncryptingJWAKeyManager<PBES2JWK, P
 			// Derive key
 			SecretKeyFactory skf = SecretKeyFactory.getInstance(this.algorithm.getJcaAlgorithm());
 			byte[] p2s = getP2s(parameters, true, null);
-			Integer p2c = getP2c(parameters, true);
+			int p2c = getP2c(parameters, true);
 			PBEKeySpec derivedKeySpec = new PBEKeySpec(new String(Base64.getUrlDecoder().decode(this.jwk.getPassword())).toCharArray(), computeSaltValue(this.algorithm, p2s), p2c, this.algorithm.getEncryptionKeyLength() * 8);
 			SecretKey derivedKey = new SecretKeySpec(skf.generateSecret(derivedKeySpec).getEncoded(), "AES");
 			
@@ -211,7 +211,7 @@ public class PBES2KeyManager extends AbstractEncryptingJWAKeyManager<PBES2JWK, P
 	 * @throws JWAKeyManagerException if there was an error extracting or generating the PBES2 salt input
 	 */
 	private static byte[] getP2s(Map<String, Object> parameters, boolean failOnMissing, SecureRandom secureRandom) throws JWAKeyManagerException {
-		byte[] p2s = null;
+		byte[] p2s;
 		String p2ss = parameters != null ? (String)parameters.get("p2s") : null;
 		if(StringUtils.isNotBlank(p2ss)) {
 			p2s = Base64.getUrlDecoder().decode(p2ss);

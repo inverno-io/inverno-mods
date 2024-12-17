@@ -65,7 +65,7 @@ public interface ResourceService {
 	 *
 	 * @param uri a URI
 	 *
-	 * @return an stream of resources
+	 * @return a stream of resources
 	 *
 	 * @throws NullPointerException     if the specified URI is null
 	 * @throws IllegalArgumentException if the resource type specified in the URI is not supported by the implementation

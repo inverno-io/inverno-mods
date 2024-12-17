@@ -28,7 +28,7 @@ public interface JWEZip {
 	/**
 	 * DEFLATE ZIP algorithm as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7516#section-4.1.3">RFC7516 Section 4.1.3</a>.
 	 */
-	public static final String ZIP_DEFLATE = "DEF";
+	String ZIP_DEFLATE = "DEF";
 	
 	/**
 	 * <p>

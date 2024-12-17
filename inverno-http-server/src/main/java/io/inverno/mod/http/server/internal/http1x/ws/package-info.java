@@ -15,7 +15,7 @@
  */
 /**
  * <p>
- * Inverno HTTP server API WebSocket implementation classes.
+ * Inverno HTTP server WebSocket implementation classes.
  * </p>
  */
 package io.inverno.mod.http.server.internal.http1x.ws;

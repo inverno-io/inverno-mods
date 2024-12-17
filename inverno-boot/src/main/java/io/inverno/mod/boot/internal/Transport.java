@@ -29,13 +29,11 @@ import io.netty.incubator.channel.uring.IOUring;
 
 /**
  * <p>
- * Determines the transport type based on configuration and software/hardware
- * capabilities.
+ * Determines the transport type based on configuration and software/hardware capabilities.
  * </p>
  * 
  * <p>
- * Note that this bean is private, the resulting transport type is exposed
- * within the NetService bean.
+ * Note that this bean is private, the resulting transport type is exposed within the NetService bean.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -104,5 +102,4 @@ public class Transport implements Supplier<TransportType> {
 			return false;
 		}
 	}
-
 }

@@ -86,7 +86,7 @@ public enum EdECAlgorithm implements JWAAlgorithm<EdECJWK> {
 	 * @param jcaAlg            the JCA signing algorithm
 	 * @param curve             the Octet Key Pair curve
 	 */
-	private EdECAlgorithm(String alg, BiFunction<EdECJWK, EdECAlgorithm, JWASigner> signerFactory, BiFunction<EdECJWK, EdECAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<EdECJWK, EdECAlgorithm, JWACipher> cipherFactory, String jcaAlg, OKPCurve curve) {
+	EdECAlgorithm(String alg, BiFunction<EdECJWK, EdECAlgorithm, JWASigner> signerFactory, BiFunction<EdECJWK, EdECAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<EdECJWK, EdECAlgorithm, JWACipher> cipherFactory, String jcaAlg, OKPCurve curve) {
 		this.alg = alg;
 		this.signerFactory = signerFactory;
 		this.keyManagerFactory = keyManagerFactory;
@@ -174,20 +174,17 @@ public enum EdECAlgorithm implements JWAAlgorithm<EdECJWK> {
 	 * @throws IllegalArgumentException if the specified algorithm is not an EdEC algorithm or if the curve does not correspond to the algorithm
 	 */
 	public static EdECAlgorithm fromAlgorithm(String alg, OKPCurve curve) throws IllegalArgumentException {
-		switch(alg) {
-			case "EdDSA": {
-					switch(curve) {
-						case ED25519:
-							return EDDSA_ED25519;
-						case ED448:
-							return EDDSA_ED448;
-						default:
-							throw new IllegalArgumentException("Unkown EdDSA algorithm curve " + curve);
-					}
-				}
-			default: 
-				throw new IllegalArgumentException("Unknown Ed algorithm " + alg);
+		if(alg.equals("EdDSA")) {
+			switch(curve) {
+				case ED25519:
+					return EDDSA_ED25519;
+				case ED448:
+					return EDDSA_ED448;
+				default:
+					throw new IllegalArgumentException("Unknown EdDSA algorithm curve " + curve);
+			}
 		}
+		throw new IllegalArgumentException("Unknown Ed algorithm " + alg);
 	}
 	
 	/**

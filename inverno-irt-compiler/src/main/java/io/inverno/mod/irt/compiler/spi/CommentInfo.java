@@ -17,27 +17,24 @@ package io.inverno.mod.irt.compiler.spi;
 
 /**
  * <p>
- * A comment info corresponds to a comment statement in a template declaration
- * in a template set source file.
+ * A comment info corresponds to a comment statement in a template declaration in a template set source file.
  * </p>
- * 
+ *
  * <p>
- * A comment info typically contains statements that are ignored during the
- * generation of a template set class.
+ * A comment info typically contains statements that are ignored during the generation of a template set class.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public interface CommentInfo extends StatementInfo {
-	
+
 	/**
 	 * <p>
 	 * Returns the list of commented statements.
 	 * </p>
-	 * 
-	 * @return a list of statements
+	 *
+	 * @return an array of statements
 	 */
 	StatementInfo[] getStatements();
 }

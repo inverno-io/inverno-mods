@@ -56,9 +56,9 @@ public class GenericRowMetadata implements RowMetadata {
 	}
 
 	@Override
-	public Collection<ColumnMetadata> getColumnMetadatas() {
+	public Collection<ColumnMetadata> getColumnMetadata() {
 		if(this.columnMetadata == null) {
-			this.columnMetadata = this.columnNames.stream().collect(Collectors.toMap(Function.identity(), name -> new GenericColumnMetadata(name), (e1, e2) -> {throw new RuntimeException();}, LinkedHashMap::new));
+			this.columnMetadata = this.columnNames.stream().collect(Collectors.toMap(Function.identity(), GenericColumnMetadata::new, (e1, e2) -> {throw new RuntimeException();}, LinkedHashMap::new));
 		}
 		return this.columnMetadata.values();
 	}

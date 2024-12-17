@@ -31,7 +31,6 @@ import io.inverno.mod.security.jose.jwk.JWKService;
 import java.lang.reflect.Type;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Supplier;
 import org.reactivestreams.Publisher;
 
 /**
@@ -60,7 +59,7 @@ public class GenericJWEService implements @Provide JWEService {
 	 * @param dataConversionService a data conversion service
 	 * @param jwkService            a JWK service
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public GenericJWEService(ObjectMapper mapper, GenericDataConversionService dataConversionService, JWKService jwkService) {
 		this.mapper = mapper;
 		this.dataConversionService = dataConversionService;
@@ -119,19 +118,5 @@ public class GenericJWEService implements @Provide JWEService {
 	@Override
 	public <T> JsonJWEReader<T, ?> jsonReader(Type type) {
 		return new GenericJsonJWEReader<>(this.mapper, this.dataConversionService, this.jwkService, type, this.zips);
-	}
-	
-	/**
-	 * <p>
-	 * JWE compression algorithms socket used to inject JWE compression algorithms when building the JOSE module.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.5
-	 * 
-	 * @see GenericJWEService
-	 */
-	@Bean(name = "jweZips")
-	public static interface JWEZipsSocket extends Supplier<List<JWEZip>> {
 	}
 }

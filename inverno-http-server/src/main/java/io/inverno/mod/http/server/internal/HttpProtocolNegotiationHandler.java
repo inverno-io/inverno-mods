@@ -36,7 +36,7 @@ public class HttpProtocolNegotiationHandler extends ApplicationProtocolNegotiati
 	
 	/**
 	 * <p>
-	 * Creates a HTTP protocol negotiation handler.
+	 * Creates an HTTP protocol negotiation handler.
 	 * </p>
 	 * 
 	 * @param channelConfigurer the channel configurer

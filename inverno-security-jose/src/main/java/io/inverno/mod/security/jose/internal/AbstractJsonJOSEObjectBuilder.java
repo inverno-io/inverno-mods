@@ -50,7 +50,7 @@ import reactor.core.publisher.Mono;
  * @param <A> the payload type
  * @param <B> the JSON JOSE object type
  * @param <C> the JOSE header configurator type
- * @param <D> the JSON JOSE object bulder type
+ * @param <D> the JSON JOSE object builder type
  */
 public abstract class AbstractJsonJOSEObjectBuilder<A, B extends JsonJOSEObject<A>, C extends JOSEHeaderConfigurator<C>, D extends AbstractJsonJOSEObjectBuilder<A, B, C, D>> implements JsonJOSEObjectBuilder<A, B, C, D> {
 	
@@ -101,7 +101,7 @@ public abstract class AbstractJsonJOSEObjectBuilder<A, B extends JsonJOSEObject<
 	 * @param jwkService            a JWK service
 	 * @param type                  the payload type
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public AbstractJsonJOSEObjectBuilder(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type) {
 		this.mapper = mapper;
 		this.dataConversionService = dataConversionService;
@@ -169,7 +169,7 @@ public abstract class AbstractJsonJOSEObjectBuilder<A, B extends JsonJOSEObject<
 		String resolvedContentType;
 		if(StringUtils.isNotBlank(overridingContentType)) {
 			if(LOGGER.isDebugEnabled() && StringUtils.isNotBlank(cty) && MediaTypes.normalizeApplicationMediaType(cty).equals(overridingContentType)) {
-				// We just log a debug here since we want to be able to override the JWS header content type (eg. application/json to encode application/jwt)
+				// We just log a debug here since we want to be able to override the JWS header content type (e.g. application/json to encode application/jwt)
 				LOGGER.debug("The overriding content type differs from the JOSE header content type");
 			}
 			resolvedContentType = overridingContentType;
@@ -183,10 +183,10 @@ public abstract class AbstractJsonJOSEObjectBuilder<A, B extends JsonJOSEObject<
 		
 		MediaTypeConverter<String> payloadConverter = this.dataConversionService.getConverter(resolvedContentType).orElseThrow(() -> new JOSEObjectBuildException("No converter found for content type: " + resolvedContentType));
 		if(this.type != null) {
-			return p -> Flux.from(payloadConverter.encodeOne(Mono.just(p), this.type)).reduceWith(() -> new StringBuilder(), (acc, v) -> acc.append(v)).map(StringBuilder::toString);
+			return p -> Flux.from(payloadConverter.encodeOne(Mono.just(p), this.type)).reduceWith(StringBuilder::new, StringBuilder::append).map(StringBuilder::toString);
 		}
 		else {
-			return p -> Flux.from(payloadConverter.encodeOne(Mono.just(p))).reduceWith(() -> new StringBuilder(), (acc, v) -> acc.append(v)).map(StringBuilder::toString);
+			return p -> Flux.from(payloadConverter.encodeOne(Mono.just(p))).reduceWith(StringBuilder::new, StringBuilder::append).map(StringBuilder::toString);
 		}
 	}
 }

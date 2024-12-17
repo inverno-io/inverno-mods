@@ -51,6 +51,15 @@ interface URIComponentPart {
 	 * @return true if this is a wildcard part, false otherwise
 	 */
 	boolean isWildcard();
+
+	/**
+	 * <p>
+	 * Return true if this represents a directories part as described in {@link URIs.Option#PATH_PATTERN}.
+	 * </p>
+	 *
+	 * @return true if this is a directories part, false otherwise
+	 */
+	boolean isDirectories();
 	
 	/**
 	 * <p>

@@ -25,7 +25,6 @@ import io.inverno.mod.irt.compiler.spi.NameInfo;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class GenericIncludeInfo extends BaseInfo implements IncludeInfo {
 

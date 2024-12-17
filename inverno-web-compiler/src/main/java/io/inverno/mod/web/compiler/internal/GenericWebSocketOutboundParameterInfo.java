@@ -29,7 +29,7 @@ import javax.lang.model.type.TypeMirror;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-class GenericWebSocketOutboundParameterInfo extends AbstractWebParameterInfo implements WebSocketOutboundParameterInfo {
+public class GenericWebSocketOutboundParameterInfo extends AbstractWebParameterInfo implements WebSocketOutboundParameterInfo {
 	
 	/**
 	 * <p>

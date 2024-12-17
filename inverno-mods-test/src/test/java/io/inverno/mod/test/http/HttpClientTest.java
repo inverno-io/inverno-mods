@@ -33,6 +33,7 @@ import io.inverno.mod.http.client.Endpoint;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfigurationLoader;
 import io.inverno.mod.test.AbstractInvernoModTest;
+import io.inverno.mod.test.ModsTestUtils;
 import io.inverno.mod.test.configuration.ConfigurationInvocationHandler;
 import io.inverno.test.InvernoCompilationException;
 import io.inverno.test.InvernoModuleLoader;
@@ -43,7 +44,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Proxy;
-import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -56,7 +56,6 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -65,7 +64,7 @@ import reactor.core.publisher.Mono;
 
 /**
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 public class HttpClientTest {
 
@@ -101,7 +100,7 @@ public class HttpClientTest {
 		
 		InvernoModuleLoader moduleLoader = invernoCompiler.compile(MODULE_WEBROUTE);
 		
-		testServerPort = getFreePort();
+		testServerPort = ModsTestUtils.getFreePort();
 		
 		Class<?> httpConfigClass = moduleLoader.loadClass(MODULE_WEBROUTE, "io.inverno.mod.http.server.HttpServerConfiguration");
 		ConfigurationInvocationHandler httpConfigHandler = new ConfigurationInvocationHandler(httpConfigClass, Map.of("server_port", testServerPort, "h2_enabled", true));
@@ -157,16 +156,7 @@ public class HttpClientTest {
 			testServerModuleProxy.stop();
 		}
 	}
-	
-	private static int getFreePort() {
-		try (ServerSocket serverSocket = new ServerSocket(0)) {
-			return serverSocket.getLocalPort();
-		} 
-		catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-	}
-	
+
 	public static Stream<Arguments> provideEndpointAndHttpVersion() {
 		return Stream.of(
 			Arguments.of(h11Endpoint, HttpVersion.HTTP_1_1),
@@ -3479,7 +3469,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Mono.just(
 					factory.create("formParam", "a,b,c")
 				)));
 				return exchange.response();
@@ -3505,7 +3495,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Flux.just(
 					factory.create("formParam", "a,b,c"),
 					factory.create("formParam", "d,e,f")
 				)));
@@ -3532,7 +3522,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.empty()));
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Mono.empty()));
 				return exchange.response();
 			})
 			.doOnNext(response -> {
@@ -3548,7 +3538,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/opt")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Mono.just(
 					factory.create("formParam", "a,b,c")
 				)));
 				return exchange.response();
@@ -3574,7 +3564,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/opt")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Flux.just(
 					factory.create("formParam", "a,b,c"),
 					factory.create("formParam", "d,e,f")
 				)));
@@ -3625,7 +3615,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/collection")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Mono.just(
 					factory.create("formParam", "a,b,c")
 				)));
 				return exchange.response();
@@ -3651,7 +3641,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/collection")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Flux.just(
 					factory.create("formParam", "a,b,c"),
 					factory.create("formParam", "d,e,f")
 				)));
@@ -3694,7 +3684,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/collection/opt")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Flux.just(
 					factory.create("formParam", "a,b,c")
 				)));
 				return exchange.response();
@@ -3720,7 +3710,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/collection/opt")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Flux.just(
 					factory.create("formParam", "a,b,c"),
 					factory.create("formParam", "d,e,f")
 				)));
@@ -3771,7 +3761,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/list")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Mono.just(
 					factory.create("formParam", "a,b,c")
 				)));
 				return exchange.response();
@@ -3797,7 +3787,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/list")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Flux.just(
 					factory.create("formParam", "a,b,c"),
 					factory.create("formParam", "d,e,f")
 				)));
@@ -3840,7 +3830,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/list/opt")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Mono.just(
 					factory.create("formParam", "a,b,c")
 				)));
 				return exchange.response();
@@ -3866,7 +3856,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/list/opt")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Flux.just(
 					factory.create("formParam", "a,b,c"),
 					factory.create("formParam", "d,e,f")
 				)));
@@ -3917,7 +3907,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/set")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Mono.just(
 					factory.create("formParam", "a,b,c")
 				)));
 				return exchange.response();
@@ -3943,7 +3933,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/set")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Flux.just(
 					factory.create("formParam", "a,b,c"),
 					factory.create("formParam", "d,e,f")
 				)));
@@ -3986,7 +3976,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/set/opt")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Mono.just(
 					factory.create("formParam", "a,b,c")
 				)));
 				return exchange.response();
@@ -4012,7 +4002,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/set/opt")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Flux.just(
 					factory.create("formParam", "a,b,c"),
 					factory.create("formParam", "d,e,f")
 				)));
@@ -4063,7 +4053,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/array")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Mono.just(
 					factory.create("formParam", "a,b,c")
 				)));
 				return exchange.response();
@@ -4089,7 +4079,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/array")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Flux.just(
 					factory.create("formParam", "a,b,c"),
 					factory.create("formParam", "d,e,f")
 				)));
@@ -4132,7 +4122,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/array/opt")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Mono.just(
 					factory.create("formParam", "a,b,c")
 				)));
 				return exchange.response();
@@ -4158,7 +4148,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/array/opt")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Flux.just(
 					factory.create("formParam", "a,b,c"),
 					factory.create("formParam", "d,e,f")
 				)));
@@ -4209,7 +4199,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/mono")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Flux.just(
 					factory.create("a", "1"),
 					factory.create("b", "2"),
 					factory.create("c", "3"),
@@ -4238,7 +4228,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post/formParam/flux")
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+				exchange.request().body().urlEncoded().from((factory, data) -> data.stream(Flux.just(
 					factory.create("a", "1"),
 					factory.create("b", "2"),
 					factory.create("c", "3"),
@@ -4274,7 +4264,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4300,7 +4290,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4326,7 +4316,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4357,7 +4347,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4383,7 +4373,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4414,7 +4404,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4440,7 +4430,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4466,7 +4456,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4492,7 +4482,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4518,7 +4508,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4544,7 +4534,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.doOnNext(response -> {
@@ -4562,7 +4552,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4588,7 +4578,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4614,7 +4604,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4640,7 +4630,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4666,19 +4656,19 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
 				Assertions.assertEquals(Status.OK, response.headers().getStatus());
 				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(25), response.headers().getContentLength());
+				Assertions.assertEquals(Long.valueOf(23), response.headers().getContentLength());
 				
 				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
-				Assertions.assertEquals("post_encoded_pub: a, b, c", body);
+				Assertions.assertEquals("post_encoded_pub: a,b,c", body);
 			})
 			.block();
 	}
@@ -4692,7 +4682,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4718,19 +4708,19 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-					.body().get().string().value("a,b,c");
+					.body().string().value("a,b,c");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
 				Assertions.assertEquals(Status.OK, response.headers().getStatus());
 				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(26), response.headers().getContentLength());
+				Assertions.assertEquals(Long.valueOf(24), response.headers().getContentLength());
 				
 				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
-				Assertions.assertEquals("post_encoded_flux: a, b, c", body);
+				Assertions.assertEquals("post_encoded_flux: a,b,c", body);
 			})
 			.block();
 	}
@@ -4744,7 +4734,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
-					.body().get().string().value("{\"message\":\"Hello, world!\"}");
+					.body().string().value("{\"message\":\"Hello, world!\"}");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4770,7 +4760,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
-					.body().get().string().value("{\"message\":\"Hello, world!\"}{\"message\":\"Hallo, welt!\"}{\"message\":\"Salut, monde!\"}");
+					.body().string().value("{\"message\":\"Hello, world!\"}{\"message\":\"Hallo, welt!\"}{\"message\":\"Salut, monde!\"}");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4796,7 +4786,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
-					.body().get().string().value("{\"@type\":\"string\", \"message\":\"Hello, world!\"}");
+					.body().string().value("{\"@type\":\"string\", \"message\":\"Hello, world!\"}");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4822,7 +4812,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
-					.body().get().string().value("{\"@type\":\"string\",\"message\":\"Hello, world!\"}{\"@type\":\"integer\",\"message\":123456}");
+					.body().string().value("{\"@type\":\"string\",\"message\":\"Hello, world!\"}{\"@type\":\"integer\",\"message\":123456}");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4848,7 +4838,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
-					.body().get().string().value("{\"a\":1, \"b\":2, \"c\":3}");
+					.body().string().value("{\"a\":1, \"b\":2, \"c\":3}");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4874,7 +4864,7 @@ public class HttpClientTest {
 			.flatMap(exchange -> {
 				exchange.request()
 					.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
-					.body().get().string().value("{\"a\":1, \"b\":2, \"c\":3}{\"d\":4, \"e\":5, \"f\":6}{\"g\":7, \"h\":8, \"i\":9}");
+					.body().string().value("{\"a\":1, \"b\":2, \"c\":3}{\"d\":4, \"e\":5, \"f\":6}{\"g\":7, \"h\":8, \"i\":9}");
 				return exchange.response();
 			})
 			.flatMapMany(response -> {
@@ -4898,7 +4888,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post_multipart_pub")
 			.flatMap(exchange -> {
-				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+				exchange.request().body().multipart().from((factory, output) -> output.stream(Flux.just(
 					factory.string(part -> part.name("a").value("1")),
 					factory.string(part -> part.name("b").value("2")),
 					factory.string(part -> part.name("c").value("3"))
@@ -4926,7 +4916,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post_multipart_pub/raw")
 			.flatMap(exchange -> {
-				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+				exchange.request().body().multipart().from((factory, output) -> output.stream(Flux.just(
 					factory.string(part -> part.name("a").value("1")),
 					factory.string(part -> part.name("b").value("2")),
 					factory.string(part -> part.name("c").value("3"))
@@ -4954,7 +4944,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post_multipart_pub/encoded")
 			.flatMap(exchange -> {
-				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+				exchange.request().body().multipart().from((factory, output) -> output.stream(Flux.just(
 					factory.string(part -> part.name("a").value("1")),
 					factory.string(part -> part.name("b").value("2")),
 					factory.string(part -> part.name("c").value("3"))
@@ -4982,7 +4972,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post_multipart_mono")
 			.flatMap(exchange -> {
-				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Mono.just(
+				exchange.request().body().multipart().from((factory, output) -> output.stream(Mono.just(
 					factory.string(part -> part.name("a").value("1"))
 				)));
 				return exchange.response();
@@ -5008,7 +4998,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post_multipart_mono")
 			.flatMap(exchange -> {
-				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+				exchange.request().body().multipart().from((factory, output) -> output.stream(Flux.just(
 					factory.string(part -> part.name("a").value("1")),
 					factory.string(part -> part.name("b").value("2")),
 					factory.string(part -> part.name("c").value("3"))
@@ -5036,7 +5026,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post_multipart_mono/raw")
 			.flatMap(exchange -> {
-				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Mono.just(
+				exchange.request().body().multipart().from((factory, output) -> output.stream(Mono.just(
 					factory.string(part -> part.name("a").value("1"))
 				)));
 				return exchange.response();
@@ -5062,7 +5052,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post_multipart_mono/raw")
 			.flatMap(exchange -> {
-				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+				exchange.request().body().multipart().from((factory, output) -> output.stream(Flux.just(
 					factory.string(part -> part.name("a").value("1")),
 					factory.string(part -> part.name("b").value("2")),
 					factory.string(part -> part.name("c").value("3"))
@@ -5090,7 +5080,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post_multipart_mono/encoded")
 			.flatMap(exchange -> {
-				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+				exchange.request().body().multipart().from((factory, output) -> output.stream(Flux.just(
 					factory.string(part -> part.name("a").value("1")),
 					factory.string(part -> part.name("b").value("2")),
 					factory.string(part -> part.name("c").value("3"))
@@ -5118,7 +5108,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post_multipart_flux")
 			.flatMap(exchange -> {
-				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+				exchange.request().body().multipart().from((factory, output) -> output.stream(Flux.just(
 					factory.string(part -> part.name("a").value("1")),
 					factory.string(part -> part.name("b").value("2")),
 					factory.string(part -> part.name("c").value("3"))
@@ -5146,7 +5136,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post_multipart_flux/raw")
 			.flatMap(exchange -> {
-				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+				exchange.request().body().multipart().from((factory, output) -> output.stream(Flux.just(
 					factory.string(part -> part.name("a").value("1")),
 					factory.string(part -> part.name("b").value("2")),
 					factory.string(part -> part.name("c").value("3"))
@@ -5174,7 +5164,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/post_multipart_flux/encoded")
 			.flatMap(exchange -> {
-				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+				exchange.request().body().multipart().from((factory, output) -> output.stream(Flux.just(
 					factory.string(part -> part.name("a").value("1")),
 					factory.string(part -> part.name("b").value("2")),
 					factory.string(part -> part.name("c").value("3"))
@@ -5206,7 +5196,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/upload")
 			.flatMap(exchange -> {
-				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+				exchange.request().body().multipart().from((factory, output) -> output.stream(Flux.just(
 					factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_small.txt"))))
 				)));
 				return exchange.response();
@@ -5237,7 +5227,7 @@ public class HttpClientTest {
 		endpoint
 			.exchange(Method.POST, "/upload")
 			.flatMap(exchange -> {
-				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+				exchange.request().body().multipart().from((factory, output) -> output.stream(Flux.just(
 					factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_big.txt"))))
 				)));
 				return exchange.response();

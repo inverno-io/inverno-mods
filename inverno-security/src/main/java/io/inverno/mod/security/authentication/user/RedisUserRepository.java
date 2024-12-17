@@ -18,6 +18,7 @@ package io.inverno.mod.security.authentication.user;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.inverno.mod.redis.RedisClient;
+import io.inverno.mod.redis.operations.RedisKeyReactiveOperations;
 import io.inverno.mod.security.authentication.AuthenticationException;
 import io.inverno.mod.security.authentication.LoginCredentials;
 import io.inverno.mod.security.authentication.password.PBKDF2Password;
@@ -303,7 +304,7 @@ public class RedisUserRepository<A extends Identity, B extends User<A>> implemen
 					.count(100)
 					.build(result.getCursor());
 			})
-			.flatMapIterable(result -> result.getKeys())
+			.flatMapIterable(RedisKeyReactiveOperations.KeyScanResult::getKeys)
 			.flatMap(username -> operations.get(username)
 				.map(jsonUser -> {
 					try {

@@ -25,8 +25,7 @@ import io.netty.buffer.Unpooled;
 
 /**
  * <p>
- * A {@link TemplateSet} base implementation template sets which renders data in
- * a composite ByteBuf.
+ * A {@link TemplateSet} base implementation template sets which renders data in a composite ByteBuf.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -60,7 +59,7 @@ public abstract class AbstractCompositeByteBufTemplateSet extends AbstractTempla
 	 * @return a ByteBuffer
 	 */
 	public ByteBuf getOutput() {
-		return Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(this.buffers.toArray(new ByteBuf[this.buffers.size()])));
+		return Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(this.buffers.toArray(ByteBuf[]::new)));
 	}
 	
 	@Override

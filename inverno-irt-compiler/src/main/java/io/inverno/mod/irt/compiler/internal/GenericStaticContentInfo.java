@@ -24,7 +24,6 @@ import io.inverno.mod.irt.compiler.spi.StaticContentInfo;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class GenericStaticContentInfo extends BaseInfo implements StaticContentInfo {
 

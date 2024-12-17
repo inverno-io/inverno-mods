@@ -20,7 +20,7 @@ package io.inverno.mod.grpc.base;
  * Base exception class used to report gRPC errors.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public class GrpcException extends RuntimeException {
@@ -197,7 +197,7 @@ public class GrpcException extends RuntimeException {
 	 * 
 	 * @param statusCode a gRPC status code 
 	 * 
-	 * @Throws IllegalArgumentException if the specified status code is invalid
+	 * @throws IllegalArgumentException if the specified status code is invalid
 	 */
 	private void setStatusCode(int statusCode) throws IllegalArgumentException {
 		if(statusCode < 0) {
@@ -252,7 +252,7 @@ public class GrpcException extends RuntimeException {
 	 * </p>
 	 * 
 	 * <p>
-	 * The specified error is returned untouched if it is already an {@code GrpcException} instance, ohterwise it is wrapped in a {@code GrpcException} with {@link GrpcStatus#INTERNAL} code.
+	 * The specified error is returned untouched if it is already an {@code GrpcException} instance, otherwise it is wrapped in a {@code GrpcException} with {@link GrpcStatus#INTERNAL} code.
 	 * </p>
 	 * 
 	 * @param error the error to wrap

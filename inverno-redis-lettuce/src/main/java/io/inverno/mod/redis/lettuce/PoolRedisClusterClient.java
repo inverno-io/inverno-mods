@@ -54,6 +54,6 @@ public class PoolRedisClusterClient<A, B, C extends StatefulRedisClusterConnecti
 
 	@Override
 	protected Mono<StatefulRedisConnectionOperations<A, B, C, ?>> operations() {
-		return Mono.fromCompletionStage(() -> this.pool.acquire()).map(connection -> new StatefulRedisConnectionOperations<>(connection, connection.reactive(), this.pool, this.keyType, this.valueType));
+		return Mono.fromCompletionStage(this.pool::acquire).map(connection -> new StatefulRedisConnectionOperations<>(connection, connection.reactive(), this.pool, this.keyType, this.valueType));
 	}
 }

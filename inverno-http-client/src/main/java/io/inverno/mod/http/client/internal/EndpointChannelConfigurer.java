@@ -21,12 +21,11 @@ import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.internal.netty.ValidatingHttpHeadersFactory;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.HttpClientUpgradeException;
-import io.inverno.mod.http.client.internal.http1x.Http1xRequestEncoder;
 import io.inverno.mod.http.client.internal.http1x.Http1xConnection;
+import io.inverno.mod.http.client.internal.http1x.Http1xRequestEncoder;
 import io.inverno.mod.http.client.internal.http1x.Http1xUpgradingExchange;
 import io.inverno.mod.http.client.internal.http1x.Http1xWebSocketConnection;
 import io.inverno.mod.http.client.internal.http2.Http2Connection;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -47,7 +46,7 @@ import io.netty.handler.proxy.ProxyHandler;
 import io.netty.handler.proxy.Socks4ProxyHandler;
 import io.netty.handler.proxy.Socks5ProxyHandler;
 import io.netty.handler.ssl.SslContext;
-import io.netty.resolver.DefaultAddressResolverGroup;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.Promise;
 import java.net.InetSocketAddress;
@@ -58,10 +57,10 @@ import java.util.Set;
 
 /**
  * <p>
- * The client endpoint channel configurer used to configure the channel pipeline when establishing a HTTP/1.X, HTTP/2 or WebSocket connection to an endpoint.
+ * The client endpoint channel configurer used to configure the channel pipeline when establishing an HTTP/1.X, HTTP/2 or WebSocket connection to an endpoint.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @version 1.6
  */
 @Bean( visibility = Bean.Visibility.PRIVATE )
@@ -77,9 +76,8 @@ public class EndpointChannelConfigurer {
 	private final HttpConnectionFactory<Http1xConnection> http1xConnectionFactory;
 	private final WebSocketConnectionFactory<Http1xWebSocketConnection> http1xWebSocketConnectionFactory;
 	private final HttpConnectionFactory<Http2Connection> http2ConnectionFactory;
-	
-	private final ByteBufAllocator allocator;
-	private final ByteBufAllocator directAllocator;
+
+	private final NetService netService;
 
 	/**
 	 * <p>
@@ -103,9 +101,8 @@ public class EndpointChannelConfigurer {
 		this.http1xConnectionFactory = http1xConnectionFactory;
 		this.http1xWebSocketConnectionFactory = http1xWebSocketConnectionFactory;
 		this.http2ConnectionFactory = http2ConnectionFactory;
-		
-		this.allocator = netService.getByteBufAllocator();
-		this.directAllocator = netService.getDirectByteBufAllocator();
+
+		this.netService = netService;
 	}
 	
 	/**
@@ -119,7 +116,7 @@ public class EndpointChannelConfigurer {
 	 * @param serverAddress    the address of the endpoint
 	 */
 	void configure(ChannelPipeline pipeline, HttpClientConfiguration configuration, SslContext sslContext, InetSocketAddress serverAddress) {
-		ConnectionSinkHandler<HttpConnection> connectionSinkHandler = new EndpointChannelConfigurer.ConnectionSinkHandler<HttpConnection>(CONNECTION_HANDLER_NAME);
+		ConnectionSinkHandler<HttpConnection> connectionSinkHandler = new EndpointChannelConfigurer.ConnectionSinkHandler<>(CONNECTION_HANDLER_NAME);
 		if(configuration.proxy_host() != null && configuration.proxy_port() != null) {
 			this.configureProxy(pipeline, configuration, sslContext, connectionSinkHandler, () -> this.configureDirect(pipeline, configuration, sslContext, serverAddress));
 		}
@@ -131,7 +128,7 @@ public class EndpointChannelConfigurer {
 	
 	/**
 	 * <p>
-	 * Configures the channel pipeline for a direct Http connection to the remote endpoint.
+	 * Configures the channel pipeline for a direct HTTP connection to the remote endpoint.
 	 * </p>
 	 * 
 	 * @param pipeline      the pipeline to configure
@@ -147,12 +144,14 @@ public class EndpointChannelConfigurer {
 		}
 		
 		if(sslContext != null) {
+			SslHandler sslHandler;
 			if(configuration.tls_send_sni()) {
-				pipeline.addLast("sslHandler", sslContext.newHandler(this.allocator, serverAddress.getHostName(), serverAddress.getPort()));
+				sslHandler = sslContext.newHandler(this.netService.getByteBufAllocator(), serverAddress.getHostName(), serverAddress.getPort());
 			}
 			else {
-				pipeline.addLast("sslHandler", sslContext.newHandler(this.allocator));
+				sslHandler = sslContext.newHandler(this.netService.getByteBufAllocator());
 			}
+			pipeline.addLast("sslHandler", sslHandler);
 
 			if(!sslContext.applicationProtocolNegotiator().protocols().isEmpty()) {
 				// alpn
@@ -197,7 +196,7 @@ public class EndpointChannelConfigurer {
 	 * @param serverAddress the address of the endpoint
 	 */
 	void configureWebSocket(ChannelPipeline pipeline, HttpClientConfiguration configuration, SslContext sslContext, InetSocketAddress serverAddress) {
-		ConnectionSinkHandler<Http1xWebSocketConnection> connectionSinkHandler = new EndpointChannelConfigurer.ConnectionSinkHandler<Http1xWebSocketConnection>(WS_CONNECTION_HANDLER_NAME);
+		ConnectionSinkHandler<Http1xWebSocketConnection> connectionSinkHandler = new EndpointChannelConfigurer.ConnectionSinkHandler<>(WS_CONNECTION_HANDLER_NAME);
 		if(configuration.proxy_host() != null && configuration.proxy_port() != null) {
 			this.configureProxy(pipeline, configuration, sslContext, connectionSinkHandler, () -> this.configureWebSocketDirect(pipeline, configuration, sslContext, serverAddress));
 		}
@@ -220,15 +219,15 @@ public class EndpointChannelConfigurer {
 	private void configureWebSocketDirect(ChannelPipeline pipeline, HttpClientConfiguration configuration, SslContext sslContext, InetSocketAddress serverAddress) {
 		if(sslContext != null) {
 			if(configuration.tls_send_sni()) {
-				pipeline.addLast("sslHandler", sslContext.newHandler(this.allocator, serverAddress.getHostName(), serverAddress.getPort()));
+				pipeline.addLast("sslHandler", sslContext.newHandler(this.netService.getByteBufAllocator(), serverAddress.getHostName(), serverAddress.getPort()));
 			}
 			else {
-				pipeline.addLast("sslHandler", sslContext.newHandler(this.allocator));
+				pipeline.addLast("sslHandler", sslContext.newHandler(this.netService.getByteBufAllocator()));
 			}
 		}
 		
 		pipeline.addLast("http1xDecoder", new HttpResponseDecoder(createHttpDecoderConfig(configuration)));
-		pipeline.addLast("http1xEncoder", new Http1xRequestEncoder(this.directAllocator));
+		pipeline.addLast("http1xEncoder", new Http1xRequestEncoder(this.netService.getDirectByteBufAllocator()));
 		pipeline.addLast("http1xAggregator", new HttpObjectAggregator(8192));
 		
 		List<WebSocketClientExtensionHandshaker> extensionHandshakers = new LinkedList<>();
@@ -266,20 +265,11 @@ public class EndpointChannelConfigurer {
 	 * @param connectionConfigurer  the connection configurer invoked to configure the pipeline once the proxy connection is established
 	 */
 	private <A> void configureProxy(ChannelPipeline pipeline, HttpClientConfiguration configuration, SslContext sslContext, EndpointChannelConfigurer.ConnectionSinkHandler<A> connectionSinkHandler, Runnable connectionConfigurer) {
-		// TODO Here we uses the default JDK based dns resolver which might not be ideal for all use cases so we might need to adjust this to use proper DNS resolver to be able to do address round robin for instance
-		// This shall be provided in a dedicated DNS service discovery module
-		DefaultAddressResolverGroup.INSTANCE.getResolver(pipeline.channel().eventLoop())
-			.resolve(InetSocketAddress.createUnresolved(configuration.proxy_host(), configuration.proxy_port()))
-			.addListener(res -> {
-				if(res.isSuccess()) {
-					InetSocketAddress proxyAddress = (InetSocketAddress)res.get();
+		this.netService.resolve(configuration.proxy_host(), configuration.proxy_port())
+			.subscribe(
+				proxyAddress -> {
 					ProxyHandler proxyHandler;
 					switch(configuration.proxy_protocol()) {
-						default:
-						case HTTP: {
-							proxyHandler = configuration.proxy_username() != null && configuration.proxy_password() != null ? new HttpProxyHandler(proxyAddress, configuration.proxy_username(), configuration.proxy_password()) : new HttpProxyHandler(proxyAddress);
-							break;
-						}
 						case SOCKS_V4: {
 							proxyHandler = configuration.proxy_username() != null ? new Socks4ProxyHandler(proxyAddress, configuration.proxy_username()) : new Socks4ProxyHandler(proxyAddress);
 							break;
@@ -288,13 +278,18 @@ public class EndpointChannelConfigurer {
 							proxyHandler = configuration.proxy_username() != null && configuration.proxy_password() != null ? new Socks5ProxyHandler(proxyAddress, configuration.proxy_username(), configuration.proxy_password()) : new Socks5ProxyHandler(proxyAddress);
 							break;
 						}
+						case HTTP:
+						default: {
+							proxyHandler = configuration.proxy_username() != null && configuration.proxy_password() != null ? new HttpProxyHandler(proxyAddress, configuration.proxy_username(), configuration.proxy_password()) : new HttpProxyHandler(proxyAddress);
+							break;
+						}
 					}
 					proxyHandler.setConnectTimeoutMillis(configuration.pool_connect_timeout());
 
 					pipeline.addFirst(PROXY_HANDLER_NAME, proxyHandler);
 					pipeline.addLast(new ChannelInboundHandlerAdapter() {
 						@Override
-						public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+						public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
 							if(evt instanceof ProxyConnectionEvent) {
 								pipeline.remove(this);
 								pipeline.remove(proxyHandler);
@@ -311,12 +306,10 @@ public class EndpointChannelConfigurer {
 							ctx.fireUserEventTriggered(evt);
 						}
 					});
-				}
-				else {
-					pipeline.fireExceptionCaught(res.cause());
-				}
-			});
-	};
+				},
+				pipeline::fireExceptionCaught
+			);
+	}
 	
 	/**
 	 * <p>
@@ -332,7 +325,7 @@ public class EndpointChannelConfigurer {
 	Http1xConnection configureHttp1x(ChannelPipeline pipeline, HttpVersion httpVersion, HttpClientConfiguration configuration) {
 		// add HTTP decoder, in case of upgrade we must make sure clean stuff if needed
 		pipeline.addLast("http1xDecoder", new HttpResponseDecoder(createHttpDecoderConfig(configuration)));
-		pipeline.addLast("http1xEncoder", new Http1xRequestEncoder(this.directAllocator));
+		pipeline.addLast("http1xEncoder", new Http1xRequestEncoder(this.netService.getDirectByteBufAllocator()));
 		if(configuration.decompression_enabled()) {
 			pipeline.addLast("http1xDecompressor", new HttpContentDecompressor(false));
 		}
@@ -383,16 +376,15 @@ public class EndpointChannelConfigurer {
 	
 	/**
 	 * <p>
-	 * Configures the specified pipeline to start an H2C upgrade negotiation.
+	 * Starts an H2C upgrade negotiation.
 	 * <p>
 	 * 
-	 * @param pipeline          the pipeline to configure
 	 * @param configuration     an HTTP client configuration
 	 * @param upgradingExchange the HTTP/1.x upgrading exchange
 	 *
 	 * @return the future HTTP/2 connection that will be used in case negotiation succeeds
 	 */
-	public Http2Connection startHttp2Upgrade(ChannelPipeline pipeline, HttpClientConfiguration configuration, Http1xUpgradingExchange<?> upgradingExchange) {
+	public Http2Connection startHttp2Upgrade(HttpClientConfiguration configuration, Http1xUpgradingExchange<?> upgradingExchange) {
 		Http2Connection connection = this.http2ConnectionFactory.create(configuration, HttpVersion.HTTP_2_0, this);
 		upgradingExchange.init(connection);
 		return connection;
@@ -459,12 +451,11 @@ public class EndpointChannelConfigurer {
 	 * 
 	 * @return a future that succeeds once the connection is active (i.e. channelActive() has been invoked) or fails when an exception was caught.
 	 */
+	@SuppressWarnings("unchecked")
 	public Future<HttpConnection> completeConnection(ChannelPipeline pipeline) {
 		EndpointChannelConfigurer.ConnectionSinkHandler<HttpConnection> connectionSinkHandler = (EndpointChannelConfigurer.ConnectionSinkHandler<HttpConnection>)pipeline.get(CONNECTION_SINK_HANDLER_NAME);
 		return connectionSinkHandler.getConnection()
-			.addListener(ign -> {
-				pipeline.remove(connectionSinkHandler);
-			});
+			.addListener(ign -> pipeline.remove(connectionSinkHandler));
 	}
 	
 	/**
@@ -476,12 +467,11 @@ public class EndpointChannelConfigurer {
 	 * 
 	 * @return a future that succeeds once the connection is active (i.e. channelActive() has been invoked) or fails when an exception was caught.
 	 */
+	@SuppressWarnings("unchecked")
 	public Future<Http1xWebSocketConnection> completeWsConnection(ChannelPipeline pipeline) {
 		EndpointChannelConfigurer.ConnectionSinkHandler<Http1xWebSocketConnection> connectionSinkHandler = (EndpointChannelConfigurer.ConnectionSinkHandler<Http1xWebSocketConnection>)pipeline.get(CONNECTION_SINK_HANDLER_NAME);
 		return connectionSinkHandler.getConnection()
-			.addListener(ign -> {
-				pipeline.remove(connectionSinkHandler);
-			});
+			.addListener(ign -> pipeline.remove(connectionSinkHandler));
 	}
 	
 	/**
@@ -489,7 +479,7 @@ public class EndpointChannelConfigurer {
 	 * A channel handler to be added at the end of the pipeline to be able to notify when a connection is active (i.e. channelActive() has been invoked).
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @version 1.9
 	 * 
 	 * @param <A> the connection type
@@ -517,13 +507,14 @@ public class EndpointChannelConfigurer {
 		}
 
 		@Override
-		public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+		public void handlerAdded(ChannelHandlerContext ctx) {
 			if(this.connectionFuture == null) {
 				this.connectionFuture = ctx.executor().newPromise();
 			}
 		}
 		
 		@Override
+		@SuppressWarnings("unchecked")
 		public void channelActive(ChannelHandlerContext ctx) throws Exception {
 			super.channelActive(ctx);
 			A connection = (A)ctx.pipeline().get(this.connectionHandlerName);
@@ -533,7 +524,7 @@ public class EndpointChannelConfigurer {
 		}
 
 		@Override
-		public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+		public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
 			this.connectionFuture.tryFailure(cause);
 		}
 	}

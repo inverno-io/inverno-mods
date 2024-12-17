@@ -32,7 +32,7 @@ import io.netty.handler.codec.MessageToByteEncoder;
  * A {@link GrpcMessageCompressor} implementation based on Netty's {@link EmbeddedChannel}. 
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public abstract class AbstractEmbeddedChannelGrpcMessageCompressor implements GrpcMessageCompressor {

@@ -57,10 +57,10 @@ public class SignatureJWSBuilder<A> extends GenericJWSBuilder<A> {
 	 * @param type                        the payload type
 	 * @param keys                        the signature specific keys to consider to sign the JWS
 	 * @param signatureProtectedJWSHeader the signature specific protected JWSheader
-	 * @param jwsHeader                   the signaTure JWS header
+	 * @param jwsHeader                   the signature JWS header
 	 * @param jwsPayload                  the JSON JWS payload
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public SignatureJWSBuilder(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type,	Publisher<? extends JWK> keys, GenericJWSHeader signatureProtectedJWSHeader, GenericJWSHeader jwsHeader, GenericJWSPayload<A> jwsPayload) {
 		super(mapper, dataConversionService, jwkService, type, keys);
 		

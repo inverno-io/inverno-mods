@@ -99,7 +99,7 @@ public interface X509JWK<A extends PublicKey, B extends PrivateKey> extends Asym
 	 * Returns the resolved certificate defining the public key.
 	 * </p>
 	 * 
-	 * @return an optional containing the resolved certificate or an empty certificate if no certificate could have been resolve when building or reading the key
+	 * @return an optional containing the resolved certificate or an empty certificate if no certificate could have been resolved when building or reading the key
 	 */
 	@JsonIgnore
 	Optional<X509Certificate> getX509Certificate();

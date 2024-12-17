@@ -12,7 +12,7 @@ Configuration is one of the most important aspect of an application and sadly on
 
 In its most basic form, a configuration is not more than a set of properties associating a value to a key. It would be naive to think that this would be enough to build an agile and customizable application, but in the end, the property should always be considered as the basic building block for configurations.
 
-Now, the first thing to notice is that any part of an application can potentially be configurable, from a server IP address to a color of a button in a user interface, there are multiple forms of configuration with different expectations that must coexist in an application. For instance, some parts of the configuration are purely static and do not change during the operation of an application, this is the case of a bootstrap configuration which mostly relates to the operating environment (eg. a server port). Some other parts, on the other hand, are more dynamic and can change during the operation of an application, this is the case of tenant specific configuration or even user preferences.
+Now, the first thing to notice is that any part of an application can potentially be configurable, from a server IP address to a color of a button in a user interface, there are multiple forms of configuration with different expectations that must coexist in an application. For instance, some parts of the configuration are purely static and do not change during the operation of an application, this is the case of a bootstrap configuration which mostly relates to the operating environment (e.g. a server port). Some other parts, on the other hand, are more dynamic and can change during the operation of an application, this is the case of tenant specific configuration or even user preferences.
 
 Following this, we can see that a configuration greatly depends on the context in which it is loaded. The definition of a configuration, which is basically a list of property names, is dictated by the application, so when the application is running, this definition should be fixed but the context is not. For instance, the bootstrap configuration is different from one operating environment to another, user preferences are not the same from one user to another...
 
@@ -29,9 +29,7 @@ In order to use the Inverno *configuration* module, we need to declare a depende
 
 ```java
 module io.inverno.example.app {
-    ...
     requires io.inverno.mod.configuration;
-    ...
 }
 ```
 
@@ -52,28 +50,26 @@ Using Maven:
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.inverno.mod:inverno-configuration:${VERSION_INVERNO_MODS}'
-...
 ```
 
 ## Configuration source
 
-A configuration source can be any data store that holds configuration data, the API abstracts configuration data sources to provide a unified access to configuration data through the `ConfigurationSource` interface. Specific implementations should be considered depending on the type of configuration: a bootstrap configuration is most likely to be static and stored in configuration files or environment variables whereas a tenant specific configuration is most likely to be stored in a distributed data store. But this is not a universal rule, depending on the needs we can very well consider any kind of configuration source for any kind of configuration. The configuration source abstracts these concerns from the rest of the application.
+A configuration source can be any data store that holds configuration data, the API abstracts configuration data sources to provide unified access to configuration data through the `ConfigurationSource` interface. Specific implementations should be considered depending on the type of configuration: a bootstrap configuration is most likely to be static and stored in configuration files or environment variables whereas a tenant specific configuration is most likely to be stored in a distributed data store. But this is not a universal rule, depending on the needs we can very well consider any kind of configuration source for any kind of configuration. The configuration source abstracts these concerns from the rest of the application.
 
 The `ConfigurationSource` is the main entry point for accessing configuration properties, it shall be used every time there's a need to retrieve configuration properties. It defines only one method for creating a `ConfigurationQuery` eventually executed in order to retrieve one or more configuration properties.
 
 For instance, property `server.uri` can be retrieved as follows:
 
 ```java
-ConfigurationSource<?, ?, ?> source = ...
+ConfigurationSource source = ...
 
 source.get("server.url")                        // 1
     .execute()                                  // 2
     .single()                                   // 3
     .map(queryResult -> queryResult
-        .getResult()                            // 4
+        .toOptional()                           // 4
         .flatMap(ConfigurationProperty::asURI)  // 5
         .orElse(URI.create("http://localhost")) // 6
     )
@@ -85,23 +81,35 @@ In the preceding example:
 1. create a configuration query to retrieve the `server.url` property
 2. execute the query, the API is reactive so nothing will happen until a subscription is actually made on the resulting publisher of `ConfigurationQueryResult`
 3. transform the `Flux` to a `Mono` since we expect a single result
-4. get the resulting configuration property, a query result is always returned even if the property does not exist in the source therefore `getResult()` returns an `Optional` that lets you decide what to do if the property is missing
+4. get the resulting configuration property as an `Optional`, a query result is always returned even if the property does not exist in the source but that doesn't mean an actual configuration property as been resolved from the configuration source, `toOptional()` allows to convert result in a configuration property `Optional` that lets you decide what to do if the property is missing. Note that `ConfigurationQueryResult` is similar to `Optional` and actually exposes most of `Optional` methods.
 5. convert the property value to URI if present, a property can be defined in a source with a null value which explains why the property value is also an `Optional` and why we need to use `flatMap()`
 6. return the actual value if it exists or the specified default value
 7. subscribe to the `Mono` which actually runs the query in the source and return the property value or the default value if the property value is null or not defined in the source
 
-This seems to be a lot of steps to simply retrieve one property value, but if you look closely you'll understand that each of them is actually necessary:
+This seems to be a lot to simply retrieve one property value, but if you look closely you'll understand that each of these steps is actually necessary:
 
 - we want to be able to retrieve multiple properties and/or create more complex queries in a batch so `.execute()` is required to mark the end of a batch of queries
 - we want to be reactive so `.single().map()` and `subscribe()` are required
-- we want to have access to the configuration query key at the origin of a property for troubleshooting as a result the query result must expose `getQueryKey()` and `getResult()` methods
+- we want to have access to the configuration query key at the origin of a property for troubleshooting as a result the query result must expose `getQueryKey()` and `toOptional()` methods
 - we want to be able to convert a property value and provide different behaviors when a property does not exist in a source or when it does exist but with a null value, as a result `.flatMap(property -> property.asURI()).orElse(URI.create("http://localhost"))` is required
+
+Hopefully, the API provides shortcuts to make above code much more compact:
+
+```java
+ConfigurationSource source = ...
+
+source.get("server.url")
+    .execute()
+    .single()
+    .map(queryResult -> queryResult.asURI(URI.create("http://localhost"))) // get or default
+    .subscribe(serverURI -> ...);
+```
 
 As we said earlier, a configuration depends on the context: a given property might have different values when considering different contexts. The configuration API defines a configuration property with a name, a value and a set of parameters specifying the context for which the property is defined. Such configuration property is referred to as a **parameterized configuration property**.
 
 > Some configuration source implementations do not support parameterized configuration property, they simply ignore parameters specified in queries and return the value associated to the property name. This is especially the case of environment variables which don't allow to specify property parameters.
 
-In order to retrieve a property in a particular context we can then parameterized the configuration query as follows:
+In order to retrieve a property in a particular context we can then parameterize the configuration query as follows:
 
 ```java
 source.get("server.url")
@@ -112,26 +120,30 @@ source.get("server.url")
 
 In the preceding example, we query the source for property `server.url` defined for the production environment in zone US. To state the obvious, both the list of parameters and their values can be determined at runtime using actual contextual values. This is what makes parameterized properties so powerful as it is suitable for a wide range of use cases. This is all the more true when using [defaultable configuration sources](#defaultable-configuration-source) which use defaulting strategies to determine the best matching value corresponding to a given query.
 
-As said before the API let's you fluently query multiple properties in a batch and map the results in a configuration object.
+As said before the API lets you fluently query multiple properties in a batch and map the results in a configuration object.
 
 ```java
 source
     .get("server.port", "db.url", "db.user", "db.password").withParameters("environment", "production", "zone", "us")
     .and()
     .get("db.schema").withParameters("environment", "production", "zone", "us", "tenant", "someCompany")
-    .execute()
-    .collectMap(queryResult -> queryResult.getQueryKey().getName(), queryResult -> queryResult.getResult())
-    .map(properties -> {
-        ApplicationConfiguration config = new ApplicationConfiguration();
-
-        properties.get("server.port").flatMap(property -> property.asInteger()).ifPresent(config::setServerPort);
-        properties.get("db.url").flatMap(property -> property.asURL()).ifPresent(config::setDbURL);
-        properties.get("db.user").flatMap(property -> property.asString()).ifPresent(config::setDbUser);
-        String dbPassword = properties.get("db.password").flatMap(property -> property.asString()).ifPresent(config::setDbPassword);
-        String dbSchema = properties.get("db.schema").flatMap(property -> property.asString()).ifPresent(config::setDbSchema);
-
-        return config;
-    })
+    .execute()    
+    .reduceWith(
+        () -> new ApplicationConfiguration(),
+        (config, queryResult) -> {
+            switch(queryResult.getQueryKey().getName()) {
+                case "db.url": config.setDbURL(queryResult.get().asURL().orElseThrow());
+                    break;
+                case "db.user": config.setDbUser(queryResult.get().asString("default"));
+                    break;
+                case "db.password": config.setDbPassword(queryResult.get().asString("password"));
+                    break;
+                case "db.schema": config.setDbSchema(queryResult.get().asString("default"));
+                    break;
+            }
+            return config;
+        }
+    );
     .subscribe(config -> {
         ...
     });
@@ -142,7 +154,7 @@ The beauty of being reactive is that it comes with a lot of cool features such a
 ```java
 Mono<ApplicationConfiguration> configurationLoader = ... // see previous example
 
-// Query the source on each subscriptions
+// Query the source on each subscription
 configurationLoader.subscribe(config -> {
     ...
 });
@@ -158,7 +170,7 @@ cachedConfigurationLoader.subscribe(config -> {
 
 > Although publisher caching is a cool feature, it might not be ideal for complex caching use cases and more solid solution should be considered.
 
-A configuration source relies on a `SplittablePrimitiveDecoder` to decode property values. Configuration source implementations usually provide a default decoder but it is possible to inject custom decoders to decode particular configuration values. The expected decoder implementation depends on the configuration source implementation but most of the time a string to object decoder is expected.
+A configuration source relies on a `SplittablePrimitiveDecoder` to decode property values. Configuration source implementations usually provide a default decoder, but it is possible to inject custom decoders to decode particular configuration values. The expected decoder implementation depends on the configuration source implementation but most of the time a string to object decoder is expected.
 
 ```java
 SplittablePrimitiveDecoder<String> customDecoder = ...
@@ -166,9 +178,9 @@ SplittablePrimitiveDecoder<String> customDecoder = ...
 PropertyFileConfigurationSource source = new PropertyFileConfigurationSource(new ClasspathResource(URI.create("classpath:/path/to/configuration.properties")), customDecoder)
 ```
 
-The regular and most efficient way to query a configuration source is to target specific configuration properties identified by a name and a set of parameters, however there are some cases that actually require to list all values defined for a particular property name and matching a particular set of parameters.
+The regular and most efficient way to query a configuration source is to target specific configuration properties identified by a name and a set of parameters. However, there are some cases that actually require to list all values defined for a particular property name and matching a particular set of parameters.
 
-for instance, this is typically the case when configuring log levels, since we can hardly know the name of each and every loggers used in an application, it is easier, safer and more efficient in that case to list all the configuration properties defined for a `logging.level` property and apply the configuration to the loggers based on the parameters of the returned properties.
+for instance, this is typically the case when configuring log levels, since we can hardly know the name of each and every logger used in an application, it is easier, safer and more efficient in that case to list all the configuration properties defined for a `logging.level` property and apply the configuration to the loggers based on the parameters of the returned properties.
 
 For instance, the following properties can be defined in the configuration:
 
@@ -238,7 +250,7 @@ It extends the `ConfigurationSource` with one method for creating a `Configurati
 For instance, a parameterized property `server.port` can be set in a configuration source as follows:
 
 ```java
-ConfigurableConfigurationSource<?, ?, ?, ?, ?> source = null;
+ConfigurableConfigurationSource source = null;
 
 source.set("server.port", 8080)
     .withParameters("environment", "production", "zone", "us")
@@ -271,16 +283,16 @@ RedisConfigurationSource source = new RedisConfigurationSource(redisClient, cust
 
 ### Defaultable configuration source
 
-By default, a configuration source returns the result that exactly match the configuration query. When considering parameterized configuration properties, this behaviour can quickly become quite retrictive and a defaulting mechanism that would allow to select the best matching value among those defined in the source could reveal their full potential.
+By default, a configuration source returns the result that exactly match the configuration query. When considering parameterized configuration properties, this behaviour can quickly become quite restrictive and a defaulting mechanism that would allow to select the best matching value among those defined in the source could reveal their full potential.
 
 A defaultable configuration source is a particular source that can rely on a defaulting strategy to determine the best matching value for a given configuration query. A defaultable configuration source implements `DefaultableConfigurationSource` which allows to choose the defaulting strategy to use by wrapping the original source:
 
 ```java
-DefaultableConfigurationSource<?, ?, ?, ?> source = ...
+DefaultableConfigurationSource source = ...
 
-DefaultableConfigurationSource<?, ?, ?, ?> defaultingSource = source.withDefaultingStrategy(DefaultingStrategy.lookup());
+DefaultableConfigurationSource defaultingSource = source.withDefaultingStrategy(DefaultingStrategy.lookup());
 
-DefaultableConfigurationSource<?, ?, ?, ?> originalSource = defaultingSource.unwrap();
+DefaultableConfigurationSource originalSource = defaultingSource.unwrap();
 ```
 
 A `DefaultingStrategy` provides two methods `#getDefaultingKeys(ConfigurationKey queryKey)` and `#getListDefaultingKeys(ConfigurationKey queryKey)` which respectively derives the actual keys to retrieve from the source ordered by priorities from the highest to the lowest to determine the best-matching value for the query (the first existing value shall be returned) and the actual keys that must be retained when listing properties. The configuration module provides three implementations: `DefaultingStrategy#noOp()` strategy, `DefaultingStrategy#lookup()` and `DefaultingStrategy#wildcard()`.
@@ -304,14 +316,14 @@ For instance, if we consider a source with the following properties:
 We can run the following queries with defaulting:
 
 ```java
-DefaultableConfigurationSource<?, ?, ?, ?> source = null;
+DefaultableConfigurationSource source = null;
     source = source.withDefaultingStrategy(DefaultingStrategy.lookup());
     source
-        .get("log.level").withParameters("environment", "dev", "name", "test1")        // 1
-        .and().get("log.level").withParameters("environment", "prod", "name", "test2") // 2
-        .and().get("log.level").withParameters("environment", "prod", "name", "test1") // 3
-        .and().get("log.level").withParameters("name", "test1")                        // 4
-        .and().get("log.level").withParameters("name", "test2", "environment", "prod") // 5
+        .get("log.level").withParameters("environment", "dev", "name", "test1").and()  // 1
+        .get("log.level").withParameters("environment", "prod", "name", "test2").and() // 2
+        .get("log.level").withParameters("environment", "prod", "name", "test1").and() // 3
+        .get("log.level").withParameters("name", "test1").and()                        // 4
+        .get("log.level").withParameters("name", "test2", "environment", "prod")       // 5
         .execute()
         ...
 ```
@@ -322,7 +334,7 @@ DefaultableConfigurationSource<?, ?, ?, ?> source = null;
 4. Returns `INFO` which corresponds to `log.level[]` property since property `log.level[name = "test1"]` is not defined
 5. Returns `INFO` which corresponds to `log.level[]` properties since property `log.level[name = "test2", "environment", "prod"]` and `log.level[name = "test2"]` are not defined
 
-Since parameters are prioritized from left to right, the order into which they are defined in the query is important. As you can see in see in above example querying `log.level[environment = "prod", name = "test2"]` is not the same as querying `log.level[name = "test2", environment = "prod"]`.
+Since parameters are prioritized from left to right, the order into which they are defined in the query is important. As you can see in above example querying `log.level[environment = "prod", name = "test2"]` is not the same as querying `log.level[name = "test2", environment = "prod"]`.
 
 A query with `n` parameters results in at most `n+1` properties being retrieved from the source depending on the implementation.
 
@@ -335,14 +347,14 @@ If we consider query key `property[p1=v1,...pn=vn]`, the most precise result is 
 Considering previous example but with the wildcard strategy instead of the lookup strategy, some queries have different results:
 
 ```java
-DefaultableConfigurationSource<?, ?, ?, ?> source = null;
+DefaultableConfigurationSource source = null;
     source = source.withDefaultingStrategy(DefaultingStrategy.wildcard());
     source
-        .get("log.level").withParameters("environment", "dev", "name", "test1")        // 1
-        .and().get("log.level").withParameters("environment", "prod", "name", "test2") // 2
-        .and().get("log.level").withParameters("environment", "prod", "name", "test1") // 3
-        .and().get("log.level").withParameters("name", "test1")                        // 4
-        .and().get("log.level").withParameters("name", "test2", "environment", "prod") // 5
+        .get("log.level").withParameters("environment", "dev", "name", "test1").and()  // 1
+        .get("log.level").withParameters("environment", "prod", "name", "test2").and() // 2
+        .get("log.level").withParameters("environment", "prod", "name", "test1").and() // 3
+        .get("log.level").withParameters("name", "test1").and()                        // 4
+        .get("log.level").withParameters("name", "test2", "environment", "prod")       // 5
         .execute()
         ...
 ```
@@ -366,7 +378,7 @@ MapConfigurationSource source = new MapConfigurationSource(Map.of("server.url", 
 ...
 ```
 
-This source is [defaultable](#defaultable-configuration-source) and it can be used for testing purpose in order to provide a mock configuration source.
+This source is [defaultable](#defaultable-configuration-source), and it can be used for testing purpose in order to provide a mock configuration source.
 
 ### System environment configuration source
 
@@ -425,7 +437,7 @@ public static void main(String[] args) {
 
 This implementation is [defaultable](#defaultable-configuration-source).
 
-### `.properties` file configuration source
+### .properties file configuration source
 
 The `.properties` file configuration source exposes configuration properties specified in a `.properties` file. This implementation supports parameterized properties.
 
@@ -446,11 +458,11 @@ PropertyFileConfigurationSource source = new PropertyFileConfigurationSource(new
 
 This implementation is [defaultable](#defaultable-configuration-source).
 
-### `.cprops` file configuration source
+### .cprops file configuration source
 
-The `.cprops` file configuration source exposes configuratio properties specified in a `.cprops` file. This implementation supports parameterized properties.
+The `.cprops` file configuration source exposes configuration properties specified in a `.cprops` file. This implementation supports parameterized properties.
 
-The `.cprops` file format has been introduced to facilitate the definition and reading of parameterized properties. In particular it allows to regroup the definition of properties with common parameters into sections and many more.
+The `.cprops` file format has been introduced to facilitate the definition and reading of parameterized properties. it allows in particular to regroup the definition of properties with common parameters into sections and many more.
 
 For instance:
 
@@ -507,7 +519,7 @@ This implementation is [defaultable](#defaultable-configuration-source).
 
 ### Redis configuration source
 
-The [Redis][redis] configuration source exposes configuration properties stored in a Redis data store. This implementation supports parameterized properties and it is also configurable which means it can be used to set configuration properties in the data store at runtime.
+The [Redis][redis] configuration source exposes configuration properties stored in a Redis data store. This implementation supports parameterized properties, and it is also configurable which means it can be used to set configuration properties in the data store at runtime.
 
 The following example shows how to set configuration properties for the `dev` and `prod` environment:
 
@@ -527,9 +539,9 @@ This implementation is [defaultable](#defaultable-configuration-source).
 
 ### Versioned Redis configuration source
 
-The versioned [Redis][redis] configuration source exposes configuration properties stored in a Redis data store. This implementation supports parameterized properties and it is also configurable which means it can be used to set configuration properties in the data store at runtime.
+The versioned [Redis][redis] configuration source exposes configuration properties stored in a Redis data store. This implementation supports parameterized properties, and it is also configurable which means it can be used to set configuration properties in the data store at runtime.
 
-The main difference with the [Redis configuration source](#redis-configuration-source) lies in the fact that it also provides a simple but effective versioning system which allows to set multiple properties and activate or revert them atomically. A global revision keeps track of the whole data store but it is also possible to version a particular branch in the tree of properties.
+The main difference with the [Redis configuration source](#redis-configuration-source) lies in the fact that it also provides a simple but effective versioning system which allows to set multiple properties and activate or revert them atomically. A global revision keeps track of the whole data store, but it is also possible to version a particular branch in the tree of properties.
 
 The following example shows how to set configuration properties for the `dev` and `prod` environment and activates them globally or independently:
 
@@ -552,7 +564,7 @@ source.activate("environment", "dev").block();
 source.activate("environment", "prod").block();
 ```
 
-It is also possible to fallback to a particular revision by specifying it in the `activate()` method:
+It is also possible to fall back to a particular revision by specifying it in the `activate()` method:
 
 ```java
 // Activate revision 2 globally
@@ -561,7 +573,7 @@ source.activate(2).block();
 
 This implementation is particularly suitable to load tenant specific configuration in a multi-tenant application, or user preferences... basically any kind of configuration that can and will be dynamically changed at runtime and might require atomic activation or fallback.
 
-> Parameterized properties and versioning per branch are two simple yet powerful features but it is important to be picky here otherwise there is a real risk of messing things up. You should thoughtfully decide when a configuration branch can be versioned, for instance the versioned sets of properties must be disjointed (if this is not obvious, think again), this is actually checked in the Redis configuration source and an exception will be thrown if you try to do things like this, basically trying to version the same property twice.
+> Parameterized properties and versioning per branch are two simple yet powerful features, but it is important to be picky here otherwise there is a real risk of messing things up. You should thoughtfully decide when a configuration branch can be versioned, for instance the versioned sets of properties must be disjointed (if this is not obvious, think again), this is actually checked in the Redis configuration source and an exception will be thrown if you try to do things like this, basically trying to version the same property twice.
 
 This implementation is [defaultable](#defaultable-configuration-source).
 
@@ -594,8 +606,8 @@ Let's consider two parameterized configuration sources: `source1` and `source2`.
 We can compose them in a composite configuration source as follows:
 
 ```java
-ConfigurationSource<?, ?, ?> source1 = ...
-ConfigurationSource<?, ?, ?> source2 = ...
+ConfigurationSource source1 = ...
+ConfigurationSource source2 = ...
 
 CompositeConfigurationSource source = new CompositeConfigurationSource(List.of(source1, source2));
 
@@ -616,7 +628,7 @@ In the example above:
 4. There is no exact match for `server.url[zone="EU", environment="production"]` in both `source1` and `source2`, the priority is given to the parameters from left to right, the property matching `server.url[zone="EU"]` shall be returned => `https://default.eu` defined in `source1` is returned
 5. Here we've simply changed the order of the parameters in the previous query, again the priority is given to parameters from left to right, since there is no match for `server.url[environment="production", zone="EU"]`, `server.url[environment="production"]` is considered => `https://prod` defined in `source2` is returned
 
-When considering multiple configuration sources, properties can be defined with the exact same key in two different sources, the source with the highest priority wins. In the last example we've been able to set the value of `server.url[]` to `null` in `source1`, however `null` is itself a value with a different meaning than a missing property, the `unset` value can be used in such situation to *unset* a property defined in a source with a lower priority.
+When considering multiple configuration sources, properties can be defined with the exact same key in two different sources, the source with the highest priority wins. In the last example we've been able to set the value of `server.url[]` to `null` in `source1`. However, `null` is itself a value with a different meaning than a missing property, the `unset` value can be used in such situation to *unset* a property defined in a source with a lower priority.
 
 For instance, considering previous example, we could have defined `server.url[]=unset` instead of `server.url[]=null` in `source1`, the query would then have returned an empty query result indicating an undefined property.
 
@@ -646,8 +658,8 @@ For instance, if we consider the following sources: `source1` and `source2`.
 If we can compose them in a composite configuration source, we can list configuration properties as follows:
 
 ```java
-ConfigurationSource<?, ?, ?> source1 = ...
-ConfigurationSource<?, ?, ?> source2 = ...
+ConfigurationSource source1 = ...
+ConfigurationSource source2 = ...
 
 CompositeConfigurationSource source = new CompositeConfigurationSource(List.of(source1, source2));
 
@@ -679,7 +691,7 @@ In the example above:
     - `logging.level[environment="prod",name="test4"]=error` defined in `source1`
     - `logging.level[environment="prod",name="test5"]=info` defined in `source1`
 2. `executeAll()` returns all properties defined with parameters `environment`, `name` and any other parameter, with parameter `environment` only and with no parameter following defaulting rules implemented in the default strategy. As a result the following properties are returned:
-    - `logging.level[environment="dev"]=info` defined in `source1` which is the property that would be returned when querying the source with an unspecified name (eg. `logging.level[environment="dev",name="unspecifiedLogger"]`)
+    - `logging.level[environment="dev"]=info` defined in `source1` which is the property that would be returned when querying the source with an unspecified name (e.g. `logging.level[environment="dev",name="unspecifiedLogger"]`)
     - `logging.level[environment="dev",name="test1"]=info` defined in `source1` and overriding the property defined in `source2`
     - `logging.level[environment="dev",name="test2"]=debug` defined in `source2`
     - `logging.level[environment="dev",name="test2",node="node-1"]=debug` defined in `source2`
@@ -750,7 +762,7 @@ public interface AppConfiguration {
 It can be loaded at runtime as follows:
 
 ```java
-ConfigurationSource<?, ?, ?> source = ...
+ConfigurationSource source = ...
 
 ConfigurationLoader
     .withConfiguration(AppConfiguration.class)
@@ -821,7 +833,7 @@ public class AppConfiguration {
 ```
 
 ```java
-ConfigurationSource<?, ?, ?> source = ...
+ConfigurationSource source = ...
 
 ConfigurationLoader
     .withConfigurator(AppConfiguration.class, configurer -> {
@@ -838,7 +850,7 @@ ConfigurationLoader
 
 ### Static loader
 
-Dynamic loading is fine but it relies on Java reflection which induces extra processing at runtime and might cause unexpected runtime errors due to the lack of static checking. This is all the more true as most of the time configuration definitions are known at compile time. For these reasons, it is better to create adhoc configuration loader implementations. Fortunately, the configuration Inverno compiler plugin can generate these for us.
+Dynamic loading is fine, but it relies on Java reflection which induces extra processing at runtime and might cause unexpected runtime errors due to the lack of static checking. This is all the more true as most of the time configuration definitions are known at compile time. For these reasons, it is better to create adhoc configuration loader implementations. Fortunately, the configuration Inverno compiler plugin can generate these for us.
 
 In order to create a configuration bean in an Inverno module, we simply need to create an interface for our configuration as specified above and annotates it with `@Configuration`, this will tell the configuration Inverno compiler plugin to generate a corresponding configuration loader implementation as well as a module bean making our configuration directly available inside our module.
 
@@ -857,7 +869,7 @@ public interface AppConfiguration {
 The preceding code will result in the generation of class `AppConfigurationLoader` which can then be used to load configuration at runtime without resorting to reflection.
 
 ```java
-ConfigurationSource<?, ?, ?> source = ...
+ConfigurationSource source = ...
 
 new AppConfigurationLoader()
     .withSource(source)
@@ -892,7 +904,7 @@ public interface AppConfiguration {
 }
 ```
 
-Finally, nested beans can be specified in a configuration which is convenient when a module is composing multiple modules and we wish to aggregate all configurations into one single representation in the composite module.
+Finally, nested beans can be specified in a configuration which is convenient when a module is composing multiple modules, and we wish to aggregate all configurations into one single representation in the composite module.
 
 For instance, we can have the following configuration defined in a component module:
 

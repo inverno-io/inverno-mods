@@ -35,7 +35,7 @@ public class JWKSet {
 
 	/**
 	 * <p>
-	 * Creates a JWK set contaning the specified keys.
+	 * Creates a JWK set containing the specified keys.
 	 * </p>
 	 * 
 	 * @param keys a list of keys
@@ -49,7 +49,7 @@ public class JWKSet {
 	 * Returns the JWK set keys.
 	 * </p>
 	 * 
-	 * @return a list of keys
+	 * @return an array of keys
 	 */
 	@JsonProperty("keys")
 	public JWK[] getKeys() {

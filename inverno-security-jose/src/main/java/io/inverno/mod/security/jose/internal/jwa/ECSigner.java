@@ -215,7 +215,7 @@ public class ECSigner extends AbstractJWASigner<ECJWK, ECAlgorithm> {
 
         int offset;
 
-        final byte derSignature[];
+        final byte[] derSignature;
 
         if(len < 128) {
             derSignature = new byte[2 + 2 + j + 2 + l];

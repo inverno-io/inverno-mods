@@ -28,6 +28,7 @@ import io.inverno.mod.http.client.internal.EndpointRequestHeaders;
 import io.inverno.mod.http.client.internal.GenericRequestCookies;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2Headers;
+import java.lang.reflect.Type;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +42,7 @@ import java.util.stream.Collectors;
  * Http/2 {@link OutboundRequestHeaders} implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class Http2RequestHeaders extends AbstractRequestHeaders<Http2Headers> {
@@ -92,6 +93,22 @@ public class Http2RequestHeaders extends AbstractRequestHeaders<Http2Headers> {
 	}
 
 	@Override
+	public OutboundRequestHeaders accept(String accept) {
+		this.headers.set(Headers.NAME_ACCEPT, accept);
+		return this;
+	}
+
+	@Override
+	public String getAccept() {
+		return this.headers.get(Headers.NAME_ACCEPT).toString();
+	}
+
+	@Override
+	public Headers.Accept getAcceptHeader() {
+		return Headers.Accept.merge(this.getAllHeader(Headers.NAME_ACCEPT)).orElse(null);
+	}
+
+	@Override
 	public Http2RequestHeaders contentLength(long contentLength) {
 		this.headers.setLong(Headers.NAME_CONTENT_LENGTH, contentLength);
 		return this;
@@ -125,6 +142,16 @@ public class Http2RequestHeaders extends AbstractRequestHeaders<Http2Headers> {
 	}
 
 	@Override
+	public <T> Http2RequestHeaders addParameter(CharSequence name, T value) {
+		return this.add(name, this.parameterConverter.encode(value));
+	}
+
+	@Override
+	public <T> OutboundRequestHeaders addParameter(CharSequence name, T value, Type type) {
+		return this.add(name, this.parameterConverter.encode(value, type));
+	}
+
+	@Override
 	public Http2RequestHeaders add(Header... headers) {
 		for(Header header : headers) {
 			this.headers.add(header.getHeaderName(), this.headerService.encodeValue(header));
@@ -136,6 +163,16 @@ public class Http2RequestHeaders extends AbstractRequestHeaders<Http2Headers> {
 	public Http2RequestHeaders set(CharSequence name, CharSequence value) {
 		this.headers.set(name, value);
 		return this;
+	}
+
+	@Override
+	public <T> Http2RequestHeaders setParameter(CharSequence name, T value) {
+		return this.set(name, this.parameterConverter.encode(value));
+	}
+
+	@Override
+	public <T> OutboundRequestHeaders setParameter(CharSequence name, T value, Type type) {
+		return this.set(name, this.parameterConverter.encode(value, type));
 	}
 
 	@Override
@@ -182,9 +219,7 @@ public class Http2RequestHeaders extends AbstractRequestHeaders<Http2Headers> {
 	@Override
 	public List<Map.Entry<String, String>> getAll() {
 		List<Map.Entry<String, String>> result = new LinkedList<>();
-		this.headers.forEach(e -> {
-			result.add(Map.entry(e.getKey().toString(), e.getValue().toString()));
-		});
+		this.headers.forEach(e -> result.add(Map.entry(e.getKey().toString(), e.getValue().toString())));
 		return result;
 	}
 	
@@ -201,9 +236,7 @@ public class Http2RequestHeaders extends AbstractRequestHeaders<Http2Headers> {
 	@Override
 	public List<Parameter> getAllParameter() {
 		List<Parameter> result = new LinkedList<>();
-		this.headers.forEach(e -> {
-			result.add(new GenericParameter(e.getValue().toString(), e.getValue().toString(), this.parameterConverter));
-		});
+		this.headers.forEach(e -> result.add(new GenericParameter(e.getValue().toString(), e.getValue().toString(), this.parameterConverter)));
 		return result;
 	}
 
@@ -220,9 +253,7 @@ public class Http2RequestHeaders extends AbstractRequestHeaders<Http2Headers> {
 	@Override
 	public List<Header> getAllHeader() {
 		List<Header> result = new LinkedList<>();
-		this.headers.forEach(e -> {
-			result.add(this.headerService.<Header>decode(e.getKey().toString(), e.getValue().toString()));
-		});
+		this.headers.forEach(e -> result.add(this.headerService.decode(e.getKey().toString(), e.getValue().toString())));
 		return result;
 	}
 }

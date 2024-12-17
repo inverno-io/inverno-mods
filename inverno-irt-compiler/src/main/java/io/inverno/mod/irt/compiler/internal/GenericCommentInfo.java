@@ -27,7 +27,6 @@ import io.inverno.mod.irt.compiler.spi.StatementInfo;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class GenericCommentInfo extends BaseInfo implements CommentInfo {
 
@@ -43,7 +42,7 @@ public class GenericCommentInfo extends BaseInfo implements CommentInfo {
 	 */
 	public GenericCommentInfo(Range range, List<StatementInfo> statements) {
 		super(range);
-		this.statements = statements.stream().toArray(StatementInfo[]::new);
+		this.statements = statements.toArray(StatementInfo[]::new);
 	}
 
 	@Override

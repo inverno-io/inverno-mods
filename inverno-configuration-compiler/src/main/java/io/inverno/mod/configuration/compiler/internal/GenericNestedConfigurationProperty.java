@@ -15,12 +15,11 @@
  */
 package io.inverno.mod.configuration.compiler.internal;
 
-import javax.lang.model.element.ExecutableElement;
-
 import io.inverno.core.compiler.spi.ReporterInfo;
 import io.inverno.mod.configuration.compiler.spi.ConfigurationInfo;
 import io.inverno.mod.configuration.compiler.spi.NestedConfigurationPropertyInfo;
 import io.inverno.mod.configuration.compiler.spi.PropertyQualifiedName;
+import javax.lang.model.element.ExecutableElement;
 
 /**
  * <p>
@@ -34,11 +33,14 @@ import io.inverno.mod.configuration.compiler.spi.PropertyQualifiedName;
  */
 class GenericNestedConfigurationProperty extends GenericConfigurationPropertyInfo implements NestedConfigurationPropertyInfo {
 
-	private ConfigurationInfo configuration;
+	private final ConfigurationInfo configuration;
 	
-	public GenericNestedConfigurationProperty(PropertyQualifiedName name, ReporterInfo reporter, 
+	public GenericNestedConfigurationProperty(
+			PropertyQualifiedName name,
+			ReporterInfo reporter,
 			ExecutableElement element,
-			ConfigurationInfo nestedConfiguration) {
+			ConfigurationInfo nestedConfiguration
+		) {
 		super(name, reporter, element);
 		
 		this.configuration = nestedConfiguration;

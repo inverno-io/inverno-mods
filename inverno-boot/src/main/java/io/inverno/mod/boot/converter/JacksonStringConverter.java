@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.deser.DefaultDeserializationContext;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Provide;
-import io.inverno.mod.base.converter.Converter;
 import io.inverno.mod.base.converter.ConverterException;
 import io.inverno.mod.base.converter.JoinableEncoder;
 import io.inverno.mod.base.converter.ReactiveConverter;
@@ -54,13 +53,17 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  * 
- * @see Converter
+ * @see io.inverno.mod.base.converter.Converter Converter
  * @see ReactiveConverter
  * @see ObjectMapper
  */
 @Bean( name = "jsonStringConverter" )
 public class JacksonStringConverter implements @Provide ReactiveConverter<String, Object>, SplittableDecoder<String, Object>, JoinableEncoder<Object, String> {
-	
+
+	/**
+	 * Unique String reference identifying the last chunk in a stream.
+	 */
+	@SuppressWarnings("StringOperationCanBeSimplified")
 	private static final String LAST_CHUNK = new String();
 	
 	private static final Mono<String> LAST_CHUNK_PUBLISHER = Mono.just(LAST_CHUNK);
@@ -80,7 +83,7 @@ public class JacksonStringConverter implements @Provide ReactiveConverter<String
 
 	@Override
 	public <T> Publisher<String> encodeOne(Mono<T> value) {
-		return value.map(t -> this.encode(t));
+		return value.map(this::encode);
 	}
 
 	@Override
@@ -95,7 +98,7 @@ public class JacksonStringConverter implements @Provide ReactiveConverter<String
 
 	@Override
 	public <T> Publisher<String> encodeMany(Flux<T> value) {
-		return value.map(t -> this.encode(t));
+		return value.map(this::encode);
 	}
 
 	@Override
@@ -190,12 +193,12 @@ public class JacksonStringConverter implements @Provide ReactiveConverter<String
 
 	@Override
 	public <T> Flux<T> decodeMany(Publisher<String> value, Class<T> type) {
-		return this.<T>decodeMany(value, type, true);
+		return this.decodeMany(value, type, true);
 	}
 
 	@Override
 	public <T> Flux<T> decodeMany(Publisher<String> value, Type type) {
-		return this.<T>decodeMany(value, type, true);
+		return this.decodeMany(value, type, true);
 	}
 
 	private <T> Flux<T> decodeMany(Publisher<String> value, Type type, boolean scanRootArray) {
@@ -212,7 +215,8 @@ public class JacksonStringConverter implements @Provide ReactiveConverter<String
 				},
 				(scanner, chunk) -> {
 					try {
-						// This is on purpose we want to compare the instance so we can differentiate it from an empty chunk
+						// This is on purpose we want to compare the instance so we can differentiate it from the last chunk reference
+						//noinspection StringEquality
 						if(chunk == LAST_CHUNK) {
 							scanner.endOfInput();
 						}
@@ -328,10 +332,18 @@ public class JacksonStringConverter implements @Provide ReactiveConverter<String
 			throw new ConverterException("Can't decode " + String.class.getCanonicalName() + " to array of " + type.getTypeName());
 		}
 	}
-	
+
+	/**
+	 * <p>
+	 * Object scanner used to decode objects from a stream of {@code ByteBufs}.
+	 * </p>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.5
+	 *
+	 * @param <T> the object type
+	 */
 	private static class ObjectScanner<T> {
-		
-		private final Type type;
 		
 		private final ObjectMapper mapper;
 		private final ObjectReader reader;
@@ -347,9 +359,8 @@ public class JacksonStringConverter implements @Provide ReactiveConverter<String
 		private TokenBuffer tokenBuffer;
 		
 		public ObjectScanner(Type type, ObjectMapper mapper, boolean scanRootArray) throws IOException {
-			this.type = type;
 			this.mapper = mapper;
-			this.reader = this.mapper.readerFor(this.mapper.constructType(this.type));
+			this.reader = this.mapper.readerFor(this.mapper.constructType(type));
 			this.scanRootArray = scanRootArray;
 			this.parser = this.mapper.getFactory().createNonBlockingByteArrayParser();
 			this.feeder = (ByteArrayFeeder)this.parser.getNonBlockingInputFeeder();

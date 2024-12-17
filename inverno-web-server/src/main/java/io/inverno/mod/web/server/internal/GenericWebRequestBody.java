@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2021 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ import io.inverno.mod.http.base.BadRequestException;
 import io.inverno.mod.http.base.InboundData;
 import io.inverno.mod.http.base.UnsupportedMediaTypeException;
 import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.server.Request;
 import io.inverno.mod.http.server.RequestBody;
-import io.inverno.mod.web.server.InboundDataDecoder;
+import io.inverno.mod.web.base.InboundDataDecoder;
+import io.inverno.mod.web.base.MissingConverterException;
 import io.inverno.mod.web.server.WebPart;
-import io.inverno.mod.web.server.WebRequest;
 import io.inverno.mod.web.server.WebRequestBody;
+import io.inverno.mod.web.server.internal.multipart.GenericWebPart;
 import io.netty.buffer.ByteBuf;
 import java.lang.reflect.Type;
 import java.util.function.Function;
@@ -34,31 +36,29 @@ import reactor.core.publisher.Flux;
  * <p>
  * Generic {@link WebRequestBody} implementation.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class GenericWebRequestBody implements WebRequestBody {
+public class GenericWebRequestBody implements WebRequestBody {
 
-	private final WebRequest request;
-	
+	private final ServerDataConversionService dataConversionService;
+	private final Request request;
 	private final RequestBody requestBody;
-	
-	private final DataConversionService dataConversionService;
-	
+
 	/**
 	 * <p>
-	 * creates a generic web request body with the specified underlying request and request body and data conversion service.
+	 * Creates a generic Web request body.
 	 * </p>
 	 *
-	 * @param request               the underlying request
-	 * @param requestBody           the unedrlying request body
 	 * @param dataConversionService the data conversion service
+	 * @param request               the originating request
+	 * @param requestBody           the originating request body
 	 */
-	public GenericWebRequestBody(WebRequest request, RequestBody requestBody, DataConversionService dataConversionService) {
+	public GenericWebRequestBody(ServerDataConversionService dataConversionService, Request request, RequestBody requestBody) {
+		this.dataConversionService = dataConversionService;
 		this.request = request;
 		this.requestBody = requestBody;
-		this.dataConversionService = dataConversionService;
 	}
 
 	@Override
@@ -76,7 +76,26 @@ class GenericWebRequestBody implements WebRequestBody {
 	public InboundData<CharSequence> string() throws IllegalStateException {
 		return this.requestBody.string();
 	}
-	
+
+	@Override
+	public <A> InboundDataDecoder<A> decoder(Class<A> type) {
+		return this.decoder((Type)type);
+	}
+
+	@Override
+	public <A> InboundDataDecoder<A> decoder(Type type) {
+		return this.request.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE)
+			.map(contentType -> {
+				try {
+					return this.dataConversionService.<A>createDecoder(this.requestBody.raw(), contentType.getMediaType(), type);
+				}
+				catch (MissingConverterException e) {
+					throw new UnsupportedMediaTypeException("No converter found for media type: " + e.getMediaType(), e);
+				}
+			})
+			.orElseThrow(() -> new BadRequestException("Empty media type"));
+	}
+
 	@Override
 	public Multipart<WebPart> multipart() throws IllegalStateException {
 		return new WebMultipart();
@@ -87,40 +106,21 @@ class GenericWebRequestBody implements WebRequestBody {
 		return this.requestBody.urlEncoded();
 	}
 
-	@Override
-	public <A> InboundDataDecoder<A> decoder(Class<A> type) {
-		return this.decoder((Type)type);
-	}
-	
-	@Override
-	public <A> InboundDataDecoder<A> decoder(Type type) {
-		return this.request.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE)
-			.map(contentType -> {
-				try {
-					return this.dataConversionService.<A>createDecoder(this.requestBody.raw(), contentType.getMediaType(), type);
-				} 
-				catch (NoConverterException e) {
-					throw new UnsupportedMediaTypeException("No converter found for media type: " + e.getMediaType(), e);
-				}
-			})
-			.orElseThrow(() -> new BadRequestException("Empty media type"));
-	}
-	
 	/**
 	 * <p>
 	 * a {@link Multipart} implementation that supports part body decoding.
 	 * </p>
-	 * 
+	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
-	 * 
+	 *
 	 * @see WebPart
 	 */
 	private class WebMultipart implements Multipart<WebPart> {
 
 		@Override
 		public Publisher<WebPart> stream() {
-			return Flux.from(GenericWebRequestBody.this.requestBody.multipart().stream()).map(part -> new GenericWebPart(part, GenericWebRequestBody.this.dataConversionService));
+			return Flux.from(GenericWebRequestBody.this.requestBody.multipart().stream()).map(part -> new GenericWebPart(GenericWebRequestBody.this.dataConversionService, part));
 		}
 	}
 }

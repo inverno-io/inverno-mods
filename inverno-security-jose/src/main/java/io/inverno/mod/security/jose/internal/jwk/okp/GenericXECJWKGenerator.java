@@ -17,7 +17,6 @@ package io.inverno.mod.security.jose.internal.jwk.okp;
 
 import io.inverno.mod.security.jose.internal.JOSEUtils;
 import io.inverno.mod.security.jose.jwa.OKPCurve;
-import io.inverno.mod.security.jose.jwa.XECAlgorithm;
 import io.inverno.mod.security.jose.jwk.JWKGenerateException;
 import io.inverno.mod.security.jose.jwk.JWKProcessingException;
 import io.inverno.mod.security.jose.jwk.okp.XECJWKGenerator;
@@ -44,8 +43,6 @@ public class GenericXECJWKGenerator extends AbstractOKPJWKGenerator<XECPublicKey
 	 */
 	public static final OKPCurve DEFAULT_CURVE = OKPCurve.X25519;
 	
-	private XECAlgorithm xecAlg;
-	
 	/**
 	 * <p>
 	 * Creates a generic XEC JWK generator.
@@ -70,13 +67,7 @@ public class GenericXECJWKGenerator extends AbstractOKPJWKGenerator<XECPublicKey
 			this.curve = DEFAULT_CURVE;
 		}
 	}
-	
-	@Override
-	public GenericXECJWKGenerator algorithm(String alg) {
-		this.xecAlg = alg != null ? XECAlgorithm.fromAlgorithm(alg) : null;
-		return super.algorithm(alg);
-	}
-	
+
 	@Override
 	protected Mono<Void> verify() throws JWKGenerateException, JWKProcessingException {
 		return super.verify().then(Mono.fromRunnable(() -> {

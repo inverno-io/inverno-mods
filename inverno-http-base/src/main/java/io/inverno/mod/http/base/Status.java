@@ -36,31 +36,31 @@ public enum Status {
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-6.3.1">RFC 7231 Section 6.3.1</a>
 	 */
-	OK(200, "OK", Category.SUCCESSUL),
+	OK(200, "OK", Category.SUCCESSFUL),
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-6.3.2">RFC 7231 Section 6.3.2</a>
 	 */
-	CREATED(201, "Created", Category.SUCCESSUL),
+	CREATED(201, "Created", Category.SUCCESSFUL),
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-6.3.3">RFC 7231 Section 6.3.3</a>
 	 */
-	ACCEPTED(202, "Accepted", Category.SUCCESSUL),
+	ACCEPTED(202, "Accepted", Category.SUCCESSFUL),
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-6.3.4">RFC 7231 Section 6.3.4</a>
 	 */
-	NON_AUTHORITATIVE_INFORMATION(203, "Non-Authoritative Information", Category.SUCCESSUL),
+	NON_AUTHORITATIVE_INFORMATION(203, "Non-Authoritative Information", Category.SUCCESSFUL),
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-6.3.5">RFC 7231 Section 6.3.5</a>
 	 */
-	NO_CONTENT(204, "No Content", Category.SUCCESSUL),
+	NO_CONTENT(204, "No Content", Category.SUCCESSFUL),
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-6.3.6">RFC 7231 Section 6.3.6</a>
 	 */
-	RESET_CONTENT(205, "Reset Content", Category.SUCCESSUL),
+	RESET_CONTENT(205, "Reset Content", Category.SUCCESSFUL),
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7233#section-4.1">RFC 7231 Section 4.1</a>
 	 */
-	PARTIAL_CONTENT(206, "Partial Content", Category.SUCCESSUL),
+	PARTIAL_CONTENT(206, "Partial Content", Category.SUCCESSFUL),
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-6.4.1">RFC 7231 Section 6.4.1</a>
 	 */
@@ -205,7 +205,7 @@ public enum Status {
 	
 	private final Category category;
 	
-	private Status(int code, String reasonPhrase, Category category) {
+	Status(int code, String reasonPhrase, Category category) {
 		this.code = code;
 		this.reasonPhrase = reasonPhrase;
 		this.category = category;
@@ -216,7 +216,7 @@ public enum Status {
 	 * Returns the code of the HTTP status.
 	 * </p>
 	 * 
-	 * @return a HTTP status code
+	 * @return an HTTP status code
 	 */
 	public int getCode() {
 		return this.code;
@@ -272,7 +272,7 @@ public enum Status {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	public static enum Category {
+	public enum Category {
 		
 		/**
 		 * <a href="https://tools.ietf.org/html/rfc7231#section-6.2">RFC 7231 Section 6.2</a>
@@ -281,7 +281,7 @@ public enum Status {
 		/**
 		 * <a href="https://tools.ietf.org/html/rfc7231#section-6.3">RFC 7231 Section 6.3</a>
 		 */
-		SUCCESSUL((byte)2),
+		SUCCESSFUL((byte)2),
 		/**
 		 * <a href="https://tools.ietf.org/html/rfc7231#section-6.4">RFC 7231 Section 6.4</a>
 		 */
@@ -304,10 +304,9 @@ public enum Status {
 		 *
 		 * @param categoryId a category id
 		 *
-		 * @return a HTTP status category
 		 * @throws IllegalArgumentException if the specified id doesn't correspond to a known HTTP status category
 		 */
-		private Category(byte categoryId) {
+		Category(byte categoryId) {
 			this.categoryId = categoryId;
 		}
 		
@@ -318,7 +317,7 @@ public enum Status {
 		 *
 		 * @param statusCode an HTTP status code
 		 *
-		 * @return a HTTP status category
+		 * @return an HTTP status category
 		 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
 		 */
 		public static Category valueOf(int statusCode) {
@@ -338,7 +337,7 @@ public enum Status {
 		 * 
 		 * @param status an HTTP status
 		 * 
-		 * @return a HTTP status category
+		 * @return an HTTP status category
 		 */
 		public static Category valueOf(Status status) {
 			return valueOf(status.getCode());

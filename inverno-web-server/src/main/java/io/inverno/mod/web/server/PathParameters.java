@@ -15,13 +15,11 @@
  */
 package io.inverno.mod.web.server;
 
+import io.inverno.mod.base.net.URIPattern;
+import io.inverno.mod.http.base.Parameter;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
-import io.inverno.mod.base.net.URIPattern;
-import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.web.server.spi.PathAware;
 
 /**
  * <p>
@@ -32,7 +30,6 @@ import io.inverno.mod.web.server.spi.PathAware;
  * @since 1.0
  *
  * @see URIPattern
- * @see PathAware
  */
 public interface PathParameters {
 
@@ -41,7 +38,7 @@ public interface PathParameters {
 	 * Returns the names of the path parameters.
 	 * </p>
 	 * 
-	 * @return a list of parameter names
+	 * @return a set of parameter names
 	 */
 	Set<String> getNames();
 	

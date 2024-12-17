@@ -42,7 +42,7 @@ import reactor.core.publisher.Mono;
  * When the group is closed or shutting down, the server shall not be able to accept new connections.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  * 
  * @see HttpServer
@@ -90,7 +90,7 @@ public class HttpConnectionGroup {
 	private Stream<HttpConnection> getActiveConnections() {
 		return this.channelGroup.stream().map(channel -> {
 				ChannelHandler handler = channel.pipeline().get("connection");
-				if(handler != null && handler instanceof HttpConnection) {
+				if(handler instanceof HttpConnection) {
 					return (HttpConnection)handler;
 				}
 				return null;
@@ -114,7 +114,7 @@ public class HttpConnectionGroup {
 				LOGGER.debug("Shutting down connections...");
 				this.closing = true;
 			})
-			.flatMap(connection -> connection.shutdown())
+			.flatMap(HttpConnection::shutdown)
 				.doOnError(e -> LOGGER.warn("Error shutting down connection", e))
 				.onErrorResume(e -> true, e -> Mono.empty()
 			)
@@ -147,7 +147,7 @@ public class HttpConnectionGroup {
 				LOGGER.debug("Shutting down connections gracefully...");
 				this.closing = true;
 			})
-			.flatMap(connection -> connection.shutdownGracefully())
+			.flatMap(HttpConnection::shutdownGracefully)
 				.doOnError(e -> LOGGER.warn("Error shutting down connection", e))
 				.onErrorResume(e -> true, e -> Mono.empty()
 			)

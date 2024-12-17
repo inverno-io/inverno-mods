@@ -209,7 +209,7 @@ public class HttpException extends RuntimeException {
 	 * 
 	 * @param statusCode an HTTP status code 
 	 * 
-	 * @Throws IllegalArgumentException if the specified status code is invalid
+	 * @throws IllegalArgumentException if the specified status code is invalid
 	 */
 	private void setStatusCode(int statusCode) throws IllegalArgumentException {
 		if(statusCode < 0 || statusCode > 999) {
@@ -290,7 +290,7 @@ public class HttpException extends RuntimeException {
 	 * </p>
 	 * 
 	 * <p>
-	 * The specified error is returned untouched if it is already an HttpException instance, ohterwise it is wrapped in an {@link InternalServerErrorException}.
+	 * The specified error is returned untouched if it is already an HttpException instance, otherwise it is wrapped in an {@link InternalServerErrorException}.
 	 * </p>
 	 * 
 	 * @param error the error to wrap
@@ -302,5 +302,83 @@ public class HttpException extends RuntimeException {
 			return (HttpException)error;
 		}
 		return new InternalServerErrorException(error);
+	}
+
+	/**
+	 * <p>
+	 * Returns the {@link HttpException} corresponding to the specified status.
+	 * </p>
+	 *
+	 * @param status an error response status ({@code 4xx} or {@code 5xx})
+	 *
+	 * @return an HTTP exception
+	 *
+	 * @throws IllegalArgumentException if the specified status is not an error response status
+	 */
+	public static HttpException fromStatus(Status status) throws IllegalArgumentException {
+		return fromStatus(status, status.getReasonPhrase(), null);
+	}
+
+	/**
+	 * <p>
+	 * Returns the {@link HttpException} corresponding to the specified status with the specified message.
+	 * </p>
+	 *
+	 * @param status  an error response status ({@code 4xx} or {@code 5xx})
+	 * @param message a message
+	 *
+	 * @return an HTTP exception
+	 *
+	 * @throws IllegalArgumentException if the specified status is not an error response status
+	 */
+	public static HttpException fromStatus(Status status, String message) throws IllegalArgumentException {
+		return fromStatus(status, message, null);
+	}
+
+	/**
+	 * <p>
+	 * Returns the {@link HttpException} corresponding to the specified status with the specified cause.
+	 * </p>
+	 *
+	 * @param status an error response status ({@code 4xx} or {@code 5xx})
+	 * @param cause  a cause
+	 *
+	 * @return an HTTP exception
+	 *
+	 * @throws IllegalArgumentException if the specified status is not an error response status
+	 */
+	public static HttpException fromStatus(Status status, Throwable cause) throws IllegalArgumentException {
+		return fromStatus(status, status.getReasonPhrase(), cause);
+	}
+
+	/**
+	 * <p>
+	 * Returns the {@link HttpException} corresponding to the specified status with the specified message and cause.
+	 * </p>
+	 *
+	 * @param status  an error response status ({@code 4xx} or {@code 5xx})
+	 * @param message a message
+	 * @param cause   a cause
+	 *
+	 * @return an HTTP exception
+	 *
+	 * @throws IllegalArgumentException if the specified status is not an error response status
+	 */
+	public static HttpException fromStatus(Status status, String message, Throwable cause) {
+		if(status.getCode() < 400) {
+			throw new IllegalArgumentException("Status " + status + " is not an error status");
+		}
+		switch(status) {
+			case BAD_REQUEST: return new BadRequestException(message, cause);
+			case UNAUTHORIZED: return new UnauthorizedException(message, cause);
+			case UNSUPPORTED_MEDIA_TYPE: return new UnsupportedMediaTypeException(message, cause);
+			case METHOD_NOT_ALLOWED: return new MethodNotAllowedException(message, cause);
+			case NOT_FOUND: return new NotFoundException(message, cause);
+			case INTERNAL_SERVER_ERROR: return new InternalServerErrorException(message, cause);
+			case FORBIDDEN: return new ForbiddenException(message, cause);
+			case NOT_ACCEPTABLE: return new NotAcceptableException(message, cause);
+			case SERVICE_UNAVAILABLE: return new ServiceUnavailableException(message, cause);
+			default: return new HttpException(status, message, cause);
+		}
 	}
 }

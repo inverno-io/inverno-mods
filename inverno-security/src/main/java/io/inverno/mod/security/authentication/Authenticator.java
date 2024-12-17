@@ -75,9 +75,7 @@ public interface Authenticator<A extends Credentials, B extends Authentication> 
 	 * @return a composed authenticator
 	 */
 	default Authenticator<A, B> or(Authenticator<? super A, ? extends B> other) {
-		return credentials -> {
-			return this.authenticate(credentials).switchIfEmpty(other.authenticate(credentials));
-		};
+		return credentials -> this.authenticate(credentials).switchIfEmpty(other.authenticate(credentials));
 	}
 
 	/**
@@ -88,12 +86,10 @@ public interface Authenticator<A extends Credentials, B extends Authentication> 
 	 * @param <T> the type of the resulting authentication
 	 * @param mapper the function to transform the authentication publisher
 	 * 
-	 * @return a transformed authentiator
+	 * @return a transformed authenticator
 	 */
 	default <T extends Authentication> Authenticator<A, T> flatMap(Function<? super B, ? extends Mono<? extends T>> mapper) {
-		return credentials -> {
-			return this.authenticate(credentials).flatMap(mapper);
-		};
+		return credentials -> this.authenticate(credentials).flatMap(mapper);
 	}
 
 	/**
@@ -104,12 +100,10 @@ public interface Authenticator<A extends Credentials, B extends Authentication> 
 	 * @param <T> the type of the resulting authentication
 	 * @param mapper the function to transform the authentication
 	 * 
-	 * @return a transformed authentiator
+	 * @return a transformed authenticator
 	 */
 	default <T extends Authentication> Authenticator<A, T> map(Function<? super B, ? extends T> mapper) {
-		return credentials -> {
-			return this.authenticate(credentials).map(mapper);
-		};
+		return credentials -> this.authenticate(credentials).map(mapper);
 	}
 	
 	/**
@@ -127,11 +121,9 @@ public interface Authenticator<A extends Credentials, B extends Authentication> 
 	 */
 	default Authenticator<A, B> failOnDenied() {
 		return credentials -> this.authenticate(credentials)
-			.doOnNext(authentication -> {
-				authentication.getCause().ifPresent(e -> {
-					throw e;
-				});
-			});
+			.doOnNext(authentication -> authentication.getCause().ifPresent(e -> {
+				throw e;
+			}));
 	}
 	
 	/**
@@ -148,17 +140,15 @@ public interface Authenticator<A extends Credentials, B extends Authentication> 
 	 */
 	default Authenticator<A, B> failOnDeniedAndAnonymous() {
 		return credentials -> this.authenticate(credentials)
-			.doOnNext(authentication -> {
-				authentication.getCause().ifPresentOrElse(
-					e -> {
-						throw e;
-					},
-					() -> {
-						if(!authentication.isAuthenticated()) {
-							throw new AuthenticationException("Anonymous authentication not allowed");
-						}
+			.doOnNext(authentication -> authentication.getCause().ifPresentOrElse(
+				e -> {
+					throw e;
+				},
+				() -> {
+					if(!authentication.isAuthenticated()) {
+						throw new AuthenticationException("Anonymous authentication not allowed");
 					}
-				);
-			});
+				}
+			));
 	}
 }

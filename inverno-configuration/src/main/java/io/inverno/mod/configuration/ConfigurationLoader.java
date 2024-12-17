@@ -34,7 +34,7 @@ import reactor.core.publisher.Mono;
  * </p>
  *
  * <pre>{@code
- * ConfigurationSource<?,?> source = ...
+ * ConfigurationSource source = ...
  *
  * SomeConfiguration configuration = ConfigurationLoader
  *     .withConfiguration(SomeConfiguration.class)
@@ -257,7 +257,7 @@ public interface ConfigurationLoader<A, B extends ConfigurationLoader<A, B>> {
 
 	/**
 	 * <p>
-	 * Defines eigth parameters that specify the context in which configuration properties are to be retrieved.
+	 * Defines eighth parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
 	 *
 	 * @param k1 the first parameter name
@@ -388,7 +388,7 @@ public interface ConfigurationLoader<A, B extends ConfigurationLoader<A, B>> {
 	 *
 	 * @return the configuration loader
 	 */
-	B withSource(ConfigurationSource<?,?,?> source);
+	B withSource(ConfigurationSource source);
 
 	/**
 	 * <p>

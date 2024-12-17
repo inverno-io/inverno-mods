@@ -25,12 +25,12 @@ import io.inverno.mod.security.context.SecurityContext;
 import io.inverno.mod.security.identity.Identity;
 import io.inverno.mod.security.identity.IdentityResolver;
 import java.util.Objects;
-import java.util.Optional;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * Generic {@link SecurityManager} implementation.
+ * Generic {@link io.inverno.mod.security.SecurityManager SecurityManager} implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -50,12 +50,12 @@ public class GenericSecurityManager<A extends Credentials, B extends Authenticat
 	/**
 	 * The identity resolver.
 	 */
-	private final Optional<IdentityResolver<? super B, ? extends C>> identityResolver;
+	private final IdentityResolver<? super B, ? extends C> identityResolver;
 	
 	/**
 	 * The access controller resolver.
 	 */
-	private final Optional<AccessControllerResolver<? super B, ? extends D>> accessControllerResolver;
+	private final AccessControllerResolver<? super B, ? extends D> accessControllerResolver;
 
 	/**
 	 * <p>
@@ -98,48 +98,44 @@ public class GenericSecurityManager<A extends Credentials, B extends Authenticat
 	 * </p>
 	 *
 	 * @param authenticator            the authenticator
-	 * @param identityResolver the identity resolver
+	 * @param identityResolver         the identity resolver
 	 * @param accessControllerResolver the access controller resolver
 	 */
 	public GenericSecurityManager(Authenticator<? super A, ? extends B> authenticator, IdentityResolver<? super B, ? extends C> identityResolver, AccessControllerResolver<? super B, ? extends D> accessControllerResolver) {
 		this.authenticator = Objects.requireNonNull(authenticator);
-		this.identityResolver = Optional.ofNullable(identityResolver);
-		this.accessControllerResolver = Optional.ofNullable(accessControllerResolver);
+		this.identityResolver = identityResolver;
+		this.accessControllerResolver = accessControllerResolver;
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public Mono<SecurityContext<C, D>> authenticate(A credentials) {
 		if(credentials == null) {
 			// Returns an anonymous authentication when no credentials are specified
-			return Mono.just((SecurityContext<C, D>)SecurityContext.of(Authentication.anonymous()));
+			return Mono.just(SecurityContext.of(Authentication.anonymous()));
 		}
+
 		// 1. Authenticate
 		return this.authenticator.authenticate(credentials)
 			.switchIfEmpty(Mono.error(() -> new AuthenticationException("Unable to authenticate")))
 			// 2. Resolve identity and access control
-			.flatMap(authentication -> Mono.zip(
-					Mono.just(authentication),
-					this.identityResolver
-						.filter(ign -> authentication.isAuthenticated())
-						.map(resolver -> resolver.resolveIdentity(authentication)
-							.map(Optional::of)
-							.switchIfEmpty(Mono.just(Optional.empty()))
+			.flatMap(authentication -> {
+				if(authentication.isAuthenticated()) {
+					SecurityContext.Builder<C, D> securityContextBuilder = SecurityContext.builder(authentication);
+					return Flux.merge(
+							Mono.justOrEmpty(this.identityResolver)
+								.flatMap(resolver -> resolver.resolveIdentity(authentication))
+								.doOnNext(securityContextBuilder::identity),
+							Mono.justOrEmpty(this.accessControllerResolver)
+								.flatMap(resolver -> resolver.resolveAccessController(authentication))
+								.doOnNext(securityContextBuilder::accessController)
 						)
-						.orElse(Mono.just(Optional.empty())),
-					this.accessControllerResolver
-						.filter(ign -> authentication.isAuthenticated())
-						.map(resolver -> resolver.resolveAccessController(authentication)
-							.map(Optional::of)
-							.switchIfEmpty(Mono.just(Optional.empty()))
-						)
-						.orElse(Mono.just(Optional.empty()))
-				)
-				.map(tuple -> SecurityContext.of(authentication, tuple.getT2(), tuple.getT3()))
-			)
+						.then(Mono.fromSupplier(securityContextBuilder::build));
+				}
+				else {
+					return Mono.just(SecurityContext.<C, D>of(authentication));
+				}
+			})
 			// Return a denied authentication in case of security error, let any other error propagate
-			.onErrorResume(io.inverno.mod.security.SecurityException.class, error -> {
-				return Mono.just((SecurityContext<C, D>)SecurityContext.of(Authentication.denied(error)));
-			});
+			.onErrorResume(io.inverno.mod.security.SecurityException.class, error -> Mono.just(SecurityContext.of(Authentication.denied(error))));
 	}
 }

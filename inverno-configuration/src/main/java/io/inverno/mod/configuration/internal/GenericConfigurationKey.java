@@ -15,17 +15,19 @@
  */
 package io.inverno.mod.configuration.internal;
 
+import io.inverno.mod.configuration.ConfigurationKey;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import io.inverno.mod.configuration.ConfigurationKey;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -69,7 +71,7 @@ public class GenericConfigurationKey implements ConfigurationKey {
 	 * @throws IllegalArgumentException if the specified name is empty
 	 */
 	public GenericConfigurationKey(String name, Collection<Parameter> parameters) throws IllegalArgumentException {
-		if(name == null || name.equals("")) {
+		if(name == null || name.isEmpty()) {
 			throw new IllegalArgumentException("Name can't be null or empty");
 		}
 		this.name = name;
@@ -170,15 +172,42 @@ public class GenericConfigurationKey implements ConfigurationKey {
 		} else if (!name.equals(other.name))
 			return false;
 		if (parameters == null) {
-			if (other.parameters != null)
-				return false;
-		} else if (parameters.size() != other.parameters.size() || !parameters.containsAll(other.parameters))
-			return false;
-		return true;
+			return other.parameters == null;
+		} else {
+			return parameters.size() == other.parameters.size() && parameters.containsAll(other.parameters);
+		}
 	}
 
 	@Override
 	public String toString() {
 		return this.name + (this.parameters.isEmpty() ? "" : "[" + this.parameters.stream().map(Parameter::toString).collect(Collectors.joining(",")) + "]");
+	}
+
+	/**
+	 * <p>
+	 * Checks that the specified list of parameters contains distinct parameters with different keys.
+	 * </p>
+	 *
+	 * @param parameters a list of configuration parameters
+	 *
+	 * @return the list of parameters if it contains distinct parameters
+	 *
+	 * @throws IllegalArgumentException if the list contains duplicate parameters
+	 */
+	public static List<ConfigurationKey.Parameter> requireDistinctParameters(List<ConfigurationKey.Parameter> parameters) throws IllegalArgumentException {
+		Set<String> parameterKeys = new HashSet<>();
+		List<String> duplicateParameters = new LinkedList<>();
+		for (ConfigurationKey.Parameter parameter : parameters) {
+			if(parameter.isWildcard() || parameter.isUndefined()) {
+				throw new IllegalArgumentException("Query parameter can not be undefined or a wildcard: " + parameter);
+			}
+			if (!parameterKeys.add(parameter.getKey())) {
+				duplicateParameters.add(parameter.getKey());
+			}
+		}
+		if (!duplicateParameters.isEmpty()) {
+			throw new IllegalArgumentException("The following parameters were specified more than once: " + String.join(", ", duplicateParameters));
+		}
+		return parameters;
 	}
 }

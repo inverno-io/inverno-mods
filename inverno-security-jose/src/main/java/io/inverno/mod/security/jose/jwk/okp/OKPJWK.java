@@ -40,7 +40,7 @@ public interface OKPJWK<A extends PublicKey, B extends PrivateKey> extends X509J
 	/**
 	 * Octet Key Pair key type as defined by <a href="https://datatracker.ietf.org/doc/html/rfc8037#section-2">RFC8037 Section 2</a>.
 	 */
-	static final String KEY_TYPE = "OKP";
+	String KEY_TYPE = "OKP";
 	
 	/**
 	 * <p>

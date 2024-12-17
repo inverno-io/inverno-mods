@@ -63,6 +63,10 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-text</artifactId>
 		</dependency>
 		<dependency>
@@ -129,6 +133,12 @@
 								<version>${project.version}</version>
 							</path>
 						</annotationProcessorPaths>
+					</configuration>
+				</plugin>
+				<plugin>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<configuration>
+						<argLine>--add-reads io.inverno.mod.security.jose=io.inverno.mod.boot --add-exports io.inverno.mod.boot/io.inverno.mod.boot.internal.resource=io.inverno.mod.security.jose</argLine>
 					</configuration>
 				</plugin>
 			</plugins>

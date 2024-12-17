@@ -28,7 +28,7 @@ package io.inverno.mod.grpc.base;
  * An outbound response is sent by a server in a server exchange, trailers metadata are sent after the response message publisher completes to terminates the gRPC exchange.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public interface GrpcOutboundResponseTrailersMetadata extends GrpcInboundResponseTrailersMetadata, GrpcOutboundMetadata<GrpcOutboundResponseTrailersMetadata> {

@@ -15,14 +15,12 @@
  */
 package io.inverno.mod.configuration.compiler.spi;
 
-import javax.lang.model.type.TypeMirror;
-
 import io.inverno.core.compiler.spi.Info;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * <p>
- * A configuration property info describes a configuration property in a
- * configuration.
+ * A configuration property info describes a configuration property in a configuration.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -34,8 +32,7 @@ public interface ConfigurationPropertyInfo extends Info {
 
 	/**
 	 * <p>
-	 * Returns the qualified name of a configuration property defined a
-	 * configuration.
+	 * Returns the qualified name of a configuration property defined a configuration.
 	 * </p>
 	 */
 	@Override
@@ -47,8 +44,7 @@ public interface ConfigurationPropertyInfo extends Info {
 	 * </p>
 	 * 
 	 * <p>
-	 * Default values are returned in default implementation in the configuration
-	 * interface.
+	 * Default values are returned in default implementation in the configuration interface.
 	 * </p>
 	 * 
 	 * @return true if the property has a default value, false otherwise

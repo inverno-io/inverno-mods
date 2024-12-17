@@ -142,7 +142,7 @@ public class GenericEdECJWKBuilder extends AbstractOKPJWKBuilder<EdECPublicKey, 
 
 					if(tmpCert.getSigAlgName() != null) {
 						if(this.edecAlg != null && !this.edecAlg.getJcaAlgorithm().equals(tmpCert.getSigAlgName())) {
-							throw new JWKBuildException("Resolved X.509 certificate algorithm does not match JWK algoritm");
+							throw new JWKBuildException("Resolved X.509 certificate algorithm does not match JWK algorithm");
 						}
 						if(!SUPPORTED_SIG_JCA_ALGORITHMS.contains(tmpCert.getSigAlgName())) {
 							throw new JWKBuildException("Resolved X.509 certificate signature algorithm is not supported: " + tmpCert.getSigAlgName());

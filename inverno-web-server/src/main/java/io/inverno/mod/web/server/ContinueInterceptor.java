@@ -22,14 +22,14 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A web exchange interceptor that sends an interim 100 Continue response to the client on requests that contain {@code expect: 100-continue} HTTP header as defined by
+ * A Web exchange interceptor that sends an interim 100 Continue response to the client on requests that contain {@code expect: 100-continue} HTTP header as defined by
  * <a href="https://tools.ietf.org/html/rfc7231#section-5.1.1">RFC 7231 Section 5.1.1</a>.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.3
  * 
- * @param <A> the type of the exchange context
+ * @param <A> the exchange context type
  */
 public class ContinueInterceptor<A extends ExchangeContext> implements ExchangeInterceptor<A, WebExchange<A>> {
 

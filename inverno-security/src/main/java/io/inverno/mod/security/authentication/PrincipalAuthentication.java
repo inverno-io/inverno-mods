@@ -47,7 +47,7 @@ public interface PrincipalAuthentication extends Authentication {
 	 * </p>
 	 * 
 	 * <p>
-	 * This is a conveninence method that should be used with care and only used after a successful authentication to generate the resulting authentication.
+	 * This is a convenience method that should be used with care and only used after a successful authentication to generate the resulting authentication.
 	 * </p>
 	 * 
 	 * @param username a username
@@ -80,7 +80,7 @@ public interface PrincipalAuthentication extends Authentication {
 	 * </p>
 	 *
 	 * <p>
-	 * This is a conveninence method that should be used with care. In order to respect the {@link Authentication} contract it is important to make sure that the specified credentials have been
+	 * This is a convenience method that should be used with care. In order to respect the {@link Authentication} contract it is important to make sure that the specified credentials have been
 	 * previously authenticated by an {@link Authenticator}.
 	 * </p>
 	 *

@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -116,7 +115,7 @@ public class ObjectDecoder implements SplittablePrimitiveDecoder<Object> {
 					return (T) this.decodeToSet(value, parameterizedType.getActualTypeArguments()[0]);
 				}
 				else {
-					// this is best effort some class cast exception might be thrown later due to type erasure
+					// best effort: some class cast exception might be thrown later due to type erasure
 					return this.decode(value, (Class<T>)rawType);
 				}
 			}
@@ -165,7 +164,7 @@ public class ObjectDecoder implements SplittablePrimitiveDecoder<Object> {
 			return (List<T>)value;
 		}
 		else {
-			return valueCollection.stream().collect(Collectors.toList());
+			return new ArrayList<>(valueCollection);
 		}
 	}
 
@@ -184,7 +183,7 @@ public class ObjectDecoder implements SplittablePrimitiveDecoder<Object> {
 			return (Set<T>)value;
 		}
 		else {
-			return valueCollection.stream().collect(Collectors.toSet());
+			return new HashSet<>(valueCollection);
 		}
 	}
 	
@@ -357,7 +356,8 @@ public class ObjectDecoder implements SplittablePrimitiveDecoder<Object> {
 	}
 
 	@Override
-	public Class<?> decodeClass(Object value) throws ConverterException {
+	@SuppressWarnings("unchecked")
+	public <T> Class<T> decodeClass(Object value) throws ConverterException {
 		return this.decode(value, Class.class);
 	}
 }

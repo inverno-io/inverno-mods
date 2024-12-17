@@ -34,7 +34,7 @@ import java.util.Optional;
 interface DelegatingSecurityContext<A extends Identity, B extends AccessController> extends SecurityContext<A, B> {
 
 	@Override
-	public default Authentication getAuthentication() {
+	default Authentication getAuthentication() {
 		var ctx = this.getSecurityContext();
 		if(ctx != null) {
             return ctx.getAuthentication();

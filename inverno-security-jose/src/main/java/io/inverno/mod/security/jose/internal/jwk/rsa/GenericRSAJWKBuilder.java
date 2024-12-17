@@ -323,7 +323,7 @@ public class GenericRSAJWKBuilder extends AbstractX509JWKBuilder<RSAPublicKey, R
 
 					if(tmpCert.getSigAlgName() != null) {
 						if(this.rsaAlg != null && this.rsaAlg.isSignature() && !this.rsaAlg.getJcaAlgorithm().equals(tmpCert.getSigAlgName())) {
-							throw new JWKBuildException("Resolved X.509 certificate algorithm does not match JWK algoritm");
+							throw new JWKBuildException("Resolved X.509 certificate algorithm does not match JWK algorithm");
 						}
 						if((this.rsaAlg == null || this.rsaAlg.isSignature()) && !SUPPORTED_SIG_JCA_ALGORITHMS.contains(tmpCert.getSigAlgName())) {
 							throw new JWKBuildException("Resolved X.509 certificate signature algorithm is not supported: " + tmpCert.getSigAlgName());

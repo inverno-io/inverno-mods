@@ -66,9 +66,7 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 			parameters.put(ContentType.CHARSET, headerField.charset.toString());
 		}
 		if(!parameters.isEmpty()) {
-			parameters.entrySet().stream().forEach(e -> {
-				result.append(this.parameterDelimiter).append(e.getKey()).append("=").append(e.getValue());
-			});
+			parameters.forEach((k, v) -> result.append(this.parameterDelimiter).append(k).append("=").append(v));
 		}
 		return result.toString();
 	}

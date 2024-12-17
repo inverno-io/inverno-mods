@@ -31,7 +31,7 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  * 
- * @param <A> the type of user authenthentication
+ * @param <A> the type of user authentication
  * @param <B> the type of identity
  */
 public class UserIdentityResolver<A extends UserAuthentication<B>, B extends Identity> implements IdentityResolver<A, B> {

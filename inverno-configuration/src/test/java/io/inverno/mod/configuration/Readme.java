@@ -18,6 +18,7 @@ package io.inverno.mod.configuration;
 import io.inverno.mod.configuration.source.CompositeConfigurationSource;
 import io.inverno.mod.configuration.source.PropertyFileConfigurationSource;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -46,7 +47,7 @@ public class Readme {
 			.block();
 		
 		results.stream().forEach(queryResult -> {
-			System.out.println(queryResult.getQueryKey() + " -> " + queryResult.getResult().orElse(null));
+			System.out.println(queryResult.getQueryKey() + " -> " + queryResult.toOptional().orElse(null));
 		});
 		
 		System.out.println("================================================================================");
@@ -80,5 +81,79 @@ public class Readme {
 		listResults.stream().forEach(result -> {
 			System.out.println(result.getKey() + " -> " + result.asString().orElse(null));
 		});
+
+		source
+			.get("server.port", "db.url", "db.user", "db.password").withParameters("environment", "production", "zone", "us")
+			.and()
+			.get("db.schema").withParameters("environment", "production", "zone", "us", "tenant", "someCompany")
+			.execute()
+			.filter(ConfigurationQueryResult::isPresent)
+			.reduceWith(
+				() -> new ApplicationConfiguration(),
+				(config, queryResult) -> {
+					switch(queryResult.getQueryKey().getName()) {
+						case "server.port": config.setServerPort(queryResult.get().asInteger().orElseThrow());
+							break;
+						case "db.url": config.setDbURL(queryResult.get().asURL().orElseThrow());
+							break;
+						case "db.user": config.setDbUser(queryResult.get().asString().orElseThrow());
+							break;
+						case "db.password": config.setDbPassword(queryResult.get().asString().orElseThrow());
+							break;
+						case "db.schema": config.setDbSchema(queryResult.get().asString().orElseThrow());
+							break;
+					}
+					return config;
+				}
+			);
+	}
+
+	private static class ApplicationConfiguration {
+
+		private String dbUser;
+		private String dbPassword;
+		private int serverPort;
+		private URL dbURL;
+		private String dbSchema;
+
+		public String getDbUser() {
+			return dbUser;
+		}
+
+		public void setDbUser(String dbUser) {
+			this.dbUser = dbUser;
+		}
+
+		public String getDbPassword() {
+			return dbPassword;
+		}
+
+		public void setDbPassword(String dbPassword) {
+			this.dbPassword = dbPassword;
+		}
+
+		public int getServerPort() {
+			return serverPort;
+		}
+
+		public void setServerPort(int serverPort) {
+			this.serverPort = serverPort;
+		}
+
+		public URL getDbURL() {
+			return dbURL;
+		}
+
+		public void setDbURL(URL dbURL) {
+			this.dbURL = dbURL;
+		}
+
+		public String getDbSchema() {
+			return dbSchema;
+		}
+
+		public void setDbSchema(String dbSchema) {
+			this.dbSchema = dbSchema;
+		}
 	}
 }

@@ -22,28 +22,22 @@ import io.inverno.core.annotation.Destroy;
 import io.inverno.core.annotation.Init;
 import io.inverno.core.annotation.Wrapper;
 import io.inverno.mod.base.concurrent.Reactor;
-import io.inverno.mod.base.concurrent.VertxReactor;
 import io.inverno.mod.base.net.NetService.TransportType;
 import io.inverno.mod.boot.BootConfiguration;
 import java.util.concurrent.ExecutorService;
 
 /**
  * <p>
- * Creates and exposes the {@link Reactor} implementation based on the boot
- * module configuration.
+ * Creates and exposes the {@link Reactor} implementation based on the boot module configuration.
  * </p>
  * 
  * <p>
- * If Vert.x core is present in the module path and
- * {@link BootConfiguration#reactor_prefer_vertx()} is set to true, a
- * {@link VertxReactor} is exposed, otherwise a regular {@link Reactor} is
- * exposed
+ * If Vert.x core is present in the module path and {@link BootConfiguration#reactor_prefer_vertx()} is set to true, a {@link io.inverno.mod.base.concurrent.VertxReactor VertxReactor} is exposed,
+ * otherwise a regular {@link Reactor} is exposed
  * </p>
- * 
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 @Wrapper @Bean(name = "reactor")
 public class ReactorWrapper implements Supplier<Reactor> {

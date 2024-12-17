@@ -22,6 +22,7 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.net.NetClientConfiguration;
 import io.inverno.mod.base.net.NetService;
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.client.Endpoint;
@@ -29,17 +30,20 @@ import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.ExchangeInterceptor;
 import io.inverno.mod.http.client.HttpClient;
 import io.inverno.mod.http.client.HttpClientConfiguration;
+import io.inverno.mod.http.client.UnboundExchange;
 import java.net.InetSocketAddress;
-import io.inverno.mod.http.client.InterceptableExchange;
+import io.inverno.mod.http.client.InterceptedExchange;
 import io.inverno.mod.http.client.Part;
 import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
+import org.apache.commons.lang3.StringUtils;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
  * The HTTP/1.x and HTTP/2 client.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 @Bean( name = "httpClient", strategy = Bean.Strategy.PROTOTYPE )
@@ -96,30 +100,46 @@ public class GenericHttpClient implements @Provide HttpClient {
 		this.multipartBodyEncoder = multipartBodyEncoder;
 		this.partFactory = partFactory;
 	}
-	
+
 	@Override
-	public EndpointBuilder endpoint(InetSocketAddress remoteAddress) {
-		return new GenericEndpointBuilder(remoteAddress);
+	public <T extends ExchangeContext> Mono<? extends UnboundExchange<T>> exchange(Method method, String requestTarget, T context) throws IllegalArgumentException {
+		if(StringUtils.isBlank(requestTarget)) {
+			throw new IllegalArgumentException("Blank request target");
+		}
+		if(!requestTarget.startsWith("/")) {
+			throw new IllegalArgumentException("Request target must be absolute");
+		}
+		return Mono.fromSupplier(() -> new EndpointExchange<>(
+			this.headerService,
+			this.parameterConverter,
+			context,
+			new EndpointRequest(this.headerService, this.parameterConverter, this.urlEncodedBodyEncoder, this.multipartBodyEncoder,	this.partFactory, method, requestTarget)
+		));
 	}
-	
+
+	@Override
+	public <A extends ExchangeContext> EndpointBuilder<A, Exchange<A>, InterceptedExchange<A>> endpoint(InetSocketAddress remoteAddress) {
+		return new GenericEndpointBuilder<>(remoteAddress);
+	}
+
 	/**
 	 * <p>
 	 * Generic {@link EndpointBuilder} implementation.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 * 
 	 * @param <A> the exchange context type
 	 */
-	private class GenericEndpointBuilder<A extends ExchangeContext> implements EndpointBuilder<A, Exchange<A>, InterceptableExchange<A>> {
+	private class GenericEndpointBuilder<A extends ExchangeContext> implements EndpointBuilder<A, Exchange<A>, InterceptedExchange<A>> {
 
 		private final InetSocketAddress remoteAddress;
 
 		private InetSocketAddress localAddress;
 		private HttpClientConfiguration configuration;
 		private NetClientConfiguration netConfiguration;
-		private ExchangeInterceptor<? super A, InterceptableExchange<A>> exchangeInterceptor;
+		private ExchangeInterceptor<A, InterceptedExchange<A>> exchangeInterceptor;
 		
 		/**
 		 * <p>
@@ -151,8 +171,9 @@ public class GenericHttpClient implements @Provide HttpClient {
 		}
 
 		@Override
-		public HttpClient.EndpointBuilder<A, Exchange<A>, InterceptableExchange<A>> interceptor(ExchangeInterceptor<? super A, InterceptableExchange<A>> exchangeInterceptor) {
-			this.exchangeInterceptor = exchangeInterceptor;
+		@SuppressWarnings("unchecked")
+		public HttpClient.EndpointBuilder<A, Exchange<A>, InterceptedExchange<A>> interceptor(ExchangeInterceptor<? super A, InterceptedExchange<A>> exchangeInterceptor) {
+			this.exchangeInterceptor = (ExchangeInterceptor<A, InterceptedExchange<A>>) exchangeInterceptor;
 			return this;
 		}
 		

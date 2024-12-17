@@ -15,7 +15,7 @@
  */
 /**
  * <p>
- * Inverno Web API and module configuration.
+ * Inverno Web server API and module configuration.
  * </p>
  */
 package io.inverno.mod.web.server;

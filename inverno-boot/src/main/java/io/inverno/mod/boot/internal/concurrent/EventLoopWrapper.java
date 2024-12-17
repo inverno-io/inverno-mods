@@ -27,7 +27,7 @@ import io.netty.util.concurrent.Promise;
  * Event loop wrapper that prevents internal event loops from being shutdown.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 class EventLoopWrapper extends EventLoopGroupWrapper implements EventLoop {

@@ -25,7 +25,6 @@ import io.inverno.mod.irt.compiler.spi.NameInfo;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class GenericImportInfo extends BaseInfo implements ImportInfo {
 
@@ -38,8 +37,7 @@ public class GenericImportInfo extends BaseInfo implements ImportInfo {
 	 * Creates a generic import info.
 	 * </p>
 	 * 
-	 * @param range        the range in the IRT source file where the info is
-	 *                     defined
+	 * @param range        the range in the IRT source file where the info is defined
 	 * @param name         a name
 	 * @param staticImport true to indicate a static import, false otherwise
 	 */

@@ -27,7 +27,7 @@ import io.inverno.core.compiler.spi.ReporterInfo;
  * 
  * @see ReporterInfo
  */
-class NoOpReporterInfo implements ReporterInfo {
+public class NoOpReporterInfo implements ReporterInfo {
 
 	private final ReporterInfo reporter;
 	
@@ -56,12 +56,12 @@ class NoOpReporterInfo implements ReporterInfo {
 
 	@Override
 	public boolean hasError() {
-		return this.reporter != null ? this.reporter.hasError() : false;
+		return this.reporter != null && this.reporter.hasError();
 	}
 
 	@Override
 	public boolean hasWarning() {
-		return this.reporter != null ? this.reporter.hasWarning() : false;
+		return this.reporter != null && this.reporter.hasWarning();
 	}
 
 	@Override

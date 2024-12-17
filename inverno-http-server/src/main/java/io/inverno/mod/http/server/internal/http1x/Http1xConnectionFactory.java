@@ -33,10 +33,10 @@ import java.util.function.Supplier;
 
 /**
  * <p>
- * A factory to create {@link Http1xConnection} when a Http/1.x channel is initialized.
+ * A factory to create {@link Http1xConnection} when an HTTP/1.x channel is initialized.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 @Bean(visibility = Bean.Visibility.PRIVATE)
@@ -65,6 +65,7 @@ public class Http1xConnectionFactory implements Supplier<Http1xConnection> {
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 */
+	@SuppressWarnings("unchecked")
 	public Http1xConnectionFactory(
 			HttpServerConfiguration configuration,
 			ServerController<?, ? extends Exchange<?>, ? extends ErrorExchange<?>> controller,

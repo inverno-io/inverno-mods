@@ -19,8 +19,7 @@ import java.lang.reflect.Type;
 
 /**
  * <p>
- * An array type argument builder is used to specify the component type of an
- * array type.
+ * An array type argument builder is used to specify the component type of an array type.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -39,6 +38,7 @@ public interface ArrayTypeArgumentBuilder<A> {
 	 * </p>
 	 * 
 	 * @param rawType an erased type
+	 *
 	 * @return a type argument builder with this builder as parent
 	 */
 	TypeArgumentBuilder<ArrayTypeArgumentBuilder<A>> componentType(Class<?> rawType);
@@ -49,6 +49,7 @@ public interface ArrayTypeArgumentBuilder<A> {
 	 * </p>
 	 * 
 	 * @param type a type
+	 *
 	 * @return this builder
 	 */
 	ArrayTypeArgumentBuilder<A> componentType(Type type);
@@ -68,8 +69,8 @@ public interface ArrayTypeArgumentBuilder<A> {
 	 * </p>
 	 * 
 	 * @return the parent builder
-	 * @throws IllegalStateException if the builder is not in a proper state to
-	 *                               be finalized
+	 *
+	 * @throws IllegalStateException if the builder is not in a proper state to be finalized
 	 */
 	A and() throws IllegalStateException;
 }

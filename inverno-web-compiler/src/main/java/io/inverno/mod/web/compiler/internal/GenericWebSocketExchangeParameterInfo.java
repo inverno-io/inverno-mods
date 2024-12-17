@@ -29,7 +29,7 @@ import javax.lang.model.type.TypeMirror;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-class GenericWebSocketExchangeParameterInfo extends AbstractWebParameterInfo implements WebSocketExchangeParameterInfo {
+public class GenericWebSocketExchangeParameterInfo extends AbstractWebParameterInfo implements WebSocketExchangeParameterInfo {
 	
 	private final TypeMirror contextType;
 	
@@ -41,11 +41,11 @@ class GenericWebSocketExchangeParameterInfo extends AbstractWebParameterInfo imp
 	 * @param name             the parameter qualified name
 	 * @param reporter         the parameter reporter
 	 * @param parameterElement the parameter element
+	 * @param type             the WebSocket exchange type
 	 * @param contextType      the exchange context type
 	 */
-	public GenericWebSocketExchangeParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, TypeMirror contextType) {
-		super(name, reporter, parameterElement, parameterElement.asType(), true);
-		
+	public GenericWebSocketExchangeParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, TypeMirror type, TypeMirror contextType) {
+		super(name, reporter, parameterElement, type, true);
 		this.contextType = contextType;
 	}
 	

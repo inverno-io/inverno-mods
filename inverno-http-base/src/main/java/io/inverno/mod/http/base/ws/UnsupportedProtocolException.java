@@ -17,7 +17,6 @@ package io.inverno.mod.http.base.ws;
 
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.Status;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -37,7 +36,7 @@ public class UnsupportedProtocolException extends WebSocketException {
 	/**
 	 * The list of supported subprotocols.
 	 */
-	private final Optional<Set<String>> supportedProtocols;
+	private final Set<String> supportedProtocols;
 
 	/**
 	 * <p>
@@ -46,7 +45,7 @@ public class UnsupportedProtocolException extends WebSocketException {
 	 */
 	public UnsupportedProtocolException() {
 		super(Status.BAD_REQUEST);
-		this.supportedProtocols = Optional.empty();
+		this.supportedProtocols = Set.of();
 	}
 
 	/**
@@ -58,7 +57,7 @@ public class UnsupportedProtocolException extends WebSocketException {
 	 */
 	public UnsupportedProtocolException(String message) {
 		super(Status.BAD_REQUEST, message);
-		this.supportedProtocols = Optional.empty();
+		this.supportedProtocols = Set.of();
 	}
 
 	/**
@@ -70,7 +69,7 @@ public class UnsupportedProtocolException extends WebSocketException {
 	 */
 	public UnsupportedProtocolException(Throwable cause) {
 		super(Status.BAD_REQUEST, cause);
-		this.supportedProtocols = Optional.empty();
+		this.supportedProtocols = Set.of();
 	}
 
 	/**
@@ -83,7 +82,7 @@ public class UnsupportedProtocolException extends WebSocketException {
 	 */
 	public UnsupportedProtocolException(String message, Throwable cause) {
 		super(Status.BAD_REQUEST, message, cause);
-		this.supportedProtocols = Optional.empty();
+		this.supportedProtocols = Set.of();
 	}
 	
 	/**
@@ -96,7 +95,7 @@ public class UnsupportedProtocolException extends WebSocketException {
 	 */
 	public UnsupportedProtocolException(Set<String> supportedProtocols) {
 		super(Status.BAD_REQUEST);
-		this.supportedProtocols = Optional.ofNullable(supportedProtocols);
+		this.supportedProtocols = supportedProtocols != null ? supportedProtocols : Set.of();
 	}
 
 	/**
@@ -110,7 +109,7 @@ public class UnsupportedProtocolException extends WebSocketException {
 	 */
 	public UnsupportedProtocolException(Set<String> supportedProtocols, String message) {
 		super(Status.BAD_REQUEST, message);
-		this.supportedProtocols = Optional.ofNullable(supportedProtocols);
+		this.supportedProtocols = supportedProtocols != null ? supportedProtocols : Set.of();
 	}
 
 	/**
@@ -124,7 +123,7 @@ public class UnsupportedProtocolException extends WebSocketException {
 	 */
 	public UnsupportedProtocolException(Set<String> supportedProtocols, Throwable cause) {
 		super(Status.BAD_REQUEST, cause);
-		this.supportedProtocols = Optional.ofNullable(supportedProtocols);
+		this.supportedProtocols = supportedProtocols != null ? supportedProtocols : Set.of();
 	}
 
 	/**
@@ -139,7 +138,7 @@ public class UnsupportedProtocolException extends WebSocketException {
 	 */
 	public UnsupportedProtocolException(Set<String> supportedProtocols, String message, Throwable cause) {
 		super(Status.BAD_REQUEST, message, cause);
-		this.supportedProtocols = Optional.ofNullable(supportedProtocols);
+		this.supportedProtocols = supportedProtocols != null ? supportedProtocols : Set.of();
 	}
 	
 	/**
@@ -147,9 +146,9 @@ public class UnsupportedProtocolException extends WebSocketException {
 	 * Returns the list of supported WebSocket subprotocols.
 	 * </p>
 	 * 
-	 * @return the list of supported WebSocket subprotocols
+	 * @return the set of supported WebSocket subprotocols
 	 */
-	public Optional<Set<String>> getSupportedProtocol() {
+	public Set<String> getSupportedProtocols() {
 		return supportedProtocols;
 	}
 }

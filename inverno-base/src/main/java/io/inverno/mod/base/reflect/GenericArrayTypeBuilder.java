@@ -34,7 +34,9 @@ class GenericArrayTypeBuilder implements ArrayTypeBuilder {
 	private Type componentType;
 	
 	/**
-	 * <p>Creates a generic array type builder.</p>
+	 * <p>
+	 * Creates a generic array type builder.
+	 * </p>
 	 */
 	public GenericArrayTypeBuilder() {
 	}

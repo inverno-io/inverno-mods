@@ -15,10 +15,7 @@
  */
 package io.inverno.mod.boot;
 
-import io.inverno.mod.base.concurrent.Reactor;
-import io.inverno.mod.base.net.NetService;
 import io.inverno.mod.configuration.Configuration;
-import io.vertx.core.Vertx;
 
 /**
  * <p>
@@ -48,15 +45,23 @@ public interface BootConfiguration {
 	 * @return the Net server global configuration
 	 */
 	BootNetServerConfiguration net_server();
-	
+
+	/**
+	 * <p>
+	 * Address resolver configuration.
+	 * </p>
+	 *
+	 * @return the address resolver configuration
+	 */
+	BootNetAddressResolverConfiguration address_resolver();
+
 	/**
 	 * <p>
 	 * Enables/Disables native transport when available.
 	 * </p>
 	 * 
 	 * <p>
-	 * Note that this settings impact both {@link Reactor} and {@link NetService}
-	 * implementations.
+	 * Note that this settings impact both {@link io.inverno.mod.base.concurrent.Reactor Reactor} and {@link io.inverno.mod.base.net.NetService NetService} implementations.
 	 * </p>
 	 * 
 	 * <p>
@@ -75,8 +80,7 @@ public interface BootConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * If sets to true and Vert.x core is on the module path, the reactor is backed
-	 * by a {@link Vertx} instance.
+	 * If sets to true and Vert.x core is on the module path, the reactor is backed by a {@link io.vertx.core.Vertx Vertx} instance.
 	 * </p>
 	 * 
 	 * <p>

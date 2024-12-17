@@ -35,7 +35,7 @@ import io.inverno.mod.security.identity.IdentityResolver;
  * </p>
  * 
  * <p>
- * This is the main security interceptor that must be used on protectected resources. It authenticates the request and creates the {@link SecurityContext} in the exchange which can later be used in a
+ * This is the main security interceptor that must be used on protected resources. It authenticates the request and creates the {@link SecurityContext} in the exchange which can later be used in a
  * {@link AccessControlInterceptor} or directly in the exchange handler to control the access to the resource.
  * </p>
  * 

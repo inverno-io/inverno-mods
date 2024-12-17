@@ -19,9 +19,9 @@ import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.test.web.webroute.dto.GenericMessage;
+import io.inverno.mod.web.base.annotation.Body;
+import io.inverno.mod.web.base.annotation.PathParam;
 import io.inverno.mod.web.server.WebExchange;
-import io.inverno.mod.web.server.annotation.Body;
-import io.inverno.mod.web.server.annotation.PathParam;
 import io.inverno.mod.web.server.annotation.WebRoute;
 
 /**

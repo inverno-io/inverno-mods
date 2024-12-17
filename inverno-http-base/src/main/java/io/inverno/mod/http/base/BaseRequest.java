@@ -36,7 +36,7 @@ import java.util.Optional;
  * where the request is received by the server from the client, implementation shall provide methods to access HTTP request content.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public interface BaseRequest {

@@ -133,9 +133,9 @@ public class JWKSetJsonMediaTypeConverter implements JOSEMediaTypeConverter, @Pr
 	public <T> Mono<T> decodeOne(Publisher<String> value, Type type) {
 		return Mono.fromRunnable(() -> this.checkJWKSetType(type))
 			.then((Mono<T>)Flux.from(value)
-				.reduceWith(() -> new StringBuilder(), (acc, v) -> acc.append(v))
+				.reduceWith(StringBuilder::new, StringBuilder::append)
 				.map(StringBuilder::toString)
-				.flatMapMany(jwk -> this.jwkService.read(jwk))
+				.flatMapMany(this.jwkService::read)
 				.collectList()
 				.map(keys -> new JWKSet(keys.toArray(JWK[]::new)))
 			);

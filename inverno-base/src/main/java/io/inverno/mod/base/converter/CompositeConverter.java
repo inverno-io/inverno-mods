@@ -20,14 +20,11 @@ import java.util.List;
 
 /**
  * <p>
- * A composite converter relies on multiple {@link CompoundEncoder} and
- * {@link CompoundDecoder} to convert objects.
+ * A composite converter relies on multiple {@link CompoundEncoder} and {@link CompoundDecoder} to convert objects.
  * </p>
  * 
  * <p>
- * Such implementation makes it possible to create extensible converter able to
- * convert various type of objects by composition of many specific compound
- * encoders and decoders.
+ * Such implementation makes it possible to create extensible converter able to convert various type of objects by composition of many specific compound encoders and decoders.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -77,8 +74,7 @@ public class CompositeConverter<A> implements Converter<A, Object> {
 	
 	/**
 	 * <p>
-	 * Sets a default decoder to use when no compound decoder is able to decode an
-	 * object.
+	 * Sets a default decoder to use when no compound decoder is able to decode an object.
 	 * </p>
 	 * 
 	 * @param defaultDecoder the default decoder
@@ -89,8 +85,7 @@ public class CompositeConverter<A> implements Converter<A, Object> {
 
 	/**
 	 * <p>
-	 * Sets a default encoder to use when no compound encoder is able to encode an
-	 * object.
+	 * Sets a default encoder to use when no compound encoder is able to encode an object.
 	 * </p>
 	 * 
 	 * @param defaultEncoder the default decoder

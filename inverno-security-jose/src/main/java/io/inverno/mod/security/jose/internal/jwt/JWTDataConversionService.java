@@ -36,8 +36,6 @@ class JWTDataConversionService implements DataConversionService {
 
 	private final DataConversionService dataConversionService;
 	
-	private Optional<MediaTypeConverter<String>> jsonMediaTypeConverter;
-
 	/**
 	 * <p>
 	 * Creates a JWT data conversion service that wraps the specified data conversion service.
@@ -53,13 +51,11 @@ class JWTDataConversionService implements DataConversionService {
 	public Optional<MediaTypeConverter<String>> getConverter(String mediaType) {
 		String normalizedMediaType = MediaTypes.normalizeApplicationMediaType(mediaType);
 		if(!normalizedMediaType.equals(MediaTypes.APPLICATION_JSON)) {
-			// It must be application/json so we can rely on a JSON media type converter, this is basically hardcoded in the JWTJWSBuilder and JWTJWEBuilder but we never know
+			// It must be application/json so we can rely on a JSON media type converter, this is basically hardcoded in the JWTJWSBuilder and JWTJWEBuilder, but we never know
 			// for nested JWT, the correct way to do it is to create a JWS or a JWE with content type JWT that embeds the compact or JSON representation of a previously created JWT
 			return Optional.empty();
 		}
-		if(this.jsonMediaTypeConverter == null) {
-			this.jsonMediaTypeConverter = this.dataConversionService.getConverter(normalizedMediaType);
-		}
-		return this.jsonMediaTypeConverter;
+		// This is already cached in GenericDataConversionService
+		return this.dataConversionService.getConverter(normalizedMediaType);
 	}
 }

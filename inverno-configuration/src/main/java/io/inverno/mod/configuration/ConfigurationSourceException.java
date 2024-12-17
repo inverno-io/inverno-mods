@@ -17,7 +17,7 @@ package io.inverno.mod.configuration;
 
 /**
  * <p>
- * Thrown to indicate that an error occured in a configuration source.
+ * Thrown to indicate that an error occurred in a configuration source.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -34,7 +34,7 @@ public class ConfigurationSourceException extends RuntimeException {
 	/**
 	 * The configuration source at the origin of the error.
 	 */
-	private ConfigurationSource<?,?,?> source;
+	private ConfigurationSource source;
 
 	/**
 	 * <p>
@@ -43,7 +43,7 @@ public class ConfigurationSourceException extends RuntimeException {
 	 * 
 	 * @param source the configuration source
 	 */
-	public ConfigurationSourceException(ConfigurationSource<?,?,?> source) {
+	public ConfigurationSourceException(ConfigurationSource source) {
 		super();
 		this.source = source;
 	}
@@ -56,7 +56,7 @@ public class ConfigurationSourceException extends RuntimeException {
 	 * @param source  the configuration source
 	 * @param message the message
 	 */
-	public ConfigurationSourceException(ConfigurationSource<?,?,?> source, String message) {
+	public ConfigurationSourceException(ConfigurationSource source, String message) {
 		super(message);
 	}
 
@@ -68,7 +68,7 @@ public class ConfigurationSourceException extends RuntimeException {
 	 * @param source the configuration source
 	 * @param cause  the cause
 	 */
-	public ConfigurationSourceException(ConfigurationSource<?,?,?> source, Throwable cause) {
+	public ConfigurationSourceException(ConfigurationSource source, Throwable cause) {
 		super(cause);
 	}
 	
@@ -81,7 +81,7 @@ public class ConfigurationSourceException extends RuntimeException {
 	 * @param message the message
 	 * @param cause   the cause
 	 */
-	public ConfigurationSourceException(ConfigurationSource<?,?,?> source, String message, Throwable cause) {
+	public ConfigurationSourceException(ConfigurationSource source, String message, Throwable cause) {
 		super(message, cause);
 	}
 	
@@ -96,7 +96,7 @@ public class ConfigurationSourceException extends RuntimeException {
 	 * @param enableSuppression  true to enable suppression, false otherwise
 	 * @param writableStackTrace true to make the stack trace writable, false otherwise
 	 */
-	public ConfigurationSourceException(ConfigurationSource<?,?,?> source, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public ConfigurationSourceException(ConfigurationSource source, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
@@ -107,7 +107,7 @@ public class ConfigurationSourceException extends RuntimeException {
 	 *
 	 * @return the configuration source
 	 */
-	public ConfigurationSource<?,?,?> getSource() {
+	public ConfigurationSource getSource() {
 		return source;
 	}
 }

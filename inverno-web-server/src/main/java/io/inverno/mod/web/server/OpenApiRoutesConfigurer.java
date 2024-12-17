@@ -23,7 +23,8 @@ import io.inverno.mod.base.resource.ResourceService;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.NotFoundException;
-import io.inverno.mod.web.server.annotation.PathParam;
+import io.inverno.mod.web.base.MissingRequiredParameterException;
+import io.inverno.mod.web.base.annotation.PathParam;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.net.URI;
@@ -35,7 +36,7 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
- * Web routes configurer used to configure routes exposing generated <a href="https://www.openapis.org/">Open API</a> specifications.
+ * Web router configurer used to configure routes exposing generated <a href="https://www.openapis.org/">Open API</a> specifications.
  * </p>
  *
  * <p>
@@ -62,7 +63,7 @@ import org.apache.logging.log4j.Logger;
  * 
  * @param <A> the exchange context type
  */
-public class OpenApiRoutesConfigurer<A extends ExchangeContext> implements WebRoutesConfigurer<A> {
+public class OpenApiRoutesConfigurer<A extends ExchangeContext> implements WebRouter.Configurer<A> {
 	
 	private static final Logger LOGGER = LogManager.getLogger(OpenApiRoutesConfigurer.class);
 	
@@ -71,7 +72,7 @@ public class OpenApiRoutesConfigurer<A extends ExchangeContext> implements WebRo
 	
 	/**
 	 * <p>
-	 * Creates an Open API web routes configurer with Swagger supprt and the specified resource service.
+	 * Creates an Open API Web routes configurer with Swagger supprt and the specified resource service.
 	 * </p>
 	 * 
 	 * @param resourceService the resource service
@@ -82,7 +83,7 @@ public class OpenApiRoutesConfigurer<A extends ExchangeContext> implements WebRo
 	
 	/**
 	 * <p>
-	 * Creates an Open API web routes configurer with the specified resource service.
+	 * Creates an Open API Web routes configurer with the specified resource service.
 	 * </p>
 	 *
 	 * @param resourceService the resource service
@@ -132,9 +133,9 @@ public class OpenApiRoutesConfigurer<A extends ExchangeContext> implements WebRo
 	}
 
 	@Override
-	public void configure(WebRoutable<A, ?> routes) {
+	public void configure(WebRouter<A> routes) {
 		routes
-			.route().path("/open-api", true).method(Method.GET).produces(MediaTypes.APPLICATION_JSON).handler(exchange -> {
+			.route().path("/open-api", true).method(Method.GET).produce(MediaTypes.APPLICATION_JSON).handler(exchange -> {
 				exchange.response().body().raw().value(this.listSpec());
 			})
 			.route().path("/open-api/{moduleName}", false).method(Method.GET).handler(exchange -> {
@@ -143,10 +144,10 @@ public class OpenApiRoutesConfigurer<A extends ExchangeContext> implements WebRo
 
 		if(this.enableSwagger) {
 			routes
-				.route().path("/open-api", true).method(Method.GET).produces(MediaTypes.TEXT_HTML).handler(exchange -> {
+				.route().path("/open-api", true).method(Method.GET).produce(MediaTypes.TEXT_HTML).handler(exchange -> {
 					exchange.response().body().raw().value(this.listSpecSwaggerUI());
 				})
-				.route().path("/open-api/{moduleName}", false).method(Method.GET).produces(MediaTypes.TEXT_HTML).handler(exchange -> {
+				.route().path("/open-api/{moduleName}", false).method(Method.GET).produce(MediaTypes.TEXT_HTML).handler(exchange -> {
 					exchange.response().body().raw().value(this.getSpecSwaggerUI(exchange.request().pathParameters().get("moduleName").map(parameter -> parameter.as(String.class)).orElseThrow(() -> new MissingRequiredParameterException("moduleName"))));
 				});
 		}

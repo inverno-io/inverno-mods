@@ -31,7 +31,7 @@ import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
  * Http/1.x {@link HttpConnectionFactory} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 @Bean( visibility = Bean.Visibility.PRIVATE )

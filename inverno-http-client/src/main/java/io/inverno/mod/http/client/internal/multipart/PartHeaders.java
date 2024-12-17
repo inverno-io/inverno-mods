@@ -24,10 +24,10 @@ import java.util.Map;
 
 /**
  * <p>
- * A {@link OutboundRequestHeaders} implementation used for representing part's headers in a multipart form data body.
+ * A {@link io.inverno.mod.http.base.OutboundRequestHeaders} implementation used for representing part's headers in a multipart form data body.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class PartHeaders extends GenericRequestHeaders<PartHeaders> {

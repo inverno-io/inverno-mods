@@ -1,5 +1,3 @@
-import io.inverno.mod.configuration.Configuration;
-
 /*
  * Copyright 2021 Jeremy KUHN
  *
@@ -18,19 +16,18 @@ import io.inverno.mod.configuration.Configuration;
 
 /**
  * <p>
- * The Inverno framework configuration compiler module provides an Inverno compiler
- * plugin to generate configuration loader for
- * {@link Configuration @Configuration} annotated interfaces.
+ * The Inverno framework configuration compiler module provides an Inverno compiler plugin to generate configuration loader for {@link io.inverno.mod.configuration.Configuration @Configuration}
+ * annotated interfaces.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see Configuration
+ * @see io.inverno.mod.configuration.Configuration
  */
 module io.inverno.mod.configuration.compiler {
 	requires transitive io.inverno.core.compiler;
-	
+
 	requires io.inverno.mod.configuration;
 	
 	exports io.inverno.mod.configuration.compiler.spi;

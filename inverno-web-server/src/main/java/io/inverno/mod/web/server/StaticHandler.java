@@ -31,7 +31,7 @@ import java.util.Optional;
  * </p>
  *
  * <p>
- * This handler is typically used as a handler in a web route to serve static content. It uses a configurable path parameter to determine the path of the resource to serve relative to the base path.
+ * This handler is typically used as a handler in a Web route to serve static content. It uses a configurable path parameter to determine the path of the resource to serve relative to the base path.
  * </p>
  * 
  * <pre>{@code
@@ -128,7 +128,7 @@ public class StaticHandler<A extends ExchangeContext> implements ExchangeHandler
 		
 		Path resourcePath = Path.of(pathParameter).normalize();
 		if(isDirectory) {
-			resourcePath.resolve(this.welcomePage);
+			resourcePath = resourcePath.resolve(this.welcomePage);
 		}
 		
 		if(resourcePath.isAbsolute() || resourcePath.getRoot() != null) {
@@ -142,7 +142,7 @@ public class StaticHandler<A extends ExchangeContext> implements ExchangeHandler
 			Optional<Boolean> exists = requestedResource.exists();
 			Optional<Boolean> isFile = requestedResource.isFile();
 			
-			if(!exists.isPresent()) {
+			if(exists.isEmpty()) {
 				// We can't determine the existence, this indicates an "opaque" resource like a URL, we can only try
 				exchange.response().body().resource().value(requestedResource);
 			}
@@ -168,7 +168,7 @@ public class StaticHandler<A extends ExchangeContext> implements ExchangeHandler
 			}
 			else {
 				// Resource doesn't exist
-				if(!isFile.isPresent()) {
+				if(isFile.isEmpty()) {
 					// This might indicate stream based resources like module or URL in which case we might have a directory
 					try(Resource requestedResourceIndex = requestedResource.resolve(this.welcomePage)) {
 						exchange.response().body().resource().value(requestedResourceIndex);

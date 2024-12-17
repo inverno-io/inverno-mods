@@ -182,48 +182,46 @@ public class GenericEdECJWK extends AbstractOKPJWK<EdECPublicKey, EdECPrivateKey
 	@Override
 	public EdECPublicKey toPublicKey() throws JWKProcessingException {
 		if(this.publicKey == null) {
-			this.publicKey = this.certificate
-				.map(cert -> (EdECPublicKey)cert.getPublicKey())
-				.orElseGet(() -> {
-					try {
-						byte[] encodedPoint = Base64.getUrlDecoder().decode(this.x);
-						byte msb = encodedPoint[encodedPoint.length - 1];
-						encodedPoint[encodedPoint.length - 1] &= (byte) 0x7F;
-						boolean xOdd = (msb & 0x80) != 0;
-						reverse(encodedPoint);
-						BigInteger y = new BigInteger(1, encodedPoint);
+			if(this.certificate == null) {
+				try {
+					byte[] encodedPoint = Base64.getUrlDecoder().decode(this.x);
+					byte msb = encodedPoint[encodedPoint.length - 1];
+					encodedPoint[encodedPoint.length - 1] &= (byte) 0x7F;
+					boolean xOdd = (msb & 0x80) != 0;
+					reverse(encodedPoint);
+					BigInteger y = new BigInteger(1, encodedPoint);
 
-						EdECPublicKeySpec edEcPublicKeySpec = new EdECPublicKeySpec(new NamedParameterSpec(this.curve.getJCAName()), new EdECPoint(xOdd, y));
-						return (EdECPublicKey) KeyFactory.getInstance(this.curve.getJCAName()).generatePublic(edEcPublicKeySpec);
-					} 
-					catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-						throw new JWKProcessingException("Error converting JWK to public key", e);
-					}
-				});
+					EdECPublicKeySpec edEcPublicKeySpec = new EdECPublicKeySpec(new NamedParameterSpec(this.curve.getJCAName()), new EdECPoint(xOdd, y));
+					this.publicKey = (EdECPublicKey) KeyFactory.getInstance(this.curve.getJCAName()).generatePublic(edEcPublicKeySpec);
+				}
+				catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+					throw new JWKProcessingException("Error converting JWK to public key", e);
+				}
+			}
+			else {
+				this.publicKey = (EdECPublicKey)this.certificate.getPublicKey();
+			}
 		}
 		return this.publicKey;
 	}
 	
 	@Override
 	public Optional<EdECPrivateKey> toPrivateKey() throws JWKProcessingException {
-		if(this.privateKey == null) {
-			this.privateKey = Optional.ofNullable(this.d)
-				.map(pk -> {
-					try {
-						EdECPrivateKeySpec edEcPrivateKeySpec = new EdECPrivateKeySpec(new NamedParameterSpec(this.curve.getJCAName()), Base64.getUrlDecoder().decode(pk));
-						return (EdECPrivateKey) KeyFactory.getInstance(this.curve.getJCAName()).generatePrivate(edEcPrivateKeySpec);
-					} 
-					catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-						throw new JWKProcessingException("Error converting JWK to private key", e);
-					}
-				});
+		if(this.privateKey == null && this.d != null) {
+			try {
+				EdECPrivateKeySpec edEcPrivateKeySpec = new EdECPrivateKeySpec(new NamedParameterSpec(this.curve.getJCAName()), Base64.getUrlDecoder().decode(this.d));
+				this.privateKey = (EdECPrivateKey) KeyFactory.getInstance(this.curve.getJCAName()).generatePrivate(edEcPrivateKeySpec);
+			}
+			catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+				throw new JWKProcessingException("Error converting JWK to private key", e);
+			}
 		}
-		return this.privateKey;
+		return Optional.ofNullable(this.privateKey);
 	}
 
 	@Override
 	public EdECJWK toPublicJWK() {
-		GenericEdECJWK jwk = new GenericEdECJWK(this.curve, this.x, this.certificate.orElse(null));
+		GenericEdECJWK jwk = new GenericEdECJWK(this.curve, this.x, this.certificate);
 		jwk.publicKey = this.publicKey;
 		jwk.setPublicKeyUse(this.use);
 		jwk.setKeyOperations(this.key_ops);
@@ -239,7 +237,7 @@ public class GenericEdECJWK extends AbstractOKPJWK<EdECPublicKey, EdECPrivateKey
 
 	@Override
 	public EdECJWK minify() {
-		GenericEdECJWK jwk = new GenericEdECJWK(this.curve, this.x, this.d, (EdECPrivateKey)this.key, this.certificate.orElse(null), this.trusted);
+		GenericEdECJWK jwk = new GenericEdECJWK(this.curve, this.x, this.d, (EdECPrivateKey)this.key, this.certificate, this.trusted);
 		jwk.publicKey = this.publicKey;
 		
 		return jwk;

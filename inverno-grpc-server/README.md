@@ -15,9 +15,9 @@
 
 # gRPC Server
 
-The Inverno *grpc-server* module allows to creates reactive gRPC servers as described by the [gRPC over HTTP/2][grpc-protocol] protocol on top of the [http-server](#http-server) module.
+The Inverno *grpc-server* module allows to create reactive gRPC servers as described by the [gRPC over HTTP/2][grpc-protocol] protocol on top of the [http-server](#http-server) module.
 
-It provides an API to create HTTP exchange handlers supporting the gRPC portocol. A gRPC exchange basically supports:
+It provides an API to create HTTP exchange handlers supporting the gRPC protocol. A gRPC exchange basically supports:
 
 - the four kinds of gRPC service methods: unary, client streaming, server streaming and bidirectional streaming as defined by the [gRPC core concepts][grpc-core-concepts].
 - [metadata][grpc-metadata] and especially encoding/decoding of Base64 protocol buffer binary metadata
@@ -62,15 +62,13 @@ Using Maven:
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.inverno.mod:inverno-boot:${VERSION_INVERNO_MODS}'
 compile 'io.inverno.mod:inverno-web-server:${VERSION_INVERNO_MODS}'
 compile 'io.inverno.mod:inverno-grpc-server:${VERSION_INVERNO_MODS}'
-...
 ```
 
-A gRPC service is basically exposed by using the `GrpcServer` bean to convert a unary, client streaming, server streaming or bidiretional streaming gRPC exchange handler into an HTTP server exchange handler which can then be injected either in the HTTP server controller or more conveniently in a Web route:
+A gRPC service is basically exposed by using the `GrpcServer` bean to convert a unary, client streaming, server streaming or bidirectional streaming gRPC exchange handler into an HTTP server exchange handler which can then be injected either in the HTTP server controller or more conveniently in a Web route:
 
 ```java
 package io.inverno.example.app_grpc_server;
@@ -84,7 +82,7 @@ import io.inverno.mod.grpc.server.GrpcExchange;
 import io.inverno.mod.grpc.server.GrpcServer;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.web.server.WebRoutable;
+import io.inverno.mod.web.server.WebRouter;
 import io.inverno.mod.web.server.WebRoutesConfigurer;
 
 @Bean( visibility = Visibility.PRIVATE )
@@ -192,7 +190,7 @@ service Greeter {
 }
 ```
 
-The plugin generates abstract class `GreeterGrpcRouteConfigurer` implementing boiler plate code, we can then simply extend that class to implement the service logic:
+The plugin generates abstract class `GreeterGrpcRouteConfigurer` implementing boilerplate code, we can then simply extend that class to implement the service logic:
 
 ```java
 package io.inverno.example.app_grpc_server;
@@ -390,7 +388,7 @@ The context is inherited from the HTTP server or the Web server, it is used to c
 
 ### Unary gRPC exchange
 
-A unary gRPC exchange corresponds to the request/response paradigm where a server receives exactly one message from the client and responds with exacly one message.
+A unary gRPC exchange corresponds to the request/response paradigm where a server receives exactly one message from the client and responds with exactly one message.
 
 The following example shows how to expose a unary service method:
 
@@ -555,14 +553,14 @@ In such use case, both the server and the client can send messages when they are
 
 ### Cancellation
 
-A server can decide to cancel a gRPC when it can no longer produce result to the client or if it estimate the client won't be interested anymore as defined by [gRPC Cancellation][grpc-cancellation]. This is typically the case when it exceeds the timeout specified by the client in the gRPC request.
+A server can decide to cancel a gRPC when it can no longer produce result to the client or if it estimates the client won't be interested anymore as defined by [gRPC Cancellation][grpc-cancellation]. This is typically the case when it exceeds the timeout specified by the client in the gRPC request.
 
 Considering a server streaming exchange, [gRPC request timeout][grpc-timeout] can be implemented as follows:
 
 ```java
 (GrpcExchange.ServerStreaming<A, GroupHelloRequest, SingleHelloReply> grpcExchange) -> {
     Duration timeout = grpcExchange.request().metadata().getTimeout().orElse(Duration.ofSeconds(20)); // Get the grpc-timeout, defaults to 20 seconds when missing
-    grpcExchange.response().stream(Flux.interval(Duration.ofSeconds(1))                               // A long running stream that will eventually time out
+    grpcExchange.response().stream(Flux.interval(Duration.ofSeconds(1))                               // A long-running stream that will eventually time out
         .map(index -> SingleHelloReply.newBuilder().setMessage("Hello " + index).build())
         .doOnCancel(() -> grpcExchange.cancel())                                                      // Cancel the exchange on cancel subscription
         .take(timeout)                                                                                // Cancel subscription when the request timeout is exceeded
@@ -579,7 +577,7 @@ A gRPC server exchange is also canceled when a `GrpcException` with a `CANCELLED
 
 The `GrpcServer` also provides an HTTP exchange error handler that can be injected in the HTTP server or Web server in order to map [HTTP errors to gRPC status code][grpc-http-mapping].
 
-In a gRPC exchange the expected HTTP code returned by a server should always be `OK(200)` even in case of errors which should then be reported in the `grpc-status` response trailer. The gRPC server exchange handler catches most of the errors that can be thrown when it is invoked by the server or when processing request and response messages publishers. However it can't catch errors thrown outside the scope of the handler, like in interceptors for example. These errors are normally handled by the Web server error exchange handlers.
+In a gRPC exchange the expected HTTP code returned by a server should always be `OK(200)` even in case of errors which should then be reported in the `grpc-status` response trailer. The gRPC server exchange handler catches most of the errors that can be thrown when it is invoked by the server or when processing request and response messages publishers. However, it can't catch errors thrown outside the scope of the handler, like in interceptors for example. These errors are normally handled by the Web server error exchange handlers.
 
 The gRPC error handler must be used to circumvent that issue, it can be injected in the HTTP server controller or in an error web route.
 
@@ -591,7 +589,7 @@ import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.grpc.server.GrpcServer;
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.web.server.ErrorWebRoutable;
+import io.inverno.mod.web.server.ErrorWebRouter;
 import io.inverno.mod.web.server.ErrorWebRoutesConfigurer;
 
 @Bean(visibility = Visibility.PRIVATE)

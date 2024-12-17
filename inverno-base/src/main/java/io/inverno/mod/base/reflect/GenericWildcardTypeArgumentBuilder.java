@@ -23,7 +23,9 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * <p>generic {@link WildcardTypeArgumentBuilder} implemenation.</p>
+ * <p>
+ * Generic {@link WildcardTypeArgumentBuilder} implementation.
+ * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
@@ -35,9 +37,9 @@ import java.util.function.Consumer;
  */
 class GenericWildcardTypeArgumentBuilder<A> implements WildcardTypeArgumentBuilder<A> {
 	
-	private A parentBuilder;
+	private final A parentBuilder;
 	
-	private Consumer<Type> typeInjector;
+	private final Consumer<Type> typeInjector;
 	
 	private List<Type> upperBoundTypes;
 	
@@ -45,13 +47,11 @@ class GenericWildcardTypeArgumentBuilder<A> implements WildcardTypeArgumentBuild
 	
 	/**
 	 * <p>
-	 * Creates a generic wildcard type argument builder with the specified parent
-	 * builder and resulting type injector.
+	 * Creates a generic wildcard type argument builder with the specified parent builder and resulting type injector.
 	 * </p>
 	 * 
 	 * @param parentBuilder the parent builder
-	 * @param typeInjector  the resulting type injector to invoke when the builder
-	 *                      is finalized.
+	 * @param typeInjector  the resulting type injector to invoke when the builder is finalized.
 	 */
 	public GenericWildcardTypeArgumentBuilder(A parentBuilder, Consumer<Type> typeInjector) {
 		this.parentBuilder = parentBuilder;
@@ -134,7 +134,7 @@ class GenericWildcardTypeArgumentBuilder<A> implements WildcardTypeArgumentBuild
 	
 	@Override
 	public A and() {
-		this.typeInjector.accept(new WildcardTypeImpl(this.upperBoundTypes != null ? this.upperBoundTypes.toArray(new Type[this.upperBoundTypes.size()]) : new Type[0], this.lowerBoundTypes != null ? this.lowerBoundTypes.toArray(new Type[this.lowerBoundTypes.size()]) : new Type[0]));
+		this.typeInjector.accept(new WildcardTypeImpl(this.upperBoundTypes != null ? this.upperBoundTypes.toArray(Type[]::new) : new Type[0], this.lowerBoundTypes != null ? this.lowerBoundTypes.toArray(Type[]::new) : new Type[0]));
 		return this.parentBuilder;
 	}
 

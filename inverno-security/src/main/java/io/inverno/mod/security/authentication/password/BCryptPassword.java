@@ -82,7 +82,7 @@ public class BCryptPassword extends AbstractPassword<BCryptPassword, BCryptPassw
 		 * The secure random.
 		 */
 		@JsonIgnore
-		private SecureRandom secureRandom;
+		private final SecureRandom secureRandom;
 		
 		/**
 		 * <p>

@@ -35,7 +35,7 @@ import io.inverno.mod.web.compiler.spi.WebParameterQualifiedName;
  * 
  * @see AbstractInfo
  */
-abstract class AbstractWebParameterInfo extends AbstractInfo<WebParameterQualifiedName> implements WebParameterInfo {
+public abstract class AbstractWebParameterInfo extends AbstractInfo<WebParameterQualifiedName> implements WebParameterInfo {
 
 	private final VariableElement element;
 
@@ -45,7 +45,7 @@ abstract class AbstractWebParameterInfo extends AbstractInfo<WebParameterQualifi
 	
 	/**
 	 * <p>
-	 * Creates an web parameter info.
+	 * Creates an Web parameter info.
 	 * </p>
 	 * 
 	 * @param name             the parameter qualified name

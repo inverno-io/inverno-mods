@@ -19,8 +19,7 @@ import java.lang.reflect.Type;
 
 /**
  * <p>
- * A type argument builder is used to specify the arguments of a parameterized
- * type.
+ * A type argument builder is used to specify the arguments of a parameterized type.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -35,6 +34,7 @@ public interface TypeArgumentBuilder<A> {
 	 * </p>
 	 * 
 	 * @param rawType an erased type
+	 *
 	 * @return a type argument builder with this builder as parent
 	 */
 	TypeArgumentBuilder<TypeArgumentBuilder<A>> type(Class<?> rawType);
@@ -45,6 +45,7 @@ public interface TypeArgumentBuilder<A> {
 	 * </p>
 	 * 
 	 * @param type a type
+	 *
 	 * @return this builder
 	 */
 	TypeArgumentBuilder<A> type(Type type);
@@ -55,6 +56,7 @@ public interface TypeArgumentBuilder<A> {
 	 * </p>
 	 * 
 	 * @param name The name of the variable
+	 *
 	 * @return a type variable builder with this builder as parent
 	 */
 	TypeVariableBuilder<TypeArgumentBuilder<A>> variableType(String name);
@@ -83,6 +85,7 @@ public interface TypeArgumentBuilder<A> {
 	 * </p>
 	 * 
 	 * @param rawType the owner type to set
+	 *
 	 * @return a type argument builder with this builder as parent
 	 */
 	TypeArgumentBuilder<TypeArgumentBuilder<A>> ownerType(Class<?> rawType);
@@ -93,8 +96,8 @@ public interface TypeArgumentBuilder<A> {
 	 * </p>
 	 * 
 	 * @return the parent builder
-	 * @throws IllegalStateException if the builder is not in a proper state to
-	 *                               be finalized
+	 *
+	 * @throws IllegalStateException if the builder is not in a proper state to be finalized
 	 */
 	A and() throws IllegalStateException;
 }

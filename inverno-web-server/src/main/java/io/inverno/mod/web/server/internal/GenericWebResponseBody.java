@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2021 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,10 @@ package io.inverno.mod.web.server.internal;
 import io.inverno.mod.http.base.InternalServerErrorException;
 import io.inverno.mod.http.base.OutboundData;
 import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.server.Response;
 import io.inverno.mod.http.server.ResponseBody;
-import io.inverno.mod.http.server.ResponseBody.Sse.Event;
-import io.inverno.mod.http.server.ResponseBody.Sse.EventFactory;
-import io.inverno.mod.web.server.OutboundDataEncoder;
-import io.inverno.mod.web.server.WebResponse;
+import io.inverno.mod.web.base.MissingConverterException;
+import io.inverno.mod.web.base.OutboundDataEncoder;
 import io.inverno.mod.web.server.WebResponseBody;
 import io.netty.buffer.ByteBuf;
 import java.lang.reflect.Type;
@@ -33,31 +32,29 @@ import org.reactivestreams.Publisher;
  * <p>
  * Generic {@link WebResponseBody} implementation.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class GenericWebResponseBody implements WebResponseBody {
+public class GenericWebResponseBody implements WebResponseBody {
 
-	private final WebResponse response;
-	
+	private final ServerDataConversionService dataConversionService;
 	private final ResponseBody responseBody;
-	
-	private final DataConversionService dataConversionService;
-	
+	private final Response response;
+
 	/**
 	 * <p>
-	 * Creates a generic web response body with the specified underlying response and response body and data conversion service.
+	 * Creates a generic Web response body.
 	 * </p>
 	 *
-	 * @param response              the underlying response
-	 * @param responseBody          the underlying response body
 	 * @param dataConversionService the data conversion service
+	 * @param response              the originating response
+	 * @param responseBody          the originating response body
 	 */
-	public GenericWebResponseBody(WebResponse response, ResponseBody responseBody, DataConversionService dataConversionService) {
-		this.response = response;
+	public GenericWebResponseBody(ServerDataConversionService dataConversionService, Response response, ResponseBody responseBody) {
 		this.dataConversionService = dataConversionService;
 		this.responseBody = responseBody;
+		this.response = response;
 	}
 
 	@Override
@@ -75,57 +72,27 @@ class GenericWebResponseBody implements WebResponseBody {
 	public OutboundData<ByteBuf> raw() {
 		return this.responseBody.raw();
 	}
-	
+
 	@Override
 	public <T extends CharSequence> OutboundData<T> string() {
 		return this.responseBody.string();
 	}
-	
+
 	@Override
 	public Resource resource() {
 		return this.responseBody.resource();
 	}
-	
+
 	@Override
-	public Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> sse() {
+	public Sse<ByteBuf, Sse.Event<ByteBuf>, Sse.EventFactory<ByteBuf, Sse.Event<ByteBuf>>> sse() {
 		return this.responseBody.sse();
 	}
-	
+
 	@Override
-	public <T extends CharSequence> Sse<T, Event<T>, EventFactory<T, Event<T>>> sseString() {
+	public <T extends CharSequence> Sse<T, Sse.Event<T>, Sse.EventFactory<T, Sse.Event<T>>> sseString() {
 		return this.responseBody.sseString();
 	}
-	
-	@Override
-	public <T> SseEncoder<T> sseEncoder(String mediaType) {
-		try {
-			return this.dataConversionService.createSseEncoder(this.responseBody.sse(), mediaType);
-		} 
-		catch (NoConverterException e) {
-			throw new InternalServerErrorException("No converter found for media type: " + e.getMediaType(), e);
-		}
-	}
-	
-	@Override
-	public <T> SseEncoder<T> sseEncoder(String mediaType, Class<T> type) {
-		try {
-			return this.dataConversionService.createSseEncoder(this.responseBody.sse(), mediaType, type);
-		} 
-		catch (NoConverterException e) {
-			throw new InternalServerErrorException("No converter found for media type: " + e.getMediaType(), e);
-		}
-	}
-	
-	@Override
-	public <T> SseEncoder<T> sseEncoder(String mediaType, Type type) {
-		try {
-			return this.dataConversionService.createSseEncoder(this.responseBody.sse(), mediaType, type);
-		} 
-		catch (NoConverterException e) {
-			throw new InternalServerErrorException("No converter found for media type: " + e.getMediaType(), e);
-		}
-	}
-	
+
 	@Override
 	public <T> OutboundDataEncoder<T> encoder() {
 		// if we don't have a content type specified in the response, it means that the route was created without any produces clause so we can fallback to a default representation assuming it is accepted in the request otherwise we should fail
@@ -136,8 +103,8 @@ class GenericWebResponseBody implements WebResponseBody {
 			.map(contentType -> {
 				try {
 					return this.dataConversionService.<T>createEncoder(this.response.body().raw(), contentType.getMediaType());
-				} 
-				catch (NoConverterException e) {
+				}
+				catch (MissingConverterException e) {
 					throw new InternalServerErrorException("No converter found for media type: " + e.getMediaType(), e);
 				}
 			})
@@ -160,10 +127,35 @@ class GenericWebResponseBody implements WebResponseBody {
 				try {
 					return this.dataConversionService.<T>createEncoder(this.response.body().raw(), contentType.getMediaType(), type);
 				}
-				catch (NoConverterException e) {
+				catch (MissingConverterException e) {
 					throw new InternalServerErrorException("No converter found for media type: " + e.getMediaType(), e);
 				}
 			})
 			.orElseThrow(() -> new InternalServerErrorException("Empty media type"));
+	}
+
+	@Override
+	public <T> SseEncoder<T> sseEncoder(String mediaType) {
+		try {
+			return this.dataConversionService.createSseEncoder(this.responseBody.sse(), mediaType);
+		}
+		catch (MissingConverterException e) {
+			throw new InternalServerErrorException("No converter found for media type: " + e.getMediaType(), e);
+		}
+	}
+
+	@Override
+	public <T> SseEncoder<T> sseEncoder(String mediaType, Class<T> type) {
+		return this.sseEncoder(mediaType, (Type)type);
+	}
+
+	@Override
+	public <T> SseEncoder<T> sseEncoder(String mediaType, Type type) {
+		try {
+			return this.dataConversionService.createSseEncoder(this.responseBody.sse(), mediaType, type);
+		}
+		catch (MissingConverterException e) {
+			throw new InternalServerErrorException("No converter found for media type: " + e.getMediaType(), e);
+		}
 	}
 }

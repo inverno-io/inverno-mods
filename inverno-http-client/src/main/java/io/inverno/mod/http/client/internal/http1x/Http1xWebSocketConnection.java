@@ -15,7 +15,6 @@
  */
 package io.inverno.mod.http.client.internal.http1x;
 
-import io.inverno.mod.http.client.internal.http1x.ws.GenericWebSocketExchange;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.internal.header.HeadersValidator;
@@ -26,10 +25,10 @@ import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.internal.EndpointExchange;
 import io.inverno.mod.http.client.internal.WebSocketConnection;
 import io.inverno.mod.http.client.internal.WebSocketConnectionExchange;
+import io.inverno.mod.http.client.internal.http1x.ws.GenericWebSocketExchange;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.EventLoop;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
@@ -60,14 +59,13 @@ import reactor.core.scheduler.Schedulers;
  * HTTP/1.x {@link WebSocketConnection} implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Object> implements WebSocketConnection {
 
 	private static final Logger LOGGER = LogManager.getLogger(WebSocketConnection.class);
 	
-	private final HttpClientConfiguration configuration;
 	private final ObjectConverter<String> parameterConverter;
 	
 	private final GenericWebSocketFrame.GenericFactory frameFactory;
@@ -91,13 +89,10 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	 * Creates an HTTP/1.x WebSocket connection.
 	 * </p>
 	 * 
-	 * @param configuration      the HTTP client configurartion
+	 * @param configuration      the HTTP client configuration
 	 * @param parameterConverter the parameter converter
 	 */
-	Http1xWebSocketConnection(
-			HttpClientConfiguration configuration, 
-			ObjectConverter<String> parameterConverter) {
-		this.configuration = configuration;
+	Http1xWebSocketConnection(HttpClientConfiguration configuration, ObjectConverter<String> parameterConverter) {
 		this.parameterConverter = parameterConverter;
 		
 		this.frameFactory = new GenericWebSocketFrame.GenericFactory(configuration.ws_max_frame_size());
@@ -145,7 +140,7 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	}
 	
 	@Override
-	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+	public void handlerAdded(ChannelHandlerContext ctx) {
 		this.tls = ctx.pipeline().get(SslHandler.class) != null;
 		this.closed = false;
 		this.close = Mono.<Void>create(sink -> {
@@ -172,7 +167,7 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	}
 
 	@Override
-	protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+	protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
 		if(msg instanceof FullHttpResponse) {
 			this.webSocketExchange.finishHandshake((FullHttpResponse) msg);
 		}
@@ -187,6 +182,7 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <A extends ExchangeContext> Mono<WebSocketConnectionExchange<A>> handshake(EndpointExchange<A> endpointExchange, String subprotocol) {
 		return Mono.<WebSocketConnectionExchange<ExchangeContext>>create(exchangeSink -> {
 			if(this.channelContext.channel().eventLoop().inEventLoop()) {
@@ -223,7 +219,7 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 		endpointExchange.request().getHeaders().getUnderlyingHeaders().setValidator(this.headersValidator);
 		Http1xWebSocketRequest handshakeRequest = new Http1xWebSocketRequest(this.parameterConverter, this, endpointExchange.request());
 		
-		URI webSocketURI = URI.create((this.tls ? "wss:// ": "ws://") + handshakeRequest.getAuthority() + handshakeRequest.getPath());
+		URI webSocketURI = URI.create((this.tls ? "wss://": "ws://") + handshakeRequest.getAuthority() + handshakeRequest.getPath());
 		WebSocketClientHandshaker handshaker = WebSocketClientHandshakerFactory.newHandshaker(
 			webSocketURI, 
 			WebSocketVersion.V13, 
@@ -259,7 +255,7 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	}
 
 	@Override
-	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
 		if(this.webSocketExchange != null) {
 			if(cause instanceof WebSocketHandshakeException) {
 				// No need to finalize exchange as it hasn't been emitted yet

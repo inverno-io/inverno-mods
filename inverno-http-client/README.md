@@ -33,15 +33,14 @@ It especially supports:
 - zero-copy file transfer when supported for fast resource transfer
 - parameter conversion
 
-The client is fully reactive, based on the reactor pattern and non-blocking sockets which means it requires a limited number of threads to supports thousands of connections with high end performances. Connections are managed per endpoint (i.e. HTTP server) in dedicated pools. It is then easy to create multiple HTTP clients in an application with specific configurations: pool size, timeouts, allocated I/O threads...
+The client is fully reactive, based on the reactor pattern and non-blocking sockets which means it requires a limited number of threads to supports thousands of connections with high-end performances. Connections are managed per endpoint (i.e. HTTP server) in dedicated pools. It is then easy to create multiple HTTP clients in an application with specific configurations: pool size, timeouts, allocated I/O threads...
 
-This module requires basic services like a [net service](#net-service) and a [resource service](#resource-service) which are usually provided by the *boot* module, so in order to use the Inverno *http-client* module, we should declare the following dependencies in the module descriptor:
+This module requires basic services like the `NetService`, the `Reactor` and the `ResourceService` which are usually provided by the *boot* module, so in order to use the Inverno *http-client* module, we need to declare the following dependency in the module descriptor:
 
 ```java
 @io.inverno.core.annotation.Module
 module io.inverno.example.app_http_client {
     requires io.inverno.mod.boot;
-    requires io.inverno.mod.http.client;
 }
 ```
 
@@ -58,21 +57,14 @@ Using Maven:
             <groupId>io.inverno.mod</groupId>
             <artifactId>inverno-boot</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.inverno.mod</groupId>
-            <artifactId>inverno-http-client</artifactId>
-        </dependency>
     </dependencies>
 </project>
 ```
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.inverno.mod:inverno-boot:${VERSION_INVERNO_MODS}'
-compile 'io.inverno.mod:inverno-http-client:${VERSION_INVERNO_MODS}'
-...
 ```
 
 An HTTP client is basically created from the `HttpClient` service exposed in the module and which is used to create the `Endpoint` connecting to the HTTP server:
@@ -258,7 +250,7 @@ public interface App_http_clientConfiguration {
 }
 ```
 
-This should be enough for exposing a configuration bean in the *app_http_client* module that let us setup the client:
+This should be enough for exposing a configuration bean in the *app_http_client* module that let us set up the client:
 
 ```java
 package io.inverno.example.app_http_client;
@@ -304,7 +296,7 @@ In above code, we have set:
 - the low level connection timeout to 30 seconds
 - the number of thread allocated to the reactor core IO event loop group to 4
 
-This configuration is basically used to override the default values globally, these settings are applied for all `Endpoint` instances created with the `HttpClient`. For instance, the connection pool size will then be the same for all endpoints. However if we consider an application creating muliple endpoints to connect to multiple HTTP servers, it is usually usefull to apply different configurations per endpoint. Hopefully specific `HttpClientConfiguration` and `NetClientConfiguration` can also be specified when creating an endpoint:
+This configuration is basically used to override the default values globally, these settings are applied for all `Endpoint` instances created with the `HttpClient`. For instance, the connection pool size will then be the same for all endpoints. However, if we consider an application creating multiple endpoints to connect to multiple HTTP servers, it is usually useful to apply different configurations per endpoint. Hopefully specific `HttpClientConfiguration` and `NetClientConfiguration` can also be specified when creating an endpoint:
 
 ```java
 package io.inverno.example.app_http_client;
@@ -420,11 +412,11 @@ or
 
 ### HTTP protocol versions
 
-The HTTP client supports HTTP/1.1, HTTP/2 and HTTP/2 over cleartext (H2C) protocols, the protocol choosed by the endpoint to connects to an HTTP server is resolved from the configuration.
+The HTTP client supports HTTP/1.1, HTTP/2 and HTTP/2 over cleartext (H2C) protocols, the protocol chosen by the endpoint to connects to an HTTP server is resolved from the configuration.
 
-The `http_protocol_versions` parameter defines the set of HTTP protocol versions that the client considers when negotiating the protocol with the server. When supported by both client and server, the HTTP/2 protocol should be always prefered over HTTP/1.1.
+The `http_protocol_versions` parameter defines the set of HTTP protocol versions that the client considers when negotiating the protocol with the server. When supported by both client and server, the HTTP/2 protocol should be always preferred over HTTP/1.1.
 
-When the `tls_enabled` parameter is enabled, protocol negotiation is done through [ALPN][alpn], the client submits the protocols defined in the `http_protocol_versions` parameter, the server then responds with its prefered protocol version and the connection is established or it rejects the connection if it doesn't support any of the protocol versions proposed by the client (e.g. client only provides HTTP/2 whereas the server only supports HTTP/1.1).
+When the `tls_enabled` parameter is enabled, protocol negotiation is done through [ALPN][alpn], the client submits the protocols defined in the `http_protocol_versions` parameter, the server then responds with its preferred protocol version and the connection is established. The connection is rejected when the server doesn't support any of the protocol versions proposed by the client (e.g. client only provides HTTP/2 whereas the server only supports HTTP/1.1).
 
 The following configuration allows to create HTTP endpoints using secured HTTP/2.0 or HTTP/1.1 connections:
 
@@ -715,7 +707,7 @@ endpoint
         Integer someInteger = exchange.request().queryParameters().get("some-integer").map(Parameter::asInteger).orElse(null);
 
         // get all query parameters with a given name
-        List<Integer> someIntergers = exchange.request().queryParameters().getAll("some-integer").stream().map(Parameter::asInteger).collect(Collectors.toList());
+        List<Integer> someIntegers = exchange.request().queryParameters().getAll("some-integer").stream().map(Parameter::asInteger).collect(Collectors.toList());
 
         // get all query parameters
         Map<String, List<Parameter>> queryParameters = exchange.request().queryParameters().getAll();
@@ -888,7 +880,7 @@ endpoint
     .exchange(Method.GET, "/some/path")
     .flatMap(Exchange::response)
     .map(response -> {
-        // Returns the value of the first occurence of 'some-header' as string or returns null
+        // Returns the value of the first occurrence of 'some-header' as string or returns null
         String someHeaderValue = response.headers().get("some-header").orElse(null);
 
         // Returns all 'some-header' values as strings
@@ -909,7 +901,7 @@ endpoint
     .exchange(Method.GET, "/some/path")
     .flatMap(Exchange::response)
     .map(response -> {
-        // Returns the value of the first occurence of 'some-header' as LocalDateTime or returns null
+        // Returns the value of the first occurrence of 'some-header' as LocalDateTime or returns null
         LocalDateTime someHeaderValue = response.headers().getParameter("some-header").map(Parameter::asLocalDateTime).orElse(null);
 
         // Returns all 'some-header' values as LocalDateTime
@@ -923,7 +915,7 @@ endpoint
     ...
 ```
 
-The *http-client* module can also uses the [header service](#http-header-service) provided by the *http-base* module to decode HTTP headers:
+The *http-client* module can also use the [header service](#http-header-service) provided by the *http-base* module to decode HTTP headers:
 
 ```java
 endpoint
@@ -931,10 +923,10 @@ endpoint
     .flatMap(Exchange::response)
     .map(response -> {
         // Returns the decoded 'content-type' header or null
-        Headers.ContentType contenType = response.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
+        Headers.ContentType contentType = response.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
 
-        String mediaType = contenType.getMediaType();
-        Charset charset = contenType.getCharset();
+        String mediaType = contentType.getMediaType();
+        Charset charset = contentType.getCharset();
 
         ...
     });
@@ -968,7 +960,7 @@ endpoint
     .request(Method.GET, "/some/path")
     .flatMap(Exchange::response)
     .map(response -> {
-        // Returns the value of the first occurence of 'some-cookie' as LocalDateTime or returns null
+        // Returns the value of the first occurrence of 'some-cookie' as LocalDateTime or returns null
         LocalDateTime someCookieValue = response.headers().cookies().get("some-cookie").map(Parameter::asLocalDateTime).orElse(null);
 
         // Returns all 'some-cookie' values as LocalDateTime
@@ -982,7 +974,7 @@ endpoint
     ...
 ```
 
-`SetCookieParameter` extends both `SetCookie` and `Parameter` so as to also expose `set-cookie` header attributes as defined by [RFC 6265 Section 4.1][rfc-6265-section41]:
+`SetCookieParameter` extends both `SetCookie` and `Parameter` to also expose `set-cookie` header attributes as defined by [RFC 6265 Section 4.1][rfc-6265-section41]:
 
 ```java
 endpoint
@@ -1007,7 +999,7 @@ endpoint
 
 The response body is exposed in a reactive way which allows to process it while it is being received by the client.
 
-In order to prevent locking and possible memory leaks, the underlying connection will discard unsubscribed data after receiving the final response content, it is therefore important to subscribe to the payload data publisher immediately when the exchange is emitted which happens after the beginning of the response is received (start line and heades) and before the payload is received.
+In order to prevent locking and possible memory leaks, the underlying connection will discard unsubscribed data after receiving the final response content, it is therefore important to subscribe to the payload data publisher immediately when the exchange is emitted which happens after the beginning of the response is received (start line and headers) and before the payload is received.
 
 ##### string
 
@@ -1019,7 +1011,7 @@ endpoint
     .flatMap(Exchange::response)
     .flatMapMany(response -> response.body().string().stream())
     .subscribe(bodyPart -> {
-        // Do something usefull with the payload
+        // Do something useful with the payload
         ...
     });
 ```
@@ -1037,7 +1029,7 @@ endpoint
     .flatMapMany(response -> response.body().raw().stream())
     .subscribe((ByteBuf chunk) -> {
         try {
-            // Do something usefull with the payload
+            // Do something useful with the payload
             ...
         }
         finally {
@@ -1046,7 +1038,7 @@ endpoint
     });
 ```
 
-When response payload is consumed as a flow of `ByteBuf`, it is the responsability of the subscriber to release chunks in order to avoid memory leaks.
+When response payload is consumed as a flow of `ByteBuf`, it is the responsibility of the subscriber to release chunks in order to avoid memory leaks.
 
 ### Exchange interceptor
 
@@ -1086,7 +1078,7 @@ endpoint
     .block(); // logs request and response body
 ```
 
-An interceptor also allows to abort sending the actual HTTP request by returning an empty publisher in which case the current interceptable exchange with a locally populated response is emitted.
+An interceptor also allows to abort sending the actual HTTP request by returning an empty publisher in which case the current intercepted exchange with a locally populated response is emitted.
 
 The following example shows how to abort all HTTP requests to `/some/path` and return a local response:
 
@@ -1115,7 +1107,7 @@ endpoint
     .block(); // returns "You have been intercepted"
 ```
 
-Mulitple interceptors can be chained by invoking `intercept()` method mutliple times:
+Multiple interceptors can be chained by invoking `intercept()` method multiple times:
 
 ```java
 Endpoint<ExchangeContext> endpoint = httpClient
@@ -1163,7 +1155,7 @@ An HTTP connection is only created when a request is sent on an `Endpoint` and n
 The endpoint connection pool behaviour is controlled by configuration with the following parameters:
 
 - **pool_max_size**: the maximum number of connections that can exist in a pool (defaults to 2).
-- **pool_clean_period**: the frequency at which the pool parks unecessary connections or closes timed out connection (defaults to 1000ms).
+- **pool_clean_period**: the frequency at which the pool parks unnecessary connections or closes timed out connection (defaults to 1000ms).
 - **pool_buffer_size**: the size of the request buffer used to buffer requests when all connections in the pool are full (defaults to `null` for no limit).
 - **pool_keep_alive_timeout**: how much time the pool needs to keep a parked connection in the pool before actually closing it (defaults to 60000ms).
 - **pool_connect_timeout**: how much time to wait for the pool to return a connection when a request is sent before raising a `ConnectionTimeoutException`.
@@ -1221,7 +1213,7 @@ endpoint
 
 In case the server does not support or accept the upgrade a `WebSocketClientHandshakeException` is raised in the `WebSocketExchange` publisher otherwise a `WebSocketExchange` is emitted exposing inbound and outbound frames or messages.
 
-> Note that a WebSocket connection is dedicated and lives outside of the connection pool managed by the endpoint and as such doesn't count in pool's capacity. It is closed as soon as the WebSocket is closed either by the client or the server.
+> Note that a WebSocket connection is dedicated and lives outside the connection pool managed by the endpoint and as such doesn't count in pool's capacity. It is closed as soon as the WebSocket is closed either by the client or the server.
 
 As for a regular HTTP request, headers and cookies can be specified as follows:
 
@@ -1297,7 +1289,7 @@ The WebSocket protocol is bidirectional and allows sending and receiving data on
 
 In a WebSocket exchange, the `Inbound` exposes the stream of frames received by the client from the server. It allows to consume WebSocket frames (text or binary) or messages (text or binary).
 
-The following example shows how to logs every incoming frames:
+The following example shows how to log every incoming frames:
 
 ```java
 endpoint
@@ -1314,7 +1306,7 @@ endpoint
     });
 ```
 
-As for response body `ByteBuf` data, WebSocket frames are reference counted and they must be released where they are consumed. In previous example, inbound frames are consumed in the subscriber which must then release them.
+As for response body `ByteBuf` data, WebSocket frames are reference counted, and they must be released where they are consumed. In previous example, inbound frames are consumed in the subscriber which must then release them.
 
 The WebSocket protocol supports fragmentation as defined by [RFC 6455 Section 5.4][rfc-6455-5.4], a WebSocket message can be fragmented into multiple frames, the final frame being flagged as final to indicate the end of the message. The `Inbound` can handle fragmented WebSocket messages and allows to consume corresponding fragmented data in multiple ways.
 
@@ -1328,16 +1320,16 @@ endpoint
         Publisher<WebSocketFrame> frames = message.frames();
 
         // The message data as stream of ByteBuf
-        Publisher<ByteBuf> binary = message.binary();
+        Publisher<ByteBuf> binary = message.raw();
 
         // The message data as stream of String
-        Publisher<String> text = message.text();
+        Publisher<String> text = message.string();
 
         // Aggregate all fragments into a single ByteBuf
-        Mono<ByteBuf> reducedBinary = message.reducedBinary();
+        Mono<ByteBuf> reducedRaw = message.rawReduced();
 
         // Aggregate all fragments into a single String
-        Mono<String> reducedText = message.reducedText();
+        Mono<String> reducedText = message.stringReduced();
 
         ...
     });
@@ -1345,7 +1337,7 @@ endpoint
 
 > Note that the different publishers in previous example are all variants of the frames publisher, as a result they are exclusive and it is only possible to subscribe once to only one of them.
 
-Unlike WebSocket frames, WebSocket messages are not reference counted, however message fragments, which are basically frames, must be released when consumed as WebSocket frames or `ByteBuf`.
+Unlike WebSocket frames, WebSocket messages are not reference counted. However, message fragments, which are basically frames, must be released when consumed as WebSocket frames or `ByteBuf`.
 
 Messages can be filtered by type (text or binary) by invoking `WebSocketExchange.Inbound#textMessages()` and `WebSocketExchange.Inbound#binaryMessages()`.
 
@@ -1381,7 +1373,7 @@ framesSink.tryEmitNext("test3");
 framesSink.tryEmitComplete();
 ```
 
-Likewise, a message publisher can be specfied to send messages composed of multiple frames. Frames and messages publisher are exclusive, only one of them can be specified.
+Likewise, a message publisher can be specified to send messages composed of multiple frames. Frames and messages publisher are exclusive, only one of them can be specified.
 
 ```java
 Sinks.Many<List<String>> messagesSink = Sinks.many().unicast().onBackpressureBuffer();

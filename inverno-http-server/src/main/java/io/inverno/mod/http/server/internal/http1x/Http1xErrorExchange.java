@@ -33,13 +33,13 @@ import reactor.core.publisher.BaseSubscriber;
  * </p>
  * 
  * <p>
- * An error exchange is used to handle exchange processing errors. It is created from the faulty exchange (see {@link Http1xExchangeV2#createErrorExchange(java.lang.Throwable) }) and processed by the
+ * An error exchange is used to handle exchange processing errors. It is created from the faulty exchange (see {@link Http1xExchange#createErrorExchange(java.lang.Throwable) }) and processed by the
  * error exchange handler specified in the server controller. In case of error while processing the error exchange, another last resort error exchange is created from the error exchange (see 
- * {@link Http1xErrorExchangeV2#createErrorExchange(java.lang.Throwable) }) and processed by the {@link GenericErrorExchangeHandler}. If the error couldn't be handled without further error or when a 
+ * {@link Http1xErrorExchange#createErrorExchange(java.lang.Throwable) }) and processed by the {@link GenericErrorExchangeHandler}. If the error couldn't be handled without further error or when a
  * partial response was sent before the error occurred, the connection is shutdown.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.10
  */
 class Http1xErrorExchange extends AbstractHttp1xExchange implements ErrorExchange<ExchangeContext> {
@@ -101,7 +101,9 @@ class Http1xErrorExchange extends AbstractHttp1xExchange implements ErrorExchang
 	@Override
 	public void handleError(Throwable throwable) {
 		if(this.lastResort || this.response.headers().isWritten()) {
-			throwable.addSuppressed(this.error);
+			if(throwable != this.error) {
+				throwable.addSuppressed(this.error);
+			}
 			LOGGER.error("Fatal exchange processing error", throwable);
 			this.dispose(throwable);
 			this.connection.shutdown().subscribe();
@@ -114,7 +116,9 @@ class Http1xErrorExchange extends AbstractHttp1xExchange implements ErrorExchang
 	
 	@Override
 	public Http1xErrorExchange createErrorExchange(Throwable throwable) {
-		throwable.addSuppressed(this.error);
+		if(throwable != this.error) {
+			throwable.addSuppressed(this.error);
+		}
 		Http1xErrorExchange errorExchange = this.exchange.createErrorExchange(throwable);
 		errorExchange.lastResort = true;
 		return errorExchange;
@@ -154,7 +158,7 @@ class Http1xErrorExchange extends AbstractHttp1xExchange implements ErrorExchang
 	 * The subscriber used to subscribe to the mono returned by the error exchange handler and that sends the response on complete.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.10
 	 */
 	private class ErrorExchangeHandlerSubscriber extends BaseSubscriber<Void> {

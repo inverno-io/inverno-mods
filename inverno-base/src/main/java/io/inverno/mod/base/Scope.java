@@ -18,20 +18,15 @@ package io.inverno.mod.base;
 
 /**
  * <p>
- * A scope can be used to define a bean which allows to create and retrieve
- * different bean instances depending on a particular scope.
+ * A scope can be used to define a bean which allows to create and retrieve different bean instances depending on a particular scope.
  * </p>
  * 
  * <p>
- * It is then possible to create instances using DI for a particular context.
- * This context can be anything from the current thread or specified by an
- * arbitrary key.
+ * It is then possible to create instances using DI for a particular context. This context can be anything from the current thread or specified by an arbitrary key.
  * </p>
  * 
  * <p>
- * A typical <code>Scope</code> implementation typically relies on prototype
- * beans injected lazily to benefit from dependency injection but they can also
- * be designed as a regular factories.
+ * A typical {@code Scope} implementation typically relies on prototype beans injected lazily to benefit from dependency injection but they can also be designed as a regular factories.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

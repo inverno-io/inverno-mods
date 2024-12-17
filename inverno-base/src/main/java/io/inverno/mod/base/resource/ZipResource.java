@@ -35,7 +35,7 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A {@link Resource} implementation that identifies resources by a URI of the form <code>zip:file:/path/to/zip!/path/to/resource</code> and looks up data in a zip file on the file system system.
+ * A {@link Resource} implementation that identifies resources by a URI of the form {@code zip:file:/path/to/zip!/path/to/resource} and looks up data in a zip file on the file system system.
  * </p>
  *
  * <p>
@@ -302,11 +302,7 @@ public class ZipResource extends AbstractAsyncResource {
 
 	@Override
 	public boolean delete() throws ResourceException {
-		Optional<PathResource> r = this.resolve();
-		if(r.isPresent()) {
-			return r.get().delete();
-		}
-		return false;
+		return this.resolve().map(PathResource::delete).orElse(false);
 	}
 	
 	@Override

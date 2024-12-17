@@ -36,7 +36,7 @@ import io.inverno.mod.base.resource.ZipResource;
 
 /**
  * <p>
- * {@link ResourceProvider} implementation used to resolve resources in a zip file (ie. <code>zip:/path/to/zip!/path/to/resource</code>).
+ * {@link ResourceProvider} implementation used to resolve resources in a zip file (ie. {@code zip:/path/to/zip!/path/to/resource}).
  * </p>
  *
  * <p>

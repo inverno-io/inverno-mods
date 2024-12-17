@@ -20,7 +20,7 @@ package io.inverno.mod.grpc.base;
  * Enumeration of gRPC statuses as defined by <a href="https://grpc.io/docs/guides/status-codes/">gRPC Status Codes</a>.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public enum GrpcStatus {
@@ -54,7 +54,7 @@ public enum GrpcStatus {
 	 * </p>
 	 * 
 	 * <p>
-	 * Note that this differs from {@link FAILED_PRECONDITION}. {@link INVALID_ARGUMENT} indicates arguments that are problematic regardless of the state of the system (e.g., a malformed file name).
+	 * Note that this differs from {@link #FAILED_PRECONDITION}. {@code INVALID_ARGUMENT} indicates arguments that are problematic regardless of the state of the system (e.g., a malformed file name).
 	 * </p>
 	 */
     INVALID_ARGUMENT(3),
@@ -75,8 +75,8 @@ public enum GrpcStatus {
 	 * </p>
 	 * 
 	 * <p>
-	 * Note to server developers: if a request is denied for an entire class of users, such as gradual feature rollout or undocumented allowlist, {@link NOT_FOUND} may be used. If a request is denied
-	 * for some users within a class of users, such as user-based access control, {@link PERMISSION_DENIED} must be used.
+	 * Note to server developers: if a request is denied for an entire class of users, such as gradual feature rollout or undocumented allowlist, {@code NOT_FOUND} may be used. If a request is denied
+	 * for some users within a class of users, such as user-based access control, {@link #PERMISSION_DENIED} must be used.
 	 * </p>
 	 */
     NOT_FOUND(5),
@@ -92,8 +92,8 @@ public enum GrpcStatus {
 	 * </p>
 	 * 
 	 * <p>
-	 * {@link PERMISSION_DENIED} must not be used for rejections caused by exhausting some resource (use {@link RESOURCE_EXHAUSTED} instead for those errors). {@link PERMISSION_DENIED} must not be
-	 * used if the caller can not be identified (use {@link UNAUTHENTICATED} instead for those errors). This error code does not imply the request is valid or the requested entity exists or satisfies
+	 * {@code PERMISSION_DENIED} must not be used for rejections caused by exhausting some resource (use {@link #RESOURCE_EXHAUSTED} instead for those errors). {@code PERMISSION_DENIED} must not be
+	 * used if the caller can not be identified (use {@link #UNAUTHENTICATED} instead for those errors). This error code does not imply the request is valid or the requested entity exists or satisfies
 	 * other pre-conditions.
 	 * </p>
 	 */
@@ -111,14 +111,14 @@ public enum GrpcStatus {
 	 * 
 	 * <p>
 	 * For example, the directory to be deleted is non-empty, an rmdir operation is applied to a non-directory, etc. Service implementors can use the following guidelines to decide between
-	 * {@link FAILED_PRECONDITION}, {@link ABORTED}, and {@link UNAVAILABLE}:
+	 * {@code FAILED_PRECONDITION}, {@link #ABORTED}, and {@link #UNAVAILABLE}:
 	 * </p>
 	 * 
 	 * <ul>
-	 * <li>Use {@link UNAVAILABLE} if the client can retry just the failing call.</li>
+	 * <li>Use {@link #UNAVAILABLE} if the client can retry just the failing call.</li>
 	 * <li>Use ABORTED if the client should retry at a higher level (e.g., when a client-specified test-and-set fails, indicating the client should restart a read-modify-write sequence).</li>
-	 * <li>Use {@link FAILED_PRECONDITION} if the client should not retry until the system state has been explicitly fixed. E.g., if an {@code rmdir} fails because the directory is non-empty,
-	 * {@link FAILED_PRECONDITION} should be returned since the client should not retry unless the files are deleted from the directory.</li>
+	 * <li>Use {@code FAILED_PRECONDITION} if the client should not retry until the system state has been explicitly fixed. E.g., if an {@code rmdir} fails because the directory is non-empty,
+	 * {@code FAILED_PRECONDITION} should be returned since the client should not retry unless the files are deleted from the directory.</li>
 	 * </ul>
 	 */
     FAILED_PRECONDITION(9),
@@ -128,7 +128,7 @@ public enum GrpcStatus {
 	 * </p>
 	 * 
 	 * <p>
-	 * See the guidelines above for deciding between {@link FAILED_PRECONDITION}, {@link ABORTED}, and {@link UNAVAILABLE}.
+	 * See the guidelines above for deciding between {@link #FAILED_PRECONDITION}, {@code ABORTED}, and {@link #UNAVAILABLE}.
 	 * </p>
 	 */
     ABORTED(10),
@@ -138,10 +138,10 @@ public enum GrpcStatus {
 	 * </p>
 	 * 
 	 * <p>
-	 * E.g., seeking or reading past end-of-file. Unlike {@link INVALID_ARGUMENT}, this error indicates a problem that may be fixed if the system state changes. For example, a 32-bit file system will
-	 * generate {@link INVALID_ARGUMENT} if asked to read at an offset that is not in the range {@code [0,2^32-1]}, but it will generate {@link OUT_OF_RANGE} if asked to read from an offset past the
-	 * current file size. There is a fair bit of overlap between {@code FAILED_PRECONDITION} and {@code OUT_OF_RANGE}. We recommend using {@code OUT_OF_RANGE} (the more specific error) when it applies
-	 * so that callers who are iterating through a space can easily look for an {@code OUT_OF_RANGE} error to detect when they are done.
+	 * E.g., seeking or reading past end-of-file. Unlike {@link #INVALID_ARGUMENT}, this error indicates a problem that may be fixed if the system state changes. For example, a 32-bit file system will
+	 * generate {@link #INVALID_ARGUMENT} if asked to read at an offset that is not in the range {@code [0,2^32-1]}, but it will generate {@code OUT_OF_RANGE} if asked to read from an offset past the
+	 * current file size. There is a fair bit of overlap between {@link #FAILED_PRECONDITION} and {@code OUT_OF_RANGE}. We recommend using {@code OUT_OF_RANGE} (the more specific error) when it
+	 * applies so that callers who are iterating through a space can easily look for an {@code OUT_OF_RANGE} error to detect when they are done.
 	 * </p>
 	 */
     OUT_OF_RANGE(11),
@@ -196,7 +196,7 @@ public enum GrpcStatus {
 	 * 
 	 * @param code a gRPC status code
 	 */
-    private GrpcStatus(int code) {
+    GrpcStatus(int code) {
       this.code = code;
     }
 

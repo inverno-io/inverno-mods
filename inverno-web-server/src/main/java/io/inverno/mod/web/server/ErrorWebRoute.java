@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2020 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,11 @@ package io.inverno.mod.web.server;
 
 import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.web.server.spi.AcceptAware;
-import io.inverno.mod.web.server.spi.ContentAware;
-import io.inverno.mod.web.server.spi.ErrorAware;
-import io.inverno.mod.web.server.spi.InterceptableRoute;
-import io.inverno.mod.web.server.spi.PathAware;
+import io.inverno.mod.http.server.ReactiveExchangeHandler;
 
 /**
  * <p>
- * An error web route specifies criteria used to determine the error web exchange handler to execute to handle a failing request.
+ * An error Web route specifies criteria used to determine the error Web exchange handler to execute to handle a failing exchange.
  * </p>
  *
  * <p>
@@ -34,91 +30,92 @@ import io.inverno.mod.web.server.spi.PathAware;
  *
  * <ul>
  * <li>the type of the error thrown during the regular processing of a request</li>
- * <li>the path to the resource which can be parameterized as defined by {@link io.inverno.mod.base.net.URIBuilder}.</li>
- * <li>the content type of the resource</li>
- * <li>the language tag of the resource</li>
+ * <li>the request path which can be parameterized as defined by {@link io.inverno.mod.base.net.URIBuilder}.</li>
+ * <li>the content type of the request</li>
+ * <li>the content type accepted by the request</li>
+ * <li>the language tag accepted by the request</li>
  * </ul>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
- * @see ErrorWebExchange
  * @see ErrorWebRouter
  *
- * @param <A> the type of the exchange context
+ * @param <A> the exchange context type
  */
-public interface ErrorWebRoute<A extends ExchangeContext> extends InterceptableRoute<A, ErrorWebExchange<A>>, ErrorAware, PathAware, ContentAware, AcceptAware {
+public interface ErrorWebRoute<A extends ExchangeContext> extends BaseWebRoute<A, ErrorWebExchange<A>> {
 
 	/**
 	 * <p>
-	 * Returns the type of errors supported by the resource served by the route.
+	 * Returns the error type matched by an error Web exchange in order to be processed by the route.
 	 * </p>
+	 *
+	 * @return an error type or null to match any exchange
 	 */
-	@Override
-	Class<? extends Throwable> getError();
+	Class<? extends Throwable> getErrorType();
 
 	/**
 	 * <p>
-	 * Returns the static normalized absolute path to the resource served by the route.
+	 * Returns the absolute normalized path matched by an error Web exchange in order to be processed by the route.
 	 * </p>
 	 *
 	 * <p>
-	 * This criteria should exactly match the absolute path of the request.
+	 * Path and path pattern are exclusive.
 	 * </p>
+	 *
+	 * @return an absolute normalized path or null to match any exchange
 	 */
-	@Override
 	String getPath();
 
 	/**
 	 * <p>
-	 * Returns the URI pattern that matches all the paths to the resource served by the route.
+	 * Returns the path pattern matched by an error Web exchange in order to be processed by the route.
 	 * </p>
 	 *
 	 * <p>
-	 * This criteria should match the absolute path of the request.
+	 * Path and path pattern are exclusive.
 	 * </p>
+	 *
+	 * @return a path pattern or null to match any exchange
 	 */
-	@Override
 	URIPattern getPathPattern();
 
 	/**
 	 * <p>
-	 * Returns the media range defining the content types accepted by the resource served by the route as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a>.
+	 * Returns the media range defining the content types as defined by <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a> matched by an error Web exchange in order
+	 * to be processed by the route.
 	 * </p>
 	 *
-	 * <p>
-	 * This criteria should match the request {@code content-type} header field.
-	 * </p>
+	 * @return a media range or null
 	 */
-	@Override
 	String getConsume();
-	
+
 	/**
 	 * <p>
-	 * Returns the media type of the resource served by the route.
+	 * Returns the media type or media range as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-3.1.1.5">RFC 7231 Section 3.1.1.5</a> and
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a> matched by an error Web exchange to be processed by the route.
 	 * </p>
-	 * 
-	 * <p>
-	 * This criteria should match the request {@code accept} header field.
-	 * </p>
-	 * 
-	 * @return a media type or null
+	 *
+	 * @return a media type, a media range or null to match any exchange
 	 */
-	@Override
 	String getProduce();
-	
+
 	/**
 	 * <p>
-	 * Returns the language of the resource served by the route.
+	 * Return the language tag or language range as defined <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.5">RFC 7231 Section 5.3.5</a> matched by an error Web exchange in order
+	 * to be processed by the route.
 	 * </p>
-	 * 
-	 * <p>
-	 * This criteria should match the request {@code accept-language} header field.
-	 * </p>
-	 * 
-	 * @return a language tag or null
+	 *
+	 * @return a language tag, a language range or null to match any exchange
 	 */
-	@Override
 	String getLanguage();
+
+	/**
+	 * <p>
+	 * Returns the error Web exchange handler used to handle error Web exchanges matching the route criteria.
+	 * </p>
+	 *
+	 * @return an error Web exchange handler
+	 */
+	ReactiveExchangeHandler<A, ErrorWebExchange<A>> getHandler();
 }

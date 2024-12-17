@@ -30,7 +30,7 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * ByteBuf {@code application/x-ndjson} media type converter as defined by <a href="http://ndjson.org/">Newline Delimited JSON</a>.
+ * {@code ByteBuf} {@code application/x-ndjson} media type converter as defined by <a href="http://ndjson.org/">Newline Delimited JSON</a>.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

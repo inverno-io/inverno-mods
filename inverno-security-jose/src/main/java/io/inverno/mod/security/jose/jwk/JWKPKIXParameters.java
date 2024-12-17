@@ -45,7 +45,7 @@ import javax.net.ssl.X509TrustManager;
  * </p>
  * 
  * <p>
- * This is an overridable wrapper bean which provides parameters that allows to validate certicates paths against a trust store. It can be overriden by injecting a custom instance when building the
+ * This is an overridable wrapper bean which provides parameters that allows to validate certificates paths against a trust store. It can be overridden by injecting a custom instance when building the
  * JOSE module.
  * </p>
  * 

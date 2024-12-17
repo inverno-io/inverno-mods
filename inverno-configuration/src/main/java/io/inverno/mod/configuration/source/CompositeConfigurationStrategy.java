@@ -23,7 +23,7 @@ import io.inverno.mod.configuration.internal.NoOpCompositeConfigurationStrategy;
 
 /**
  * <p>
- * A composite configuration strategy allows to specifies the behaviour of a {@link CompositeConfigurationStrategy}.
+ * A composite configuration strategy allows to specifies the behaviour of a {@link CompositeConfigurationSource}.
  * </p>
  * 
  * <p>
@@ -125,7 +125,7 @@ public interface CompositeConfigurationStrategy {
 	 * @param previousKey the configuration key of the previous result
 	 * @param resultKey   the configuration key of the current result
 	 *
-	 * @return true if the result key superseds the previous result key, false otherwise
+	 * @return true if the result key supersedes the previous result key, false otherwise
 	 */
 	boolean isSuperseded(ConfigurationKey queryKey, ConfigurationKey previousKey, ConfigurationKey resultKey);
 

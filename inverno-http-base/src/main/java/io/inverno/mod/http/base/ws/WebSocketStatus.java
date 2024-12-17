@@ -172,7 +172,7 @@ public enum WebSocketStatus {
 	 * </p>
 	 * 
 	 * <p>
-	 * A client may reconnect, and if it choses to do, should reconnect using a randomized delay of 5 - 30s.
+	 * A client may reconnect, and if it chooses to do, should reconnect using a randomized delay of 5 - 30s.
 	 * </p>
 	 * 
 	 * <p>
@@ -227,7 +227,7 @@ public enum WebSocketStatus {
 	
 	private final String reason;
 	
-	private WebSocketStatus(short code, String reason) {
+	WebSocketStatus(short code, String reason) {
 		this.code = code;
 		this.reason = reason;
 	}
@@ -256,7 +256,7 @@ public enum WebSocketStatus {
 	
 	/**
 	 * <p>
-	 * Returns the status correspoding to the specified code.
+	 * Returns the status corresponding to the specified code.
 	 * </p>
 	 * 
 	 * @param code a code

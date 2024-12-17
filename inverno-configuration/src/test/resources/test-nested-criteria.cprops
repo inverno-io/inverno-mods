@@ -1,0 +1,21 @@
+load_balancer = "DEFAULT"
+
+[ environment = "dev" ] {
+    load_balancer = "RANDOM"
+    [ host = "test" ] {
+        load_balancer = "ROUND_ROBIN"
+        [ port = "1234" ] {
+            load_balancer = "MIN_LOAD"
+        }
+    }
+}
+
+[ environment = "prod" ] {
+    load_balancer = "ROUND_ROBIN"
+    [ host = "test" ] {
+        load_balancer = "RANDOM"
+        [ port = "1234" ] {
+            load_balancer = "LEAST_REQUEST"
+        }
+    }
+}

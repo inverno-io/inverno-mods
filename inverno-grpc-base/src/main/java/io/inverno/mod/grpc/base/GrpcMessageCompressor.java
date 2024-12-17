@@ -22,7 +22,7 @@ import io.netty.buffer.ByteBuf;
  * A gRPC message compressor is used to compress or uncompress gRPC messages.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public interface GrpcMessageCompressor {
@@ -49,7 +49,7 @@ public interface GrpcMessageCompressor {
 	 * 
 	 * @return compressed data
 	 * 
-	 * @throws GrpcException if ther was an error compressing data
+	 * @throws GrpcException if there was an error compressing data
 	 */
 	ByteBuf compress(ByteBuf data) throws GrpcException;
 	

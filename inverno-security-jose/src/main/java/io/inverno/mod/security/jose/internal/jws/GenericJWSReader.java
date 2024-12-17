@@ -66,7 +66,7 @@ public class GenericJWSReader<A> extends AbstractJOSEObjectReader<A, JWSHeader, 
 	 * @param type the payload type
 	 * @param keys the keys to consider to verify the JWS
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public GenericJWSReader(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type, Publisher<? extends JWK> keys) {
 		super(mapper, dataConversionService, jwkService, type, keys);
 	}

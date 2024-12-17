@@ -44,7 +44,7 @@ import reactor.core.publisher.Sinks;
 
 /**
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 public class Readme {
 
@@ -66,7 +66,7 @@ public class Readme {
 		// For this we can imagine exposing a method on the HttpClient to create endpoint free exchanges, that must be attached to an endpoint to be "sendable"
 		// We'll see when/if we need this
 		
-		/*HttpClient.Request<ExchangeContext, Exchange<ExchangeContext>, InterceptableExchange<ExchangeContext>> request = client
+		/*HttpClient.Request<ExchangeContext, Exchange<ExchangeContext>, InterceptedExchange<ExchangeContext>> request = client
 			.exchange(Method.GET, "/")
 			.headers(headers -> headers
 				.contentType(MediaTypes.APPLICATION_JSON)
@@ -92,14 +92,14 @@ public class Readme {
 		endpoint
 			.exchange(Method.POST, path)
 			.flatMap(exchange -> {
-				exchange.request().body().get().string().stream(Flux.just("a", "b", "c"));
+				exchange.request().body().string().stream(Flux.just("a", "b", "c"));
 				return exchange.response();
 			});
 		
 		endpoint
 			.exchange(Method.POST, path)
 			.flatMap(exchange -> {
-				exchange.request().body().get().raw().stream(
+				exchange.request().body().raw().stream(
 					Flux.just(
 						Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello", Charsets.DEFAULT)),
 						Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(" world!", Charsets.DEFAULT))
@@ -111,14 +111,14 @@ public class Readme {
 		endpoint
 			.exchange(Method.POST, path)
 			.flatMap(exchange -> {
-				exchange.request().body().get().resource().value(new FileResource("/path/to/resource"));
+				exchange.request().body().resource().value(new FileResource("/path/to/resource"));
 				return exchange.response();
 			});
 		
 		endpoint
 			.exchange(Method.POST, path)
 			.flatMap(exchange -> {
-				exchange.request().body().get().urlEncoded()
+				exchange.request().body().urlEncoded()
 					.from((factory, data) -> data.stream(
 						Flux.just(
 							factory.create("param1", 1234), 
@@ -131,7 +131,7 @@ public class Readme {
 		endpoint
 			.exchange(Method.POST, "/some/path")
 			.flatMap(exchange -> {
-				exchange.request().body().get().multipart()
+				exchange.request().body().multipart()
 					.from((factory, output) -> output.stream(Flux.just(
 						factory.string(part -> part
 							.name("param1")
@@ -306,10 +306,13 @@ public class Readme {
 			.endpoint("example.org", 80)
 			.interceptor(exchange -> {
 				final StringBuilder requestBodyBuilder = new StringBuilder();
-				exchange.request().body().ifPresent(body -> body.transform(data -> Flux.from(data)
-					.doOnNext(buf -> requestBodyBuilder.append(buf.toString(Charsets.UTF_8)))
-					.doOnComplete(() -> System.out.println("Request Body: \n" + requestBodyBuilder.toString()))
-				));
+
+				if(exchange.request().getMethod().isBodyAllowed()) {
+					exchange.request().body().transform(data -> Flux.from(data)
+						.doOnNext(buf -> requestBodyBuilder.append(buf.toString(Charsets.UTF_8)))
+						.doOnComplete(() -> System.out.println("Request Body: \n" + requestBodyBuilder.toString()))
+					);
+				}
 
 				final StringBuilder responseBodyBuilder = new StringBuilder();
 				exchange.response().body().transform(data -> Flux.from(data)
@@ -328,7 +331,7 @@ public class Readme {
 		endpoint
 			.exchange(Method.POST, path, context)                        // Creates the request 
 			.flatMap(exchange -> {
-				exchange.request().body().get().string().value("test");
+				exchange.request().body().string().value("test");
 				return exchange.response();                             // Request is sent on subscribe
 			})
 			.flatMapMany(response -> response.body().string().stream()) // Streams the response body
@@ -370,7 +373,7 @@ public class Readme {
 			.flatMapMany(wsExchange -> wsExchange.inbound().frames())
 			.subscribe(frame -> {
 				try {
-					LOGGER.info("Received WebSocket frame: kind = " + frame.getKind() + ", final = " + frame.isFinal() + ", size = " + frame.getBinaryData().readableBytes());					
+					LOGGER.info("Received WebSocket frame: kind = " + frame.getKind() + ", final = " + frame.isFinal() + ", size = " + frame.getRawData().readableBytes());
 				}
 				finally {
 					frame.release();
@@ -385,16 +388,16 @@ public class Readme {
                 Publisher<WebSocketFrame> frames = message.frames();
             
                 // The message data as stream of ByteBuf
-                Publisher<ByteBuf> binary = message.binary();
+                Publisher<ByteBuf> binary = message.raw();
                 
                 // The message data as stream of String
-                Publisher<String> text = message.text();
+                Publisher<String> text = message.string();
                 
                 // Aggregate all fragments into a single ByteBuf
-                Mono<ByteBuf> reducedBinary = message.reducedBinary();
+                Mono<ByteBuf> reducedBinary = message.rawReduced();
                 
                 // Aggregate all fragments into a single String
-                Mono<String> reducedText = message.reducedText();
+                Mono<String> reducedText = message.stringReduced();
 				
 				return Mono.empty();
 			});
@@ -408,7 +411,7 @@ public class Readme {
 			})
 			.subscribe(frame -> {
 				try {
-					LOGGER.info("Received WebSocket frame: kind = " + frame.getKind() + ", final = " + frame.isFinal() + ", size = " + frame.getBinaryData().readableBytes());					
+					LOGGER.info("Received WebSocket frame: kind = " + frame.getKind() + ", final = " + frame.isFinal() + ", size = " + frame.getRawData().readableBytes());
 				}
 				finally {
 					frame.release();
@@ -427,7 +430,7 @@ public class Readme {
 				wsExchange.outbound().closeOnComplete(true).messages(factory -> messagesSink.asFlux().map(Flux::fromIterable).map(factory::text));
 				return wsExchange.inbound().messages();
 			})
-			.flatMap(WebSocketMessage::reducedText)
+			.flatMap(WebSocketMessage::stringReduced)
 			.subscribe(message -> {
 				LOGGER.info("Received WebSocket message: {}", message );
 			});

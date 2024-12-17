@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Jeremy KUHN
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,74 +15,90 @@
  */
 package io.inverno.mod.web.server;
 
+import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
+import io.inverno.mod.web.server.ws.Web2SocketExchange;
 
 /**
  * <p>
- * A web route that upgrade to the WebSocket procotol.
+ * A WebSocket route specifies criteria used to determine the WebSocket exchange handler to execute to handle an exchange.
  * </p>
- * 
+ *
  * <p>
- * A WebSocket route specified a {@link WebSocketExchangeHandler} used to handle a {@link Web2SocketExchange} once the WebSocket connection has been established. The method shall always be {@code GET}
- * and consume, produce and handler always {@code null}.
+ * It basically supports the following criteria:
  * </p>
- * 
+ *
+ * <ul>
+ * <li>the request path which can be parameterized as defined by {@link io.inverno.mod.base.net.URIBuilder}.</li>
+ * <li>the language tag accepted by the request</li>
+ * <li>the WebSocket subProtocol used by the handler</li>
+ * </ul>
+ *
+ * <p>
+ * The request path criteria can be either static or dynamic if a parameterized path is specified as defined by {@link io.inverno.mod.base.net.URIBuilder}. When a parameterized path is defined, the
+ * router extracts path parameters from the {@link io.inverno.mod.base.net.URIMatcher} used to match the request. For instance, path {@code /books/{id}} defines path parameter {@code id} and
+ * matches paths: {@code /books/1}, {@code /books/2}...
+ * </p>
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
- * 
- * @param <A> the type of the exchange context
+ *
+ * @param <A> the exchange context type
  */
-public interface WebSocketRoute<A extends ExchangeContext> extends WebRoute<A>, WebSocketProtocolAware {
-	
-	/**
-	 * <p>
-	 * Always returns {@code GET}.
-	 * </p>
-	 */
-	@Override
-	default Method getMethod() {
-		return Method.GET;
-	}
+public interface WebSocketRoute<A extends ExchangeContext> extends BaseWebRoute<A, WebExchange<A>> {
 
 	/**
 	 * <p>
-	 * Always returns {@code null}.
+	 * Returns the absolute normalized path matched by a Web exchange in order to be processed by the route.
 	 * </p>
+	 *
+	 * <p>
+	 * Path and path pattern are exclusive.
+	 * </p>
+	 *
+	 * @return an absolute normalized path or null to match any exchange
 	 */
-	@Override
-	default String getConsume() {
-		return null;
-	}
+	String getPath();
 
 	/**
 	 * <p>
-	 * Always returns {@code null}.
+	 * Returns the path pattern matched by a Web exchange in order to be processed by the route.
 	 * </p>
+	 *
+	 * <p>
+	 * Path and path pattern are exclusive.
+	 * </p>
+	 *
+	 * @return a path pattern or null to match any exchange
 	 */
-	@Override
-	default String getProduce() {
-		return null;
-	}
+	URIPattern getPathPattern();
 
 	/**
 	 * <p>
-	 * Always returns {@code null}.
+	 * Returns the language tag or language range as defined <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.5">RFC 7231 Section 5.3.5</a> matched by a Web exchange in order to be
+	 * processed by the route.
 	 * </p>
+	 *
+	 * @return a language tag, a language range or null to match any exchange
 	 */
-	@Override
-	default ReactiveExchangeHandler<A, WebExchange<A>> getHandler() {
-		return null;
-	}
-	
+	String getLanguage();
+
 	/**
 	 * <p>
-	 * Returns the route WebSocket handler used to process a WebSocket exchange for a WebSocket upgrade request matching the route's criteria.
+	 * Returns the WebSocket subProtocol matched by a Web exchange in order to be processed by the route.
 	 * </p>
-	 * 
+	 *
+	 * @return a subProtocol or null to match any exchange
+	 */
+	String getSubProtocol();
+
+	/**
+	 * <p>
+	 * Returns the WebSocket exchange handler used to handle Web exchanges matching the route criteria.
+	 * </p>
+	 *
 	 * @return a WebSocket exchange handler
 	 */
-	WebSocketExchangeHandler<A, Web2SocketExchange<A>> getWebSocketHandler();
+	WebSocketExchangeHandler<A, Web2SocketExchange<A>> getHandler();
 }

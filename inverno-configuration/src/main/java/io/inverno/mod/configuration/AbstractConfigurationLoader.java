@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import io.inverno.mod.configuration.ConfigurationKey.Parameter;
 
@@ -38,7 +37,7 @@ public abstract class AbstractConfigurationLoader<A, B extends AbstractConfigura
 	/**
 	 * The configuration source to use to load the configuration.
 	 */
-	protected ConfigurationSource<?,?,?> source;
+	protected ConfigurationSource source;
 	
 	/**
 	 * The parameters to use to retrieve configuration values.
@@ -58,7 +57,7 @@ public abstract class AbstractConfigurationLoader<A, B extends AbstractConfigura
 				}
 			}
 			if(!duplicateParameters.isEmpty()) {
-				throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
+				throw new IllegalArgumentException("The following parameters were specified more than once: " + String.join(", ", duplicateParameters));
 			}
 			this.parameters = parameters;
 		}
@@ -70,7 +69,7 @@ public abstract class AbstractConfigurationLoader<A, B extends AbstractConfigura
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public B withSource(ConfigurationSource<?,?,?> source) {
+	public B withSource(ConfigurationSource source) {
 		this.source = source;
 		return (B)this;
 	}

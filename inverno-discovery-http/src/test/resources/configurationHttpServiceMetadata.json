@@ -1,0 +1,17 @@
+{
+	"configuration": {
+		"pool_max_size": 25
+	},
+	"loadBalancer": {
+		"strategy": "RANDOM"
+	},
+	"routes": [
+		{
+			"destinations":[
+				{"uri":"http://host1:port"},
+				{"uri":"http://host2:port"},
+				{"uri":"http://host3:port"}
+			]
+		}
+	]
+}

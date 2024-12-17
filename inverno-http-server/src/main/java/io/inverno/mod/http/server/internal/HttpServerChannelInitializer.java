@@ -39,7 +39,7 @@ public class HttpServerChannelInitializer extends ChannelInitializer<SocketChann
 	
 	/**
 	 * <p>
-	 * Creates a HTTP channel initializer.
+	 * Creates an HTTP channel initializer.
 	 * </p>
 	 * 
 	 * @param channelConfigurer the channel configurer

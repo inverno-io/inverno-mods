@@ -42,7 +42,7 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B>, B exte
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	public static enum SpecialValue {
+	enum SpecialValue {
 		/**
 		 * The unset special value
 		 */

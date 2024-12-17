@@ -17,7 +17,6 @@ The Inverno *boot* module is the basic building block for any application and as
 @io.inverno.core.annotation.Module
 module io.inverno.example.app {
     requires io.inverno.mod.boot;
-    // Other modules...
 }
 ```
 
@@ -40,15 +39,13 @@ Using Maven:
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.inverno.mod:inverno-boot:${VERSION_INVERNO_MODS}'
-...
 ```
 
 ## Configuration
 
-The `BootConfiguration` is used to configure the beans exposed in the *boot* module, the `Reactor` and the `NetService` in particular.
+The `BootConfiguration` is used to configure the beans exposed in the *boot* module, the `Reactor` and the `NetService` in particular. It is itself composed of `BootNetClientConfiguration`, `BootNetServerConfiguration` and `BootNetAddressResolverConfiguration`.
 
 Please refer to the [API documentation][inverno-javadoc] to have an exhaustive description of the different configuration properties.
 
@@ -56,7 +53,7 @@ Please refer to the [API documentation][inverno-javadoc] to have an exhaustive d
 
 The module provides two `Reactor` implementations: one generic implementation which creates a regular Netty event loop group and a [Vert.x][vertx] core implementation which uses the event loops of a `Vertx` instance. The Vert.x implementation is particularly suited when an Inverno application must integrate Vert.x services such as the PostgreSQL client.
 
-The module exposes one or the other as bean depending on the *boot* module configuration, parameter `reactor_prefer_vertx` must be set to true, and whether or not the Vert.x core module is present on the module path.
+The module exposes a `Reactor` bean whose implementation depends on the *boot* module configuration, more precisely the `reactor_prefer_vertx` parameter, and the presence of the Vert.x core module on the module path.
 
 ## Net service
 
@@ -131,6 +128,8 @@ The default worker pool bean is a simple [cached Thread pool][jdk-executors-newC
 
 ## Object mapper
 
-A standard JSON reader/writer based on Jackson `ObjectMapper` is also provided. This instance is used across the application to perform JSON conversion operations, a global configuration can then be applied to that particular instance or it can be overridden when creating the *boot* module.
+A standard JSON reader/writer based on Jackson `ObjectMapper` is also provided. This instance shall be used across the application to perform JSON conversion operations, a global configuration can then be applied to that particular instance, or it can be overridden when creating the *boot* module.
 
-The global object mapper is configured to use [JSR310][jsr310] for dates which are serialized as timestamps following [ISO 8601][iso8601] representation.
+The `InvernoBaseModule` provide serializers/deserializers for specific types defined in the *base* such as `Settable`. 
+
+The global object mapper is initialized with modules `Jdk8Module`, `JavaTimeModule`, `AfterburnerModule` and `InvernoBaseModule()` and configured to use [JSR310][jsr310] for dates which are serialized as timestamps following [ISO 8601][iso8601] representation. 

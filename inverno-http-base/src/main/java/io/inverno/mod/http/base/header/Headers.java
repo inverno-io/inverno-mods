@@ -300,7 +300,7 @@ public final class Headers {
 	
 	/**
 	 * <p>
-	 * MArker interface for simple key/value header.
+	 * Marker interface for simple key/value header.
 	 * </p>
 	 * 
 	 * <p>
@@ -310,7 +310,7 @@ public final class Headers {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.9
 	 */
-	public static interface SimpleHeader extends Header {
+	public interface SimpleHeader extends Header {
 		
 	}
 	
@@ -322,17 +322,17 @@ public final class Headers {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	public static interface ContentType extends Header {
+	public interface ContentType extends Header {
 		
 		/**
 		 * Boundary parameter
 		 */
-		public static final String BOUNDARY = "boundary";
+		String BOUNDARY = "boundary";
 		
 		/**
 		 * Charset parameter
 		 */
-		public static final String CHARSET = "charset";
+		String CHARSET = "charset";
 		
 		/**
 		 * <p>
@@ -406,27 +406,27 @@ public final class Headers {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.5
 	 */
-	public static interface Authorization extends Header {
+	public interface Authorization extends Header {
 		
 		/**
 		 * Designates the {@code basic} authentication scheme as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7617">RFC 7617 Section 2</a>.
 		 */
-		public static final String AUTH_SCHEME_BASIC = "basic";
+		String AUTH_SCHEME_BASIC = "basic";
 		
 		/**
 		 * Designates the {@code bearer} authentication scheme as defined by <a href="https://www.rfc-editor.org/rfc/rfc6750.html#section-2.1">RFC 6750 Section 2.1</a>
 		 */
-		public static final String AUTH_SCHEME_BEARER = "bearer";
+		String AUTH_SCHEME_BEARER = "bearer";
 		
 		/**
 		 * Designates the {@code digest} authentication scheme as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7616#section-3.4">RFC 7616 Section 3.4</a>.
 		 */
-		public static final String AUTH_SCHEME_DIGEST = "digest";
+		String AUTH_SCHEME_DIGEST = "digest";
 		
 		/**
-		 * Desginates the {@code negotiate} authentication scheme as defined by <a href="https://datatracker.ietf.org/doc/html/rfc4559#section-4">RFC 4559 Section 4</a>.
+		 * Designates the {@code negotiate} authentication scheme as defined by <a href="https://datatracker.ietf.org/doc/html/rfc4559#section-4">RFC 4559 Section 4</a>.
 		 */
-		public static final String AUTH_SCHEME_NEGOTIATE = "negotiate";
+		String AUTH_SCHEME_NEGOTIATE = "negotiate";
 		
 		/**
 		 * <p>
@@ -464,37 +464,37 @@ public final class Headers {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	public static interface ContentDisposition extends Header {
+	public interface ContentDisposition extends Header {
 
 		/**
 		 * Name parameter
 		 */
-		public static final String PART_NAME = "name";
+		String PART_NAME = "name";
 		/**
 		 * Filename parameter
 		 */
-		public static final String FILENAME = "filename";
+		String FILENAME = "filename";
 		/**
 		 * Creation-date parameter
 		 */
-		public static final String CREATION_DATE = "creation-date";
+		String CREATION_DATE = "creation-date";
 		/**
 		 * Modification-date parameter
 		 */
-		public static final String MODIFICATION_DATE = "modification-date";
+		String MODIFICATION_DATE = "modification-date";
 		/**
 		 * Read-state parameter
 		 */
-		public static final String READ_DATE = "read-date";
+		String READ_DATE = "read-date";
 		/**
 		 * Size parameter
 		 */
-		public static final String SIZE = "size";
+		String SIZE = "size";
 		
 		/**
 		 * form-data content disposition type as defined by <a href="https://tools.ietf.org/html/rfc7578">RFC 7578</a>.
 		 */
-		public static final String TYPE_FORM_DATA = "form-data";
+		String TYPE_FORM_DATA = "form-data";
 		
 		/**
 		 * <p>
@@ -568,7 +568,7 @@ public final class Headers {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	public static interface SetCookie extends Header {
+	public interface SetCookie extends Header {
 		
 		/**
 		 * <p>
@@ -588,9 +588,7 @@ public final class Headers {
 			 */
 			STRICT("Strict"),
 			/**
-			 * Send the cookie with both same-site and cross-site requests.
-			 * 
-			 * The secure attribute must be set to {@code true}.
+			 * Send the cookie with both same-site and cross-site requests. The secure attribute must be set to {@code true}.
 			 */
 			NONE("None");
 
@@ -603,7 +601,7 @@ public final class Headers {
 			 * 
 			 * @param value the policy value
 			 */
-			private SameSitePolicy(String value) {
+			SameSitePolicy(String value) {
 				this.value = value;
 			}
 
@@ -646,31 +644,31 @@ public final class Headers {
 		/**
 		 * Expires parameter
 		 */
-		public static final String EXPIRES = "Expires";
+		String EXPIRES = "Expires";
 		/**
 		 * Max-Age parameter
 		 */
-		public static final String MAX_AGE = "Max-Age";
+		String MAX_AGE = "Max-Age";
 		/**
 		 * Domain parameter
 		 */
-		public static final String DOMAIN = "Domain";
+		String DOMAIN = "Domain";
 		/**
 		 * Path parameter
 		 */
-		public static final String PATH = "Path";
+		String PATH = "Path";
 		/**
 		 * Secure parameter
 		 */
-		public static final String SECURE = "Secure";
+		String SECURE = "Secure";
 		/**
 		 * HttpOnly parameter
 		 */
-		public static final String HTTPONLY = "HttpOnly";
+		String HTTPONLY = "HttpOnly";
 		/**
 		 * HttpOnly parameter
 		 */
-		public static final String SAME_SITE = "SameSite";
+		String SAME_SITE = "SameSite";
 		
 		/**
 		 * <p>
@@ -762,7 +760,7 @@ public final class Headers {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	public static interface Cookie extends Header {
+	public interface Cookie extends Header {
 		
 		/**
 		 * <p>
@@ -771,7 +769,7 @@ public final class Headers {
 		 * 
 		 * @return a map associating a cookie name to a list of cookie parameter
 		 */
-		public Map<String, List<CookieParameter>> getPairs();
+		Map<String, List<CookieParameter>> getPairs();
 	}
 	
 	/**
@@ -782,12 +780,12 @@ public final class Headers {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	public static interface Accept extends Header {
+	public interface Accept extends Header {
 		
 		/**
 		 * Accept all header: *{@literal /*}
 		 */
-		public static final Headers.Accept ALL = new AcceptCodec.Accept(null);
+		Headers.Accept ALL = new AcceptCodec.Accept(null);
 		
 		/**
 		 * <p>
@@ -818,7 +816,7 @@ public final class Headers {
 		 *
 		 * @param <T>                  the type of the item
 		 * @param items                a collection items
-		 * @param contentTypeExtractor a function that extracts the content type of an item
+		 * @param contentTypeExtractor a function that extracts the items content type
 		 *
 		 * @return an optional returning an accept match or an empty optional if no match was found
 		 */
@@ -853,13 +851,13 @@ public final class Headers {
 		 *
 		 * @param <T>                  the type of the item
 		 * @param items                a collection of items
-		 * @param contentTypeExtractor a function that extracts the content type of an item
+		 * @param contentTypeExtractor a function that extracts the items content type
 		 *
 		 * @return a collection of accept matches
 		 */
 		default <T> Collection<AcceptMatch<MediaRange, T>> findAllMatch(Collection<T> items, Function<T, Headers.ContentType> contentTypeExtractor) {
 			List<AcceptMatch<MediaRange, T>> result = new ArrayList<>();
-			// This works because items are content type ie. with no wild cards
+			// This works because items are content type i.e. with no wild cards
 			for(MediaRange mediaRange : this.getMediaRanges()) {
 				for(T item : items) {
 					if(mediaRange.matches(contentTypeExtractor.apply(item))) {
@@ -884,7 +882,7 @@ public final class Headers {
 				return Optional.empty();
 			}
 			else if(acceptHeaders.size() == 1) {
-				return Optional.of(acceptHeaders.get(0));
+				return Optional.of(acceptHeaders.getFirst());
 			}
 			else {
 				return Optional.of(new Accept() {
@@ -919,12 +917,12 @@ public final class Headers {
 		 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 		 * @since 1.0
 		 */
-		public static interface MediaRange {
+		interface MediaRange {
 			
 			/**
 			 * The media range comparator based on media range scores.
 			 */
-			public static final Comparator<MediaRange> COMPARATOR = (r1, r2) -> r2.getScore() - r1.getScore();
+			Comparator<MediaRange> COMPARATOR = (r1, r2) -> r2.getScore() - r1.getScore();
 			
 			/**
 			 * <p>
@@ -1049,34 +1047,33 @@ public final class Headers {
 				if(type.equals("*")) {
 					if(subType.equals("*")) {
 						// */*
-						score += 0 * 10;
+						score += 0; // 0 * 10
 					}
 					else {
 						// */b
-						score += 1 * 10;
+						score += 10; // 1 * 10
 					}
 				}
 				else {
 					if(subType.equals("*")) {
 						// a/*
-						score += 2 * 10;
+						score += 20; // 2 * 10
 					}
 					else {
 						// a/b
-						score += 3 * 10;
+						score += 30; // 3 * 10
 					}
 				}
 				
 				// 3. parameters
 				for(Entry<String, String> e : parameters.entrySet()) {
 					if(e.getValue() == null) {
-						score += 1 * 1;
+						score += 1; // 1 * 1
 					}
 					else {
-						score += 2 * 1;
+						score += 2; // 2 * 1
 					}
 				}
-				
 				return score;
 			}
 			
@@ -1102,7 +1099,7 @@ public final class Headers {
 			 * @param <T>                 the type of the item
 			 * @param contentType         a content type
 			 * @param items               a collection of items
-			 * @param mediaRangeExtractor a function that extracts the media type of an item
+			 * @param mediaRangeExtractor a function that extracts the items media type
 			 *
 			 * @return an optional returning the first match or an empty optional if no match was found
 			 */
@@ -1148,7 +1145,7 @@ public final class Headers {
 	
 	/**
 	 * <p>
-	 * An accept match respresents a match between a source item and a target item.
+	 * An accept match represents a match between a source item and a target item.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -1239,12 +1236,12 @@ public final class Headers {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	public static interface AcceptLanguage extends Header {
+	public interface AcceptLanguage extends Header {
 		
 		/**
 		 * Accept all header: *
 		 */
-		public static final Headers.AcceptLanguage ALL = new AcceptLanguageCodec.AcceptLanguage(null);
+		Headers.AcceptLanguage ALL = new AcceptLanguageCodec.AcceptLanguage(null);
 		
 		/**
 		 * <p>
@@ -1345,7 +1342,7 @@ public final class Headers {
 				return Optional.empty();
 			}
 			else if(acceptLanguageHeaders.size() == 1) {
-				return Optional.of(acceptLanguageHeaders.get(0));
+				return Optional.of(acceptLanguageHeaders.getFirst());
 			}
 			else {
 				return Optional.of(new AcceptLanguage() {
@@ -1380,12 +1377,12 @@ public final class Headers {
 		 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 		 * @since 1.0
 		 */
-		public static interface LanguageRange {
+		interface LanguageRange {
 			
 			/**
 			 * The language range comparator based on language range scores.
 			 */
-			public static final Comparator<LanguageRange> COMPARATOR = (r1, r2) -> r2.getScore() - r1.getScore();
+			Comparator<LanguageRange> COMPARATOR = (r1, r2) -> r2.getScore() - r1.getScore();
 			
 			/**
 			 * <p>

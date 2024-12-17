@@ -258,7 +258,7 @@ public class DigestAuthenticationErrorInterceptor<A extends ExchangeContext, B e
 			return String.format(FORMAT_WWW_AUTHENTICATE_STALE, StringEscapeUtils.escapeJava(this.realm), VALUE_QOP_AUTH, nonceB64, this.digest.getAlgorithm(), true);
 		}
 		else {
-			return String.format(FORMAT_WWW_AUTHENTICATE, StringEscapeUtils.escapeJava(this.realm), VALUE_QOP_AUTH, nonceB64, this.digest.getAlgorithm(), StringEscapeUtils.escapeJava(this.realm));
+			return String.format(FORMAT_WWW_AUTHENTICATE, StringEscapeUtils.escapeJava(this.realm), VALUE_QOP_AUTH, nonceB64, this.digest.getAlgorithm());
 		}
 	}
 }

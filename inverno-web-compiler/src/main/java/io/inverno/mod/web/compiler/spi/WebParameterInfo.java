@@ -15,14 +15,13 @@
  */
 package io.inverno.mod.web.compiler.spi;
 
+import io.inverno.core.compiler.spi.Info;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
-import io.inverno.core.compiler.spi.Info;
-
 /**
  * <p>
- * Common web route parameter information.
+ * Common Web route parameter information.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -37,7 +36,7 @@ public interface WebParameterInfo extends Info {
 	
 	/**
 	 * <p>
-	 * Returns the web parameter element.
+	 * Returns the Web parameter element.
 	 * </p>
 	 * 
 	 * @return a variable element

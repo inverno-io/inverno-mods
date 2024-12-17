@@ -58,7 +58,7 @@ public class ConnectionPreparedStatement extends AbstractPreparedStatement {
 	 */
 	public ConnectionPreparedStatement(SqlConnection connection, String sql) {
 		this.preparedStatement = Mono.fromCompletionStage(connection.prepare(sql).toCompletionStage()).cache();
-		this.preparedQuery = this.preparedStatement.map(statement -> statement.query()).cache();
+		this.preparedQuery = this.preparedStatement.map(io.vertx.sqlclient.PreparedStatement::query).cache();
 	}
 	
 	@Override
@@ -103,7 +103,7 @@ public class ConnectionPreparedStatement extends AbstractPreparedStatement {
 					.flatMapMany(statement -> {
 						Cursor cursor = statement.cursor(this.currentParameters);
 						return Mono.fromCompletionStage(() -> cursor.read(this.fetchSize).toCompletionStage())
-							.repeat(() -> cursor.hasMore())
+							.repeat(cursor::hasMore)
 							.map(rowSet -> rowSet.size() > 0 ? rowMapper.apply(new GenericRow(rowSet.iterator().next())) : null)
 							.doFinally(ign -> cursor.close());
 					});

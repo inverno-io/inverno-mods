@@ -20,8 +20,7 @@ import io.vertx.sqlclient.SqlConnection;
 
 /**
  * <p>
- * A {@link PreparedStatement} implementation that runs in a transaction with
- * support for result streaming.
+ * A {@link PreparedStatement} implementation that runs in a transaction with support for result streaming.
  * </p>
  * 
  * <p>

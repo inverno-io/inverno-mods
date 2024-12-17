@@ -1,6 +1,3 @@
-import io.inverno.mod.ldap.LDAPClient;
-import java.util.concurrent.ExecutorService;
-
 /*
  * Copyright 2022 Jeremy KUHN
  *
@@ -31,10 +28,10 @@ import java.util.concurrent.ExecutorService;
  * </p>
  * 
  * <dl>
- * <dt>configuration</dt>
+ * <dt><b>configuration</b></dt>
  * <dd>the LDAP module configuration</dd>
- * <dt>workerPool</dt>
- * <dd>The {@code ExecutorService} used to execute blocking operations.</dd>
+ * <dt><b>workerPool</b></dt>
+ * <dd>The {@link java.util.concurrent.ExecutorService} used to execute blocking operations.</dd>
  * </dl>
  * 
  * <p>
@@ -42,10 +39,10 @@ import java.util.concurrent.ExecutorService;
  * </p>
  * 
  * <dl>
- * <dt>configuration</dt>
+ * <dt><b>configuration</b></dt>
  * <dd>the LDAP module configuration</dd>
- * <dt>jdkLdapClient</dt>
- * <dd>The {@link LDAPClient} used to execute blocking operations.</dd>
+ * <dt><b>jdkLdapClient</b></dt>
+ * <dd>The {@link io.inverno.mod.ldap.LDAPClient} used to execute blocking operations.</dd>
  * </dl>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -55,10 +52,13 @@ import java.util.concurrent.ExecutorService;
 module io.inverno.mod.ldap {
 	requires io.inverno.core;
 	requires static io.inverno.core.annotation; // for javadoc...
+
 	requires io.inverno.mod.base;
 	requires transitive io.inverno.mod.configuration;
 	
 	requires java.naming;
+	requires transitive org.reactivestreams;
+	requires transitive reactor.core;
 	
 	exports io.inverno.mod.ldap;
 }

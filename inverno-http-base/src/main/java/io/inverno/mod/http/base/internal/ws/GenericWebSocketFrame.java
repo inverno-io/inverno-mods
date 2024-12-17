@@ -137,12 +137,12 @@ public class GenericWebSocketFrame implements WebSocketFrame {
 	}
 
 	@Override
-	public ByteBuf getBinaryData() {
+	public ByteBuf getRawData() {
 		return this.underlyingFrame.content();
 	}
 
 	@Override
-	public String getTextData() {
+	public String getStringData() {
 		return this.underlyingFrame.content().toString(Charsets.UTF_8);
 	}
 
@@ -182,7 +182,7 @@ public class GenericWebSocketFrame implements WebSocketFrame {
 		
 		/**
 		 * <p>
-		 * Creates a generic WebSocker frame factory.
+		 * Creates a generic WebSocket frame factory.
 		 * </p>
 		 * 
 		 * @param maxFrameSize the maximum size of a frame
@@ -263,7 +263,7 @@ public class GenericWebSocketFrame implements WebSocketFrame {
 			}
 			switch(webSocketFrame.getKind()) {
 				case TEXT: {
-					String text = webSocketFrame.getTextData();
+					String text = webSocketFrame.getStringData();
 					ByteBuf data;
 					if (text == null || text.isEmpty()) {
 						data = Unpooled.EMPTY_BUFFER;
@@ -274,16 +274,16 @@ public class GenericWebSocketFrame implements WebSocketFrame {
 					return new TextWebSocketFrame(webSocketFrame.isFinal(), 0, data);
 				}
 				case BINARY: {
-					return new BinaryWebSocketFrame(webSocketFrame.isFinal(), 0, this.checkPayload(webSocketFrame.getBinaryData(), WebSocketFrame.Kind.BINARY));
+					return new BinaryWebSocketFrame(webSocketFrame.isFinal(), 0, this.checkPayload(webSocketFrame.getRawData(), WebSocketFrame.Kind.BINARY));
 				}
 				case CONTINUATION:{
-					return new ContinuationWebSocketFrame(webSocketFrame.isFinal(), 0, this.checkPayload(webSocketFrame.getBinaryData(), WebSocketFrame.Kind.CONTINUATION));
+					return new ContinuationWebSocketFrame(webSocketFrame.isFinal(), 0, this.checkPayload(webSocketFrame.getRawData(), WebSocketFrame.Kind.CONTINUATION));
 				}
 				case PING:{
-					return new PingWebSocketFrame(this.checkPayload(webSocketFrame.getBinaryData(), WebSocketFrame.Kind.PING));
+					return new PingWebSocketFrame(this.checkPayload(webSocketFrame.getRawData(), WebSocketFrame.Kind.PING));
 				}
 				case PONG:{
-					return new PongWebSocketFrame(this.checkPayload(webSocketFrame.getBinaryData(), WebSocketFrame.Kind.PONG));
+					return new PongWebSocketFrame(this.checkPayload(webSocketFrame.getRawData(), WebSocketFrame.Kind.PONG));
 				}
 				default: {
 					throw new WebSocketException("Unsupported frame kind: " + webSocketFrame.getKind());

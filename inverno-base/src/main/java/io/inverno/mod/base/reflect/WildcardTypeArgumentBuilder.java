@@ -19,8 +19,7 @@ import java.lang.reflect.Type;
 
 /**
  * <p>
- * A wildcard type argument builder is used to specify the bounds of a
- * parameterized type argument.
+ * A wildcard type argument builder is used to specify the bounds of a parameterized type argument.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -53,8 +52,7 @@ public interface WildcardTypeArgumentBuilder<A> {
 	
 	/**
 	 * <p>
-	 * Specifies an array type as upper bound type of the parameterized type
-	 * argument.
+	 * Specifies an array type as upper bound type of the parameterized type argument.
 	 * </p>
 	 * 
 	 * @return an array type argument builder with this builder as parent
@@ -85,8 +83,7 @@ public interface WildcardTypeArgumentBuilder<A> {
 	
 	/**
 	 * <p>
-	 * Specifies an array type as lower bound type of the parameterized type
-	 * argument.
+	 * Specifies an array type as lower bound type of the parameterized type argument.
 	 * </p>
 	 * 
 	 * @return an array type argument builder with this builder as parent
@@ -99,8 +96,8 @@ public interface WildcardTypeArgumentBuilder<A> {
 	 * </p>
 	 * 
 	 * @return the parent builder
-	 * @throws IllegalStateException if the builder is not in a proper state to
-	 *                               be finalized
+	 *
+	 * @throws IllegalStateException if the builder is not in a proper state to be finalized
 	 */
 	A and();
 }

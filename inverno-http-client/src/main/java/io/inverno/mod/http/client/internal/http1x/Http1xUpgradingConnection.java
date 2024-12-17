@@ -46,10 +46,10 @@ import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * Http/1.x {@link HttpConnection} supporting H2C upgrade.
+ * Http/1.x {@link io.inverno.mod.http.client.internal.HttpConnection} supporting H2C upgrade.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 class Http1xUpgradingConnection extends Http1xConnection {
@@ -61,15 +61,15 @@ class Http1xUpgradingConnection extends Http1xConnection {
 	 * Specifies H2C upgrade states.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 */
-	private static enum UpgradeState {
+	private enum UpgradeState {
 		STARTED,
 		RECEIVED,
 		FULLY_RECEIVED,
 		PREPARED,
-		COMPLETED;
+		COMPLETED
 	}
 	
 	private final EndpointChannelConfigurer configurer;
@@ -87,7 +87,7 @@ class Http1xUpgradingConnection extends Http1xConnection {
 	 * Creates an HTTP/1.x upgrading connection.
 	 * </p>
 	 * 
-	 * @param configuration         the HTTP client configurartion
+	 * @param configuration         the HTTP client configuration
 	 * @param httpVersion           the HTTP/1.x protocol version
 	 * @param headerService         the header service
 	 * @param parameterConverter    the parameter converter
@@ -117,7 +117,7 @@ class Http1xUpgradingConnection extends Http1xConnection {
 			return super.getMaxConcurrentRequests();
 		}
 		else {
-			return 1l;
+			return 1L;
 		}
 	}
 
@@ -228,6 +228,7 @@ class Http1xUpgradingConnection extends Http1xConnection {
 	 * Rejects the upgrade.
 	 * </p>
 	 */
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	private void rejectUpgrade() {
 		this.upgradingExchange.getUpgradedSink().tryEmitValue((Http1xUpgradingExchange)this.upgradingExchange);
 		this.state = UpgradeState.COMPLETED;
@@ -256,15 +257,15 @@ class Http1xUpgradingConnection extends Http1xConnection {
 	}
 
 	@Override
-	<A extends ExchangeContext> Http1xExchange createExchange(Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink, EndpointExchange<A> endpointExchange) {
+	<A extends ExchangeContext> Http1xExchange<A> createExchange(Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink, EndpointExchange<A> endpointExchange, Object state) {
 		if(this.state == UpgradeState.COMPLETED) {
-			return super.createExchange(sink, endpointExchange);
+			return super.createExchange(sink, endpointExchange, state);
 		}
 		else if(this.upgradingExchange == null) {
 			this.state = UpgradeState.STARTED;
 
-			Http1xUpgradingExchange<A> exchange = new Http1xUpgradingExchange<>(this.configuration, sink, this.headerService, this.parameterConverter, endpointExchange.context(), this, endpointExchange.request());
-			this.configurer.startHttp2Upgrade(this.channelContext.pipeline(), this.configuration, exchange);
+			Http1xUpgradingExchange<A> exchange = new Http1xUpgradingExchange<>(state, this.configuration, sink, this.headerService, this.parameterConverter, endpointExchange.context(), this, endpointExchange.request());
+			this.configurer.startHttp2Upgrade(this.configuration, exchange);
 			this.upgradingExchange = exchange;
 			
 			return exchange;

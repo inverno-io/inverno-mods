@@ -34,7 +34,7 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * Access to a service or a resouce is granted when the authenticated entity has a particular role. This can be checked as follows:
+ * Access to a service or a resource is granted when the authenticated entity has a particular role. This can be checked as follows:
  * </p>
  * 
  * <pre>{@code
@@ -114,7 +114,7 @@ public interface RoleBasedAccessController extends AccessController {
 	 * 
 	 * @return a new role based access controller
 	 */
-	public static RoleBasedAccessController of(String... roles) {
+	static RoleBasedAccessController of(String... roles) {
 		return new GenericRoleBasedAccessController(Arrays.stream(roles).filter(Objects::nonNull).collect(Collectors.toSet()));
 	}
 	
@@ -127,7 +127,7 @@ public interface RoleBasedAccessController extends AccessController {
 	 * 
 	 * @return a new role based access controller
 	 */
-	public static RoleBasedAccessController of(Collection<String> roles) {
+	static RoleBasedAccessController of(Collection<String> roles) {
 		return new GenericRoleBasedAccessController(roles.stream().filter(Objects::nonNull).collect(Collectors.toSet()));
 	}
 }

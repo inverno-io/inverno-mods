@@ -22,10 +22,10 @@
  * <p>It defines the following sockets:</p>
  * 
  * <dl>
- * <dt>configuration</dt>
- * <dd>the gRPC base module configuration</dd>
  * <dt><b>netService (required)</b></dt>
  * <dd>the Net service providing the ByteBuf allocator to message compressors</dd>
+ * <dt><b>configuration</b></dt>
+ * <dd>the gRPC base module configuration</dd>
  * <dt><b>messageCompressors</b></dt>
  * <dd>custom message compressors to be added to the built-in list of message compressors ({@code gzip}, {@code deflate}, {@code snappy})</dd>
  * </dl>
@@ -35,13 +35,13 @@
  * </p>
  * 
  * <dl>
- * <dt>configuration</dt>
+ * <dt><b>configuration</b></dt>
  * <dd>the gRPC base module configuration</dd>
- * <dt>messageCompressorService</dt>
+ * <dt><b>messageCompressorService</b></dt>
  * <dd>the message compressor service which allows to resolve a message compressor from a list of message encodings</dd>
  * </dl>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 @io.inverno.core.annotation.Module(excludes = "io.inverno.mod.http.base")

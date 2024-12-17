@@ -15,7 +15,7 @@
  */
 /**
  * <p>
- * Inverno security context API implementation.
+ * Inverno security context implementation classes.
  * </p>
  */
 package io.inverno.mod.security.internal.context;

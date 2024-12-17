@@ -24,6 +24,7 @@ import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -84,7 +85,7 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 	 */
 	public static final class AcceptLanguage extends ParameterizedHeader implements Headers.AcceptLanguage {
 
-		private List<Headers.AcceptLanguage.LanguageRange> ranges;
+		private final List<Headers.AcceptLanguage.LanguageRange> ranges;
 		
 		/**
 		 * <p>
@@ -215,31 +216,16 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 			}
 
 			@Override
-			public int hashCode() {
-				final int prime = 31;
-				int result = 1;
-				result = prime * result + ((languageTag == null) ? 0 : languageTag.hashCode());
-				result = prime * result + Float.floatToIntBits(weight);
-				return result;
+			public boolean equals(Object o) {
+				if(this == o) return true;
+				if(o == null || getClass() != o.getClass()) return false;
+				LanguageRange that = (LanguageRange) o;
+				return Float.compare(weight, that.weight) == 0 && Objects.equals(languageTag, that.languageTag);
 			}
 
 			@Override
-			public boolean equals(Object obj) {
-				if (this == obj)
-					return true;
-				if (obj == null)
-					return false;
-				if (getClass() != obj.getClass())
-					return false;
-				LanguageRange other = (LanguageRange) obj;
-				if (languageTag == null) {
-					if (other.languageTag != null)
-						return false;
-				} else if (!languageTag.equals(other.languageTag))
-					return false;
-				if (Float.floatToIntBits(weight) != Float.floatToIntBits(other.weight))
-					return false;
-				return true;
+			public int hashCode() {
+				return Objects.hash(languageTag, weight);
 			}
 		}
 		

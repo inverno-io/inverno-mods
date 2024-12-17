@@ -19,13 +19,11 @@ import java.util.function.Function;
 
 /**
  * <p>
- * A pipe is used within a template to transform a value before applying
- * templates.
+ * A pipe is used within a template to transform a value before applying templates.
  * </p>
  * 
  * <p>
- * Pipes can be chained using the {@link #and(Pipe)} method in order to apply
- * multiple transformations.
+ * Pipes can be chained using the {@link #and(Pipe)} method in order to apply multiple transformations.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -52,7 +50,9 @@ public interface Pipe<T, U> extends Function<T, U> {
 	}
 	
 	/**
-	 * <p>Applies the specified pipe to the specified source value.</p>
+	 * <p>
+	 * Applies the specified pipe to the specified source value.
+	 * </p>
 	 * 
 	 * @param <T> the type of the source value to transform
 	 * @param <U> the type of the value resulting from the transformation

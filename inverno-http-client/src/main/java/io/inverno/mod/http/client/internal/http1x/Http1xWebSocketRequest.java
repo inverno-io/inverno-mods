@@ -28,7 +28,7 @@ import java.util.Optional;
  * HTTP/1.x WebSocket {@link Request} implementation
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.11
  */
 class Http1xWebSocketRequest extends AbstractRequest<Http1xRequestHeaders> {

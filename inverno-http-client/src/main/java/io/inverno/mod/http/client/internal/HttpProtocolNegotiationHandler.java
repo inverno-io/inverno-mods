@@ -32,7 +32,7 @@ import java.util.Set;
  * </p>
  * 
  * <p>
- * This is used to negotiate the protocol (ALPN) when connection is estalished using TLS protocol.
+ * This is used to negotiate the protocol (ALPN) when connection is established using TLS protocol.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -81,7 +81,7 @@ public class HttpProtocolNegotiationHandler extends ApplicationProtocolNegotiati
 	}
 	
 	@Override
-	protected void configurePipeline(ChannelHandlerContext ctx, String protocol) throws Exception {
+	protected void configurePipeline(ChannelHandlerContext ctx, String protocol) {
 		ChannelPipeline pipeline = ctx.pipeline();
 		if(ApplicationProtocolNames.HTTP_2.equals(protocol) && this.supportedProtocols.contains(HttpVersion.HTTP_2_0)) {
 			this.channelConfigurer.configureHttp2(pipeline, this.configuration);

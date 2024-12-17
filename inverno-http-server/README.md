@@ -35,7 +35,7 @@ It especially supports:
 - zero-copy file transfer when supported for fast resource transfer
 - parameter conversion
 
-The server is fully reactive, based on the reactor pattern and non-blocking sockets which means it requires a limited number of threads to supports thousands of connections with high end performances. This design offers multiple advantages starting with maximizing the usage of resources. It is also easy to scale the server up and down by specifying the number of threads we want to allocate to the server, which ideally corresponds to the number of CPU cores. All this makes it a perfect choice for microservices applications running in containers in the cloud.
+The server is fully reactive, based on the reactor pattern and non-blocking sockets which means it requires a limited number of threads to supports thousands of connections with high-end performances. This design offers multiple advantages starting with maximizing the usage of resources. It is also easy to scale the server up and down by specifying the number of threads we want to allocate to the server, which ideally corresponds to the number of CPU cores. All this makes it a perfect choice for microservices applications running in containers in the cloud.
 
 > This module lays the foundational service and API for building HTTP servers with more complex and advanced features, that is why you might sometimes find it a little bit low level but that is the price of performance. If you require higher level functionalities like request routing, content negotiation and automatic payload conversion please consider the [web server module](#web-server).
 
@@ -72,11 +72,9 @@ Using Maven:
 
 Using Gradle:
 
-```java
-...
+```groovy
 compile 'io.inverno.mod:inverno-boot:${VERSION_INVERNO_MODS}'
 compile 'io.inverno.mod:inverno-http-server:${VERSION_INVERNO_MODS}'
-...
 ```
 
 The resulting *app_http* module, thus created, can then be started as an application as follows:
@@ -94,7 +92,7 @@ public class Main {
 }
 ```
 
-The above example starts a HTTP/1.x server using default configuration and a default server controller.
+The above example starts an HTTP/1.x server using default configuration and a default server controller.
 
 ```plaintext
 2021-04-14 09:51:46,329 INFO  [main] i.w.c.v.Application - Inverno is starting...
@@ -148,7 +146,7 @@ Hello
 
 The HTTP server uses a **server controller** to handle client request. The module provides a default implementation as overridable bean, a custom server controller can then be injected when creating the *http-server* module.
 
-> this module can also be used to embed a HTTP server in any application, unlike other application frameworks, Inverno core IoC/DI framework is not pervasive and any Inverno modules can be safely used in various contexts and applications.
+> this module can also be used to embed an HTTP server in any application, unlike other application frameworks, Inverno core IoC/DI framework is not pervasive and any Inverno modules can be safely used in various contexts and applications.
 
 ## Configuration
 
@@ -175,7 +173,7 @@ public interface App_httpConfiguration {
 }
 ```
 
-This should be enough for exposing a configuration in the *app_http* module that let us setup the server:
+This should be enough for exposing a configuration in the *app_http* module that let us set up the server:
 
 ```java
 package io.inverno.example.app_http;
@@ -516,7 +514,7 @@ public class Main {
 
 The server controller specifies how exchanges and errors are handled by the server. It also provides the exchange context created and attached to the exchange by the server.
 
-The `ServerController` interface bascially defines the following methods:
+The `ServerController` interface basically defines the following methods:
 
 - `Mono<Void> defer(Exchange<ExchangeContext> exchange)` which is used to handle an exchange
 - `Mono<Void> defer(ErrorExchange<ExchangeContext> errorExchange)` which is used to handle an error exchange
@@ -524,7 +522,7 @@ The `ServerController` interface bascially defines the following methods:
 
 > Methods `void handle(Exchange<ExchangeContext> exchange)` and `void handle(ErrorExchange<ExchangeContext> errorExchange)` are also defined, they can be more convenient when the handling logic does not have to be reactive. Note that the server will always invoke `defer()` methods which must then be properly implemented.
 
-As stated before, the *http-server* module provides a default `ServerController` implementation which returns `Hello` when a request is made to the root path `/` and (404) not found error otherwise. By default no context is created and `exchange.context()` returns `null`.
+As stated before, the *http-server* module provides a default `ServerController` implementation which returns `Hello` when a request is made to the root path `/` and (404) not found error otherwise. By default, no context is created and `exchange.context()` returns `null`.
 
 A custom server controller can be injected when creating the *app_http* module. In the following code, a socket bean is defined to inject the custom server controller and starts an HTTP server which responds with `Hello from app_http module!` to any request:
 
@@ -744,7 +742,7 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
 
 #### String
 
-We already saw how to send a single string response but we might also want to send the response in a reactive way as a stream of data in case the entire response payload is not available right away, if it doesn't fit in memory or if we simply want to send a response in multiple parts as soon as they become available (e.g. progressive display).
+We already saw how to send a single string response, but we might also want to send the response in a reactive way as a stream of data in case the entire response payload is not available right away, if it doesn't fit in memory or if we simply want to send a response in multiple parts as soon as they become available (e.g. progressive display).
 
 ```java
 ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
@@ -825,7 +823,7 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
 };
 ```
 
-In the above example, if a client sends a payload in the request, the server responds with the number of characters of each string received or it responds `0` if the request payload is empty. As before, request body is processed as a flow of data.
+In the above example, if a client sends a payload in the request, the server responds with the number of characters of each string received, or it responds `0` if the request payload is empty. As before, request body is processed as a flow of data.
 
 #### Raw
 
@@ -850,7 +848,7 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
 };
 ```
 
-In the above example, if a client sends a payload in the request, the server responds with the number of bytes of each chunk of data it receives or it responds `0` if the request payload is empty. This simple example illustrates how we can process requests as flow of data.
+In the above example, if a client sends a payload in the request, the server responds with the number of bytes of each chunk of data it receives, or it responds `0` if the request payload is empty. This simple example illustrates how we can process requests as flow of data.
 
 > Note that request's `ByteBuf` data must be released when they are consumed in the exchange handler.
 
@@ -869,7 +867,7 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
 
 In the above example, for each form parameters the server responds with a message describing the parameters it just received. Again this shows that the API is fully reactive and form parameters can be processed as they are decoded.
 
-A more traditional example though would be to obtained the map of parameters grouped by names (because multiple parameters with the same name can be sent):
+A more traditional example though would be to obtain the map of parameters grouped by names (because multiple parameters with the same name can be sent):
 
 ```java
 ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
@@ -926,7 +924,7 @@ The above code uses multiple elements and deserves a detailed explanation:
 6. close the file resource when the publisher completes
 7. if the part is not a file part respond with a bad request error
 
-The `Flux.using()` construct is the reactive counterpart of a try-with-resource statement. It is interesting to note that the content of the file is streamed up to the file and it is then never entirely loaded in memory. From there, it is quite easy to stop the upload of a file if a given size threshold is exceeded. We can also imagine how we could create a progress bar in a client UI to show the progression of the upload.
+The `Flux.using()` construct is the reactive counterpart of a try-with-resource statement. It is interesting to note that the content of the file is streamed up to the file, and it is then never entirely loaded in memory. From there, it is quite easy to stop the upload of a file if a given size threshold is exceeded. We can also imagine how we could create a progress bar in a client UI to show the progression of the upload.
 
 > In the above code we uploaded one or more file and stored their content on the local file system and during all that process, the I/O thread was never blocked.
 
@@ -979,14 +977,14 @@ ExchangeInterceptor<ExchangeContext, Exchange<ExchangeContext>> interceptor = ex
         // Do some processing and terminate the exchange
         exchange.response().body().empty();
 
-        // the exchange has been processed by the interceptor and it won't be processed by the handler
+        // the exchange has been processed by the interceptor, and it won't be processed by the handler
         return Mono.empty();
     }
     return Mono.just(exchange);
 }
 ```
 
-Mulitple interceptors can be chained by invoking `intercept()` method mutliple times:
+Multiple interceptors can be chained by invoking `intercept()` method multiple times:
 
 ```java
 // exchange handling chain: interceptor3 -> interceptor2 -> interceptor1 -> handler
@@ -1044,7 +1042,7 @@ ExchangeInterceptor<SecurityContext, Exchange<SecurityContext>> securityIntercep
 ReactiveExchangeHandler<SecurityContext, Exchange<SecurityContext>> interceptedHandler = handler.intercept(securityInterceptor);
 ```
 
-> The server relies on the `ServerController` in order to create the context. Please refer to the [Server Controller](#server-controller) section which explains this in details and describes how to setup the HTTP server.
+> The server relies on the `ServerController` in order to create the context. Please refer to the [Server Controller](#server-controller) section which explains this in details and describes how to set up the HTTP server.
 
 ### Misc
 
@@ -1056,7 +1054,7 @@ Request headers can be obtained as string values as follows:
 
 ```java
 handler = exchange -> {
-    // Returns the value of the first occurence of 'some-header' as string or returns null
+    // Returns the value of the first occurrence of 'some-header' as string or returns null
     String someHeaderValue = exchange.request().headers().get("some-header").orElse(null);
 
     // Returns all 'some-header' values as strings
@@ -1071,7 +1069,7 @@ It is also possible to get headers as `Parameter` which allows to easily convert
 
 ```java
 handler = exchange -> {
-    // Returns the value of the first occurence of 'some-header' as LocalDateTime or returns null
+    // Returns the value of the first occurrence of 'some-header' as LocalDateTime or returns null
     LocalDateTime someHeaderValue = exchange.request().headers().getParameter("some-header").map(Parameter::asLocalDateTime).orElse(null);
 
     // Returns all 'some-header' values as LocalDateTime
@@ -1082,15 +1080,15 @@ handler = exchange -> {
 };
 ```
 
-The *http-server* module can also uses the [header service](#http-header-service) provided by the *http-base* module to decode HTTP headers:
+The *http-server* module can also use the [header service](#http-header-service) provided by the *http-base* module to decode HTTP headers:
 
 ```java
 ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     // Returns the decoded 'content-type' header or null
-    Headers.ContentType contenType = exchange.request().headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
+    Headers.ContentType contentType = exchange.request().headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
 
-    String mediaType = contenType.getMediaType();
-    Charset charset = contenType.getCharset();
+    String mediaType = contentType.getMediaType();
+    Charset charset = contentType.getCharset();
     ...
 };
 ```
@@ -1108,7 +1106,7 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
     int someInteger = exchange.request().queryParameters().get("some-integer").map(Parameter::asInteger).orElseThrow(() -> new BadRequestException("Missing some-integer"));
 
     // get all query parameters with a given name
-    List<Integer> someIntergers = exchange.request().queryParameters().getAll("some-integer").stream().map(Parameter::asInteger).collect(Collectors.toList());
+    List<Integer> someIntegers = exchange.request().queryParameters().getAll("some-integer").stream().map(Parameter::asInteger).collect(Collectors.toList());
 
     // get all query parameters
     Map<String, List<Parameter>> queryParameters = exchange.request().queryParameters().getAll();
@@ -1127,7 +1125,7 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
     int someInteger = exchange.request().headers().cookies().get("some-integer").map(Parameter::asInteger).orElseThrow(() -> new BadRequestException("Missing some-integer"));
 
     // get all cookies with a given name
-    List<Integer> someIntergers = exchange.request().headers().cookies().getAll("some-integer").stream().map(Parameter::asInteger).collect(Collectors.toList());
+    List<Integer> someIntegers = exchange.request().headers().cookies().getAll("some-integer").stream().map(Parameter::asInteger).collect(Collectors.toList());
 
     // get all cookies
     Map<String, List<CookieParameter>> queryParameters = exchange.request().headers().cookies().getAll();
@@ -1348,7 +1346,7 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
         .handler(webSocketExchange -> {
             Flux.from(webSocketExchange.inbound().frames()).subscribe(frame -> {
                 try {
-                    LOGGER.info("Received WebSocket frame: kind = " + frame.getKind() + ", final = " + frame.isFinal() + ", size = " + frame.getBinaryData().readableBytes());
+                    LOGGER.info("Received WebSocket frame: kind = " + frame.getKind() + ", final = " + frame.isFinal() + ", size = " + frame.getRawData().readableBytes());
                 }
                 finally {
                     frame.release();
@@ -1358,7 +1356,7 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
 };
 ```
 
-As for request body `ByteBuf` data, WebSocket frames are reference counted and they must be released where they are consumed. In previous example, inbound frames are consumed in the handler which must release them.
+As for request body `ByteBuf` data, WebSocket frames are reference counted, and they must be released where they are consumed. In previous example, inbound frames are consumed in the handler which must release them.
 
 The WebSocket protocol supports fragmentation as defined by [RFC 6455 Section 5.4][rfc-6455-5.4], a WebSocket message can be fragmented into multiple frames, the final frame being flagged as final to indicate the end of the message. The `Inbound` can handle fragmented WebSocket messages and allows to consume corresponding fragmented data in multiple ways.
 
@@ -1372,16 +1370,16 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
                 Publisher<WebSocketFrame> frames = message.frames();
 
                 // The message data as stream of ByteBuf
-                Publisher<ByteBuf> binary = message.binary();
+                Publisher<ByteBuf> binary = message.raw();
 
                 // The message data as stream of String
-                Publisher<String> text = message.text();
+                Publisher<String> text = message.string();
 
                 // Aggregate all fragments into a single ByteBuf
-                Mono<ByteBuf> reducedBinary = message.reducedBinary();
+                Mono<ByteBuf> reducedBinary = message.rawReduced();
 
                 // Aggregate all fragments into a single String
-                Mono<String> reducedText = message.reducedText();
+                Mono<String> reducedText = message.stringReduced();
 
                 ...
             });
@@ -1391,7 +1389,7 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
 
 > Note that the different publishers in previous example are all variants of the frames publisher, as a result they are exclusive and it is only possible to subscribe once to only one of them.
 
-Unlike WebSocket frames, WebSocket messages are not reference counted, however message fragments, which are basically frames, must be released when consumed as WebSocket frames or `ByteBuf`.
+Unlike WebSocket frames, WebSocket messages are not reference counted. However, message fragments, which are basically frames, must be released when consumed as WebSocket frames or `ByteBuf`.
 
 Messages can be filtered by type (text or binary) by invoking `WebSocketExchange.Inbound#textMessages()` and `WebSocketExchange.Inbound#binaryMessages()`.
 
@@ -1412,7 +1410,7 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
 }
 ```
 
-Likewise we can send messages to the client, in the following example three Websocket frames are sent to the client per message: the constant `message:`, the actual message content and an empty final frame which marks the end of the message. Frames and messages publisher are exclusive, only one of them can be specified.
+Likewise, we can send messages to the client, in the following example three Websocket frames are sent to the client per message: the constant `message:`, the actual message content and an empty final frame which marks the end of the message. Frames and messages publisher are exclusive, only one of them can be specified.
 
 ```java
 ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
@@ -1470,7 +1468,7 @@ public class ChatServerController implements ServerController<ExchangeContext, E
 
     @Init
     public void init() {
-        this.chatSink = Sinks.many().multicast().onBackpressureBuffer(16, false);                                                  // 0
+        this.chatSink = Sinks.many().multicast().onBackpressureBuffer(16, false);                                                  // 1
     }
 
     @Destroy
@@ -1483,16 +1481,16 @@ public class ChatServerController implements ServerController<ExchangeContext, E
         exchange.webSocket().ifPresentOrElse(
             websocket -> websocket
                 .handler(webSocketExchange -> {
-                    Flux.from(webSocketExchange.inbound().frames())                                                                // 1
-                        .subscribe(frame -> {                                                                                      // 2
+                    Flux.from(webSocketExchange.inbound().frames())                                                                // 2
+                        .subscribe(frame -> {                                                                                      // 3
                             try {
-                                this.chatSink.tryEmitNext(frame);                                                                  // 3
+                                this.chatSink.tryEmitNext(frame);                                                                  // 4
                             }
                             finally {
-                                frame.release();                                                                                   // 4
+                                frame.release();                                                                                   // 5
                             }
                         });
-                    webSocketExchange.outbound().frames(factory -> this.chatSink.asFlux().map(WebSocketFrame::retainedDuplicate)); // 5
+                    webSocketExchange.outbound().frames(factory -> this.chatSink.asFlux().map(WebSocketFrame::retainedDuplicate)); // 6
                 })
                 .or(() -> exchange.response()
                     .body().string().value("Web socket handshake failed")
@@ -1504,12 +1502,12 @@ public class ChatServerController implements ServerController<ExchangeContext, E
 }
 ```
 
-0. Create a multicast chat sink with autocancel set to false to broadcast inbound frames to all connected clients.
-1. When receiving a new connection, get the inbound frames stream.
-2. Subscribe to the inbound frames stream.
-3. For each frame received, broadcast the frame using the chat sink.
-4. Release the inbound frame.
-5. Set the WebSocket outbound using the chat sink: on each frame, retain and duplicate.
+1. Create a multicast chat sink with auto-cancel set to false in order to broadcast inbound frames to all connected clients.
+2. When receiving a new connection, get the inbound frames stream.
+3. Subscribe to the inbound frames stream.
+4. For each frame received, broadcast the frame using the chat sink.
+5. Release the inbound frame.
+6. Set the WebSocket outbound using the chat sink: on each frame, retain and duplicate.
 
 As stated before, WebSocket frames are reference counted and inbound WebSocket frames must be released since the handler is the one consuming them. Furthermore for each connected client, the frame must be duplicated, since it is written multiple times, and retained to increment the reference counter, since it must stay in memory until it has been sent to all connected clients.
 
@@ -1525,7 +1523,7 @@ In practice, all we have to do to extend these services is to provide `HeaderCod
 
 ## Wrap-up
 
-If we put all we've just seen together, here is a complete example showing how to create a HTTP/2 server with HTTP compression using a custom server controller:
+If we put all we've just seen together, here is a complete example showing how to create an HTTP/2 server with HTTP compression using a custom server controller:
 
 ```java
 package io.inverno.example.app_http;

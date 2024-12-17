@@ -16,9 +16,6 @@
 package io.inverno.mod.web.server.annotation;
 
 import io.inverno.core.annotation.Bean;
-import io.inverno.mod.web.server.WebRouterConfigurer;
-import io.inverno.mod.web.server.WebRoutesConfigurer;
-import io.inverno.mod.web.server.WebServerControllerConfigurer;
 import java.lang.annotation.Documented;
 import static java.lang.annotation.ElementType.TYPE;
 import java.lang.annotation.Retention;
@@ -27,12 +24,12 @@ import java.lang.annotation.Target;
 
 /**
  * <p>
- * The WebRoutes annotation is used in conjunction with the {@link Bean @Bean} annotation to indicate a web routes configurer bean.
+ * The WebRoutes annotation is used in conjunction with the {@link Bean @Bean} annotation on a Web router configurer bean or a Web server configurer bean.
  * </p>
  *
  * <p>
- * Web router configurer beans must implements {@link WebRoutesConfigurer} or {@link WebRouterConfigurer}, they are used to programmatically specifies web routes and/or WebSocket routes in a module.
- * They are injected in a generated {@link WebServerControllerConfigurer} bean that can be used to configure a web server.
+ * Web routes can be configured in {@link io.inverno.mod.web.server.WebRouter.Configurer} or {@link io.inverno.mod.web.server.WebServer.Configurer} beans, they are used to programmatically specifies
+ * Web routes and/or WebSocket routes in a module. They are injected in a generated bean used to configure the Web server on application startup.
  * </p>
  *
  * <p>
@@ -58,7 +55,7 @@ import java.lang.annotation.Target;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
- * @see WebRouterConfigurer
+ * @see io.inverno.mod.web.server.WebRouter
  * @see WebController
  * @see WebRoute
  * @see WebSocketRoute
@@ -70,7 +67,7 @@ public @interface WebRoutes {
 
 	/**
 	 * <p>
-	 * Returns the web routes configured in the web router configurer.
+	 * Returns the Web routes configured in the configurer.
 	 * </p>
 	 * 
 	 * <p>
@@ -82,13 +79,13 @@ public @interface WebRoutes {
 	 * If you want to define undocumented routes and you know a route will not conflict with another one, you can omit to declare them.
 	 * </p>
 	 * 
-	 * @return an array of web route
+	 * @return an array of Web route
 	 */
-	WebRoute[] value() default {}; 
+	WebRoute[] value() default {};
 	
 	/**
 	 * <p>
-	 * Returns the WebSocket routes configured in the web router configurer.
+	 * Returns the WebSocket routes configured in the configurer.
 	 * </p>
 	 * 
 	 * <p>

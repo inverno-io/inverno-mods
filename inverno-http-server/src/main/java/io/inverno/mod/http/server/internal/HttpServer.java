@@ -54,7 +54,7 @@ public class HttpServer {
 	
 	/**
 	 * <p>
-	 * Creates a HTTP server.
+	 * Creates an HTTP server.
 	 * </p>
 	 * 
 	 * @param configuration      the HTTP server configuration

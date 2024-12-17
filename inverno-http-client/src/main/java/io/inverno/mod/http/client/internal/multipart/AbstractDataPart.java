@@ -23,10 +23,10 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * Base {@link Part} implementation for sending data.
+ * Base {@link io.inverno.mod.http.client.Part Part} implementation for sending data.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @param <A> the type of data sent in the part

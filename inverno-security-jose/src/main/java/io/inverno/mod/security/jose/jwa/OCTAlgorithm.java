@@ -177,7 +177,7 @@ public enum OCTAlgorithm implements JWAAlgorithm<OCTJWK> {
 	
 	/**
 	 * <p>
-	 * Creates an Octet symmetic algorithm.
+	 * Creates an Octet symmetric algorithm.
 	 * </p>
 	 *
 	 * @param alg               the JWA registered algorithm name
@@ -187,7 +187,7 @@ public enum OCTAlgorithm implements JWAAlgorithm<OCTJWK> {
 	 * @param jcaAlg            the JCA algorithm
 	 * @param encKeyLength      the encryption key length in bytes
 	 */
-	private OCTAlgorithm(String alg, BiFunction<OCTJWK, OCTAlgorithm, JWASigner> signerFactory, BiFunction<OCTJWK, OCTAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<OCTJWK, OCTAlgorithm, JWACipher> cipherFactory, String jcaAlg, int encKeyLength) {
+	OCTAlgorithm(String alg, BiFunction<OCTJWK, OCTAlgorithm, JWASigner> signerFactory, BiFunction<OCTJWK, OCTAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<OCTJWK, OCTAlgorithm, JWACipher> cipherFactory, String jcaAlg, int encKeyLength) {
 		this(alg, signerFactory, keyManagerFactory, cipherFactory, jcaAlg, encKeyLength, null, null, null, null);
 	}
 	
@@ -205,7 +205,7 @@ public enum OCTAlgorithm implements JWAAlgorithm<OCTJWK> {
 	 * @param ivLength          the initialization vector length in bytes
 	 * @param tagLength         the authentication tag length in bytes
 	 */
-	private OCTAlgorithm(String alg, BiFunction<OCTJWK, OCTAlgorithm, JWASigner> signerFactory, BiFunction<OCTJWK, OCTAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<OCTJWK, OCTAlgorithm, JWACipher> cipherFactory, String jcaAlg, int encKeyLength, Integer ivLength, Integer tagLength) {
+	OCTAlgorithm(String alg, BiFunction<OCTJWK, OCTAlgorithm, JWASigner> signerFactory, BiFunction<OCTJWK, OCTAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<OCTJWK, OCTAlgorithm, JWACipher> cipherFactory, String jcaAlg, int encKeyLength, Integer ivLength, Integer tagLength) {
 		this(alg, signerFactory, keyManagerFactory, cipherFactory, jcaAlg, encKeyLength, ivLength, tagLength, null, null);
 	}
 	
@@ -225,7 +225,7 @@ public enum OCTAlgorithm implements JWAAlgorithm<OCTJWK> {
 	 * @param jcaMacAlg         the JCA Mac algorithm
 	 * @param macKeyLength      the Mac key length in bytes
 	 */
-	private OCTAlgorithm(String alg, BiFunction<OCTJWK, OCTAlgorithm, JWASigner> signerFactory, BiFunction<OCTJWK, OCTAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<OCTJWK, OCTAlgorithm, JWACipher> cipherFactory, String jcaAlg, int encKeyLength, Integer ivLength, Integer tagLength, String jcaMacAlg, Integer macKeyLength) {
+	OCTAlgorithm(String alg, BiFunction<OCTJWK, OCTAlgorithm, JWASigner> signerFactory, BiFunction<OCTJWK, OCTAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<OCTJWK, OCTAlgorithm, JWACipher> cipherFactory, String jcaAlg, int encKeyLength, Integer ivLength, Integer tagLength, String jcaMacAlg, Integer macKeyLength) {
 		this.alg = alg;
 		this.signerFactory = signerFactory;
 		this.keyManagerFactory = keyManagerFactory;

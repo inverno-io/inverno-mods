@@ -32,7 +32,7 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  * 
- * @param <A> the type of authenthentication
+ * @param <A> the type of authentication
  * @param <B> the type of identity
  */
 @FunctionalInterface
@@ -62,9 +62,7 @@ public interface IdentityResolver<A extends Authentication, B extends Identity> 
 	 * @return a transformed identity resolver
 	 */
 	default <T extends Identity> IdentityResolver<A, T> flatMap(Function<? super B, ? extends Mono<? extends T>> mapper) {
-		return identity -> {
-			return this.resolveIdentity(identity).flatMap(mapper);
-		};
+		return identity -> this.resolveIdentity(identity).flatMap(mapper);
 	}
 	
 		/**
@@ -78,8 +76,6 @@ public interface IdentityResolver<A extends Authentication, B extends Identity> 
 	 * @return a transformed identity resolver
 	 */
 	default <T extends Identity> IdentityResolver<A, T> map(Function<? super B, ? extends T> mapper) {
-		return identity -> {
-			return this.resolveIdentity(identity).map(mapper);
-		};
+		return identity -> this.resolveIdentity(identity).map(mapper);
 	}
 }

@@ -66,7 +66,7 @@ public interface JWACipher extends JWA {
 	 * 
 	 * @param cipherText the cipher text to decrypt
 	 * @param aad the additional authentication data
-	 * @param iv the initilization vector
+	 * @param iv the initialization vector
 	 * @param tag the authentication tag
 	 * 
 	 * @return decrypted data

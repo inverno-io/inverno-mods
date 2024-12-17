@@ -16,13 +16,14 @@
 package io.inverno.mod.http.base;
 
 import io.inverno.mod.http.base.header.Cookie;
+import java.lang.reflect.Type;
 
 /**
  * <p>
  * Represents mutable outbound HTTP cookies.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @see Cookie
@@ -42,4 +43,35 @@ public interface OutboundCookies extends InboundCookies {
 	 * @return the outbound cookies
 	 */
 	<T> OutboundCookies addCookie(String name, T value);
+
+	/**
+	 * <p>
+	 * Adds a cookie.
+	 * </p>
+	 *
+	 * @param <T> the value type
+	 * @param name the name
+	 * @param value the value
+	 * @param type the value type
+	 *
+	 * @return the outbound cookies
+	 *
+	 */
+	default <T> OutboundCookies addCookie(String name, T value, Class<T> type) {
+		return this.addCookie(name, value, (Type)type);
+	}
+
+	/**
+	 * <p>
+	 * Adds a cookie.
+	 * </p>
+	 *
+	 * @param <T> the value type
+	 * @param name the name
+	 * @param value the value
+	 * @param type the value type
+	 *
+	 * @return the outbound cookies
+	 */
+	<T> OutboundCookies addCookie(String name, T value, Type type);
 }

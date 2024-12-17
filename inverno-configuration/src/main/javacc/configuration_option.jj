@@ -23,19 +23,18 @@ options {
 PARSER_BEGIN(ConfigurationOptionParser) 
 package io.inverno.mod.configuration.internal.parser.option;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-
-import io.inverno.mod.configuration.AbstractConfigurationSource;
+import io.inverno.mod.base.Settable;
+import io.inverno.mod.configuration.internal.AbstractConfigurationSource;
 import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.ConfigurationKey.Parameter;
 import io.inverno.mod.configuration.internal.GenericConfigurationProperty;
 import io.inverno.mod.configuration.internal.GenericConfigurationKey;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-public class ConfigurationOptionParser<A extends AbstractConfigurationSource<?,?,?,String>> {
+public class ConfigurationOptionParser<A extends AbstractConfigurationSource<?, ?, ?, String, ?>> {
 
 	private A inverno_source;
 
@@ -797,9 +796,9 @@ ConfigurationKey StartKey():
 	}
 }
 
-Optional<String> StartValue():
+Settable<String> StartValue():
 {
-	Optional<String> value;
+	Settable<String> value;
 }
 {
 	value = Value()
@@ -809,9 +808,9 @@ Optional<String> StartValue():
 	}
 }
 
-Optional<String> StartValueRevision():
+Settable<String> StartValueRevision():
 {
-	Optional<String> value;
+	Settable<String> value;
 }
 {
 	< INTEGER_LITERAL > < LBRACE > value = Value() < RBRACE >
@@ -824,13 +823,13 @@ Optional<String> StartValueRevision():
 ConfigurationProperty Option():
 {
 	ConfigurationKey key;
-	Optional<String> value;
+	Settable<String> value;
 }
 {
 	key = Key() < EQ > value = Value()
 	{
-		if(value != null) {
-			return new GenericConfigurationProperty<ConfigurationKey, A, String>(key, value.orElse(null), inverno_source);
+		if(value.isSet()) {
+			return new GenericConfigurationProperty<ConfigurationKey, A, String>(key, value.get(), inverno_source);
 		}
 		else {
 			return new GenericConfigurationProperty<ConfigurationKey, A, String>(key, inverno_source);
@@ -915,20 +914,20 @@ Object ParameterValue() :
 	}
 }
 
-Optional<String> Value():
+Settable<String> Value():
 {
 	Token t;
-	Optional<String> value;
+	Settable<String> value;
 }
 {
 	(
-		  t = < INTEGER_LITERAL > { value = Optional.of(t.image); }
-		| t = < FLOATING_POINT_LITERAL > { value = Optional.of(t.image); }
-		| t = < STRING_LITERAL > { value = Optional.of(t.image.substring(1, t.image.length()-1)); }
-		| t = < TRUE > { value = Optional.of(t.image); }
-		| t = < FALSE > { value = Optional.of(t.image); }
-		| t = < NULL > { value = Optional.empty(); }
-		| t = < UNSET > { value = null; }
+		  t = < INTEGER_LITERAL > { value = Settable.of(t.image); }
+		| t = < FLOATING_POINT_LITERAL > { value = Settable.of(t.image); }
+		| t = < STRING_LITERAL > { value = Settable.of(t.image.substring(1, t.image.length()-1)); }
+		| t = < TRUE > { value = Settable.of(t.image); }
+		| t = < FALSE > { value = Settable.of(t.image); }
+		| t = < NULL > { value = Settable.of(null); }
+		| t = < UNSET > { value = Settable.undefined(); }
 	)
 	{
 		return value;

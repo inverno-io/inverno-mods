@@ -39,14 +39,14 @@ public interface Encoder<From, To> {
 	 * @param value the object to encode
 	 * 
 	 * @return an encoded object
+	 *
 	 * @throws ConverterException if there was an error encoding the value
 	 */
 	<T extends From> To encode(T value) throws ConverterException;
 	
 	/**
 	 * <p>
-	 * Encodes the specified value whose type is represented by the specified class
-	 * to the encoded type.
+	 * Encodes the specified value whose type is represented by the specified class to the encoded type.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object
@@ -54,14 +54,14 @@ public interface Encoder<From, To> {
 	 * @param type  the class of the decoded object
 	 * 
 	 * @return an encoded object
+	 *
 	 * @throws ConverterException if there was an error encoding the value
 	 */
 	<T extends From> To encode(T value, Class<T> type) throws ConverterException;
 	
 	/**
 	 * <p>
-	 * Encodes the specified value whose type is the specified type to the encoded
-	 * type.
+	 * Encodes the specified value whose type is the specified type to the encoded type.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object
@@ -69,6 +69,7 @@ public interface Encoder<From, To> {
 	 * @param type  the type of the decoded object
 	 * 
 	 * @return an encoded object
+	 *
 	 * @throws ConverterException if there was an error encoding the value
 	 */
 	<T extends From> To encode(T value, Type type) throws ConverterException;

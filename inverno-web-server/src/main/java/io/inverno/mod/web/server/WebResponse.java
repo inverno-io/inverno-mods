@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2021 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,22 +22,25 @@ import java.util.function.Consumer;
 
 /**
  * <p>
- * A request with supports for body encoding based on the response content type.
+ * A response with supports for body encoding based on the response content type.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see WebExchange
  */
 public interface WebResponse extends Response {
 
 	@Override
-	WebResponseBody body();
-	
-	@Override
-	public WebResponse headers(Consumer<OutboundResponseHeaders> headersConfigurer) throws IllegalStateException;
+	WebResponse headers(Consumer<OutboundResponseHeaders> headersConfigurer) throws IllegalStateException;
 
 	@Override
-	public WebResponse trailers(Consumer<OutboundHeaders<?>> trailersConfigurer);
+	WebResponse sendContinue() throws IllegalStateException;
+
+	@Override
+	WebResponseBody body();
+
+	@Override
+	WebResponse trailers(Consumer<OutboundHeaders<?>> trailersConfigurer);
 }

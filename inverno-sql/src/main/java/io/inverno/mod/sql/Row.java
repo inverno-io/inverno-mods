@@ -45,6 +45,7 @@ public interface Row {
 	 * @param type  the expected type of the value
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException if the value can't be cast into the type
 	 */
 	<T> T get(int index, Class<T> type);
@@ -60,6 +61,7 @@ public interface Row {
 	 * @param type the expected type of the value
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException     if the value can't be cast into the type
 	 * @throws NoSuchElementException if there is no column with the specified name
 	 */
@@ -84,6 +86,7 @@ public interface Row {
 	 * @param name the name of the column
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws NoSuchElementException if there is no column with the specified name
 	 */
 	Object get(String name);
@@ -96,6 +99,7 @@ public interface Row {
 	 * @param index the index of the value in the row
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException if the value can't be cast into a String
 	 */
 	String getString(int index);
@@ -108,6 +112,7 @@ public interface Row {
 	 * @param name the name of the column
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws NoSuchElementException if there is no column with the specified name
 	 * @throws ClassCastException     if the value can't be cast into a String
 	 */
@@ -121,19 +126,20 @@ public interface Row {
 	 * @param index the index of the value in the row
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException if the value can't be cast into a Boolean
 	 */
 	Boolean getBoolean(int index);
 	
 	/**
 	 * <p>
-	 * Returns the value of the column identified by the specified name as a
-	 * Boolean.
+	 * Returns the value of the column identified by the specified name as a Boolean.
 	 * </p>
 	 * 
 	 * @param name the name of the column
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws NoSuchElementException if there is no column with the specified name
 	 * @throws ClassCastException     if the value can't be cast into a Boolean
 	 */
@@ -147,6 +153,7 @@ public interface Row {
 	 * @param index the index of the value in the row
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException if the value can't be cast into a Byte
 	 */
 	Byte getByte(int index);
@@ -159,6 +166,7 @@ public interface Row {
 	 * @param name the name of the column
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws NoSuchElementException if there is no column with the specified name
 	 * @throws ClassCastException     if the value can't be cast into a Byte
 	 */
@@ -172,6 +180,7 @@ public interface Row {
 	 * @param index the index of the value in the row
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException if the value can't be cast into a Short
 	 */
 	Short getShort(int index);
@@ -184,6 +193,7 @@ public interface Row {
 	 * @param name the name of the column
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws NoSuchElementException if there is no column with the specified name
 	 * @throws ClassCastException     if the value can't be cast into a Short
 	 */
@@ -197,19 +207,20 @@ public interface Row {
 	 * @param index the index of the value in the row
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException if the value can't be cast into an Integer
 	 */
 	Integer getInteger(int index);
 	
 	/**
 	 * <p>
-	 * Returns the value of the column identified by the specified name as an
-	 * Integer.
+	 * Returns the value of the column identified by the specified name as an Integer.
 	 * </p>
 	 * 
 	 * @param name the name of the column
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws NoSuchElementException if there is no column with the specified name
 	 * @throws ClassCastException     if the value can't be cast into an Integer
 	 */
@@ -223,6 +234,7 @@ public interface Row {
 	 * @param index the index of the value in the row
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException if the value can't be cast into a Long
 	 */
 	Long getLong(int index);
@@ -235,6 +247,7 @@ public interface Row {
 	 * @param name the name of the column
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws NoSuchElementException if there is no column with the specified name
 	 * @throws ClassCastException     if the value can't be cast into a Long
 	 */
@@ -248,6 +261,7 @@ public interface Row {
 	 * @param index the index of the value in the row
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException if the value can't be cast into a Float
 	 */
 	Float getFloat(int index);
@@ -260,6 +274,7 @@ public interface Row {
 	 * @param name the name of the column
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws NoSuchElementException if there is no column with the specified name
 	 * @throws ClassCastException     if the value can't be cast into a Float
 	 */
@@ -273,6 +288,7 @@ public interface Row {
 	 * @param index the index of the value in the row
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException if the value can't be cast into a Double
 	 */
 	Double getDouble(int index);
@@ -285,6 +301,7 @@ public interface Row {
 	 * @param name the name of the column
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws NoSuchElementException if there is no column with the specified name
 	 * @throws ClassCastException     if the value can't be cast into a Double
 	 */
@@ -298,19 +315,20 @@ public interface Row {
 	 * @param index the index of the value in the row
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException if the value can't be cast into a BigDecimal
 	 */
 	BigDecimal getBigDecimal(int index);
 	
 	/**
 	 * <p>
-	 * Returns the value of the column identified by the specified name as a
-	 * BigDecimal.
+	 * Returns the value of the column identified by the specified name as a BigDecimal.
 	 * </p>
 	 * 
 	 * @param name the name of the column
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws NoSuchElementException if there is no column with the specified name
 	 * @throws ClassCastException     if the value can't be cast into a BigDecimal
 	 */
@@ -324,19 +342,20 @@ public interface Row {
 	 * @param index the index of the value in the row
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException if the value can't be cast into a LocalDate
 	 */
 	LocalDate getLocalDate(int index);
 	
 	/**
 	 * <p>
-	 * Returns the value of the column identified by the specified name as a
-	 * LocalDate.
+	 * Returns the value of the column identified by the specified name as a LocalDate.
 	 * </p>
 	 * 
 	 * @param name the name of the column
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws NoSuchElementException if there is no column with the specified name
 	 * @throws ClassCastException     if the value can't be cast into a LocalDate
 	 */
@@ -350,19 +369,20 @@ public interface Row {
 	 * @param index the index of the value in the row
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException if the value can't be cast into a LocalTime
 	 */
 	LocalTime getLocalTime(int index);
 	
 	/**
 	 * <p>
-	 * Returns the value of the column identified by the specified name as a
-	 * LocalTime.
+	 * Returns the value of the column identified by the specified name as a LocalTime.
 	 * </p>
 	 * 
 	 * @param name the name of the column
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws NoSuchElementException if there is no column with the specified name
 	 * @throws ClassCastException     if the value can't be cast into a LocalTime
 	 */
@@ -376,14 +396,14 @@ public interface Row {
 	 * @param index the index of the value in the row
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException if the value can't be cast into a LocalDateTime
 	 */
 	LocalDateTime getLocalDateTime(int index);
 	
 	/**
 	 * <p>
-	 * Returns the value of the column identified by the specified name as a
-	 * LocalDateTime.
+	 * Returns the value of the column identified by the specified name as a LocalDateTime.
 	 * </p>
 	 * 
 	 * @param name the name of the column
@@ -403,19 +423,20 @@ public interface Row {
 	 * @param index the index of the value in the row
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException if the value can't be cast into an OffsetTime
 	 */
 	OffsetTime getOffsetTime(int index);
 	
 	/**
 	 * <p>
-	 * Returns the value of the column identified by the specified name as an
-	 * OffsetTime.
+	 * Returns the value of the column identified by the specified name as an OffsetTime.
 	 * </p>
 	 * 
 	 * @param name the name of the column
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws NoSuchElementException if there is no column with the specified name
 	 * @throws ClassCastException     if the value can't be cast into an OffsetTime
 	 */
@@ -429,22 +450,22 @@ public interface Row {
 	 * @param index the index of the value in the row
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException if the value can't be cast into an OffsetDateTime
 	 */
 	OffsetDateTime getOffsetDateTime(int index);
 	
 	/**
 	 * <p>
-	 * Returns the value of the column identified by the specified name as an
-	 * OffsetDateTime.
+	 * Returns the value of the column identified by the specified name as an OffsetDateTime.
 	 * </p>
 	 * 
 	 * @param name the name of the column
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws NoSuchElementException if there is no column with the specified name
-	 * @throws ClassCastException     if the value can't be cast into an
-	 *                                OffsetDateTime
+	 * @throws ClassCastException     if the value can't be cast into an OffsetDateTime
 	 */
 	OffsetDateTime getOffsetDateTime(String name);
 	
@@ -456,19 +477,20 @@ public interface Row {
 	 * @param index the index of the value in the row
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws ClassCastException if the value can't be cast into a ByteBuf
 	 */
 	ByteBuf getByteBuf(int index);
 	
 	/**
 	 * <p>
-	 * Returns the value of the column identified by the specified name as a
-	 * ByteBuf.
+	 * Returns the value of the column identified by the specified name as a ByteBuf.
 	 * </p>
 	 * 
 	 * @param name the name of the column
 	 * 
 	 * @return the value or null
+	 *
 	 * @throws NoSuchElementException if there is no column with the specified name
 	 * @throws ClassCastException     if the value can't be cast into a ByteBuf
 	 */

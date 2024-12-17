@@ -35,7 +35,7 @@ import java.util.Optional;
  * Http/2 {@link HttpConnectionFactory} implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 @Bean( visibility = Bean.Visibility.PRIVATE )
@@ -70,7 +70,7 @@ public class Http2ConnectionFactory implements HttpConnectionFactory<Http2Connec
 	 * HTTP/2 channel handler builder.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 */
 	private class Http2ChannelHandlerBuilder extends AbstractHttp2ConnectionHandlerBuilder<Http2Connection, Http2ChannelHandlerBuilder> {
@@ -82,7 +82,7 @@ public class Http2ConnectionFactory implements HttpConnectionFactory<Http2Connec
 		 * Creates an HTTP/2 channel handler builder.
 		 * </p>
 		 * 
-		 * @param configuration the HTTP client configurartion
+		 * @param configuration the HTTP client configuration
 		 */
 		public Http2ChannelHandlerBuilder(HttpClientConfiguration configuration) {
 			this.configuration = configuration;

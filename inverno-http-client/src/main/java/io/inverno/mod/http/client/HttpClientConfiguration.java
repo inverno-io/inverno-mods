@@ -39,21 +39,21 @@ public interface HttpClientConfiguration {
 	/**
 	 * Default HTTP versions accepted by the client.
 	 */
-	static final Set<HttpVersion> DEFAULT_HTTP_PROTOCOL_VERSIONS = Set.of(HttpVersion.HTTP_2_0, HttpVersion.HTTP_1_1);
+	Set<HttpVersion> DEFAULT_HTTP_PROTOCOL_VERSIONS = Set.of(HttpVersion.HTTP_2_0, HttpVersion.HTTP_1_1);
 	
 	/**
 	 * Default user agent.
 	 */
-	static final String USER_AGENT = "Inverno" + Optional.ofNullable(HttpClientConfiguration.class.getModule().getDescriptor()).flatMap(ModuleDescriptor::version).map(version -> "/" + version).orElse("");
+	String USER_AGENT = "Inverno" + Optional.ofNullable(HttpClientConfiguration.class.getModule().getDescriptor()).flatMap(ModuleDescriptor::version).map(version -> "/" + version).orElse("");
 	
 	/**
 	 * <p>
 	 * Designates a proxy protocol.
 	 * </p>
 	 */
-	public enum ProxyProtocol {
+	enum ProxyProtocol {
 		/**
-		 * Http proxy protocol.
+		 * HTTP proxy protocol.
 		 */
 		HTTP,
 		/**
@@ -91,7 +91,7 @@ public interface HttpClientConfiguration {
 	 * 
 	 * @return the maximum size of the pool
 	 */
-	default Integer pool_max_size() {
+	default int pool_max_size() {
 		return 2;
 	}
 	
@@ -112,7 +112,7 @@ public interface HttpClientConfiguration {
 	 * @return the pool's clean period
 	 */
 	default long pool_clean_period() {
-		return 1000l;
+		return 1000L;
 	}
 	
 	/**
@@ -144,7 +144,7 @@ public interface HttpClientConfiguration {
 	 * @return the pool
 	 */
 	default Long pool_keep_alive_timeout() {
-		return 60000l;
+		return 60000L;
 	}
 	
 	/**
@@ -164,9 +164,50 @@ public interface HttpClientConfiguration {
 	 * @return the pool connection timeout
 	 */
 	default long pool_connect_timeout() {
-		return 60000l;
+		return 60000L;
 	}
-	
+
+	/**
+	 * <p>
+	 * The number of random connections to consider when selecting a connection in the pool.
+	 * </p>
+	 *
+	 * <p>
+	 * The pool will retain the connection with the lowest load factor and compare it to {@link #pool_select_connection_load_threshold()} to determine whether the creation of a new connection is
+	 * required.
+	 * </p>
+	 *
+	 * <p>
+	 * Defaults to {@code 2}.
+	 * </p>
+	 *
+	 * @return the number of random connections to consider when selecting a connection
+	 */
+	default int pool_select_choice_count() {
+		return 2;
+	}
+
+	/**
+	 * <p>
+	 * The connection load threshold between 0 and 1 above which a new connection must be added to the pool.
+	 * </p>
+	 *
+	 * <p>
+	 * Each connection in the pool maintain an internal load factor which is the ratio between the active requests and the connection capacity. When selecting a connection the pool tries to select the
+	 * connection with the minimum load factor, this parameter allows to force the pool to create new connection when that load factor is above a specific threshold. Setting this to {@code 1} means it
+	 * should reduce the number of connection, setting it to {@code 0} means it should optimize throughput (i.e. create and use the maximum allowed number of connections).
+	 * </p>
+	 *
+	 * <p>
+	 * Defaults to {@code 0.5}
+	 * </p>
+	 *
+	 * @return the pool connection load threshold
+	 */
+	default float pool_select_connection_load_threshold() {
+		return 0.5f;
+	}
+
 	/**
 	 * <p>
 	 * The request timeout in milliseconds.
@@ -180,10 +221,10 @@ public interface HttpClientConfiguration {
 	 * Set to {@code 0} to disable, defaults to {@code 60000}. 
 	 * </p>
 	 * 
-	 * @return the connection timeout
+	 * @return the request timeout
 	 */
 	default long request_timeout() {
-		return 60000l;
+		return 60000L;
 	}
 	
 	/**
@@ -198,7 +239,7 @@ public interface HttpClientConfiguration {
 	 * @return the graceful shutdown timeout
 	 */
 	default long graceful_shutdown_timeout() {
-		return 30000l;
+		return 30000L;
 	}
 	
 	/**
@@ -626,7 +667,7 @@ public interface HttpClientConfiguration {
 	 * The list of ciphers to include.
 	 * </p>
 	 * 
-	 * @return a list of ciphers
+	 * @return an array of ciphers
 	 */
 	String[] tls_ciphers_includes();
 
@@ -635,7 +676,7 @@ public interface HttpClientConfiguration {
 	 * The list of ciphers to exclude.
 	 * </p>
 	 * 
-	 * @return a list of ciphers
+	 * @return an array of ciphers
 	 */
 	String[] tls_ciphers_excludes();
 	
@@ -730,7 +771,7 @@ public interface HttpClientConfiguration {
 	 * @return the maximum HTTP/1.1 concurrent requests on a single connection
 	 */
 	default Long http1_max_concurrent_requests() {
-		return 10l;
+		return 10L;
 	}
 	
 	/**
@@ -745,7 +786,7 @@ public interface HttpClientConfiguration {
 	 * @return the header table size
 	 */
 	default Long http2_header_table_size() {
-		return 4096l;
+		return 4096L;
 	}
 
 	/**
@@ -760,7 +801,7 @@ public interface HttpClientConfiguration {
 	 * @return max concurrent streams
 	 */
 	default Long http2_max_concurrent_streams() {
-		return 100l;
+		return 100L;
 	}
 
 	/**
@@ -988,7 +1029,7 @@ public interface HttpClientConfiguration {
 	 * @return the inbound close frame timeout
 	 */
 	default long ws_inbound_close_frame_timeout() {
-		return 60000l;
+		return 60000L;
 	}
 	
 	/**

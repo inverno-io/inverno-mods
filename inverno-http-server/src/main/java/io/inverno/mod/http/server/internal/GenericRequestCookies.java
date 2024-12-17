@@ -15,13 +15,11 @@
  */
 package io.inverno.mod.http.server.internal;
 
-import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.InboundCookies;
 import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.header.Cookie;
 import io.inverno.mod.http.base.header.CookieParameter;
 import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.base.internal.header.GenericCookieParameter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,21 +44,11 @@ public class GenericRequestCookies implements InboundCookies {
 	 * </p>
 	 *
 	 * @param requestHeaders     the request headers
-	 * @param parameterConverter an string object converter
 	 */
-	public GenericRequestCookies(InboundRequestHeaders requestHeaders, ObjectConverter<String> parameterConverter) {
+	public GenericRequestCookies(InboundRequestHeaders requestHeaders) {
 		this.pairs = requestHeaders.<Headers.Cookie>getAllHeader(Headers.NAME_COOKIE)
 			.stream()
 			.flatMap(cookieHeader -> cookieHeader.getPairs().values().stream().flatMap(List::stream))
-			.map(cookie -> {
-				if(cookie instanceof CookieParameter) {
-					return (CookieParameter)cookie;
-				}
-				else {
-					return new GenericCookieParameter(parameterConverter, cookie.getName(), cookie.getValue());
-				}
-
-			})
 			.collect(Collectors.groupingBy(Cookie::getName));
 	}
 
@@ -78,7 +66,7 @@ public class GenericRequestCookies implements InboundCookies {
 	public Optional<CookieParameter> get(String name) {
 		return Optional.ofNullable(this.getAll(name)).map(cookies ->  {
 			if(!cookies.isEmpty()) {
-				return cookies.get(0);
+				return cookies.getFirst();
 			}
 			return null;
 		});

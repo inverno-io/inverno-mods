@@ -16,7 +16,9 @@
 package io.inverno.mod.base.converter;
 
 /**
- * <p>An object converter which is splittable and joinable with primitive conversion bindings.</p>
+ * <p>
+ * An object converter which is splittable and joinable with primitive conversion bindings.
+ * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

@@ -39,7 +39,7 @@ import java.util.Optional;
  * This is used as a proxy between the exchange and the connection and abstracts the stream to the exchange.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.11
  */
 class Http2ConnectionStream {
@@ -51,12 +51,12 @@ class Http2ConnectionStream {
 	private Http2Stream stream;
 	
 	/**
-	 * The exchange associated to the stream which can be replaced by an {@link Http2ErrorExchange} in case of error while processing the exchange.
+	 * The exchange associated to the stream.
 	 */
 	AbstractHttp2Exchange<?, ?> exchange;
 	
 	/**
-	 * The error code that was received or sent in a RST_STREAM frame or null if the stream was not reset.
+	 * The error code that was received or sent in an RST_STREAM frame or null if the stream was not reset.
 	 */
 	private Long errorCode;
 
@@ -302,9 +302,9 @@ class Http2ConnectionStream {
 				this.flush();
 			}
 			else {
-				// We haven't created any stream but we still need to release the connection
+				// We haven't created any stream, but we still need to release the connection
 				if(this.connection.handler != null) {
-					this.connection.handler.recycle();
+					this.connection.handler.onRelease(this.exchange.getState());
 				}
 			}
 		}

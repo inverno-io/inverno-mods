@@ -16,8 +16,8 @@
 package io.inverno.mod.configuration.source;
 
 import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
-import io.inverno.mod.configuration.AbstractHashConfigurationSource;
-import io.inverno.mod.configuration.AbstractPropertiesConfigurationSource;
+import io.inverno.mod.configuration.internal.AbstractHashConfigurationSource;
+import io.inverno.mod.configuration.internal.AbstractPropertiesConfigurationSource;
 import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.internal.GenericConfigurationProperty;
@@ -89,23 +89,53 @@ public class MapConfigurationSource extends AbstractHashConfigurationSource<Obje
 		super(decoder);
 		this.map = map;
 	}
-	
+
 	/**
 	 * <p>
-	 * Creates a map configuration source from the specified initial source and using the specified defaulting strategy.
+	 * Creates a map configuration source from the specified original source which applies the specified default parameters.
 	 * </p>
 	 *
-	 * @param initial            the initial configuration source.
+	 * @param original           the original configuration source
+	 * @param defaultParameters  the default parameters to apply
+	 */
+	private MapConfigurationSource(MapConfigurationSource original, List<ConfigurationKey.Parameter> defaultParameters) {
+		this(original, defaultParameters, original.defaultingStrategy);
+	}
+
+	/**
+	 * <p>
+	 * Creates a map configuration source from the specified original source which uses the specified defaulting strategy.
+	 * </p>
+	 *
+	 * @param original           the original configuration source
 	 * @param defaultingStrategy a defaulting strategy
 	 */
-	private MapConfigurationSource(MapConfigurationSource initial, DefaultingStrategy defaultingStrategy) {
-		super(initial, defaultingStrategy);
-		this.map = initial.map;
+	private MapConfigurationSource(MapConfigurationSource original, DefaultingStrategy defaultingStrategy) {
+		this(original, original.defaultParameters, defaultingStrategy);
+	}
+
+	/**
+	 * <p>
+	 * Creates a map configuration source from the specified original source which applies the specified default parameters and uses the specified defaulting strategy.
+	 * </p>
+	 *
+	 * @param original           the original configuration source
+	 * @param defaultParameters  the default parameters to apply
+	 * @param defaultingStrategy a defaulting strategy
+	 */
+	private MapConfigurationSource(MapConfigurationSource original, List<ConfigurationKey.Parameter> defaultParameters, DefaultingStrategy defaultingStrategy) {
+		super(original, defaultParameters, defaultingStrategy);
+		this.map = original.map;
+	}
+
+	@Override
+	public MapConfigurationSource withParameters(List<ConfigurationKey.Parameter> parameters) throws IllegalArgumentException {
+		return new MapConfigurationSource(this, parameters);
 	}
 
 	@Override
 	public MapConfigurationSource withDefaultingStrategy(DefaultingStrategy defaultingStrategy) {
-		return new MapConfigurationSource(this.initial != null ? this.initial : this, defaultingStrategy);
+		return new MapConfigurationSource(this, defaultingStrategy);
 	}
 
 	@Override

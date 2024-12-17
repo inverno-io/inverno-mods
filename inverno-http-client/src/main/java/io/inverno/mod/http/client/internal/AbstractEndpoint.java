@@ -19,35 +19,37 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.net.NetClientConfiguration;
 import io.inverno.mod.base.net.NetService;
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
-import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.client.Endpoint;
 import io.inverno.mod.http.client.EndpointConnectException;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.ExchangeInterceptor;
 import io.inverno.mod.http.client.HttpClientConfiguration;
+import io.inverno.mod.http.client.HttpClientConfigurationLoader;
+import io.inverno.mod.http.client.InterceptedExchange;
+import io.inverno.mod.http.client.Part;
+import io.inverno.mod.http.client.internal.http1x.Http1xWebSocketConnection;
+import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
-import io.inverno.mod.http.client.InterceptableExchange;
-import io.inverno.mod.http.client.Part;
-import io.inverno.mod.http.client.internal.http1x.Http1xWebSocketConnection;
-import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
-import io.netty.resolver.NoopAddressResolverGroup;
-import java.net.SocketAddress;
 
 /**
  * <p>
  * Base {@link Endpoint} implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
  * @param <A> the exchange context type
@@ -59,7 +61,7 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 	private final InetSocketAddress localAddress;
 	private final InetSocketAddress remoteAddress;
 	protected final HttpClientConfiguration configuration;
-	
+
 	private final NetService netService;
 	private final SslContextProvider sslContextProvider;
 	private final EndpointChannelConfigurer channelConfigurer;
@@ -69,11 +71,12 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 	private final MultipartEncoder<Parameter> urlEncodedBodyEncoder;
 	private final MultipartEncoder<Part<?>> multipartBodyEncoder;
 	private final Part.Factory partFactory;
-	private final ExchangeInterceptor<? super A, InterceptableExchange<A>> exchangeInterceptor;
+	private final ExchangeInterceptor<A, InterceptedExchange<A>> exchangeInterceptor;
 	
 	private final Bootstrap bootstrap;
+
 	private Bootstrap webSocketBootstrap;
-	
+
 	/**
 	 * <p>
 	 * Creates a endpoint targeting the specified remote address.
@@ -84,14 +87,14 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 	 * @param channelConfigurer     the endpoint channel configurer
 	 * @param localAddress          the local address
 	 * @param remoteAddress         the remote address
-	 * @param configuration         the HTTP client configurartion
+	 * @param configuration         the HTTP client configuration
 	 * @param netConfiguration      the net configuration
 	 * @param headerService         the header service
 	 * @param parameterConverter    the parameter converter
 	 * @param urlEncodedBodyEncoder the URL encoded body encoder
 	 * @param multipartBodyEncoder  the multipart body encoder
 	 * @param partFactory           the part factory
-	 * @param exchangeInterceptor   an optional exchange intercetptor
+	 * @param exchangeInterceptor   an optional exchange interceptor
 	 */
 	public AbstractEndpoint(
 			NetService netService, 
@@ -106,7 +109,7 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 			MultipartEncoder<Parameter> urlEncodedBodyEncoder,
 			MultipartEncoder<Part<?>> multipartBodyEncoder, 
 			Part.Factory partFactory,
-			ExchangeInterceptor<? super A, InterceptableExchange<A>> exchangeInterceptor) {
+			ExchangeInterceptor<A, InterceptedExchange<A>> exchangeInterceptor) {
 		this.netService = netService;
 		this.sslContextProvider = sslContextProvider;
 		this.channelConfigurer = channelConfigurer;
@@ -133,9 +136,8 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 			this.bootstrap.localAddress(this.localAddress);
 		}
 		
-		// TODO the server address and the proxy address should resolved using service discovery (most likely DNS resolver)
 		if(this.configuration.proxy_host() != null && this.configuration.proxy_password() != null) {
-			this.bootstrap.resolver(NoopAddressResolverGroup.INSTANCE);
+			this.bootstrap.resolver(netService.getResolver());
 		}
 
 		this.bootstrap
@@ -158,33 +160,61 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 	}
 
 	@Override
-	public Mono<? extends Exchange<A>> exchange(Method method, String requestTarget, A context) {
-		return Mono.fromSupplier(() -> {
-			EndpointRequest request = new EndpointRequest(this.headerService, this.parameterConverter, this.urlEncodedBodyEncoder, this.multipartBodyEncoder, this.partFactory, method, requestTarget);
-			if(this.configuration.send_user_agent()) {
-				request.headers(headers -> headers.set(Headers.NAME_USER_AGENT, this.configuration.user_agent()));
-			}
-			return new EndpointExchange(this, this.headerService, this.parameterConverter, context, request, this.exchangeInterceptor);
-		});
+	public Mono<? extends Exchange<A>> exchange(Method method, String requestTarget, A context) throws IllegalArgumentException {
+		if(StringUtils.isBlank(requestTarget)) {
+			throw new IllegalArgumentException("Blank request target");
+		}
+		if(!requestTarget.startsWith("/")) {
+			throw new IllegalArgumentException("Request target must be absolute");
+		}
+		return Mono.fromSupplier(() -> new EndpointExchange<>(
+			this.headerService,
+			this.parameterConverter,
+			this,
+			context,
+			new EndpointRequest(this.headerService, this.parameterConverter, this.urlEncodedBodyEncoder, this.multipartBodyEncoder, this.partFactory, method, requestTarget)
+		));
 	}
-	
+
 	/**
 	 * <p>
-	 * Obtains an HTTP connection.
+	 * Returns the endpoint's exchange interceptor.
+	 * </p>
+	 *
+	 * @return an exchange interceptor or null
+	 */
+	public ExchangeInterceptor<A, InterceptedExchange<A>> getExchangeInterceptor() {
+		return this.exchangeInterceptor;
+	}
+
+	/**
+	 * <p>
+	 * Obtains an HTTP connection handle.
 	 * </p>
 	 * 
 	 * <p>
 	 * Whether a new connection or a pooled connection is returned is implementation specific.
 	 * </p>
 	 * 
-	 * @return a mono emitting an HTTP connection
+	 * @return a mono emitting an HTTP connection handle
 	 */
-	public abstract Mono<HttpConnection> connection();
-	
+	public abstract Mono<HttpConnection.Handle> connection();
+
+	/**
+	 * <p>
+	 * Obtains a WebSocket connection.
+	 * </p>
+	 *
+	 * <p>
+	 * This method actually opens a socket to the HTTP server using HTTP/1.1 for the WebSocket protocol handshake.
+	 * </p>
+	 *
+	 * @return a mono emitting a new HTTP connection
+	 */
 	public Mono<WebSocketConnection> webSocketConnection() {
 		return this.createWebSocketConnection();
 	}
-	
+
 	/**
 	 * <p>
 	 * Creates a new WebSocket connection.
@@ -198,12 +228,16 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 	 */
 	protected Mono<WebSocketConnection> createWebSocketConnection() {
 		if(this.webSocketBootstrap == null) {
+			HttpClientConfiguration webSocketConfiguration = this.configuration;
+			if(this.configuration.tls_enabled()) {
+				webSocketConfiguration = HttpClientConfigurationLoader.load(this.configuration, c -> c.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1)));
+			}
 			this.webSocketBootstrap = this.bootstrap
 				.clone()
 				.handler(new EndpointWebSocketChannelInitializer(
 					this.sslContextProvider, 
-					this.channelConfigurer, 
-					this.configuration,
+					this.channelConfigurer,
+					webSocketConfiguration,
 					this.remoteAddress
 				));
 		}

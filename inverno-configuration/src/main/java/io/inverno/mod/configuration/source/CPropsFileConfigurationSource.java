@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.configuration.source;
 
+import io.inverno.mod.configuration.ConfigurationKey;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.Channels;
@@ -29,7 +30,7 @@ import org.apache.logging.log4j.Logger;
 import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceException;
-import io.inverno.mod.configuration.AbstractHashConfigurationSource;
+import io.inverno.mod.configuration.internal.AbstractHashConfigurationSource;
 import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.DefaultingStrategy;
 import io.inverno.mod.configuration.internal.JavaStringConverter;
@@ -164,26 +165,57 @@ public class CPropsFileConfigurationSource extends AbstractHashConfigurationSour
 		super(decoder);
 		this.propertyResource = propertyResource;
 	}
-	
+
 	/**
 	 * <p>
-	 * Creates a {@code .cprops} file configuration source from the specified initial source and using the specified defaulting strategy.
+	 * Creates a {@code .cprops} file configuration source from the specified original source which applies the specified default parameters.
 	 * </p>
 	 *
-	 * @param initial            the initial configuration source.
+	 * @param original          the original configuration source
+	 * @param defaultParameters the default parameters to apply
+	 */
+	private CPropsFileConfigurationSource(CPropsFileConfigurationSource original, List<ConfigurationKey.Parameter> defaultParameters) {
+		this(original, defaultParameters, original.defaultingStrategy);
+	}
+
+	/**
+	 * <p>
+	 * Creates a {@code .cprops} file configuration source from the specified original source which uses the specified defaulting strategy.
+	 * </p>
+	 *
+	 * @param original           the original configuration source
 	 * @param defaultingStrategy a defaulting strategy
 	 */
-	private CPropsFileConfigurationSource(CPropsFileConfigurationSource initial, DefaultingStrategy defaultingStrategy) {
-		super(initial, defaultingStrategy);
-		this.propertyFile = initial.propertyFile;
-		this.propertyResource = initial.propertyResource;
-		this.propertyInput = initial.propertyInput;
-		this.properties = initial.properties;
+	private CPropsFileConfigurationSource(CPropsFileConfigurationSource original, DefaultingStrategy defaultingStrategy) {
+		this(original, original.defaultParameters, defaultingStrategy);
+	}
+
+	/**
+	 * <p>
+	 * Creates a {@code .cprops} file configuration source from the specified original source which applies the specified default parameters and uses the specified defaulting strategy.
+	 * </p>
+	 *
+	 * @param original           the original configuration source
+	 * @param defaultParameters  the default parameters to apply
+	 * @param defaultingStrategy a defaulting strategy
+	 */
+	private CPropsFileConfigurationSource(CPropsFileConfigurationSource original, List<ConfigurationKey.Parameter> defaultParameters, DefaultingStrategy defaultingStrategy) {
+		super(original, defaultParameters, defaultingStrategy);
+		this.propertyFile = original.propertyFile;
+		this.propertyResource = original.propertyResource;
+		this.propertyInput = original.propertyInput;
+		this.propertiesTTL = original.propertiesTTL;
+		this.properties = original.properties;
+	}
+
+	@Override
+	public CPropsFileConfigurationSource withParameters(List<ConfigurationKey.Parameter> parameters) throws IllegalArgumentException {
+		return new CPropsFileConfigurationSource(this, parameters);
 	}
 
 	@Override
 	public CPropsFileConfigurationSource withDefaultingStrategy(DefaultingStrategy defaultingStrategy) {
-		return new CPropsFileConfigurationSource(this.initial != null ? this.initial : this, defaultingStrategy);
+		return new CPropsFileConfigurationSource(this, defaultingStrategy);
 	}
 
 	/**

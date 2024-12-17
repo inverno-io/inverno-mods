@@ -23,17 +23,15 @@ import io.inverno.mod.irt.compiler.spi.ApplyInfo.ArgumentInfo;
  * <p>
  * A pipe info specifies a pipe after a value in a value or apply statement.
  * </p>
- * 
+ *
  * <p>
- * Pipes are applied sequentially to the value before rendering the value or
- * applying templates.
+ * Pipes are applied sequentially to the value before rendering the value or applying templates.
  * </p>
- * 
+ *
  * <p>
- * A pipe info can be specified as a name pointing to a factory method with
- * optional arguments or as a raw Java expression.
+ * A pipe info can be specified as a name pointing to a factory method with optional arguments or as a raw Java expression.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
  */
@@ -43,9 +41,8 @@ public interface PipeInfo {
 	 * <p>
 	 * Returns the raw Java expression that evaluates to a pipe.
 	 * </p>
-	 * 
-	 * @return an optional returning a raw Java expression or an empty optional if
-	 *         the pipe is defined as a name instead.
+	 *
+	 * @return an optional returning a raw Java expression or an empty optional if the pipe is defined as a name instead.
 	 */
 	Optional<String> getExpression();
 
@@ -53,24 +50,21 @@ public interface PipeInfo {
 	 * <p>
 	 * Returns the name that evaluate to a pipe.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * The name should point to a factory method returning a pipe which may accept
-	 * arguments in which case arguments must be provided.
+	 * The name should point to a factory method returning a pipe which may accept arguments in which case arguments must be provided.
 	 * </p>
-	 * 
-	 * @return an optional returning a name or an empty optional if the pipe is
-	 *         specified as an expression instead.
+	 *
+	 * @return an optional returning a name or an empty optional if the pipe is specified as an expression instead.
 	 */
 	Optional<NameInfo> getName();
-	
+
 	/**
 	 * <p>
 	 * Returns the list of arguments to pass to the pipe factory method.
 	 * </p>
-	 * 
-	 * @return an optional returning the list of arguments or an empty optional if
-	 *         the pipe has no argument or it has been defined with an expression.
+	 *
+	 * @return an optional returning the list of arguments or an empty optional if the pipe has no argument, or it has been defined with an expression.
 	 */
 	Optional<ArgumentInfo[]> getArguments();
 }

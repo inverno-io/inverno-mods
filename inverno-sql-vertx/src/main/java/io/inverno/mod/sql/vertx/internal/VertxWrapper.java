@@ -28,14 +28,11 @@ import io.vertx.core.Vertx;
 
 /**
  * <p>
- * A Vert.x instance wrapper bean which uses the {@link VertxReactor} instance
- * when available or creates a new one in order to create Vert.x SQL clients and
- * pools.
+ * A Vert.x instance wrapper bean which uses the {@link VertxReactor} instance when available or creates a new one in order to create Vert.x SQL clients and pools.
  * </p>
  * 
  * <p>
- * This bean is overridable and as a result it is also possible to provide a
- * custom instance on the module.
+ * This bean is overridable and as a result it is also possible to provide a custom instance on the module.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

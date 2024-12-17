@@ -30,7 +30,7 @@ import java.util.function.Consumer;
  * An outbound request is sent by a client in a client exchange.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public interface OutboundRequestHeaders extends InboundRequestHeaders, OutboundHeaders<OutboundRequestHeaders> {
@@ -48,6 +48,17 @@ public interface OutboundRequestHeaders extends InboundRequestHeaders, OutboundH
 
 	/**
 	 * <p>
+	 * Sets the request accept header field value.
+	 * </p>
+	 *
+	 * @param accept the accept header value
+	 *
+	 * @return the request headers
+	 */
+	OutboundRequestHeaders accept(String accept);
+
+	/**
+	 * <p>
 	 * Sets the request content length.
 	 * </p>
 	 * 
@@ -56,7 +67,7 @@ public interface OutboundRequestHeaders extends InboundRequestHeaders, OutboundH
 	 * @return the request headers
 	 */
 	OutboundRequestHeaders contentLength(long contentLength);
-	
+
 	/**
 	 * <p>
 	 * Sets the request cookies.

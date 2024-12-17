@@ -48,7 +48,7 @@ public class JWTSAuthentication<A extends JWTClaimsSet> implements TokenAuthenti
 	/**
 	 * The security error resulting from a JOSE processing error.
 	 */
-	private final Optional<SecurityException> cause;
+	private final SecurityException cause;
 	
 	/**
 	 * <p>
@@ -59,7 +59,7 @@ public class JWTSAuthentication<A extends JWTClaimsSet> implements TokenAuthenti
 	 */
 	public JWTSAuthentication(JWS<A> jwt) {
 		this.jwt = Objects.requireNonNull(jwt);
-		this.cause = Optional.empty();
+		this.cause = null;
 	}
 	
 	/**
@@ -71,7 +71,7 @@ public class JWTSAuthentication<A extends JWTClaimsSet> implements TokenAuthenti
 	 */
 	public JWTSAuthentication(SecurityException cause) {
 		this.jwt = null;
-		this.cause = Optional.ofNullable(cause);
+		this.cause = cause;
 	}
 
 	/**
@@ -83,7 +83,7 @@ public class JWTSAuthentication<A extends JWTClaimsSet> implements TokenAuthenti
 	 */
 	JWTSAuthentication(JOSEProcessingException cause) {
 		this.jwt = null;
-		this.cause = Optional.ofNullable(cause).map(e -> new InvalidCredentialsException("Invalid token", e));
+		this.cause = cause != null ? new InvalidCredentialsException("Invalid token", cause) : null;
 	}
 	
 	/**
@@ -126,7 +126,6 @@ public class JWTSAuthentication<A extends JWTClaimsSet> implements TokenAuthenti
 	}
 
 	@Override
-	@SuppressWarnings("exports")
 	public Optional<io.inverno.mod.security.SecurityException> getCause() {
 		if(this.jwt != null) {
 			try {
@@ -137,6 +136,6 @@ public class JWTSAuthentication<A extends JWTClaimsSet> implements TokenAuthenti
 				return Optional.of(new InvalidCredentialsException(e));
 			}
 		}
-		return this.cause;
+		return Optional.ofNullable(this.cause);
 	}
 }

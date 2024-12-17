@@ -39,8 +39,7 @@ public interface ReactiveDecoder<From, To> extends Decoder<From, To> {
 
 	/**
 	 * <p>
-	 * Decodes the specified stream of values whose type is represented by the
-	 * specified class into a mono stream of values.
+	 * Decodes the specified stream of values whose type is represented by the specified class into a mono stream of values.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object
@@ -53,8 +52,7 @@ public interface ReactiveDecoder<From, To> extends Decoder<From, To> {
 	
 	/**
 	 * <p>
-	 * Decodes the specified stream of values whose type is the specified type into
-	 * a mono stream of value.
+	 * Decodes the specified stream of values whose type is the specified type into a mono stream of value.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object
@@ -67,8 +65,7 @@ public interface ReactiveDecoder<From, To> extends Decoder<From, To> {
 	
 	/**
 	 * <p>
-	 * Decodes the specified stream of values whose type is represented by the
-	 * specified class into a flux stream of values.
+	 * Decodes the specified stream of values whose type is represented by the specified class into a flux stream of values.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object
@@ -81,8 +78,7 @@ public interface ReactiveDecoder<From, To> extends Decoder<From, To> {
 	
 	/**
 	 * <p>
-	 * Decodes the specified stream of values whose type is the specified type into
-	 * a flux stream of values.
+	 * Decodes the specified stream of values whose type is the specified type into a flux stream of values.
 	 * </p>
 	 * 
 	 * @param <T>   the type of the decoded object

@@ -35,7 +35,7 @@ import reactor.core.publisher.Mono;
  * Following {@link Part} interface, it is possible to provide multiple {@link Resource} into the part resulting in multiple {@link FilePart}.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class ResourcePart extends AbstractPart<Resource> {
@@ -86,7 +86,7 @@ public class ResourcePart extends AbstractPart<Resource> {
 	 * A file {@link Part} implementation.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 */
 	public class FilePart extends AbstractDataPart<ByteBuf> {
@@ -130,10 +130,10 @@ public class ResourcePart extends AbstractPart<Resource> {
 		 * This is unsupported because data are provided in the resource.
 		 * </p>
 		 * 
-		 * @throws UnsupportedOperationException
+		 * @throws UnsupportedOperationException unsupported because data are provided in the resource
 		 */
 		@Override
-		public <T extends ByteBuf> void stream(Publisher<T> value) throws IllegalStateException {
+		public <T extends ByteBuf> void stream(Publisher<T> value) throws UnsupportedOperationException {
 			throw new UnsupportedOperationException();
 		}
 	}

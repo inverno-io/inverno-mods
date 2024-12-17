@@ -41,6 +41,7 @@ public interface ArrayTypeBuilder {
 	 * </p>
 	 * 
 	 * @param rawType an erased type
+	 *
 	 * @return a type argument builder with this builder as parent
 	 */
 	TypeArgumentBuilder<ArrayTypeBuilder> componentType(Class<?> rawType);
@@ -68,8 +69,8 @@ public interface ArrayTypeBuilder {
 	 * <p>Builds the array type.</p>
 	 * 
 	 * @return a generic array type
-	 * @throws IllegalStateException if the builder is not in a proper state to
-	 *                               build a type
+	 *
+	 * @throws IllegalStateException if the builder is not in a proper state to build a type
 	 */
 	Type build() throws IllegalStateException;
 }

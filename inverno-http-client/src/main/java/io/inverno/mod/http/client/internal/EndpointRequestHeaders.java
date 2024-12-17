@@ -20,10 +20,10 @@ import io.inverno.mod.http.base.header.HeaderService;
 
 /**
  * <p>
- * The {@link RequestHeaders} implementation exposed in the {@link EndpointRequest} to set request headers.
+ * The {@link io.inverno.mod.http.base.OutboundRequestHeaders} implementation exposed in the {@link EndpointRequest} to set request headers.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.8
  */
 public class EndpointRequestHeaders extends GenericRequestHeaders<EndpointRequestHeaders> {

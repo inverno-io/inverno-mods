@@ -15,26 +15,24 @@
  */
 package io.inverno.mod.configuration.compiler.internal;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
-
 import io.inverno.core.compiler.spi.ModuleQualifiedName;
 import io.inverno.core.compiler.spi.support.AbstractSourceGenerationContext;
 import io.inverno.mod.configuration.ConfigurationLoader;
 import io.inverno.mod.configuration.compiler.spi.ConfigurationInfo;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /**
  * <p>
- * Represents a generation context used by the
- * {@link ConfigurationLoaderClassGenerator} during the generation of a {@link ConfigurationLoader}.
+ * Represents a generation context used by the {@link ConfigurationLoaderClassGenerator} during the generation of a {@link ConfigurationLoader}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -50,7 +48,7 @@ class ConfigurationLoaderClassGenerationContext extends AbstractSourceGeneration
 	
 	public static final String CONFIGURATION_BEAN_INNER_CLASS = "Bean";
 	
-	public static enum GenerationMode {
+	public enum GenerationMode {
 		CONFIGURATION_LOADER_CLASS,
 		CONFIGURATION_PROPERTIES,
 		CONFIGURATION_CONFIGURER,
@@ -67,15 +65,16 @@ class ConfigurationLoaderClassGenerationContext extends AbstractSourceGeneration
 		CONFIGURATION_BEAN_CLASS
 	}
 	
-	private TypeMirror collectionType;
-	private TypeMirror listType;
-	private TypeMirror setType;
-	private TypeMirror consumerType;
-	private TypeMirror optionalType;
+	private final TypeMirror collectionType;
+	private final TypeMirror listType;
+	private final TypeMirror setType;
+	private final TypeMirror consumerType;
+	private final TypeMirror optionalType;
+	private final TypeMirror objectsType;
 	
 	private ConfigurationInfo configuration;
 	
-	private AtomicInteger resultIndex;
+	private final AtomicInteger resultIndex;
 
 	public ConfigurationLoaderClassGenerationContext(Types typeUtils, Elements elementUtils, GenerationMode mode) {
 		super(typeUtils, elementUtils, mode);
@@ -85,12 +84,20 @@ class ConfigurationLoaderClassGenerationContext extends AbstractSourceGeneration
 		this.listType = this.typeUtils.erasure(this.elementUtils.getTypeElement(List.class.getCanonicalName()).asType());
 		this.consumerType = this.typeUtils.erasure(this.elementUtils.getTypeElement(Consumer.class.getCanonicalName()).asType());
 		this.optionalType = this.typeUtils.erasure(this.elementUtils.getTypeElement(Optional.class.getCanonicalName()).asType());
+		this.objectsType = this.elementUtils.getTypeElement(Objects.class.getCanonicalName()).asType();
 	}
 	
 	private ConfigurationLoaderClassGenerationContext(ConfigurationLoaderClassGenerationContext parentGeneration) {
 		super(parentGeneration);
 		this.configuration = parentGeneration.configuration;
 		this.resultIndex = parentGeneration.resultIndex;
+
+		this.collectionType = parentGeneration.collectionType;
+		this.listType = parentGeneration.listType;
+		this.setType = parentGeneration.setType;
+		this.consumerType = parentGeneration.consumerType;
+		this.optionalType = parentGeneration.optionalType;
+		this.objectsType = parentGeneration.objectsType;
 	}
 	
 	@Override
@@ -129,23 +136,27 @@ class ConfigurationLoaderClassGenerationContext extends AbstractSourceGeneration
 	}
 	
 	public TypeMirror getCollectionType() {
-		return this.collectionType != null ? this.collectionType : this.parentGeneration.getCollectionType();
+		return this.collectionType;
 	}
 	
 	public TypeMirror getListType() {
-		return this.listType != null ? this.listType : this.parentGeneration.getListType();
+		return this.listType;
 	}
 	
 	public TypeMirror getSetType() {
-		return this.setType != null ? this.setType : this.parentGeneration.getSetType();
+		return this.setType;
 	}
 	
 	public TypeMirror getConsumerType() {
-		return this.consumerType != null ? this.consumerType : this.parentGeneration.getConsumerType();
+		return this.consumerType;
 	}
 	
 	public TypeMirror getOptionalType() {
-		return this.optionalType != null ? this.optionalType : this.parentGeneration.getOptionalType();
+		return this.optionalType;
+	}
+	
+	public TypeMirror getObjectsType() {
+		return this.objectsType;
 	}
 	
 	public String getConfigurationLoaderTypeName(ConfigurationInfo configurationInfo) {

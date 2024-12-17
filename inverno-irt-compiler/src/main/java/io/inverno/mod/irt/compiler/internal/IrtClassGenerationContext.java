@@ -69,7 +69,7 @@ public class IrtClassGenerationContext {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.2
 	 */
-	public static enum GenerationMode {
+	public enum GenerationMode {
 		IRT_CLASS,
 		TEMPLATE_SET_INTERFACES,
 		TEMPLATE_SET_CLASSES,
@@ -83,19 +83,13 @@ public class IrtClassGenerationContext {
 	
 	private final Types typeUtils;
 	private final Elements elementUtils;
-	
 	private final String templateName;
-	
 	private final Options options;
-	
-	private List<String> staticContents;
+	private final List<String> staticContents;
 	
 	private TemplateInfo templateInfo;
-	
 	private ApplyInfo applyInfo;
-	
 	private ExtendedTemplateMode templateMode;
-	
 	private ExtendedTemplateMode.StaticContentType staticContentType;
 	
 	/**
@@ -190,8 +184,7 @@ public class IrtClassGenerationContext {
 	
 	/**
 	 * <p>
-	 * Returns an indent of the specified depth from the current generation indent
-	 * depth.
+	 * Returns an indent of the specified depth from the current generation indent depth.
 	 * </p>
 	 * 
 	 * @param depth the relative indent depth
@@ -199,17 +192,12 @@ public class IrtClassGenerationContext {
 	 * @return an indent
 	 */
 	public String indent(int depth) {
-		String repeatIndent = "";
-		for(int i=0;i<this.indentDepth + depth;i++) {
-			repeatIndent += this.indent;
-		}
-		return repeatIndent;
+		return String.valueOf(this.indent).repeat(Math.max(0, this.indentDepth + depth));
 	}
 	
 	/**
 	 * <p>
-	 * Returns a new generation context created from this context with the specified
-	 * mode.
+	 * Returns a new generation context created from this context with the specified mode.
 	 * </p>
 	 * 
 	 * <p>
@@ -228,8 +216,7 @@ public class IrtClassGenerationContext {
 	
 	/**
 	 * <p>
-	 * Returns a new generation context created from this context with an indent
-	 * depth increased by the specified delta.
+	 * Returns a new generation context created from this context with an indent depth increased by the specified delta.
 	 * </p>
 	 * 
 	 * <p>
@@ -246,8 +233,7 @@ public class IrtClassGenerationContext {
 	
 	/**
 	 * <p>
-	 * Returns a new generation context created from this context with the specified
-	 * indent depth.
+	 * Returns a new generation context created from this context with the specified indent depth.
 	 * </p>
 	 * 
 	 * <p>
@@ -266,8 +252,7 @@ public class IrtClassGenerationContext {
 	
 	/**
 	 * <p>
-	 * Returns a new generation context created from this context with the specified
-	 * template info.
+	 * Returns a new generation context created from this context with the specified template info.
 	 * </p>
 	 * 
 	 * <p>
@@ -286,8 +271,7 @@ public class IrtClassGenerationContext {
 	
 	/**
 	 * <p>
-	 * Returns a new generation context created from this context with the specified
-	 * apply info.
+	 * Returns a new generation context created from this context with the specified apply info.
 	 * </p>
 	 * 
 	 * <p>
@@ -306,8 +290,7 @@ public class IrtClassGenerationContext {
 	
 	/**
 	 * <p>
-	 * Returns a new generation context created from this context with the specified
-	 * template mode.
+	 * Returns a new generation context created from this context with the specified template mode.
 	 * </p>
 	 * 
 	 * <p>
@@ -327,8 +310,7 @@ public class IrtClassGenerationContext {
 	
 	/**
 	 * <p>
-	 * Returns a new generation context created from this context with the specified
-	 * static content type.
+	 * Returns a new generation context created from this context with the specified static content type.
 	 * </p>
 	 * 
 	 * <p>
@@ -489,16 +471,14 @@ public class IrtClassGenerationContext {
 	
 	/**
 	 * <p>
-	 * Returns the accessor element (executable or variable) in the specified
-	 * declared type that should be used to access the value targeted by the
-	 * specified name.
+	 * Returns the accessor element (executable or variable) in the specified declared type that should be used to access the value targeted by the specified name.
 	 * </p>
 	 * 
 	 * <p>An accessor is resolved using the following rules:</p>
 	 * <ol>
-	 * <li>consider the public getter method: <code>get[name]()</code></li>
-	 * <li>consider the public named method: <code>[name]()</code></li>
-	 * <li>consider the public field: <code>[name]</code></li>
+	 * <li>consider the public getter method: {@code get[name]()}</li>
+	 * <li>consider the public named method: {@code [name]()}</li>
+	 * <li>consider the public field: {@code [name]}</li>
 	 * </ol>
 	 * 
 	 * @param type a declared type
@@ -550,27 +530,21 @@ public class IrtClassGenerationContext {
 			)
 			.map(e -> (VariableElement)e)
 			.findFirst();
-		
-		if(field.isPresent()) {
-			return field.get();
-		}
-		
-		return null;
+
+		return field.orElse(null);
 	}
 	
 	/**
 	 * <p>
-	 * Returns a Collector that concatenates the input elements into a
-	 * StringBuilder, in encounter order.
+	 * Returns a Collector that concatenates the input elements into a StringBuilder, in encounter order.
 	 * </p>
 	 * 
-	 * @return a Collector that concatenates the input elements into a
-	 *         StringBuilder, in encounter order
+	 * @return a Collector that concatenates the input elements into a StringBuilder, in encounter order
 	 */
 	public Collector<CharSequence, ?, StringBuilder> joining() {
 		return Collector.of(
-				StringBuilder::new, 
-				(stringBuilder, seq) -> stringBuilder.append(seq),
+				StringBuilder::new,
+				StringBuilder::append,
 				StringBuilder::append, 
 				stringBuilder -> stringBuilder
 			);
@@ -578,28 +552,25 @@ public class IrtClassGenerationContext {
 	
 	/**
 	 * <p>
-	 * Returns a Collector that concatenates the input elements, separated by the
-	 * specified delimiter, in encounter order.
+	 * Returns a Collector that concatenates the input elements, separated by the specified delimiter, in encounter order.
 	 * </p>
 	 * 
 	 * @param delimiter the delimiter to be used between each element
 	 * 
-	 * @return A Collector which concatenates CharSequence elements, separated by
-	 *         the specified delimiter, in encounter order
+	 * @return A Collector which concatenates CharSequence elements, separated by the specified delimiter, in encounter order
 	 */
 	public Collector<CharSequence, ?, StringBuilder> joining(CharSequence delimiter) {
 		return Collector.of(
 			StringBuilder::new, 
 			(stringBuilder, seq) -> stringBuilder.append(seq).append(delimiter),
 			StringBuilder::append, 
-			stringBuilder -> stringBuilder.length() > 0 ? stringBuilder.delete(stringBuilder.length() - delimiter.length(), stringBuilder.length()) : stringBuilder
+			stringBuilder -> !stringBuilder.isEmpty() ? stringBuilder.delete(stringBuilder.length() - delimiter.length(), stringBuilder.length()) : stringBuilder
 		);
 	}
 	
 	/**
 	 * <p>
-	 * This class is used to validate and expose the template set options specified
-	 * in the IRT source file.
+	 * This class is used to validate and expose the template set options specified in the IRT source file.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -623,8 +594,7 @@ public class IrtClassGenerationContext {
 
 		/**
 		 * <p>
-		 * Creates options after validating the option info extracted from the IRT
-		 * source file.
+		 * Creates options after validating the option info extracted from the IRT source file.
 		 * </p>
 		 * 
 		 * @param options the list of option info extracted from the IRT source file
@@ -689,7 +659,7 @@ public class IrtClassGenerationContext {
 		 * Returns the list of template modes to generate.
 		 * </p>
 		 * 
-		 * @return a list of template modes
+		 * @return an array of template modes
 		 */
 		public ExtendedTemplateMode[] getModes() {
 			return modes;
@@ -704,9 +674,8 @@ public class IrtClassGenerationContext {
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.2
-	 *
 	 */
-	public static enum ExtendedTemplateMode {
+	public enum ExtendedTemplateMode {
 		
 		/**
 		 * Publisher ByteBuf mode
@@ -741,7 +710,7 @@ public class IrtClassGenerationContext {
 		
 		private final String outputType;
 		
-		private ExtendedTemplateMode(TemplateMode mode, Class<?> templateSetClass, StaticContentType staticContentType, String outputType) {
+		ExtendedTemplateMode(TemplateMode mode, Class<?> templateSetClass, StaticContentType staticContentType, String outputType) {
 			this.mode = mode;
 			this.templateSetClass = templateSetClass;
 			this.staticContentType = staticContentType;
@@ -813,16 +782,14 @@ public class IrtClassGenerationContext {
 		
 		/**
 		 * <p>
-		 * Returns the extended template mode corresponding to the specified template
-		 * mode.
+		 * Returns the extended template mode corresponding to the specified template mode.
 		 * </p>
 		 * 
 		 * @param mode a template mode
 		 * 
 		 * @return an array of extended template modes
 		 * 
-		 * @throws IllegalArgumentException if the specified template mode is
-		 *                                  unsupported
+		 * @throws IllegalArgumentException if the specified template mode is not supported
 		 */
 		public static ExtendedTemplateMode[] fromTemplateMode(TemplateMode mode) throws IllegalArgumentException {
 			switch(mode) {
@@ -837,15 +804,13 @@ public class IrtClassGenerationContext {
 		
 		/**
 		 * <p>
-		 * The static content type specifies how static content should be stored to be
-		 * optimized for a particular template mode.
+		 * The static content type specifies how static content should be stored to be optimized for a particular template mode.
 		 * </p>
 		 * 
 		 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 		 * @since 1.2
-		 *
 		 */
-		public static enum StaticContentType {
+		public enum StaticContentType {
 			/**
 			 * Indicates that static contents should be stored as String.
 			 */
@@ -857,7 +822,7 @@ public class IrtClassGenerationContext {
 			/**
 			 * Indicates that static contents should be stored as byte arrays.
 			 */
-			BYTES;
+			BYTES
 		}
 	}
 }

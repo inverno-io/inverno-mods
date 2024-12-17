@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -103,7 +104,7 @@ public class InMemoryUserRepository<A extends Identity, B extends User<A>> imple
 		this.passwordEncoder = passwordEncoder != null ? passwordEncoder : DEFAULT_PASSWORD_ENCODER;
 		this.passwordPolicy = passwordPolicy != null ? passwordPolicy : new SimplePasswordPolicy<>();
 		if(users != null) {
-			users.stream().forEach(user -> this.createUser(user).block());
+			users.forEach(user -> this.createUser(user).block());
 		}
 	}
 	
@@ -250,7 +251,7 @@ public class InMemoryUserRepository<A extends Identity, B extends User<A>> imple
 			
 			// Here we simply check password from credentials matches what we have in the repository
 			// This is what is done in the UserAuthenticator which is fine for this particular use case
-			// We can imagine more complex implementations where a full authentication is performed with the provied credentials (including two factors authentication...)
+			// We can imagine more complex implementations where a full authentication is performed with the provided credentials (including two factors authentication...)
 			// This would basically require to inject a UserAuthenticator
 			if(!previousUser.getPassword().matches(credentials.getPassword())) {
 				throw new AuthenticationException("Invalid credentials");
@@ -294,7 +295,7 @@ public class InMemoryUserRepository<A extends Identity, B extends User<A>> imple
 			}
 			
 			Set<String> newGroups = new HashSet<>(previousUser.getGroups());
-			newGroups.removeAll(Arrays.asList(groups));
+			newGroups.removeAll(Arrays.stream(groups).collect(Collectors.toSet()));
 			previousUser.setGroups(newGroups);
 			this.users.put(previousUser.getUsername(), previousUser);
 			
@@ -305,13 +306,7 @@ public class InMemoryUserRepository<A extends Identity, B extends User<A>> imple
 	@Override
 	public Mono<B> deleteUser(String username) throws UserRepositoryException {
 		Objects.requireNonNull(username);
-		return Mono.fromSupplier(() -> {
-			B previousUser = this.users.remove(username);
-			if(previousUser == null) {
-				return null;
-			}
-			return previousUser;
-		});
+		return Mono.fromSupplier(() -> this.users.remove(username));
 	}
 
 	@Override
@@ -322,7 +317,7 @@ public class InMemoryUserRepository<A extends Identity, B extends User<A>> imple
 	
 	/**
 	 * <p>
-	 * A builder used to build in-memory user reposities.
+	 * A builder used to build in-memory user repositories.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -421,7 +416,7 @@ public class InMemoryUserRepository<A extends Identity, B extends User<A>> imple
 		 * Builds an in-memory user repository.
 		 * </p>
 		 * 
-		 * @return an new in-memory user repository
+		 * @return a new in-memory user repository
 		 */
 		public InMemoryUserRepository<A, B> build() {
 			return new InMemoryUserRepository<>(this.users, this.passwordEncoder, this.passwordPolicy);

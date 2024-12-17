@@ -23,8 +23,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * <p>
- * A {@link TemplateSet} base implementation template sets which renders data in
- * an {@link OutputStream}.
+ * A {@link TemplateSet} base implementation template sets which renders data in an {@link OutputStream}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -45,7 +44,7 @@ public abstract class AbstractStreamTemplateSet<T extends OutputStream> extends 
 	 * </p>
 	 * 
 	 * @param charset the charset to use to encode data
-	 * @param output the output stream where to write rendered data
+	 * @param output  the output stream where to write rendered data
 	 */
 	public AbstractStreamTemplateSet(Charset charset, T output) {
 		super(charset);

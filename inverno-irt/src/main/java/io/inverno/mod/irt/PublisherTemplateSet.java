@@ -19,8 +19,7 @@ import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * A publisher {@link TemplateSet} which exposes the sink where data are
- * rendered.
+ * A publisher {@link TemplateSet} which exposes the sink where data are rendered.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

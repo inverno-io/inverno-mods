@@ -268,7 +268,7 @@ public interface Convertible<A> {
 
 	/**
 	 * <p>
-	 * Converts the value to a loca date time.
+	 * Converts the value to a local date time.
 	 * </p>
 	 *
 	 * @return the converted value or null

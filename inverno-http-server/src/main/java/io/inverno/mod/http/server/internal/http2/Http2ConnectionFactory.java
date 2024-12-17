@@ -43,10 +43,10 @@ import java.util.function.Supplier;
 
 /**
  * <p>
- * A factory to create {@link Http2Connection} when a Http/2 channel is initialized.
+ * A factory to create {@link Http2Connection} when an HTTP/2 channel is initialized.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 @Bean(visibility = Bean.Visibility.PRIVATE)
@@ -74,6 +74,7 @@ public class Http2ConnectionFactory implements Supplier<Http2Connection> {
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 */
+	@SuppressWarnings("unchecked")
 	public Http2ConnectionFactory(
 			HttpServerConfiguration configuration, ServerController<?, ? extends Exchange<?>, ? extends ErrorExchange<?>> controller, 
 			HeaderService headerService, 
@@ -101,7 +102,7 @@ public class Http2ConnectionFactory implements Supplier<Http2Connection> {
 				compressionOptionsList.add(StandardCompressionOptions.brotli(new Encoder.Parameters().setQuality(this.configuration.compression_brotli_quality()).setMode(Encoder.Mode.of(this.configuration.compression_brotli_mode())).setWindow(this.configuration.compression_brotli_window())));
 			}
 
-			this.compressionOptions = compressionOptionsList.stream().toArray(CompressionOptions[]::new);
+			this.compressionOptions = compressionOptionsList.toArray(CompressionOptions[]::new);
 			this.contentEncodingResolver = new Http2ContentEncodingResolver(Http2ConnectionFactory.this.compressionOptions);
 		}
 		else {
@@ -120,7 +121,7 @@ public class Http2ConnectionFactory implements Supplier<Http2Connection> {
 	 * Http/2 connection builder.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.10
 	 */
 	private class Http2ChannelHandlerBuilder extends AbstractHttp2ConnectionHandlerBuilder<Http2Connection, Http2ChannelHandlerBuilder> {

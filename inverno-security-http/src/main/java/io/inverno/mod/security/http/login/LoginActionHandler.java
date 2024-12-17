@@ -51,7 +51,7 @@ import reactor.core.publisher.Mono;
 public class LoginActionHandler<A extends LoginCredentials, B extends Authentication, C extends ExchangeContext, D extends Exchange<C>> implements ExchangeHandler<C, D> {
 	
 	/**
-	 * The credentials extractor.
+	 * The credentials' extractor.
 	 */
 	private final CredentialsExtractor<A> credentialsExtractor;
 	

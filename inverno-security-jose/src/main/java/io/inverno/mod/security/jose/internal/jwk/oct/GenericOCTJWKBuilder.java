@@ -81,15 +81,11 @@ public class GenericOCTJWKBuilder extends AbstractJWKBuilder<GenericOCTJWK, Gene
 	
 	@Override
 	protected void set(String field, Object value) throws JWKReadException {
-		switch(field) {
-			case "k" : {
-				this.keyValue((String)value);
-				break;
-			}
-			default: {
-				super.set(field, value);
-				break;
-			}
+		if(field.equals("k")) {
+			this.keyValue((String) value);
+		}
+		else {
+			super.set(field, value);
 		}
 	}
 	

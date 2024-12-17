@@ -15,7 +15,7 @@
  */
 /**
  * <p>
- * Inverno security user provisioning API implementation.
+ * Inverno security user provisioning implementation classes.
  * </p>
  */
 package io.inverno.mod.security.internal.authentication.user;

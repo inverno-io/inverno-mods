@@ -39,7 +39,7 @@ import java.util.concurrent.TimeoutException;
  * Event loop group wrapper that prevents internal event loop groups from being shutdown.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 class EventLoopGroupWrapper implements EventLoopGroup {

@@ -15,8 +15,6 @@
  */
 package io.inverno.mod.irt.compiler.internal;
 
-import java.util.stream.Collectors;
-
 import io.inverno.mod.irt.compiler.internal.parser.ParseException;
 import io.inverno.mod.irt.compiler.internal.parser.Token;
 
@@ -27,7 +25,6 @@ import io.inverno.mod.irt.compiler.internal.parser.Token;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class IrtCompilationException extends RuntimeException {
 
@@ -137,7 +134,7 @@ public class IrtCompilationException extends RuntimeException {
 	@Override
 	public String getMessage() {
 		if(this.range != null) {
-			return this.range.toString() + ": " + super.getMessage();
+			return this.range + ": " + super.getMessage();
 		}
 		return super.getMessage();
 	}
@@ -160,7 +157,7 @@ public class IrtCompilationException extends RuntimeException {
 	    StringBuilder expected = new StringBuilder();
 	    
 	    int maxSize = 0;
-	    java.util.TreeSet<String> sortedOptions = new java.util.TreeSet<String>();
+	    java.util.TreeSet<String> sortedOptions = new java.util.TreeSet<>();
 	    for (int i = 0; i < parseException.expectedTokenSequences.length; i++) {
 	      if (maxSize < parseException.expectedTokenSequences[i].length) {
 	        maxSize = parseException.expectedTokenSequences[i].length;
@@ -170,7 +167,7 @@ public class IrtCompilationException extends RuntimeException {
 	      }
 	    }
 	    
-	    expected.append(sortedOptions.stream().collect(Collectors.joining(", ")));
+	    expected.append(String.join(", ", sortedOptions));
 	    
 	    message.append("Encountered unexpected token:");
 	    
@@ -188,17 +185,15 @@ public class IrtCompilationException extends RuntimeException {
 	      message.append(" \"");
 		  message.append(escapedTokenText);
 	      message.append("\"");
-	      message.append(" " + parseException.tokenImage[tok.kind]);
+	      message.append(" ").append(parseException.tokenImage[tok.kind]);
 	      tok = tok.next;
 	    }
 	    message.append(".");
 	    
-	    if (parseException.expectedTokenSequences.length == 0) {
-	        // Nothing to add here
-	    } else {
+	    if(parseException.expectedTokenSequences.length > 0) {
 	    	int numExpectedTokens = parseException.expectedTokenSequences.length;
-	    	message.append(" Was expecting"+ (numExpectedTokens == 1 ? ":" : " one of: "));
-	    	message.append(expected.toString());
+	    	message.append(" Was expecting").append(numExpectedTokens == 1 ? ":" : " one of: ");
+	    	message.append(expected);
 	    }
 	    
 	    return message.toString();
@@ -206,8 +201,7 @@ public class IrtCompilationException extends RuntimeException {
 	
 	/**
 	 * <p>
-	 * Used to convert raw characters to their escaped version when these raw
-	 * version cannot be used as part of an ASCII string literal.
+	 * Used to convert raw characters to their escaped version when these raw version cannot be used as part of an ASCII string literal.
 	 * </p>
 	 * 
 	 * @param str the string to escape
@@ -236,7 +230,7 @@ public class IrtCompilationException extends RuntimeException {
 				retval.append("\\\"");
 				continue;
 			case '\'':
-				retval.append("\\\'");
+				retval.append("\\'");
 				continue;
 			case '\\':
 				retval.append("\\\\");
@@ -244,11 +238,10 @@ public class IrtCompilationException extends RuntimeException {
 			default:
 				if ((ch = str.charAt(i)) < 0x20 || ch > 0x7e) {
 					String s = "0000" + Integer.toString(ch, 16);
-					retval.append("\\u" + s.substring(s.length() - 4, s.length()));
+					retval.append("\\u").append(s, s.length() - 4, s.length());
 				} else {
 					retval.append(ch);
 				}
-				continue;
 			}
 		}
 		return retval.toString();

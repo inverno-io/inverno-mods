@@ -15,33 +15,35 @@
  */
 package io.inverno.mod.base.net;
 
+import io.netty.resolver.AddressResolverGroup;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
+import java.util.List;
+import java.util.stream.Collectors;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A net service provides methods to create resource friendly IO and acceptor
- * event loop groups ad well as clients and servers.
+ * A net service provides methods to create resource friendly network clients and servers and resolve host addresses with DNS resolution.
  * </p>
  * 
  * <p>
- * This service should always be used to create event loop groups, clients or
- * servers (that eventually relies on event loop groups) as it allows to
- * centralize their usage so that thread creation and usage can be optimized
- * based on hardware capabilities.
+ * This service should always be used to create clients or servers as it allows to centralize their usage so that thread creation and usage can be optimized based on hardware capabilities.
  * </p>
- * 
+ *
  * <p>
- * For instance, a typical implementation would create a single event loop group
- * according to CPU capacities and/or configuration and rely on this limited
- * amount of event loops to provides event loop groups accross the application.
+ * A typical implementation would rely on the {@link io.inverno.mod.base.concurrent.Reactor} to obtain optimized event loop groups for the creation of client and server bootstraps.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
+ *
+ * @see io.inverno.mod.base.concurrent.Reactor
  */
 public interface NetService {
 
@@ -53,7 +55,7 @@ public interface NetService {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	public static enum TransportType {
+	enum TransportType {
 		/**
 		 * <a href="https://en.wikipedia.org/wiki/Non-blocking_I/O_(Java)">Nio</a> transport type.
 		 */
@@ -69,7 +71,7 @@ public interface NetService {
 		/**
 		 * <a href="https://github.com/netty/netty-incubator-transport-io_uring">io_uring</a> transport type. 
 		 */
-		IO_URING;
+		IO_URING
 	}
 
 	/**
@@ -77,14 +79,13 @@ public interface NetService {
 	 * Returns the transport type.
 	 * </p>
 	 * 
-	 * @return a trasport type
+	 * @return a transport type
 	 */
 	TransportType getTransportType();
 	
 	/**
 	 * <p>
-	 * Creates a client bootstrap that will connect to the specified address with
-	 * all available threads.
+	 * Creates a client bootstrap that will connect to the specified address with all available threads.
 	 * </p>
 	 * 
 	 * @param socketAddress the socket address to connect to
@@ -114,6 +115,7 @@ public interface NetService {
 	 * @param nThreads      the number of threads to allocate
 	 *
 	 * @return a client bootstrap
+	 *
 	 * @throws IllegalArgumentException if the specified number of thread exceeds the number of threads available
 	 */
 	Bootstrap createClient(SocketAddress socketAddress, int nThreads) throws IllegalArgumentException;
@@ -128,14 +130,14 @@ public interface NetService {
 	 * @param nThreads            the number of threads to allocate
 	 *
 	 * @return a client bootstrap
+	 *
 	 * @throws IllegalArgumentException if the specified number of thread exceeds the number of threads available
 	 */
 	Bootstrap createClient(SocketAddress socketAddress, NetClientConfiguration clientConfiguration, int nThreads) throws IllegalArgumentException;
 	
 	/**
 	 * <p>
-	 * Creates a server bootstrap that will bind to the specified address with all
-	 * available threads.
+	 * Creates a server bootstrap that will bind to the specified address with all available threads.
 	 * </p>
 	 * 
 	 * @param socketAddress the socket address to bind to
@@ -158,16 +160,15 @@ public interface NetService {
 	
 	/**
 	 * <p>
-	 * Creates a server bootstrap that will bind to the specified address with the
-	 * specified amount of threads.
+	 * Creates a server bootstrap that will bind to the specified address with the specified amount of threads.
 	 * </p>
 	 * 
 	 * @param socketAddress the socket address to bind to
 	 * @param nThreads      the number of threads to allocate
 	 * 
 	 * @return a server bootstrap
-	 * @throws IllegalArgumentException if the specified number of thread exceeds
-	 *                                  the number of threads available
+	 *
+	 * @throws IllegalArgumentException if the specified number of thread exceeds the number of threads available
 	 */
 	ServerBootstrap createServer(SocketAddress socketAddress, int nThreads) throws IllegalArgumentException;
 	
@@ -181,18 +182,103 @@ public interface NetService {
 	 * @param nThreads            the number of threads to allocate
 	 *
 	 * @return a server bootstrap
+	 *
 	 * @throws IllegalArgumentException if the specified number of thread exceeds the number of threads available
 	 */
 	ServerBootstrap createServer(SocketAddress socketAddress, NetServerConfiguration serverConfiguration, int nThreads) throws IllegalArgumentException;
-	
+
 	/**
 	 * <p>
-	 * Returns a ByteBuf allocator.
+	 * Resolves an address associated to the specified host name.
+	 * </p>
+	 *
+	 * @param host a host name
+	 *
+	 * @return a mono emitting an address
+	 */
+	default Mono<InetAddress> resolve(String host) {
+		return this.resolve(InetSocketAddress.createUnresolved(host, 0)).map(InetSocketAddress::getAddress);
+	}
+
+	/**
+	 * <p>
+	 * Resolves a socket address associated to the specified host name and port.
+	 * </p>
+	 *
+	 * @param host a host name
+	 * @param port a port
+	 *
+	 * @return a mono emitting a socket address
+	 */
+	default Mono<InetSocketAddress> resolve(String host, int port) {
+		return this.resolve(InetSocketAddress.createUnresolved(host, port));
+	}
+
+	/**
+	 * <p>
+	 * Resolves a socket address associated to the socket address.
+	 * </p>
+	 *
+	 * @param socketAddress a socket address
+	 *
+	 * @return a mono emitting a socket address
+	 */
+	Mono<InetSocketAddress> resolve(InetSocketAddress socketAddress);
+
+	/**
+	 * <p>
+	 * Resolves all addresses associated to the specified host name.
+	 * </p>
+	 *
+	 * @param host a host name
+	 *
+	 * @return a mono emitting a list of addresses
+	 */
+	default Mono<List<InetAddress>> resolveAll(String host) {
+		return this.resolveAll(InetSocketAddress.createUnresolved(host, 0)).map(addresses -> addresses.stream().map(InetSocketAddress::getAddress).collect(Collectors.toList()));
+	}
+
+	/**
+	 * <p>
+	 * Resolves all socket addresses associated to the specified host name and port.
+	 * </p>
+	 *
+	 * @param host a host name
+	 * @param port a port
+	 *
+	 * @return a mono emitting a list of socket addresses
+	 */
+	default Mono<List<InetSocketAddress>> resolveAll(String host, int port) {
+		return this.resolveAll(InetSocketAddress.createUnresolved(host, port));
+	}
+
+	/**
+	 * <p>
+	 * Resolves all socket addresses associated to the specified socket address.
+	 * </p>
+	 *
+	 * @param socketAddress a socket address
+	 *
+	 * @return a mono emitting a list of socket addresses
+	 */
+	Mono<List<InetSocketAddress>> resolveAll(InetSocketAddress socketAddress);
+
+	/**
+	 * <p>
+	 * Returns the DNS resolver.
+	 * </p>
+	 *
+	 * @return the name resolver
+	 */
+	AddressResolverGroup<InetSocketAddress> getResolver();
+
+	/**
+	 * <p>
+	 * Returns a {@code ByteBuf} allocator.
 	 * </p>
 	 * 
 	 * <p>
-	 * As for event loop groups, this service shall provide optimized ByteBuf
-	 * allocators.
+	 * As for event loop groups, this service shall provide optimized {@code ByteBuf} allocators.
 	 * </p>
 	 * 
 	 * @return a byte buf allocator
@@ -201,12 +287,11 @@ public interface NetService {
 	
 	/**
 	 * <p>
-	 * Returns a direct ByteBuf allocator.
+	 * Returns a direct {@code ByteBuf} allocator.
 	 * </p>
 	 * 
 	 * <p>
-	 * As for event loop groups, this service shall provide optimized ByteBuf
-	 * allocators.
+	 * As for event loop groups, this service shall provide optimized {@code ByteBuf} allocators.
 	 * </p>
 	 * 
 	 * @return a byte buf allocator

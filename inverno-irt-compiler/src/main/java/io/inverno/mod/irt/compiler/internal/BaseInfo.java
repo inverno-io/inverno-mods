@@ -17,13 +17,11 @@ package io.inverno.mod.irt.compiler.internal;
 
 /**
  * <p>
- * Base class for *info implementations which holds the range in an IRT source
- * file where the info is defined.
+ * Base class for *info implementations which holds the range in an IRT source file where the info is defined.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class BaseInfo implements LocatableInfo {
 

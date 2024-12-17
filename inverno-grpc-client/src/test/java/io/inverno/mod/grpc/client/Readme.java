@@ -1,15 +1,3 @@
-package io.inverno.mod.grpc.client;
-
-
-import com.google.protobuf.Message;
-import io.inverno.mod.grpc.base.GrpcServiceName;
-import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.base.HttpVersion;
-import io.inverno.mod.http.client.Endpoint;
-import io.inverno.mod.http.client.HttpClient;
-import io.inverno.mod.http.client.HttpClientConfigurationLoader;
-import java.util.Set;
-
 /*
  * Copyright 2024 Jeremy Kuhn
  *
@@ -25,12 +13,19 @@ import java.util.Set;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.inverno.mod.grpc.client;
+
+import com.google.protobuf.Message;
+import io.inverno.mod.grpc.base.GrpcServiceName;
+import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.HttpVersion;
+import io.inverno.mod.http.client.Endpoint;
+import io.inverno.mod.http.client.HttpClient;
+import io.inverno.mod.http.client.HttpClientConfigurationLoader;
+import java.util.Set;
+
 /**
- * <p>
- * 
- * </p>
- * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public class Readme {

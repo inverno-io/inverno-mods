@@ -28,10 +28,10 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * It is used to establish WebSocket connection with the endoint.
+ * It is used to establish WebSocket connection with the endpoint.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public interface WebSocketConnection {

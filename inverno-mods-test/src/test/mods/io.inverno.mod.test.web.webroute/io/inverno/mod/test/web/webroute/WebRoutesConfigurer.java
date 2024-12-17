@@ -24,7 +24,9 @@ import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.web.server.StaticHandler;
-import io.inverno.mod.web.server.WebRoutable;
+import io.inverno.mod.web.server.WebRouter;
+import io.inverno.mod.web.server.annotation.WebRoutes;
+import io.inverno.mod.web.server.annotation.WebRoute;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import reactor.core.publisher.Flux;
@@ -32,11 +34,16 @@ import reactor.core.publisher.Flux;
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
+@WebRoutes({
+	@WebRoute(path = {"/static/{path:.*}"}, matchTrailingSlash = true, method = {Method.GET}),
+	@WebRoute(path = {"/post_100_continue"}, method = {Method.POST}),
+	@WebRoute(path = {"/upload"}, method = {Method.POST})
+})
 @Bean( visibility = Visibility.PRIVATE )
-public class WebRoutesConfigurer implements io.inverno.mod.web.server.WebRoutesConfigurer<ExchangeContext> {
+public class WebRoutesConfigurer implements WebRouter.Configurer<ExchangeContext> {
 
 	@Override
-	public void configure(WebRoutable<ExchangeContext, ?> routes) {
+	public void configure(WebRouter<ExchangeContext> routes) {
 		routes
 			.route()
 				.path("/static/{path:.*}", true)

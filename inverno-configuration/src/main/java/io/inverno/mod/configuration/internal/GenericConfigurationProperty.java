@@ -15,11 +15,14 @@
  */
 package io.inverno.mod.configuration.internal;
 
+import io.inverno.mod.configuration.ConfigurationKey;
+import io.inverno.mod.configuration.ConfigurationProperty;
 import java.io.File;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
@@ -32,11 +35,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
-
-import io.inverno.mod.configuration.AbstractConfigurationSource;
-import io.inverno.mod.configuration.ConfigurationKey;
-import io.inverno.mod.configuration.ConfigurationProperty;
-import java.net.InetSocketAddress;
 
 /**
  * <p>
@@ -52,7 +50,7 @@ import java.net.InetSocketAddress;
  * @param <B> the source type
  * @param <C> the raw value type
  */
-public class GenericConfigurationProperty<A extends ConfigurationKey, B extends AbstractConfigurationSource<?, ?, ?, C>, C> implements ConfigurationProperty {
+public class GenericConfigurationProperty<A extends ConfigurationKey, B extends AbstractConfigurationSource<?, ?, ?, C, ?>, C> implements ConfigurationProperty {
 
 	protected final A key;
 
@@ -120,45 +118,90 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	public <T> Optional<T> as(Class<T> type) {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decode(this.value, type) : null);
 	}
-	
+
+	@Override
+	public <T> T as(Class<T> type, T defaultValue) {
+		return this.value != null ? this.source.getDecoder().decode(this.value, type) : defaultValue;
+	}
+
 	@Override
 	public <T> Optional<T> as(Type type) {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decode(this.value, type) : null);
 	}
-	
+
+	@Override
+	public <T> T as(Type type, T defaultValue) {
+		return this.value != null ? this.source.getDecoder().decode(this.value, type) : defaultValue;
+	}
+
 	@Override
 	public <T> Optional<T[]> asArrayOf(Class<T> type) {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeToArray(this.value, type) : null);
 	}
-	
+
+	@Override
+	public <T> T[] asArrayOf(Class<T> type, T[] defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeToArray(this.value, type) : defaultValue;
+	}
+
 	@Override
 	public <T> Optional<T[]> asArrayOf(Type type) {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeToArray(this.value, type) : null);
 	}
-	
+
+	@Override
+	public <T> T[] asArrayOf(Type type, T[] defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeToArray(this.value, type) : defaultValue;
+	}
+
 	@Override
 	public <T> Optional<List<T>> asListOf(Class<T> type) {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeToList(this.value, type) : null);
 	}
-	
+
+	@Override
+	public <T> List<T> asListOf(Class<T> type, List<T> defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeToList(this.value, type) : defaultValue;
+	}
+
 	@Override
 	public <T> Optional<List<T>> asListOf(Type type) {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeToList(this.value, type) : null);
 	}
 
 	@Override
+	public <T> List<T> asListOf(Type type, List<T> defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeToList(this.value, type) : defaultValue;
+	}
+
+	@Override
 	public <T> Optional<Set<T>> asSetOf(Class<T> type) {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeToSet(this.value, type) : null);
 	}
-	
+
+	@Override
+	public <T> Set<T> asSetOf(Class<T> type, Set<T> defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeToSet(this.value, type) : defaultValue;
+	}
+
 	@Override
 	public <T> Optional<Set<T>> asSetOf(Type type) {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeToSet(this.value, type) : null);
 	}
-	
+
+	@Override
+	public <T> Set<T> asSetOf(Type type, Set<T> defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeToSet(this.value, type) : defaultValue;
+	}
+
 	@Override
 	public Optional<Byte> asByte() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeByte(this.value) : null);
+	}
+
+	@Override
+	public byte asByte(byte defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeByte(this.value) : defaultValue;
 	}
 
 	@Override
@@ -167,8 +210,18 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	}
 
 	@Override
+	public short asShort(short defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeShort(this.value) : defaultValue;
+	}
+
+	@Override
 	public Optional<Integer> asInteger() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeInteger(this.value) : null);
+	}
+
+	@Override
+	public int asInteger(int defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeInteger(this.value) : defaultValue;
 	}
 
 	@Override
@@ -177,8 +230,18 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	}
 
 	@Override
+	public long asLong(long defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeLong(this.value) : defaultValue;
+	}
+
+	@Override
 	public Optional<Float> asFloat() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeFloat(this.value) : null);
+	}
+
+	@Override
+	public float asFloat(float defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeFloat(this.value) : defaultValue;
 	}
 
 	@Override
@@ -187,8 +250,18 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	}
 
 	@Override
+	public double asDouble(double defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeDouble(this.value) : defaultValue;
+	}
+
+	@Override
 	public Optional<Character> asCharacter() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeCharacter(this.value) : null);
+	}
+
+	@Override
+	public char asCharacter(char defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeCharacter(this.value) : defaultValue;
 	}
 
 	@Override
@@ -197,8 +270,18 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	}
 
 	@Override
+	public String asString(String defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeString(this.value) : defaultValue;
+	}
+
+	@Override
 	public Optional<Boolean> asBoolean() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeBoolean(this.value) : null);
+	}
+
+	@Override
+	public boolean asBoolean(boolean defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeBoolean(this.value) : defaultValue;
 	}
 
 	@Override
@@ -207,8 +290,18 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	}
 
 	@Override
+	public BigInteger asBigInteger(BigInteger defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeBigInteger(this.value) : defaultValue;
+	}
+
+	@Override
 	public Optional<BigDecimal> asBigDecimal() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeBigDecimal(this.value) : null);
+	}
+
+	@Override
+	public BigDecimal asBigDecimal(BigDecimal defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeBigDecimal(this.value) : defaultValue;
 	}
 
 	@Override
@@ -217,8 +310,18 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	}
 
 	@Override
+	public LocalDate asLocalDate(LocalDate defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeLocalDate(this.value) : defaultValue;
+	}
+
+	@Override
 	public Optional<LocalDateTime> asLocalDateTime() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeLocalDateTime(this.value) : null);
+	}
+
+	@Override
+	public LocalDateTime asLocalDateTime(LocalDateTime defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeLocalDateTime(this.value) : defaultValue;
 	}
 
 	@Override
@@ -227,8 +330,18 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	}
 
 	@Override
+	public ZonedDateTime asZonedDateTime(ZonedDateTime defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeZonedDateTime(this.value) : defaultValue;
+	}
+
+	@Override
 	public Optional<Currency> asCurrency() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeCurrency(this.value) : null);
+	}
+
+	@Override
+	public Currency asCurrency(Currency defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeCurrency(this.value) : defaultValue;
 	}
 
 	@Override
@@ -237,8 +350,18 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	}
 
 	@Override
+	public Locale asLocale(Locale defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeLocale(this.value) : defaultValue;
+	}
+
+	@Override
 	public Optional<File> asFile() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeFile(this.value) : null);
+	}
+
+	@Override
+	public File asFile(File defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeFile(this.value) : defaultValue;
 	}
 
 	@Override
@@ -247,8 +370,18 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	}
 
 	@Override
+	public Path asPath(Path defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodePath(this.value) : defaultValue;
+	}
+
+	@Override
 	public Optional<URI> asURI() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeURI(this.value) : null);
+	}
+
+	@Override
+	public URI asURI(URI defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeURI(this.value) : defaultValue;
 	}
 
 	@Override
@@ -257,23 +390,48 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	}
 
 	@Override
+	public URL asURL(URL defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeURL(this.value) : defaultValue;
+	}
+
+	@Override
 	public Optional<Pattern> asPattern() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodePattern(this.value) : null);
+	}
+
+	@Override
+	public Pattern asPattern(Pattern defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodePattern(this.value) : defaultValue;
 	}
 
 	@Override
 	public Optional<InetAddress> asInetAddress() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeInetAddress(this.value) : null);
 	}
-	
+
+	@Override
+	public InetAddress asInetAddress(InetAddress defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeInetAddress(this.value) : defaultValue;
+	}
+
 	@Override
 	public Optional<InetSocketAddress> asInetSocketAddress() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeInetSocketAddress(this.value) : null);
 	}
 
 	@Override
-	public Optional<Class<?>> asClass() {
+	public InetSocketAddress asInetSocketAddress(InetSocketAddress defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeInetSocketAddress(this.value) : defaultValue;
+	}
+
+	@Override
+	public <T> Optional<Class<T>> asClass() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeClass(this.value) : null);
+	}
+
+	@Override
+	public <T> Class<T> asClass(Class<T> defaultValue) {
+		return this.value != null ? this.source.getDecoder().decodeClass(this.value) : defaultValue;
 	}
 	
 	@Override

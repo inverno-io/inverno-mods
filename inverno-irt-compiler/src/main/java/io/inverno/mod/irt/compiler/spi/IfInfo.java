@@ -19,24 +19,19 @@ import java.util.Optional;
 
 /**
  * <p>
- * An if info corresponds to an if statement in a template declaration in a
- * template set source file.
+ * An if info corresponds to an if statement in a template declaration in a template set source file.
  * </p>
- * 
+ *
  * <p>
- * An if statement basically specifies a conditional expression with different
- * cases with guard expressions evaluated in sequence to determine the
- * statements to apply based on the data model.
+ * An if statement basically specifies a conditional expression with different cases with guard expressions evaluated in sequence to determine the statements to apply based on the data model.
  * </p>
- * 
+ *
  * <p>
- * There should be at most one case with no guard expression and it must comes
- * last.
+ * There should be at most one case with no guard expression and it must comes last.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public interface IfInfo extends StatementInfo {
 
@@ -44,20 +39,18 @@ public interface IfInfo extends StatementInfo {
 	 * <p>
 	 * Returns the list of cases.
 	 * </p>
-	 * 
-	 * @return a list of cases
+	 *
+	 * @return an array of cases
 	 */
 	CaseInfo[] getCases();
 
 	/**
 	 * <p>
-	 * A case info specifies a guard expression and a corresponding list of
-	 * statements in an if statement.
+	 * A case info specifies a guard expression and a corresponding list of statements in an if statement.
 	 * </p>
-	 * 
+	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.2
-	 *
 	 */
 	interface CaseInfo {
 
@@ -65,19 +58,17 @@ public interface IfInfo extends StatementInfo {
 		 * <p>
 		 * Returns the guard expression.
 		 * </p>
-		 * 
-		 * @return an optional returning a guard expression or an empty optional if
-		 *         there's no guard expression (default case).
+		 *
+		 * @return an optional returning a guard expression or an empty optional if there's no guard expression (default case).
 		 */
 		Optional<String> getGuardExpression();
 
 		/**
 		 * <p>
-		 * Returns the list of statements to evaluate when the guard expression
-		 * evaluates to true.
+		 * Returns the list of statements to evaluate when the guard expression evaluates to true.
 		 * </p>
-		 * 
-		 * @return a list of statements
+		 *
+		 * @return an array of statements
 		 */
 		StatementInfo[] getStatements();
 	}

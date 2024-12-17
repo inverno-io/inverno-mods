@@ -17,8 +17,7 @@ package io.inverno.mod.base.converter;
 
 /**
  * <p>
- * Thrown by a {@link CompositeEncoder} to indicate that no encoder can encode a
- * given type.
+ * Thrown by a {@link CompositeEncoder} to indicate that no encoder can encode a given type.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -74,15 +73,13 @@ public class EncoderNotFoundException extends ConverterException {
 
 	/**
 	 * <p>
-	 * Creates an encoder not found exception with the specified message, cause,
-	 * suppression enabled or disabled and writable stack trace enabled or disabled.
+	 * Creates an encoder not found exception with the specified message, cause, suppression enabled or disabled and writable stack trace enabled or disabled.
 	 * </p>
 	 * 
 	 * @param message            the message
 	 * @param cause              the cause
 	 * @param enableSuppression  true to enable suppression, false otherwise
-	 * @param writableStackTrace true to make the stack trace writable, false
-	 *                           otherwise
+	 * @param writableStackTrace true to make the stack trace writable, false otherwise
 	 */
 	public EncoderNotFoundException(String message, Throwable cause, boolean enableSuppression,
 			boolean writableStackTrace) {

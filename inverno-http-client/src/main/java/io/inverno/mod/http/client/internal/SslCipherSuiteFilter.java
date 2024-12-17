@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -35,7 +36,7 @@ import java.util.Set;
 @Bean(visibility = Visibility.PRIVATE)
 public class SslCipherSuiteFilter implements CipherSuiteFilter {
 
-	private HttpClientConfiguration configuration;
+	private final HttpClientConfiguration configuration;
 	
 	/**
 	 * <p>
@@ -56,13 +57,11 @@ public class SslCipherSuiteFilter implements CipherSuiteFilter {
 		}
 		
 		if(this.configuration.tls_ciphers_includes() != null) {
-			filteredCiphers.retainAll(Arrays.asList(configuration.tls_ciphers_includes()));
+			filteredCiphers.retainAll(Arrays.stream(configuration.tls_ciphers_includes()).collect(Collectors.toSet()));
 		}
 		if(this.configuration.tls_ciphers_excludes() != null) {
-			filteredCiphers.removeAll(Arrays.asList(configuration.tls_ciphers_excludes()));
+			filteredCiphers.removeAll(Arrays.stream(configuration.tls_ciphers_excludes()).collect(Collectors.toSet()));
 		}
-		
-		return filteredCiphers.stream().toArray(String[]::new);
+		return filteredCiphers.toArray(String[]::new);
 	}
-
 }

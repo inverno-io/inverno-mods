@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  * Http/1.x {@link InboundRequestHeaders} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 class Http1xRequestHeaders extends AbstractRequestHeaders {
@@ -48,8 +48,8 @@ class Http1xRequestHeaders extends AbstractRequestHeaders {
 	 * </p>
 	 * 
 	 * @param headerService      the header service
-	 * @param parameterConverter the paremeter converter
-	 * @param headers            the originating Http headers
+	 * @param parameterConverter the parameter converter
+	 * @param headers            the originating HTTP headers
 	 */
 	public Http1xRequestHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, LinkedHttpHeaders headers) {
 		super(headerService, parameterConverter);
@@ -67,8 +67,18 @@ class Http1xRequestHeaders extends AbstractRequestHeaders {
 	}
 
 	@Override
+	public String getAccept() {
+		return this.headers.get((CharSequence)Headers.NAME_ACCEPT);
+	}
+
+	@Override
+	public Headers.Accept getAcceptHeader() {
+		return Headers.Accept.merge(this.getAllHeader(Headers.NAME_ACCEPT)).orElse(null);
+	}
+
+	@Override
 	public Long getContentLength() {
-		return this.headers.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
+		return this.headers.getLong(Headers.NAME_CONTENT_LENGTH);
 	}
 
 	@Override

@@ -51,23 +51,18 @@
 			<artifactId>inverno-configuration</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.ongres.scram</groupId>
+			<artifactId>client</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>io.netty</groupId>
 			<artifactId>netty-buffer</artifactId>
-		</dependency>
-		
-		<dependency>
-			<groupId>io.projectreactor</groupId>
-			<artifactId>reactor-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-api</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>io.vertx</groupId>
-			<artifactId>vertx-core</artifactId>
 		</dependency>
 		<!-- Overrides Vert.x transitive dependencies to prevent version conflicts -->
 		<dependency>
@@ -95,13 +90,20 @@
 			<artifactId>netty-resolver-dns</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-core</artifactId>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-core</artifactId>
 		</dependency>
-		
+		<dependency>
+			<groupId>io.vertx</groupId>
+			<artifactId>vertx-core</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-sql-client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
 		</dependency>
 		
 		<dependency>
@@ -109,11 +111,7 @@
 			<artifactId>vertx-pg-client</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.ongres.scram</groupId>
-			<artifactId>client</artifactId>
-		</dependency>
-		
+
 		<dependency>
 			<groupId>org.junit.platform</groupId>
 			<artifactId>junit-platform-launcher</artifactId>

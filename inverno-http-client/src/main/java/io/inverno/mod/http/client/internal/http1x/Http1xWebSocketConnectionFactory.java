@@ -26,7 +26,7 @@ import io.inverno.mod.http.client.internal.WebSocketConnectionFactory;
  * HTTP/1.x {@link WebSocketConnectionFactory} implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 @Bean( visibility = Bean.Visibility.PRIVATE )

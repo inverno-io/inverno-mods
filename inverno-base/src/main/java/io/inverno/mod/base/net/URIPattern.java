@@ -19,17 +19,12 @@ import java.util.regex.Pattern;
 
 /**
  * <p>
- * A URI pattern is used to create a URI matcher to perform match operation on
- * URI against against a regular expression built from a URI Builder's
- * components.
+ * A URI pattern is used to create a URI matcher to perform match operation on URI against against a regular expression built from a URI Builder's components.
  * </p>
  * 
  * <p>
- * A URI pattern is created from a URI builder by invoking the builder's
- * {@link URIBuilder#buildPattern() buildPattern} or
- * {@link URIBuilder#buildPathPattern() buildPathPattern} methods. It is then
- * used to create URI matchers that performs match operations on an input URI
- * string.
+ * A URI pattern is created from a URI builder by invoking the builder's {@link URIBuilder#buildPattern() buildPattern} or {@link URIBuilder#buildPathPattern() buildPathPattern} methods. It is then
+ * used to create URI matchers that performs match operations on an input URI string.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -48,7 +43,7 @@ public interface URIPattern {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.3
 	 */
-	static enum Inclusion {
+	enum Inclusion {
 		/**
 		 * One URI pattern is included in another URI pattern.
 		 */
@@ -92,8 +87,7 @@ public interface URIPattern {
 
 	/**
 	 * <p>
-	 * Creates a matchers that will match the specified input URI against this
-	 * pattern.
+	 * Creates a matchers that will match the specified input URI against this pattern.
 	 * </p>
 	 * 
 	 * @param uri The URI to match
@@ -127,5 +121,4 @@ public interface URIPattern {
 	 * @return a pattern inclusion state specifying whether the specified pattern is included in this pattern
 	 */
 	URIPattern.Inclusion includes(URIPattern pattern);
-	
 }

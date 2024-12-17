@@ -16,17 +16,19 @@
 package io.inverno.mod.http.client.internal.http2;
 
 import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.OutboundResponseHeaders;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.client.Response;
 import io.inverno.mod.http.client.internal.AbstractResponse;
 import io.netty.handler.codec.http2.Http2Headers;
+import java.util.function.Consumer;
 
 /**
  * <p>
  * Http/2 {@link Response} implementation.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
 public class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2ResponseBody, Http2ResponseTrailers, Http2Headers> {
@@ -48,7 +50,13 @@ public class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2R
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 	}
-	
+
+	@Override
+	public Http2Response configureInterceptedHeaders(Consumer<OutboundResponseHeaders> headersConfigurer) {
+		this.headers().configureInterceptedHeaders(headersConfigurer);
+		return this;
+	}
+
 	@Override
 	protected Http2ResponseTrailers createTrailers(Http2Headers trailers) {
 		return new Http2ResponseTrailers(this.headerService, this.parameterConverter, trailers);

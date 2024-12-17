@@ -39,7 +39,6 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import java.nio.charset.Charset;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
 import reactor.core.publisher.BaseSubscriber;
@@ -51,7 +50,7 @@ import reactor.core.publisher.Mono;
  * Http/1.x {@link Response} implementation.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.10
  */
 class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xResponseBody, Http1xResponseTrailers, Http1xResponse> {
@@ -74,7 +73,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 	 * @param parameterConverter the parameter converter
 	 * @param headersValidator   the headers validator
 	 * @param connection         the Http/1.x connection
-	 * @param version            the Http version
+	 * @param version            the HTTP version
 	 * @param head               true to indicate a {@code HEAD} request, false otherwise
 	 * @param keepAlive          true to indicate the connection is keepAlive, false otherwise
 	 */
@@ -135,7 +134,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 				else {
 					httpTrailers = this.trailers != null ? this.trailers.unwrap() : null;
 					if(httpTrailers != null) {
-						this.headers.set(Headers.NAME_TRAILER, httpTrailers.names().stream().collect(Collectors.joining(", ")));
+						this.headers.set(Headers.NAME_TRAILER, String.join(", ", httpTrailers.names()));
 					}
 				}
 
@@ -201,7 +200,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 	 * The response body data publisher optimized for {@link Mono} publisher that writes a single response object to the connection.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.10
 	 */
 	private class MonoBodyDataSubscriber extends BaseSubscriber<ByteBuf> {
@@ -216,7 +215,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 		
 		@Override
 		protected void hookOnNext(ByteBuf value) {
-			Http1xResponse.this.transferedLength += value.readableBytes();
+			Http1xResponse.this.transferredLength += value.readableBytes();
 			this.data = value;
 		}
 
@@ -230,7 +229,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 			}
 			else {
 				if(!Http1xResponse.this.headers.contains((CharSequence)Headers.NAME_CONTENT_LENGTH)) {
-					Http1xResponse.this.headers.set((CharSequence)Headers.NAME_CONTENT_LENGTH, "" + Http1xResponse.this.transferedLength);
+					Http1xResponse.this.headers.set((CharSequence)Headers.NAME_CONTENT_LENGTH, "" + Http1xResponse.this.transferredLength);
 				}
 				
 				if(Http1xResponse.this.trailers == null) {
@@ -238,7 +237,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 				}
 				else {
 					httpTrailers = Http1xResponse.this.trailers.unwrap();
-					Http1xResponse.this.headers.set(Headers.NAME_TRAILER, httpTrailers.names().stream().collect(Collectors.joining(", ")));
+					Http1xResponse.this.headers.set(Headers.NAME_TRAILER, String.join(", ", httpTrailers.names()));
 				}
 			}
 			
@@ -268,7 +267,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 	 * The response body data subscriber that writes response objects to the connection.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.10
 	 */
 	private class BodyDataSubscriber extends BaseSubscriber<ByteBuf> {
@@ -291,7 +290,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 				if(!Http1xResponse.this.headers.contains((CharSequence)Headers.NAME_CONTENT_LENGTH)) {
 					List<String> transferEncodings = Http1xResponse.this.headers.getAll((CharSequence)Headers.NAME_TRANSFER_ENCODING);
 					if(!this.many && (transferEncodings.isEmpty() || !transferEncodings.getLast().endsWith(Headers.VALUE_CHUNKED))) {
-						Http1xResponse.this.headers.set((CharSequence)Headers.NAME_CONTENT_LENGTH, "" + Http1xResponse.this.transferedLength);
+						Http1xResponse.this.headers.set((CharSequence)Headers.NAME_CONTENT_LENGTH, "" + Http1xResponse.this.transferredLength);
 					}
 					else {
 						if(transferEncodings.isEmpty()) {
@@ -307,7 +306,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 				}
 				else {
 					this.httpTrailers = Http1xResponse.this.trailers.unwrap();
-					Http1xResponse.this.headers().set(Headers.NAME_TRAILER, this.httpTrailers.names().stream().collect(Collectors.joining(", ")));
+					Http1xResponse.this.headers().set(Headers.NAME_TRAILER, String.join(", ", this.httpTrailers.names()));
 				}
 			}
 		}
@@ -330,7 +329,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 		
 		@Override
 		protected void hookOnNext(ByteBuf value) {
-			Http1xResponse.this.transferedLength += value.readableBytes();
+			Http1xResponse.this.transferredLength += value.readableBytes();
 			if(!this.many && this.singleChunk == null) {
 				this.singleChunk = value;
 			}
@@ -408,7 +407,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 	 * The file region response body data publisher that writes response file regions to the connection.
 	 * </p>
 	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.10
 	 */
 	private class FileRegionBodyDataSubscriber extends BaseSubscriber<FileRegion> {
@@ -427,7 +426,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 			}
 			else {
 				this.httpTrailers = Http1xResponse.this.trailers.unwrap();
-				Http1xResponse.this.headers.set(Headers.NAME_TRAILER, this.httpTrailers.names().stream().collect(Collectors.joining(", ")));
+				Http1xResponse.this.headers.set(Headers.NAME_TRAILER, String.join(", ", this.httpTrailers.names()));
 			}
 			
 			Http1xResponse.this.connection.writeHttpObject(new FlatHttpResponse(Http1xResponse.this.version, httpStatus, Http1xResponse.this.headers.unwrap(), Unpooled.EMPTY_BUFFER));
@@ -437,7 +436,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 
 		@Override
 		protected void hookOnNext(FileRegion value) {
-			Http1xResponse.this.transferedLength += value.count();
+			Http1xResponse.this.transferredLength += value.count();
 			Http1xResponse.this.connection.writeFileRegion(value, Http1xResponse.this.connection.newPromise().addListener(future -> {
 				if(future.isSuccess()) {
 					this.request(1);

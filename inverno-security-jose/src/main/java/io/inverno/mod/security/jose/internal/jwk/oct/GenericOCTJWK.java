@@ -73,7 +73,7 @@ public class GenericOCTJWK extends AbstractJWK implements OCTJWK {
 	
 	private OCTAlgorithm octAlg;
 	
-	private Optional<SecretKey> secretKey;
+	private SecretKey secretKey;
 	
 	private Map<OCTAlgorithm, JWASigner> signers;
 	private Map<OCTAlgorithm, JWACipher> ciphers;
@@ -111,7 +111,7 @@ public class GenericOCTJWK extends AbstractJWK implements OCTJWK {
 	public GenericOCTJWK(String k, SecretKey key, boolean trusted) {
 		super(KEY_TYPE, key, trusted);
 		this.k = k;
-		this.secretKey = key != null ? Optional.of(key) : null;
+		this.secretKey = key;
 	}
 	
 	/**
@@ -145,11 +145,10 @@ public class GenericOCTJWK extends AbstractJWK implements OCTJWK {
 
 	@Override
 	public Optional<SecretKey> toSecretKey() throws JWKProcessingException {
-		if(this.secretKey == null) {
-			this.secretKey = Optional.ofNullable(this.k)
-				.map(sk -> new SecretKeySpec(Base64.getUrlDecoder().decode(sk), "AES"));
+		if(this.secretKey == null && this.k != null) {
+			this.secretKey = new SecretKeySpec(Base64.getUrlDecoder().decode(this.k), "AES");
 		}
-		return this.secretKey;
+		return Optional.ofNullable(this.secretKey);
 	}
 	
 	@Override
@@ -165,9 +164,7 @@ public class GenericOCTJWK extends AbstractJWK implements OCTJWK {
 	
 	@Override
 	public OCTJWK minify() {
-		GenericOCTJWK jwk = new GenericOCTJWK(this.k, (SecretKey)this.key, this.trusted);
-		
-		return jwk;
+		return new GenericOCTJWK(this.k, (SecretKey)this.key, this.trusted);
 	}
 
 	@Override
@@ -272,9 +269,7 @@ public class GenericOCTJWK extends AbstractJWK implements OCTJWK {
 		if(this.ciphers == null) {
 			this.ciphers = new HashMap<>();
 		}
-		return this.ciphers.computeIfAbsent(algorithm, ign -> {
-			return algorithm.createCipher(this);
-		});
+		return this.ciphers.computeIfAbsent(algorithm, ign -> algorithm.createCipher(this));
 	}
 
 	@Override
@@ -305,9 +300,7 @@ public class GenericOCTJWK extends AbstractJWK implements OCTJWK {
 		if(this.keyManagers == null) {
 			this.keyManagers = new HashMap<>();
 		}
-		return this.keyManagers.computeIfAbsent(algorithm, ign -> {
-			return algorithm.createKeyManager(this);
-		});
+		return this.keyManagers.computeIfAbsent(algorithm, ign -> algorithm.createKeyManager(this));
 	}
 
 	@Override

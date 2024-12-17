@@ -34,7 +34,7 @@ public class GenericConfigurationUpdateResult implements ConfigurationUpdateResu
 
 	protected final ConfigurationKey updateKey;
 	protected Throwable error;
-	protected ConfigurationSource<?,?,?> errorSource;
+	protected ConfigurationSource errorSource;
 	
 	/**
 	 * <p>
@@ -56,7 +56,7 @@ public class GenericConfigurationUpdateResult implements ConfigurationUpdateResu
 	 * @param source    the configuration source
 	 * @param error     the error
 	 */
-	public GenericConfigurationUpdateResult(ConfigurationKey updateKey, ConfigurationSource<?,?,?> source, Throwable error) {
+	public GenericConfigurationUpdateResult(ConfigurationKey updateKey, ConfigurationSource source, Throwable error) {
 		this.updateKey = updateKey;
 		this.errorSource = source;
 		this.error = error;

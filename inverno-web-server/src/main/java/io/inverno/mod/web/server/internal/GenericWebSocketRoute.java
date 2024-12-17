@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Jeremy KUHN
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  */
 package io.inverno.mod.web.server.internal;
 
+import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
-import io.inverno.mod.web.server.Web2SocketExchange;
 import io.inverno.mod.web.server.WebExchange;
 import io.inverno.mod.web.server.WebSocketRoute;
-import java.util.Objects;
+import io.inverno.mod.web.server.internal.router.InternalWebRouter;
+import io.inverno.mod.web.server.ws.Web2SocketExchange;
 
 /**
  * <p>
@@ -31,79 +30,44 @@ import java.util.Objects;
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ *
+ * @param <A> the exchange context type
  */
-class GenericWebSocketRoute extends GenericWebRoute implements WebSocketRoute<ExchangeContext> {
+public class GenericWebSocketRoute<A extends ExchangeContext> extends AbstractWebRoute<A, WebExchange<A>, WebRouteHandler<A>, InternalWebRouter.Route<A>> implements WebSocketRoute<A> {
 
-	private String subProtocol;
-	
-	private WebSocketExchangeHandler<ExchangeContext, Web2SocketExchange<ExchangeContext>> webSocketHandler;
-	
 	/**
 	 * <p>
-	 * Creates a generic WebSocket route in the specified generic web router.
+	 * Creates a generic Web socket route.
 	 * </p>
-	 * 
-	 * @param router a generic web router
+	 *
+	 * @param route an internal route
 	 */
-	public GenericWebSocketRoute(AbstractWebRouter router) {
-		super(router);
+	public GenericWebSocketRoute(InternalWebRouter.Route<A> route) {
+		super(route);
 	}
 
 	@Override
-	public Method getMethod() {
-		return Method.GET;
+	public String getPath() {
+		return this.route.getPath();
 	}
 
 	@Override
-	public String getConsume() {
-		return null;
+	public URIPattern getPathPattern() {
+		return this.route.getPathPattern();
 	}
 
 	@Override
-	public String getProduce() {
-		return null;
+	public String getLanguage() {
+		return this.route.getLanguage();
 	}
 
 	@Override
 	public String getSubProtocol() {
-		return this.subProtocol;
-	}
-
-	public void setSubProtocol(String subProtocol) {
-		this.subProtocol = subProtocol;
+		return this.route.getSubprotocol();
 	}
 
 	@Override
-	public ReactiveExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> getHandler() {
-		return null;
-	}
-	
-	@Override
-	public WebSocketExchangeHandler<ExchangeContext, Web2SocketExchange<ExchangeContext>> getWebSocketHandler() {
-		return this.webSocketHandler;
-	}
-
-	public void setWebSocketHandler(WebSocketExchangeHandler<ExchangeContext, Web2SocketExchange<ExchangeContext>> webSocketHandler) {
-		this.webSocketHandler = webSocketHandler;
-	}
-	
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + Objects.hash(subProtocol);
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (!super.equals(obj))
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		GenericWebSocketRoute other = (GenericWebSocketRoute) obj;
-		return Objects.equals(subProtocol, other.subProtocol);
+	public WebSocketExchangeHandler<A, Web2SocketExchange<A>> getHandler() {
+		return this.route.get().getWebSocketHandler();
 	}
 }

@@ -14,19 +14,9 @@
  * limitations under the License.
  */
 
-import java.util.concurrent.ExecutorService;
-
-import io.inverno.mod.base.concurrent.Reactor;
-import io.inverno.mod.base.converter.CompoundDecoder;
-import io.inverno.mod.base.converter.CompoundEncoder;
-import io.inverno.mod.base.net.NetService;
-import io.inverno.mod.base.resource.MediaTypeService;
-import io.inverno.mod.base.resource.Resource;
-import io.inverno.mod.base.resource.ResourceService;
-
 /**
  * <p>
- * The Inverno framework boot module provides basic services.
+ * The Inverno framework boot module provides foundational services.
  * </p>
  * 
  * <p>
@@ -34,57 +24,61 @@ import io.inverno.mod.base.resource.ResourceService;
  * </p>
  * 
  * <dl>
- * <dt>configuration</dt>
+ * <dt><b>compoundDecoders</b></dt>
+ * <dd>extend the parameter converter decoding capabilities with a list of {@link io.inverno.mod.base.converter.CompoundDecoder}</dd>
+ * <dt><b>compoundEncoders</b></dt>
+ * <dd>extend the parameter converter encoding capabilities with a list of {@link io.inverno.mod.base.converter.CompoundEncoder}</dd>
+ * <dt><b>configuration</b></dt>
  * <dd>the boot module configuration</dd>
- * <dt>compoundDecoders</dt>
- * <dd>extend the parameter converter decoding capabilities with a list of
- * {@link CompoundDecoder}</dd>
- * <dt>compoundEncoders</dt>
- * <dd>extend the parameter converter encoding capabilities with a list of
- * {@link CompoundEncoder}</dd>
- * <dt>objectMapper</dt>
- * <dd>override the JSON reader/writer</dd>
- * <dt>workerPool</dt>
+ * <dt><b>mediaTypeService</b></dt>
+ * <dd>override the media type service</dd>
+ * <dt><b>objectMapper</b></dt>
+ * <dd>override the JSON object mapper</dd>
+ * <dt><b>resourceProviders</b></dt>
+ * <dd>extend the resource service with custom resource providers</dd>
+ * <dt><b>workerPool</b></dt>
  * <dd>override the worker thread pool</dd>
  * </dl>
- * 
+ *
  * <p>
  * It exposes the following beans:
  * </p>
  * 
  * <dl>
- * <dt>configuration</dt>
+ * <dt><b>configuration</b></dt>
  * <dd>the boot module configuration</dd>
- * <dt>reactor</dt>
- * <dd>the {@link Reactor} used to create optimized threading model based on
- * event loop group</dd>
- * <dt>netService</dt>
- * <dd>a {@link NetService} used to create optimized network clients and
- * servers</dd>
- * <dt>mediaTypeService</dt>
- * <dd>a {@link MediaTypeService} used to determine the media type of a resource
- * based on its URI</dd>
- * <dt>resourceService</dt>
- * <dd>a {@link ResourceService} used to access {@link Resource}</dd>
- * <dt>parameterConverter</dt>
- * <dd>a parameter converter used to convert parameter values to primitive and
- * common types as well as custom types when custom compound decoders and/or
- * encoders are injected</dd>
- * <dt>jsonByteBufConverter</dt>
- * <dd>A JSON to ByteBuf converter</dd>
- * <dt>jsonMediaTypeConverter</dt>
- * <dd>An application/json media type converter</dd>
- * <dt>ndjsonMediaTypeConverter</dt>
- * <dd>An application/x-ndjson media type converter</dd>
- * <dt>textPlainMediaTypeConverter</dt>
- * <dd>An text/plain media type converter</dd>
- * <dt>workerPool</dt>
- * <dd>a worker thread pool used whenever there's a need for an
- * {@link ExecutorService} to execute tasks asynchronously.
- * <dt>objectMapper</dt>
- * <dd>A JSON reader/writer</dd>
+ * <dt><b>jsonByteBufConverter</b></dt>
+ * <dd>A JSON to {@code ByteBuf} converter</dd>
+ * <dt><b>jsonByteBufMediaTypeConverter</b></dt>
+ * <dd>A JSON to {@code ByteBuf} {@code application/json} media type converter</dd>
+ * <dt><b>jsonStringConverter</b></dt>
+ * <dd>A JSON to {@code String} converter</dd>
+ * <dt><b>jsonStringMediaTypeConverter</b></dt>
+ * <dd>A JSON to {@code String} {@code application/json} media type converter</dd>
+ * <dt><b>ndJsonByteBufMediaTypeConverter</b></dt>
+ * <dd>A JSON to {@code ByteBuf} {@code application/x-ndjson} media type converter</dd>
+ * <dt><b>ndJsonByteBufMediaTypeConverter</b></dt>
+ * <dd>A JSON to {@code String} {@code application/x-ndjson} media type converter</dd>
+ * <dt><b>mediaTypeService</b></dt>
+ * <dd>a {@link io.inverno.mod.base.resource.MediaTypeService} used to determine the media type of a resource based on its URI</dd>
+ * <dt><b>netService</b></dt>
+ * <dd>a {@link io.inverno.mod.base.net.NetService} used to create optimized network clients and servers</dd>
+ * <dt><b>objectMapper</b></dt>
+ * <dd>a JSON object mapper configured with common modules (JDK8, time...)</dd>
+ * <dt><b>parameterConverter</b></dt>
+ * <dd>a parameter converter used to convert parameter values to primitive and common types as well as custom types when custom compound decoders and/or encoders are injected</dd>
+ * <dt><b>reactor</b></dt>
+ * <dd>the {@link io.inverno.mod.base.concurrent.Reactor} used to create optimized threading model based on event loop group</dd>
+ * <dt><b>resourceService</b></dt>
+ * <dd>a {@link io.inverno.mod.base.resource.ResourceService} used to access various types of {@link io.inverno.mod.base.resource.Resource}</dd>
+ * <dt><b>textByteBufMediaTypeConverter</b></dt>
+ * <dd>A text to {@code ByteBuf} {@code plain/text} media type converter</dd>
+ * <dt><b>textStringMediaTypeConverter</b></dt>
+ * <dd>A text to {@code String} {@code plain/text} media type converter</dd>
+ * <dt><b>workerPool</b></dt>
+ * <dd>a worker thread pool used whenever there's a need for an {@link java.util.concurrent.ExecutorService} to execute tasks asynchronously.</dd>
  * </dl>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
@@ -101,21 +95,27 @@ module io.inverno.mod.boot {
 	requires transitive io.inverno.mod.configuration;
 	
 	requires transitive com.fasterxml.jackson.databind;
+	requires com.fasterxml.jackson.datatype.jdk8;
 	requires com.fasterxml.jackson.datatype.jsr310;
 	requires com.fasterxml.jackson.module.afterburner;
-	requires org.apache.logging.log4j;
-	requires transitive org.reactivestreams;
 	requires transitive io.netty.buffer;
 	requires io.netty.common;
 	requires io.netty.handler;
+	requires io.netty.resolver;
+	requires io.netty.resolver.dns;
 	requires transitive io.netty.transport;
-	requires static io.netty.transport.unix.common;
 	requires static io.netty.transport.classes.epoll;
 	requires static io.netty.transport.classes.kqueue;
 	requires static io.netty.incubator.transport.classes.io_uring;
+	requires static io.netty.transport.unix.common;
 	requires static io.vertx.core;
+	requires org.apache.logging.log4j;
+	requires transitive org.reactivestreams;
 	requires transitive reactor.core;
-	
+
 	exports io.inverno.mod.boot;
 	exports io.inverno.mod.boot.converter;
+	exports io.inverno.mod.boot.json;
+
+	provides com.fasterxml.jackson.databind.Module with io.inverno.mod.boot.json.InvernoBaseModule;
 }

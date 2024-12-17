@@ -24,7 +24,7 @@ import java.util.Set;
  * A JWT claims set validator used to validate a {@link JWTClaimsSet}.
  * </p>
  *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
 @FunctionalInterface
@@ -32,7 +32,7 @@ public interface JWTClaimsSetValidator {
 
 	/**
 	 * <p>
-	 * Determines wether the specified claims set is valid.
+	 * Determines whether the specified claims set is valid.
 	 * </p>
 	 * 
 	 * @param claims a JWT claims set
@@ -149,7 +149,7 @@ public interface JWTClaimsSetValidator {
 	 * Returns a JWT claims set validator that validates that the JWT not before time is after the specified activation time.
 	 * </p>
 	 * 
-	 * @param time the activtion time reference
+	 * @param time the activation time reference
 	 * 
 	 * @return a JWT claims set validator
 	 */

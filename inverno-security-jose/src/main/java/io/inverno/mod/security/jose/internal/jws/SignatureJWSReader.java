@@ -56,7 +56,7 @@ public class SignatureJWSReader<A> extends GenericJWSReader<A> {
 	 * @param jwsHeader             the signature JWS header
 	 * @param jwsPayload            the JSON JWS payload
 	 */
-	@SuppressWarnings("exports")
+	@SuppressWarnings("ClassEscapesDefinedScope")
 	public SignatureJWSReader(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type, Publisher<? extends JWK> keys, GenericJWSHeader jwsHeader, GenericJWSPayload<A> jwsPayload) {
 		super(mapper, dataConversionService, jwkService, type, keys);
 		this.jwsHeader = jwsHeader;

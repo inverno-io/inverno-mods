@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2021 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,29 +28,28 @@ import java.util.function.Consumer;
  * <p>
  * Generic {@link WebResponse} implementation.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see WebResponseBody
  */
-class GenericWebResponse implements WebResponse {
+public class GenericWebResponse implements WebResponse {
 
 	private final Response response;
-	
 	private final WebResponseBody responseBody;
-	
+
 	/**
 	 * <p>
-	 * Creates a generic web response with the specified underlying response and data conversion service.
+	 * Creates a generic Web response.
 	 * </p>
 	 *
-	 * @param response              the underlying response
 	 * @param dataConversionService the data conversion service
+	 * @param response              the originating response
 	 */
-	public GenericWebResponse(Response response, DataConversionService dataConversionService) {
+	public GenericWebResponse(ServerDataConversionService dataConversionService, Response response) {
 		this.response = response;
-		this.responseBody = new GenericWebResponseBody(this, response.body(), dataConversionService);
+		this.responseBody = new GenericWebResponseBody(dataConversionService, response, response.body());
 	}
 
 	@Override
@@ -59,8 +58,8 @@ class GenericWebResponse implements WebResponse {
 	}
 
 	@Override
-	public int getTransferedLength() {
-		return this.response.getTransferedLength();
+	public int getTransferredLength() {
+		return this.response.getTransferredLength();
 	}
 
 	@Override
@@ -75,6 +74,17 @@ class GenericWebResponse implements WebResponse {
 	}
 
 	@Override
+	public WebResponse sendContinue() throws IllegalStateException {
+		this.response.sendContinue();
+		return this;
+	}
+
+	@Override
+	public WebResponseBody body() {
+		return this.responseBody;
+	}
+
+	@Override
 	public InboundHeaders trailers() {
 		return this.response.trailers();
 	}
@@ -83,16 +93,5 @@ class GenericWebResponse implements WebResponse {
 	public WebResponse trailers(Consumer<OutboundHeaders<?>> trailersConfigurer) {
 		this.response.trailers(trailersConfigurer);
 		return this;
-	}
-
-	@Override
-	public Response sendContinue() {
-		this.response.sendContinue();
-		return this;
-	}
-
-	@Override
-	public WebResponseBody body() {
-		return this.responseBody;
 	}
 }

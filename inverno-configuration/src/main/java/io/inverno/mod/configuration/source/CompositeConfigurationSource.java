@@ -27,6 +27,7 @@ import io.inverno.mod.configuration.ListConfigurationQuery;
 import io.inverno.mod.configuration.internal.GenericConfigurationKey;
 import io.inverno.mod.configuration.internal.GenericConfigurationQueryResult;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,7 +35,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import reactor.core.publisher.Flux;
@@ -73,38 +73,155 @@ import reactor.core.publisher.Mono;
  * @see ConfigurationSource
  * @see CompositeConfigurationStrategy
  */
-public class CompositeConfigurationSource implements ConfigurationSource<CompositeConfigurationSource.CompositeConfigurationQuery, CompositeConfigurationSource.CompositeExecutableConfigurationQuery, CompositeConfigurationSource.CompositeListConfigurationQuery> {
+public class CompositeConfigurationSource implements ConfigurationSource {
+
+	private final CompositeConfigurationSource original;
 
 	/**
 	 * The configuration sources.
 	 */
-	private final List<ConfigurationSource<?, ?, ?>> sources;
+	private final List<ConfigurationSource> sources;
+
+	private final List<ConfigurationKey.Parameter> defaultParameters;
 
 	private CompositeConfigurationStrategy strategy;
 
 	/**
 	 * <p>
-	 * Creates a new composite configuration source with the specified sources ordered from the highest to lowest priority using the default {@link CompositeConfigurationStrategy#lookup()}
+	 * Creates a new composite configuration source with the specified sources ordered from the highest to lowest priority which uses the default {@link CompositeConfigurationStrategy#lookup()}
 	 * strategy.
 	 * </p>
 	 *
 	 * @param sources a list of configuration sources
 	 */
-	public CompositeConfigurationSource(List<ConfigurationSource<?, ?, ?>> sources) {
-		this(sources, CompositeConfigurationStrategy.lookup());
+	public CompositeConfigurationSource(List<ConfigurationSource> sources) {
+		this(sources, List.of(), CompositeConfigurationStrategy.lookup());
 	}
 
 	/**
 	 * <p>
-	 * Creates a new composite configuration source with the specified sources ordered from the highest to lowest priority and using the specified strategy. 
+	 * Creates a new composite configuration source with the specified sources ordered from the highest to lowest priority which applies the specified default parameters and uses the default
+	 * {@link CompositeConfigurationStrategy#lookup()} strategy.
 	 * </p>
-	 * 
-	 * @param sources a list of configuration sources
-	 * @param strategy a composite configuration strategy
+	 *
+	 * @param sources           a list of configuration sources
+	 * @param defaultParameters the default parameters to apply
 	 */
-	public CompositeConfigurationSource(List<ConfigurationSource<?, ?, ?>> sources, CompositeConfigurationStrategy strategy) {
+	public CompositeConfigurationSource(List<ConfigurationSource> sources, List<ConfigurationKey.Parameter> defaultParameters) {
+		this(sources, defaultParameters, CompositeConfigurationStrategy.lookup());
+	}
+
+	/**
+	 * <p>
+	 * Creates a new composite configuration source with the specified sources ordered from the highest to lowest priority which uses the specified strategy.
+	 * </p>
+	 *
+	 * @param sources           a list of configuration sources
+	 * @param strategy          a composite configuration strategy
+	 */
+	public CompositeConfigurationSource(List<ConfigurationSource> sources, CompositeConfigurationStrategy strategy) {
+		this(sources, List.of(), strategy);
+	}
+
+	/**
+	 * <p>
+	 * Creates a new composite configuration source with the specified sources ordered from the highest to lowest priority which applies the specified default parameters and uses the specified
+	 * strategy.
+	 * </p>
+	 *
+	 * @param sources           a list of configuration sources
+	 * @param defaultParameters the default parameters to apply
+	 * @param strategy          a composite configuration strategy
+	 */
+	public CompositeConfigurationSource(List<ConfigurationSource> sources, List<ConfigurationKey.Parameter> defaultParameters, CompositeConfigurationStrategy strategy) {
+		this.original = null;
 		this.sources = sources;
+		this.defaultParameters = Collections.unmodifiableList(GenericConfigurationKey.requireDistinctParameters(defaultParameters));
 		this.strategy = strategy;
+	}
+
+	/**
+	 * <p>
+	 * Creates a composite configuration source from the specified original source which applies the specified default parameters.
+	 * </p>
+	 *
+	 * @param original          the original configuration source
+	 * @param defaultParameters the default parameters to apply
+	 */
+	private CompositeConfigurationSource(CompositeConfigurationSource original, List<ConfigurationKey.Parameter> defaultParameters) {
+		this.original = original;
+		this.sources = original.sources;
+		this.defaultParameters = Collections.unmodifiableList(GenericConfigurationKey.requireDistinctParameters(defaultParameters));
+		this.strategy = original.strategy;
+	}
+
+	@Override
+	public final CompositeConfigurationSource withParameters(String k1, Object v1) {
+		return this.withParameters(List.of(ConfigurationKey.Parameter.of(k1, v1)));
+	}
+
+	@Override
+	public final CompositeConfigurationSource withParameters(String k1, Object v1, String k2, Object v2) throws IllegalArgumentException {
+		return this.withParameters(List.of(ConfigurationKey.Parameter.of(k1, v1), ConfigurationKey.Parameter.of(k2, v2)));
+	}
+
+	@Override
+	public final CompositeConfigurationSource withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3) throws IllegalArgumentException {
+		return this.withParameters(List.of(ConfigurationKey.Parameter.of(k1, v1), ConfigurationKey.Parameter.of(k2, v2), ConfigurationKey.Parameter.of(k3, v3)));
+	}
+
+	@Override
+	public final CompositeConfigurationSource withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) throws IllegalArgumentException {
+		return this.withParameters(List.of(ConfigurationKey.Parameter.of(k1, v1), ConfigurationKey.Parameter.of(k2, v2), ConfigurationKey.Parameter.of(k3, v3), ConfigurationKey.Parameter.of(k4, v4)));
+	}
+
+	@Override
+	public final CompositeConfigurationSource withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) throws IllegalArgumentException {
+		return this.withParameters(List.of(ConfigurationKey.Parameter.of(k1, v1), ConfigurationKey.Parameter.of(k2, v2), ConfigurationKey.Parameter.of(k3, v3), ConfigurationKey.Parameter.of(k4, v4), ConfigurationKey.Parameter.of(k5, v5)));
+	}
+
+	@Override
+	public final CompositeConfigurationSource withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) throws IllegalArgumentException {
+		return this.withParameters(List.of(ConfigurationKey.Parameter.of(k1, v1), ConfigurationKey.Parameter.of(k2, v2), ConfigurationKey.Parameter.of(k3, v3), ConfigurationKey.Parameter.of(k4, v4), ConfigurationKey.Parameter.of(k5, v5), ConfigurationKey.Parameter.of(k6, v6)));
+	}
+
+	@Override
+	public final CompositeConfigurationSource withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) throws IllegalArgumentException {
+		return this.withParameters(List.of(ConfigurationKey.Parameter.of(k1, v1), ConfigurationKey.Parameter.of(k2, v2), ConfigurationKey.Parameter.of(k3, v3), ConfigurationKey.Parameter.of(k4, v4), ConfigurationKey.Parameter.of(k5, v5), ConfigurationKey.Parameter.of(k6, v6), ConfigurationKey.Parameter.of(k7, v7)));
+	}
+
+	@Override
+	public final CompositeConfigurationSource withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) throws IllegalArgumentException {
+		return this.withParameters(List.of(ConfigurationKey.Parameter.of(k1, v1), ConfigurationKey.Parameter.of(k2, v2), ConfigurationKey.Parameter.of(k3, v3), ConfigurationKey.Parameter.of(k4, v4), ConfigurationKey.Parameter.of(k5, v5), ConfigurationKey.Parameter.of(k6, v6), ConfigurationKey.Parameter.of(k7, v7), ConfigurationKey.Parameter.of(k8, v8)));
+	}
+
+	@Override
+	public final CompositeConfigurationSource withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) throws IllegalArgumentException {
+		return this.withParameters(List.of(ConfigurationKey.Parameter.of(k1, v1), ConfigurationKey.Parameter.of(k2, v2), ConfigurationKey.Parameter.of(k3, v3), ConfigurationKey.Parameter.of(k4, v4), ConfigurationKey.Parameter.of(k5, v5), ConfigurationKey.Parameter.of(k6, v6), ConfigurationKey.Parameter.of(k7, v7), ConfigurationKey.Parameter.of(k8, v8), ConfigurationKey.Parameter.of(k9, v9)));
+	}
+
+	@Override
+	public final CompositeConfigurationSource withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) throws IllegalArgumentException {
+		return this.withParameters(List.of(ConfigurationKey.Parameter.of(k1, v1), ConfigurationKey.Parameter.of(k2, v2), ConfigurationKey.Parameter.of(k3, v3), ConfigurationKey.Parameter.of(k4, v4), ConfigurationKey.Parameter.of(k5, v5), ConfigurationKey.Parameter.of(k6, v6), ConfigurationKey.Parameter.of(k7, v7), ConfigurationKey.Parameter.of(k8, v8), ConfigurationKey.Parameter.of(k9, v9), ConfigurationKey.Parameter.of(k10, v10)));
+	}
+
+	@Override
+	public final CompositeConfigurationSource withParameters(ConfigurationKey.Parameter... parameters) throws IllegalArgumentException {
+		return this.withParameters(parameters != null ? Arrays.asList(parameters) : List.of());
+	}
+
+	@Override
+	public CompositeConfigurationSource withParameters(List<ConfigurationKey.Parameter> parameters) throws IllegalArgumentException {
+		return new CompositeConfigurationSource(this, parameters);
+	}
+
+	@Override
+	public CompositeConfigurationSource unwrap() {
+		CompositeConfigurationSource current = this;
+		while(current.original != null) {
+			current = current.original;
+		}
+		return current;
 	}
 
 	/**
@@ -114,7 +231,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 	 *
 	 * @return a list of configuration sources
 	 */
-	public List<ConfigurationSource<?, ?, ?>> getSources() {
+	public List<ConfigurationSource> getSources() {
 		return sources;
 	}
 
@@ -171,16 +288,11 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 
 		private final List<String> names;
 
-		private final LinkedList<ConfigurationKey.Parameter> parameters;
+		private List<ConfigurationKey.Parameter> parameters;
 
-		/**
-		 * 
-		 * @param executableQuery 
-		 */
 		private CompositeConfigurationQuery(CompositeExecutableConfigurationQuery executableQuery) {
 			this.executableQuery = executableQuery;
 			this.names = new LinkedList<>();
-			this.parameters = new LinkedList<>();
 		}
 
 		@Override
@@ -209,25 +321,15 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 
 		private final LinkedList<CompositeConfigurationQuery> queries;
 
-		/**
-		 *
-		 * @param source
-		 */
 		private CompositeExecutableConfigurationQuery(CompositeConfigurationSource source) {
 			this.source = source;
 			this.queries = new LinkedList<>();
 		}
 
 		@Override
-		public CompositeConfigurationQuery and() {
-			this.queries.add(new CompositeConfigurationQuery(this));
-			return this.queries.peekLast();
-		}
-
-		@Override
 		public CompositeExecutableConfigurationQuery withParameters(List<ConfigurationKey.Parameter> parameters) throws IllegalArgumentException {
 			CompositeConfigurationQuery currentQuery = this.queries.peekLast();
-			currentQuery.parameters.clear();
+			currentQuery.parameters = new LinkedList<>(this.source.defaultParameters);
 			if (parameters != null && !parameters.isEmpty()) {
 				Set<String> parameterKeys = new HashSet<>();
 				List<String> duplicateParameters = new LinkedList<>();
@@ -241,25 +343,33 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 					}
 				}
 				if (!duplicateParameters.isEmpty()) {
-					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
+					throw new IllegalArgumentException("The following parameters were specified more than once: " + String.join(", ", duplicateParameters));
 				}
 			}
 			return this;
 		}
 
 		@Override
+		public CompositeConfigurationQuery and() {
+			CompositeConfigurationQuery nextQuery = new CompositeConfigurationQuery(this);
+			nextQuery.parameters = this.source.defaultParameters;
+			this.queries.add(nextQuery);
+			return nextQuery;
+		}
+
+		@Override
 		public Flux<ConfigurationQueryResult> execute() {
 			return Flux.create(sink -> {
 				final LinkedList<CompositeConfigurationQueryResult> results = this.queries.stream()
-						.flatMap(query -> query.names.stream().map(name -> new CompositeConfigurationQueryResult(new GenericConfigurationKey(name, query.parameters), this.source.strategy)))
-						.collect(Collectors.toCollection(LinkedList::new));
+					.flatMap(query -> query.names.stream().map(name -> new CompositeConfigurationQueryResult(new GenericConfigurationKey(name, query.parameters), this.source.strategy)))
+					.collect(Collectors.toCollection(LinkedList::new));
 
 				final CompositeConfigurationStrategy.CompositeDefaultingStrategy defaultingStrategy = this.source.strategy.createDefaultingStrategy();
 
 				Flux.fromIterable(this.source.sources)
 						.map(currentSource -> {
 							if (currentSource instanceof DefaultableConfigurationSource) {
-								return ((DefaultableConfigurationSource<?, ?, ?, ?>) currentSource).withDefaultingStrategy(defaultingStrategy);
+								return ((DefaultableConfigurationSource) currentSource).withDefaultingStrategy(defaultingStrategy);
 							}
 							return currentSource;
 						})
@@ -296,7 +406,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 						.subscribe(
 								ign -> {
 								},
-								e -> sink.error(e),
+								sink::error,
 								() -> {
 									results.forEach(sink::next);
 									sink.complete();
@@ -324,13 +434,8 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 
 		private boolean resolved;
 
-		/**
-		 * 
-		 * @param queryKey
-		 * @param strategy 
-		 */
 		private CompositeConfigurationQueryResult(ConfigurationKey queryKey, CompositeConfigurationStrategy strategy) {
-			super(queryKey, (ConfigurationProperty) null);
+			super(queryKey, null);
 			this.strategy = strategy;
 		}
 
@@ -356,11 +461,6 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 			return this.initial;
 		}
 
-		@Override
-		public Optional<ConfigurationProperty> getResult() throws ConfigurationSourceException {
-			return this.initial != null ? this.initial.getResult().map(property -> property.isUnset() ? null : property) : Optional.empty();
-		}
-
 		/**
 		 * <p>
 		 * Updates the result with the specified result returned by an underlying source.
@@ -374,19 +474,26 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		 */
 		private void updateResult(ConfigurationQueryResult result) {
 			if (!this.resolved) {
-				ConfigurationProperty previousProperty = this.initial != null ? this.initial.getResult().orElse(null) : null;
 				try {
+					ConfigurationProperty previousProperty = this.initial != null && this.initial.isPresent() ? this.initial.get() : null;
 					if (previousProperty != null) {
-						// does the new property supesede the old one?
-						result.getResult().ifPresent(property -> {
+						// does the new property supersede the old one?
+						if(result.isPresent()) {
+							ConfigurationProperty property = result.get();
 							if (this.strategy.isSuperseded(this.queryKey, previousProperty.getKey(), property.getKey())) {
 								this.initial = result;
+								this.queryResult = !property.isUnset() ? property : null;
 								this.resolved = this.strategy.isResolved(this.queryKey, property.getKey());
 							}
-						});
-					} 
+						}
+					}
 					else {
 						this.initial = result;
+						if(result.isPresent()) {
+							ConfigurationProperty property = result.get();
+							this.queryResult = !property.isUnset() ? property : null;
+							this.resolved = this.strategy.isResolved(this.queryKey, property.getKey());
+						}
 					}
 				}
 				catch(ConfigurationSourceException e) {
@@ -394,9 +501,9 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 						// We have two choices:
 						// - set the failed query result and mark the result as resolved to make sure the error is propagated to the caller as results might not be accurate
 						// - report the failure and resume the defaulting mechanism ignoring the failing source
-						// The issue is that we don't know whether the error is related to an invalid value or an unreachable configuration source, in the latter case, we can't assume 
+						// The issue is that we don't know whether the error is related to an invalid value or an unreachable configuration source, in the latter case, we can't assume
 						// We should delegate this to the strategy so it can decide what to do
-						// if the strategy does not ignore failure then if an error occurs the result is set and the result resolved, otherwise the failed result is ignored and the process continue 
+						// if the strategy does not ignore failure then if an error occurs the result is set and the result resolved, otherwise the failed result is ignored and the process continue
 						this.initial = result;
 						this.resolved = true;
 					}
@@ -421,22 +528,17 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 
 		private final String name;
 
-		private final LinkedList<ConfigurationKey.Parameter> parameters;
+		private List<ConfigurationKey.Parameter> parameters;
 
-		/**
-		 *
-		 * @param source
-		 * @param name
-		 */
 		private CompositeListConfigurationQuery(CompositeConfigurationSource source, String name) {
 			this.source = source;
 			this.name = name;
-			this.parameters = new LinkedList<>();
+			this.parameters = this.source.defaultParameters;
 		}
 
 		@Override
 		public CompositeListConfigurationQuery withParameters(List<ConfigurationKey.Parameter> parameters) throws IllegalArgumentException {
-			this.parameters.clear();
+			this.parameters = new LinkedList<>(this.source.defaultParameters);
 			if (parameters != null && !parameters.isEmpty()) {
 				Set<String> parameterKeys = new HashSet<>();
 				List<String> duplicateParameters = new LinkedList<>();
@@ -447,7 +549,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 					}
 				}
 				if (!duplicateParameters.isEmpty()) {
-					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
+					throw new IllegalArgumentException("The following parameters were specified more than once: " + String.join(", ", duplicateParameters));
 				}
 			}
 			return this;
@@ -461,7 +563,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 				return Flux.fromIterable(this.source.sources)
 						.map(currentSource -> {
 							if (currentSource instanceof DefaultableConfigurationSource) {
-								return ((DefaultableConfigurationSource<?, ?, ?, ?>) currentSource).withDefaultingStrategy(defaultingStrategy);
+								return ((DefaultableConfigurationSource) currentSource).withDefaultingStrategy(defaultingStrategy);
 							}
 							return currentSource;
 						})
@@ -485,7 +587,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 				return Flux.fromIterable(this.source.sources)
 						.map(currentSource -> {
 							if (currentSource instanceof DefaultableConfigurationSource) {
-								return ((DefaultableConfigurationSource<?, ?, ?, ?>) currentSource).withDefaultingStrategy(defaultingStrategy);
+								return ((DefaultableConfigurationSource) currentSource).withDefaultingStrategy(defaultingStrategy);
 							}
 							return currentSource;
 						})
@@ -588,7 +690,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 					this.children = new HashMap<>();
 				}
 				ConfigurationKey.Parameter currentPropertyParameter = currentPropertyParameters.poll();
-				ConfigurationPropertyNode childNode = this.children.computeIfAbsent(currentPropertyParameter, k -> new ConfigurationPropertyNode(k));
+				ConfigurationPropertyNode childNode = this.children.computeIfAbsent(currentPropertyParameter, ConfigurationPropertyNode::new);
 				childNode.insert(property, currentPropertyParameters);
 			}
 		}
@@ -618,7 +720,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 				properties.add(this.property);
 			}
 			if (this.children != null) {
-				this.children.values().stream().forEach(childNode -> childNode.walk(properties));
+				this.children.values().forEach(childNode -> childNode.walk(properties));
 			}
 		}
 	}

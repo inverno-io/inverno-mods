@@ -32,18 +32,26 @@ import javax.lang.model.type.TypeMirror;
  * 
  * @see AbstractWebParameterInfo
  */
-class GenericWebExchangeContextParameterInfo extends AbstractWebParameterInfo implements WebExchangeContextParameterInfo {
+public class GenericWebExchangeContextParameterInfo extends AbstractWebParameterInfo implements WebExchangeContextParameterInfo {
+
+	private final TypeMirror contextType;
 
 	/**
 	 * <p>
-	 * Creates a generic web exchange context parameter info.
+	 * Creates a generic Web exchange context parameter info.
 	 * </p>
 	 * 
 	 * @param name             the parameter qualified name
 	 * @param reporter         the parameter reporter
 	 * @param parameterElement the parameter element
 	 */
-	public GenericWebExchangeContextParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, TypeMirror contextType) {
-		super(name, reporter, parameterElement, contextType, true);
+	public GenericWebExchangeContextParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, TypeMirror type, TypeMirror contextType) {
+		super(name, reporter, parameterElement, type, true);
+		this.contextType = contextType;
+	}
+
+	@Override
+	public TypeMirror getContextType() {
+		return this.contextType;
 	}
 }

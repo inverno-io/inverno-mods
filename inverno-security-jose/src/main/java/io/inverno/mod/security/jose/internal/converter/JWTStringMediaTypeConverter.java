@@ -132,7 +132,7 @@ public class JWTStringMediaTypeConverter implements JOSEMediaTypeConverter, @Pro
 	public <T> Mono<T> decodeOne(Publisher<String> value, Type type) {
 		return Mono.fromRunnable(() -> this.checkJWTType(type))
 			.then((Mono<T>)Flux.from(value)
-				.reduceWith(() -> new StringBuilder(), (acc, v) -> acc.append(v))
+				.reduceWith(StringBuilder::new, StringBuilder::append)
 				.map(StringBuilder::toString)
 				.flatMapMany(compact -> this.jwtService.readerFor(compact, type).read(compact))
 				.next()

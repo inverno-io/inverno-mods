@@ -29,7 +29,7 @@ import org.reactivestreams.Publisher;
 
 /**
  * <p>
- * A {@link Resource} implementation that identifies resources by a URI of the form <code>file:/path/to/resource</code> and looks up data on the file system.
+ * A {@link Resource} implementation that identifies resources by a URI of the form {@code file:/path/to/resource} and looks up data on the file system.
  * </p>
  *
  * <p>

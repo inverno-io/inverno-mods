@@ -30,7 +30,7 @@ import io.inverno.mod.http.server.ResponseBody.Sse.EventFactory;
 
 /**
  * <p>
- * Binds a server-sent events {@link EventFactory factory} to a web route method parameter.
+ * Binds a server-sent events {@link EventFactory factory} to a Web route method parameter.
  * </p>
  *
  * <p>
@@ -50,7 +50,7 @@ import io.inverno.mod.http.server.ResponseBody.Sse.EventFactory;
  * </p>
  *
  * <p>
- * The event data is encoded using one of the {@link MediaTypeConverter} injected in the web server module and corresponding to the media type specified in the annotation.
+ * The event data is encoded using one of the {@link MediaTypeConverter} injected in the Web server module and corresponding to the media type specified in the annotation.
  * </p>
  *
  * <pre>{@code

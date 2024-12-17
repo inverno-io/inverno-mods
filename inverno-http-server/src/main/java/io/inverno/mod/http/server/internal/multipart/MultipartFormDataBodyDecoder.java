@@ -39,14 +39,14 @@ import reactor.core.publisher.SignalType;
 
 /**
  * <p>
- * A multipart/form-data payload decoder implementation as defined by <a href="https://tools.ietf.org/html/rfc7578">RFC 7578</a>.
+ * A {@code multipart/form-data} payload decoder implementation as defined by <a href="https://tools.ietf.org/html/rfc7578">RFC 7578</a>.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 /*
- * Usefull:
+ * Useful:
  * - https://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
  */
 @Bean(visibility = Visibility.PRIVATE)
@@ -58,7 +58,7 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 	
 	/**
 	 * <p>
-	 * Creates a multipart/form-data payload decoder.
+	 * Creates a {@code multipart/form-data} payload decoder.
 	 * </p>
 	 * 
 	 * @param headerService      the header service
@@ -81,11 +81,9 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 		// Why parts flux is sequential: we have to emit all parts before we can send response back to the client?
 		// => request data flux emits chunk, the same thread is used for
 		// subscription as a result no parts can be emitted before the chunk is fully
-		// processed, this explain why we received batch of parts: they all result from
+		// processed, this explains why we received batch of parts: they all result from
 		// one single request data chunk
-		return Flux.create(emitter -> {
-			data.subscribe(new BodyDataSubscriber(contentType, emitter));
-		});
+		return Flux.create(emitter -> data.subscribe(new BodyDataSubscriber(contentType, emitter)));
 	}
 	
 	private DecoderTask boundary(ByteBuf buffer, BodyDataSubscriber context) throws MalformedBodyException {
@@ -107,7 +105,7 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
                 delimiterPos++;
             } 
             else {
-            	// We were expecting a valid delimiter but we didn't find it
+            	// We were expecting a valid delimiter, but we didn't find it
             	throw new MalformedBodyException("No delimiter found");
             }
         }
@@ -130,7 +128,7 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
         				return this::headers;
         			}
         			else {
-        				// We were expecting a valid delimiter but we didn't find it
+        				// We were expecting a valid delimiter, but we didn't find it
         				throw new MalformedBodyException("No delimiter found");
         			}
         		}
@@ -169,12 +167,12 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 		}
 		
 		// We have all headers, we can create the part
-		Headers.ContentDisposition partContentDispositionHeader = context.<Headers.ContentDisposition>getDecodedHeader(Headers.NAME_CONTENT_DISPOSITION);
+		Headers.ContentDisposition partContentDispositionHeader = context.getDecodedHeader(Headers.NAME_CONTENT_DISPOSITION);
 		if(partContentDispositionHeader == null || partContentDispositionHeader.getPartName() == null) {
 			throw new MalformedBodyException("Missing content disposition");
 		}
 		
-		Headers.ContentType partContentTypeHeader = context.<Headers.ContentType>getDecodedHeader(Headers.NAME_CONTENT_TYPE);
+		Headers.ContentType partContentTypeHeader = context.getDecodedHeader(Headers.NAME_CONTENT_TYPE);
 		
 		if(partContentTypeHeader != null && partContentTypeHeader.getMediaType().equalsIgnoreCase(MediaTypes.MULTIPART_MIXED)) {
 			context.startMultipartMixed(partContentTypeHeader);
@@ -315,7 +313,7 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
     }
 	
 	@FunctionalInterface
-	private static interface DecoderTask {
+	private interface DecoderTask {
 		
 		DecoderTask run(ByteBuf buffer, BodyDataSubscriber context) throws MalformedBodyException;
 	}
@@ -424,12 +422,7 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 			if(this.decodedHeaders == null) {
 				this.decodedHeaders = new LinkedHashMap<>();
 			}
-			List<Header> headerFieldList = this.decodedHeaders.get(decodedHeaderField.getHeaderName());
-			if(headerFieldList == null) {
-				headerFieldList = new ArrayList<>();
-				this.decodedHeaders.put(decodedHeaderField.getHeaderName(), headerFieldList);
-			}
-			headerFieldList.add(decodedHeaderField);
+			this.decodedHeaders.computeIfAbsent(decodedHeaderField.getHeaderName(), ign -> new ArrayList<>()).add(decodedHeaderField);
 		}
 		
 		public Map<String, List<Header>> getAllDecodedHeaders() {
@@ -442,14 +435,14 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 		}
 		
 		public <T> T getDecodedHeader(String name) {
-			List<T> headers = this.<T>getDecodedHeaders(name);
+			List<T> headers = this.getDecodedHeaders(name);
 			if(headers == null || headers.isEmpty()) {
 				return null;
 			}
 			if(headers.size() > 1) {
 				throw new IllegalStateException("Invalid request");
 			}
-			return headers.get(0);
+			return headers.getFirst();
 		}
 		
 		@Override

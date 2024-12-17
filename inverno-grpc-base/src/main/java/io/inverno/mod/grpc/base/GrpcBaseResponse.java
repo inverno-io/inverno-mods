@@ -29,7 +29,7 @@ package io.inverno.mod.grpc.base;
  * where the response is provided and sent from the server to the client, implementation shall provide methods to set gRPC response content.
  * </p>
  * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
 public interface GrpcBaseResponse {

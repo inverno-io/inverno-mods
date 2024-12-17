@@ -17,21 +17,16 @@ package io.inverno.mod.irt.compiler.spi;
 
 /**
  * <p>
- * An include info corresponds to an include statement in a template set source
- * file.
+ * An include info corresponds to an include statement in a template set source file.
  * </p>
- * 
+ *
  * <p>
- * An include statement is used to combine multiple external template sets
- * within the current template. The generated template set class will basically
- * extends the included template set classes and as such can apply their
- * templates. It shall possible to override an included template and resolve
- * ambiguities when two included template set define the same template.
+ * An include statement is used to combine multiple external template sets within the current template. The generated template set class will basically extends the included template set classes and as
+ * such can apply their templates. It shall possible to override an included template and resolve ambiguities when two included template set define the same template.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public interface IncludeInfo {
 
@@ -39,7 +34,7 @@ public interface IncludeInfo {
 	 * <p>
 	 * Returns the name of the included template set.
 	 * </p>
-	 * 
+	 *
 	 * @return a name info
 	 */
 	NameInfo getName();

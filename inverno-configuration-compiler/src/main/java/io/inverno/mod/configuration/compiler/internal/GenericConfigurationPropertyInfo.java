@@ -15,13 +15,12 @@
  */
 package io.inverno.mod.configuration.compiler.internal;
 
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.type.TypeMirror;
-
 import io.inverno.core.compiler.spi.ReporterInfo;
 import io.inverno.core.compiler.spi.support.AbstractInfo;
 import io.inverno.mod.configuration.compiler.spi.ConfigurationPropertyInfo;
 import io.inverno.mod.configuration.compiler.spi.PropertyQualifiedName;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * <p>
@@ -35,7 +34,7 @@ import io.inverno.mod.configuration.compiler.spi.PropertyQualifiedName;
  */
 class GenericConfigurationPropertyInfo extends AbstractInfo<PropertyQualifiedName> implements ConfigurationPropertyInfo {
 
-	private ExecutableElement accessor;
+	private final ExecutableElement accessor;
 	
 	public GenericConfigurationPropertyInfo(PropertyQualifiedName name, ReporterInfo reporter, ExecutableElement element) {
 		super(name, reporter);

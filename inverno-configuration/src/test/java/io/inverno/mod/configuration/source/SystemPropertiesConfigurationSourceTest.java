@@ -13,7 +13,6 @@ public class SystemPropertiesConfigurationSourceTest {
 
 	@Test
 	public void testSystemPropertiesConfigurationSource() throws URISyntaxException {
-
 		System.setProperty("tata.toto", "123456789");
 		System.setProperty("url", "https://localhost:8443");
 		System.setProperty("table","a,b,c");
@@ -37,30 +36,55 @@ public class SystemPropertiesConfigurationSourceTest {
 		Iterator<ConfigurationQueryResult> resultIterator = results.iterator();
 		
 		ConfigurationQueryResult current = resultIterator.next();
-		Assertions.assertTrue(current.getResult().isPresent());
-		Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
-		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("test", 5), Parameter.of("tutu", "plop"))));
-		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals(123456789, current.getResult().get().asInteger().get());
+		Assertions.assertTrue(current.isPresent());
+		Assertions.assertEquals("tata.toto", current.get().getKey().getName());
+		Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("test", 5), Parameter.of("tutu", "plop"))));
+		Assertions.assertTrue(current.get().isPresent());
+		Assertions.assertEquals(123456789, current.get().asInteger().get());
 		
 		current = resultIterator.next();
-		Assertions.assertTrue(current.getResult().isPresent());
-		Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
-		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("tutu", "plop"))));
-		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals(123456789, current.getResult().get().asInteger().get());
+		Assertions.assertTrue(current.isPresent());
+		Assertions.assertEquals("tata.toto", current.get().getKey().getName());
+		Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("tutu", "plop"))));
+		Assertions.assertTrue(current.get().isPresent());
+		Assertions.assertEquals(123456789, current.get().asInteger().get());
 		
 		current = resultIterator.next();
-		Assertions.assertTrue(current.getResult().isPresent());
-		Assertions.assertEquals("url", current.getResult().get().getKey().getName());
-		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals(new URI("https://localhost:8443"), current.getResult().get().asURI().get());
+		Assertions.assertTrue(current.isPresent());
+		Assertions.assertEquals("url", current.get().getKey().getName());
+		Assertions.assertTrue(current.get().isPresent());
+		Assertions.assertEquals(new URI("https://localhost:8443"), current.get().asURI().get());
 		
 		current = resultIterator.next();
-		Assertions.assertTrue(current.getResult().isPresent());
-		Assertions.assertEquals("table", current.getResult().get().getKey().getName());
-		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertArrayEquals(new String[] {"a","b","c"}, current.getResult().get().asArrayOf(String.class).get());
+		Assertions.assertTrue(current.isPresent());
+		Assertions.assertEquals("table", current.get().getKey().getName());
+		Assertions.assertTrue(current.get().isPresent());
+		Assertions.assertArrayEquals(new String[] {"a","b","c"}, current.get().asArrayOf(String.class).get());
 	}
 
+	@Test
+	public void testWithParameters() {
+		System.setProperty("tata.toto", "123456789");
+		System.setProperty("url", "https://localhost:8443");
+		System.setProperty("table","a,b,c");
+
+		SystemPropertiesConfigurationSource src = new SystemPropertiesConfigurationSource().withParameters("tutu", "plop","test", 5);
+
+		List<ConfigurationQueryResult> results = src
+			.get("tata.toto")
+			.execute()
+			.collectList()
+			.block();
+
+		Assertions.assertEquals(1, results.size());
+
+		Iterator<ConfigurationQueryResult> resultIterator = results.iterator();
+
+		ConfigurationQueryResult current = resultIterator.next();
+		Assertions.assertTrue(current.isPresent());
+		Assertions.assertEquals("tata.toto", current.get().getKey().getName());
+		Assertions.assertTrue(current.get().getKey().getParameters().containsAll(List.of(Parameter.of("test", 5), Parameter.of("tutu", "plop"))));
+		Assertions.assertTrue(current.get().isPresent());
+		Assertions.assertEquals(123456789, current.get().asInteger().get());
+	}
 }

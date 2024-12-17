@@ -132,7 +132,7 @@ public enum ECAlgorithm implements JWAAlgorithm<ECJWK> {
 	 * @param cipherFactory        the JWA cipher factory
 	 * @param keyWrappingAlgorithm the key wrapping algorithm
 	 */
-	private ECAlgorithm(String alg, BiFunction<ECJWK, ECAlgorithm, JWASigner> signerFactory, BiFunction<ECJWK, ECAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<ECJWK, ECAlgorithm, JWACipher> cipherFactory, String keyWrappingAlgorithm) {
+	ECAlgorithm(String alg, BiFunction<ECJWK, ECAlgorithm, JWASigner> signerFactory, BiFunction<ECJWK, ECAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<ECJWK, ECAlgorithm, JWACipher> cipherFactory, String keyWrappingAlgorithm) {
 		this(alg, signerFactory, keyManagerFactory, cipherFactory, null, null, keyWrappingAlgorithm);
 	}
 	
@@ -146,9 +146,9 @@ public enum ECAlgorithm implements JWAAlgorithm<ECJWK> {
 	 * @param keyManagerFactory the JWA key manager factory
 	 * @param cipherFactory     the JWA cipher factory
 	 * @param jcaAlg            the JCA signing algorithm
-	 * @param curve             the Ellitic curve bound to the algorithm
+	 * @param curve             the Elliptic curve bound to the algorithm
 	 */
-	private ECAlgorithm(String alg, BiFunction<ECJWK, ECAlgorithm, JWASigner> signerFactory, BiFunction<ECJWK, ECAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<ECJWK, ECAlgorithm, JWACipher> cipherFactory, String jcaAlg, ECCurve curve) {
+	ECAlgorithm(String alg, BiFunction<ECJWK, ECAlgorithm, JWASigner> signerFactory, BiFunction<ECJWK, ECAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<ECJWK, ECAlgorithm, JWACipher> cipherFactory, String jcaAlg, ECCurve curve) {
 		this(alg, signerFactory, keyManagerFactory, cipherFactory, jcaAlg, curve, null);
 	}
 	
@@ -162,10 +162,10 @@ public enum ECAlgorithm implements JWAAlgorithm<ECJWK> {
 	 * @param keyManagerFactory    the JWA key manager factory
 	 * @param cipherFactory        the JWA cipher factory
 	 * @param jcaAlg               the JCA signing algorithm
-	 * @param curve                the Ellitic curve bound to the algorithm
+	 * @param curve                the Elliptic curve bound to the algorithm
 	 * @param keyWrappingAlgorithm the key wrapping algorithm
 	 */
-	private ECAlgorithm(String alg, BiFunction<ECJWK, ECAlgorithm, JWASigner> signerFactory, BiFunction<ECJWK, ECAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<ECJWK, ECAlgorithm, JWACipher> cipherFactory, String jcaAlg, ECCurve curve, String keyWrappingAlgorithm) {
+	ECAlgorithm(String alg, BiFunction<ECJWK, ECAlgorithm, JWASigner> signerFactory, BiFunction<ECJWK, ECAlgorithm, JWAKeyManager> keyManagerFactory, BiFunction<ECJWK, ECAlgorithm, JWACipher> cipherFactory, String jcaAlg, ECCurve curve, String keyWrappingAlgorithm) {
 		this.alg = alg;
 		this.signerFactory = signerFactory;
 		this.keyManagerFactory = keyManagerFactory;
