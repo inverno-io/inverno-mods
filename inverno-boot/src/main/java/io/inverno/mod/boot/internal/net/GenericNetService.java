@@ -135,8 +135,6 @@ public class GenericNetService implements @Provide NetService {
 			DnsServerAddresses nameServerAddresses = addressResolverConfiguration.rotate_servers() ? DnsServerAddresses.rotational(nameServers) : DnsServerAddresses.sequential(nameServers);
 
 			DnsCache resolveCache = new DefaultDnsCache(addressResolverConfiguration.cache_min_ttl(), addressResolverConfiguration.cache_max_ttl(), addressResolverConfiguration.cache_negative_ttl());
-//			DnsCache authoritativeDnsServerCache = new DefaultDnsCache(addressResolverConfiguration.cache_min_ttl(), addressResolverConfiguration.cache_max_ttl(), addressResolverConfiguration.cache_negative_ttl());
-
 			AuthoritativeDnsServerCache authoritativeDnsServerCache = new DefaultAuthoritativeDnsServerCache(addressResolverConfiguration.cache_min_ttl(), addressResolverConfiguration.cache_max_ttl(), null);
 
 			DnsNameResolverBuilder builder = new DnsNameResolverBuilder()
