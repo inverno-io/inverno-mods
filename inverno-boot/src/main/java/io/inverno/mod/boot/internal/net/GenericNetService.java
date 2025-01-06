@@ -61,7 +61,10 @@ import io.netty.resolver.AddressResolverGroup;
 import io.netty.resolver.DefaultAddressResolverGroup;
 import io.netty.resolver.NameResolver;
 import io.netty.resolver.RoundRobinInetAddressResolver;
+import io.netty.resolver.dns.AuthoritativeDnsServerCache;
+import io.netty.resolver.dns.DefaultAuthoritativeDnsServerCache;
 import io.netty.resolver.dns.DefaultDnsCache;
+import io.netty.resolver.dns.DefaultDnsServerAddressStreamProvider;
 import io.netty.resolver.dns.DnsAddressResolverGroup;
 import io.netty.resolver.dns.DnsCache;
 import io.netty.resolver.dns.DnsNameResolverBuilder;
@@ -128,11 +131,13 @@ public class GenericNetService implements @Provide NetService {
 
 	private AddressResolverGroup<InetSocketAddress> createAddressResolver(NetAddressResolverConfiguration addressResolverConfiguration) {
 		if(addressResolverConfiguration.dns_enabled()) {
-			Collection<InetSocketAddress> nameServers = addressResolverConfiguration.name_servers() != null && !addressResolverConfiguration.name_servers().isEmpty() ? addressResolverConfiguration.name_servers() : DnsServerAddresses.defaultAddressList();
+			Collection<InetSocketAddress> nameServers = addressResolverConfiguration.name_servers() != null && !addressResolverConfiguration.name_servers().isEmpty() ? addressResolverConfiguration.name_servers() : DefaultDnsServerAddressStreamProvider.defaultAddressList();
 			DnsServerAddresses nameServerAddresses = addressResolverConfiguration.rotate_servers() ? DnsServerAddresses.rotational(nameServers) : DnsServerAddresses.sequential(nameServers);
 
 			DnsCache resolveCache = new DefaultDnsCache(addressResolverConfiguration.cache_min_ttl(), addressResolverConfiguration.cache_max_ttl(), addressResolverConfiguration.cache_negative_ttl());
-			DnsCache authoritativeDnsServerCache = new DefaultDnsCache(addressResolverConfiguration.cache_min_ttl(), addressResolverConfiguration.cache_max_ttl(), addressResolverConfiguration.cache_negative_ttl());
+//			DnsCache authoritativeDnsServerCache = new DefaultDnsCache(addressResolverConfiguration.cache_min_ttl(), addressResolverConfiguration.cache_max_ttl(), addressResolverConfiguration.cache_negative_ttl());
+
+			AuthoritativeDnsServerCache authoritativeDnsServerCache = new DefaultAuthoritativeDnsServerCache(addressResolverConfiguration.cache_min_ttl(), addressResolverConfiguration.cache_max_ttl(), null);
 
 			DnsNameResolverBuilder builder = new DnsNameResolverBuilder()
 				.nameServerProvider(hostname -> nameServerAddresses.stream())
@@ -153,22 +158,22 @@ public class GenericNetService implements @Provide NetService {
 
 			switch(this.transportType) {
 				case KQUEUE: {
-					builder.channelFactory(KQueueDatagramChannel::new);
+					builder.datagramChannelFactory(KQueueDatagramChannel::new);
 					builder.socketChannelFactory(KQueueSocketChannel::new);
 					break;
 				}
 				case EPOLL: {
-					builder.channelFactory(EpollDatagramChannel::new);
+					builder.datagramChannelFactory(EpollDatagramChannel::new);
 					builder.socketChannelFactory(EpollSocketChannel::new);
 					break;
 				}
 				case IO_URING: {
-					builder.channelFactory(IOUringDatagramChannel::new);
+					builder.datagramChannelFactory(IOUringDatagramChannel::new);
 					builder.socketChannelFactory(IOUringSocketChannel::new);
 					break;
 				}
 				default: {
-					builder.channelFactory(NioDatagramChannel::new);
+					builder.datagramChannelFactory(NioDatagramChannel::new);
 					builder.socketChannelFactory(NioSocketChannel::new);
 				}
 			}
@@ -438,7 +443,7 @@ public class GenericNetService implements @Provide NetService {
 	@Override
 	public Mono<InetSocketAddress> resolve(InetSocketAddress socketAddress) {
 		return Mono.create(sink -> {
-			EventLoop eventLoop = this.reactor.eventLoop().orElseGet(() -> this.reactor.getEventLoop());
+			EventLoop eventLoop = this.reactor.eventLoop().orElseGet(this.reactor::getEventLoop);
 			this.addressResolverGroup.getResolver(eventLoop).resolve(socketAddress).addListener(result -> {
 				if(result.isSuccess()) {
 					sink.success((InetSocketAddress)result.get());
@@ -451,9 +456,10 @@ public class GenericNetService implements @Provide NetService {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public Mono<List<InetSocketAddress>> resolveAll(InetSocketAddress socketAddress) {
 		return Mono.create(sink -> {
-			EventLoop eventLoop = this.reactor.eventLoop().orElseGet(() -> this.reactor.getEventLoop());
+			EventLoop eventLoop = this.reactor.eventLoop().orElseGet(this.reactor::getEventLoop);
 			this.addressResolverGroup.getResolver(eventLoop).resolveAll(socketAddress).addListener(result -> {
 				if(result.isSuccess()) {
 					sink.success((List<InetSocketAddress>)result.get());

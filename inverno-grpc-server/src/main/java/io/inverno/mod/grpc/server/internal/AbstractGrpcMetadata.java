@@ -102,6 +102,7 @@ public abstract class AbstractGrpcMetadata<A extends InboundHeaders> implements 
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T extends MessageLite> Optional<T> getBinary(CharSequence name, T defaultMessageInstance) {
 		return this.headers.get(name + "-bin")
 			.map(value -> {

@@ -99,11 +99,6 @@ public class HttpAccessLogsInterceptor<A extends ExchangeContext, B extends Exch
 			this.referer = exchange.request().headers().get(Headers.NAME_REFERER).orElse("");
 			this.userAgent = exchange.request().headers().get(Headers.NAME_USER_AGENT).orElse("");
 		}
-		
-		@Override
-		public String getFormat() {
-			return Strings.EMPTY;
-		}
 
 		@Override
 		public Object[] getParameters() {

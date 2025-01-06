@@ -147,16 +147,16 @@ public abstract class AbstractRedisClient<A, B, C extends StatefulConnection<A, 
 	@Override
 	public <T> Publisher<T> batch(Function<RedisOperations<A, B>, Publisher<Publisher<T>>> function) {
 		return Flux.usingWhen(
-			this.operations().doOnNext(o -> o.getCommands().setAutoFlushCommands(false)), 
+			this.operations().doOnNext(o -> o.getConnection().setAutoFlushCommands(false)),
 			// the mergeSequential concurrency here is an issue when batching many commands ending with a deadlock
 			// we have to flush commands by block: 256 is the default mergeSequential() concurrency
 			operations -> Flux.from(function.apply(operations))
 				.buffer(Queues.SMALL_BUFFER_SIZE) // use default mergeSequential() concurrency size: 256
-				.flatMap(commands -> Flux.mergeSequential(commands).mergeWith(Mono.<T>empty().doOnSubscribe(ign -> operations.getCommands().flushCommands())))
+				.flatMap(commands -> Flux.mergeSequential(commands).mergeWith(Mono.<T>empty().doOnSubscribe(ign -> operations.getConnection().flushCommands())))
 			,
 			operations -> {
 				// restore default and close operations
-				operations.getCommands().setAutoFlushCommands(true);
+				operations.getConnection().setAutoFlushCommands(true);
 				return operations.close();
 			}
 		);

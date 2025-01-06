@@ -59,6 +59,7 @@ public interface RedisTransactionalClient<A, B> extends RedisClient<A, B> {
 	 * 
 	 * @return a mono emitting a transactional operations object
 	 */
+	@SuppressWarnings("unchecked")
 	Mono<RedisTransactionalOperations<A, B>> multi(A... watches);
 	
 	/**
@@ -90,5 +91,6 @@ public interface RedisTransactionalClient<A, B> extends RedisClient<A, B> {
 	 * 
 	 * @return a mono emitting transaction result
 	 */
+	@SuppressWarnings("unchecked")
 	Mono<RedisTransactionResult> multi(Function<RedisOperations<A, B>, Publisher<Publisher<?>>> function, A... watches);
 }

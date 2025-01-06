@@ -77,7 +77,8 @@ public class PoolRedisClient<A, B, C extends StatefulRedisConnection<A, B>> exte
 	}
 	
 	@Override
-	public Mono<RedisTransactionalOperations<A, B>> multi(A... watches) {
+	@SafeVarargs
+	public final Mono<RedisTransactionalOperations<A, B>> multi(A... watches) {
 		return this.transactionalOperations().flatMap(operations -> {
 			if(watches != null && watches.length > 0) {
 				return operations.getCommands().watch(watches).then(operations.getCommands().multi().map(r -> {
@@ -103,7 +104,8 @@ public class PoolRedisClient<A, B, C extends StatefulRedisConnection<A, B>> exte
 	}
 
 	@Override
-	public Mono<RedisTransactionResult> multi(Function<RedisOperations<A, B>, Publisher<Publisher<?>>> function, A... watches) {
+	@SafeVarargs
+	public final Mono<RedisTransactionResult> multi(Function<RedisOperations<A, B>, Publisher<Publisher<?>>> function, A... watches) {
 		// commands must be subscribed in the function: .set(...).subscribe() which basically returns QUEUED
 		return Mono.usingWhen(
 			this.multi(watches),

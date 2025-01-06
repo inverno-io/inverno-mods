@@ -97,7 +97,15 @@ public class StatefulRedisConnectionOperations<A, B, C extends StatefulConnectio
 	public Mono<Void> close() {
 		return Mono.fromCompletionStage(this.pool.release(this.connection));
 	}
-	
+
+	/**
+	 *
+	 * @return
+	 */
+	public C getConnection() {
+		return connection;
+	}
+
 	/**
 	 * 
 	 * @return 

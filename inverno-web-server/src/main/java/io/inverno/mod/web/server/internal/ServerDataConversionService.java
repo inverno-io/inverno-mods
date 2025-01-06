@@ -210,6 +210,7 @@ public class ServerDataConversionService implements DataConversionService {
 		}
 
 		@Override
+		@SuppressWarnings("unchecked")
 		public void from(BiConsumer<EventFactory<A>, OutboundData<Event<A>>> data) {
 			this.rawSse.from((rawEvents, rawData) -> data.accept(
 				eventConfigurer -> {
