@@ -36,7 +36,7 @@ import java.util.function.Consumer;
  * @param <D> the response type
  */
 public abstract class AbstractResponse<A extends AbstractResponseHeaders<?>, B extends AbstractResponseBody<A, B>, C extends AbstractResponseTrailers<?>, D extends AbstractResponse<A, B, C, D>> implements Response {
-	
+
 	/**
 	 * The header service.
 	 */
@@ -75,7 +75,7 @@ public abstract class AbstractResponse<A extends AbstractResponseHeaders<?>, B e
 		this.head = head;
 		this.headers = headers;
 	}
-	
+
 	/**
 	 * <p>
 	 * Sends the response.

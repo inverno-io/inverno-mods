@@ -28,6 +28,9 @@ import io.inverno.mod.http.server.ServerController;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.inverno.mod.http.server.ws.WebSocket;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import java.util.Optional;
 import org.reactivestreams.Subscription;
@@ -52,6 +55,8 @@ class Http1xExchange extends AbstractHttp1xExchange {
 	private final ExchangeContext context;
 	private final Http1xRequest request;
 	private final Http1xResponse response;
+
+	private final boolean keepAlive;
 	
 	private Http1xWebSocket webSocket;
 	
@@ -83,7 +88,7 @@ class Http1xExchange extends AbstractHttp1xExchange {
 			Http1xConnection connection,
 			HttpRequest request
 		) {
-		super(configuration, controller, connection, request);
+		super(configuration, controller, connection, request.method() == HttpMethod.HEAD, request.protocolVersion());
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		this.headersValidator = headersValidator;
@@ -93,14 +98,36 @@ class Http1xExchange extends AbstractHttp1xExchange {
 			this.context.init();
 		}
 		this.request = new Http1xRequest(headerService, parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder, connection, request);
-		this.response = new Http1xResponse(headerService, parameterConverter, headersValidator, connection, this.version, this.head, this.keepAlive);
+		this.response = new Http1xResponse(headerService, parameterConverter, headersValidator, connection, this.version, this.head);
+
+		if(this.version == io.netty.handler.codec.http.HttpVersion.HTTP_1_1) {
+			if(request.headers().contains(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE, true)) {
+				this.keepAlive = false;
+				this.response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
+			}
+			else {
+				this.keepAlive = true;
+			}
+		}
+		else if(request.headers().contains(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE, true)) {
+			this.keepAlive = true;
+			this.response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+		}
+		else {
+			this.keepAlive = false;
+		}
 	}
 
 	@Override
 	Http1xExchange unwrap() {
 		return this;
 	}
-	
+
+	@Override
+	boolean isKeepAlive() {
+		return this.keepAlive;
+	}
+
 	@Override
 	public void start() {
 		try {
@@ -150,7 +177,7 @@ class Http1xExchange extends AbstractHttp1xExchange {
 	
 	@Override
 	public Http1xErrorExchange createErrorExchange(Throwable throwable) {
-		return new Http1xErrorExchange(this, new Http1xResponse(this.headerService, this.parameterConverter, this.headersValidator, this.connection, this.version, this.head, this.keepAlive), throwable);
+		return new Http1xErrorExchange(this, new Http1xResponse(this.headerService, this.parameterConverter, this.headersValidator, this.connection, this.version, this.head), throwable);
 	}
 
 	@Override
@@ -198,7 +225,7 @@ class Http1xExchange extends AbstractHttp1xExchange {
 	 * @since 1.10
 	 */
 	private class ExchangeHandlerSubscriber extends BaseSubscriber<Void> {
-		
+
 		@Override
 		protected void hookOnSubscribe(Subscription subscription) {
 			Http1xExchange.this.disposable = this;

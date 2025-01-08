@@ -770,7 +770,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 			if(this.respondingExchange != null) {
 				// The responding exchange might be null when the connection is closed before the exchange gets completed
 				// This especially happens when the handler invoked a non-blocking operation (e.g. client call) on a different thread
-				if(!this.respondingExchange.keepAlive) {
+				if(!this.respondingExchange.isKeepAlive()) {
 					this.shutdown().subscribe();
 				}
 				else {

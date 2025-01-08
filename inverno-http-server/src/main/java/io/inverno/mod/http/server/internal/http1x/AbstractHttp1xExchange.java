@@ -52,15 +52,12 @@ abstract class AbstractHttp1xExchange extends AbstractExchange<Http1xRequest, Ht
 	 * The Http/1.x connection.
 	 */
 	protected final Http1xConnection connection;
+
 	/**
 	 * The HTTP version.
 	 */
 	protected final io.netty.handler.codec.http.HttpVersion version;
-	/**
-	 * Flag indicating whether the request is a keep-alive request.
-	 */
-	protected final boolean keepAlive;
-	
+
 	/**
 	 * The next exchange to process in the request pipeline.
 	 */
@@ -76,19 +73,17 @@ abstract class AbstractHttp1xExchange extends AbstractExchange<Http1xRequest, Ht
 	 * @param configuration the server configuration
 	 * @param controller    the server controller
 	 * @param connection    the Http/1.x connection
-	 * @param request       the originating HTTP request
 	 */
 	public AbstractHttp1xExchange(
 			HttpServerConfiguration configuration, 
 			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller, 
-			Http1xConnection connection, 
-			HttpRequest request
+			Http1xConnection connection,
+			boolean head,
+			io.netty.handler.codec.http.HttpVersion version
 		) {
-		super(configuration, controller, request.method() == HttpMethod.HEAD);
+		super(configuration, controller, head);
 		this.connection = connection;
-		this.version = request.protocolVersion();
-		this.keepAlive = (this.version == io.netty.handler.codec.http.HttpVersion.HTTP_1_1 && !request.headers().contains(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE, true)) || 
-			(this.version == io.netty.handler.codec.http.HttpVersion.HTTP_1_0 && request.headers().contains(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE, true));
+		this.version = version;
 	}
 
 	/**
@@ -106,7 +101,6 @@ abstract class AbstractHttp1xExchange extends AbstractExchange<Http1xRequest, Ht
 		super(parentExchange);
 		this.connection = parentExchange.connection;
 		this.version = parentExchange.version;
-		this.keepAlive = parentExchange.keepAlive;
 		this.next = parentExchange.next;
 		this.reset = parentExchange.reset;
 	}
@@ -119,7 +113,16 @@ abstract class AbstractHttp1xExchange extends AbstractExchange<Http1xRequest, Ht
 	 * @return the originating exchange
 	 */
 	abstract Http1xExchange unwrap();
-	
+
+	/**
+	 * <p>
+	 * Determines whether the connection should be kept alive after processing the exchange.
+	 * </p>
+	 *
+	 * @return true when the connection must be kept alive, false otherwise
+	 */
+	abstract boolean isKeepAlive();
+
 	@Override
 	public final HttpVersion getProtocol() {
 		return this.version == io.netty.handler.codec.http.HttpVersion.HTTP_1_0 ? io.inverno.mod.http.base.HttpVersion.HTTP_1_0 : io.inverno.mod.http.base.HttpVersion.HTTP_1_1;
@@ -137,11 +140,11 @@ abstract class AbstractHttp1xExchange extends AbstractExchange<Http1xRequest, Ht
 				else {
 					LinkedHttpHeaders httpHeaders = new LinkedHttpHeaders();
 					if(this.version == io.netty.handler.codec.http.HttpVersion.HTTP_1_0) {
-						if(this.keepAlive) {
+						if(this.isKeepAlive()) {
 							httpHeaders.set((CharSequence)Headers.NAME_CONNECTION, (CharSequence)Headers.VALUE_KEEP_ALIVE);
 						}
 					}
-					else if(!this.keepAlive) {
+					else if(!this.isKeepAlive()) {
 						httpHeaders.set((CharSequence)Headers.NAME_CONNECTION, (CharSequence)Headers.VALUE_CLOSE);
 					}
 					httpHeaders.set((CharSequence)Headers.NAME_CONTENT_LENGTH, (CharSequence)"0");

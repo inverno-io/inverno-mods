@@ -74,7 +74,12 @@ class Http1xErrorExchange extends AbstractHttp1xExchange implements ErrorExchang
 	Http1xExchange unwrap() {
 		return this.exchange;
 	}
-	
+
+	@Override
+	boolean isKeepAlive() {
+		return this.exchange.isKeepAlive();
+	}
+
 	@Override
 	public void start() {
 		this.connection.respondingExchange = this;
