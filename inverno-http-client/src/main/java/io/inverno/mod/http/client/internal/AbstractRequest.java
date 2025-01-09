@@ -20,8 +20,10 @@ import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.OutboundRequestHeaders;
 import io.inverno.mod.http.base.internal.GenericQueryParameters;
+import io.netty.buffer.ByteBuf;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import reactor.core.publisher.BaseSubscriber;
 
 /**
  * <p>
@@ -33,7 +35,7 @@ import java.net.SocketAddress;
  * 
  * @param <A> the HTTP request headers type
  */
-public abstract class AbstractRequest<A extends OutboundRequestHeaders> implements HttpConnectionRequest {
+public abstract class AbstractRequest<A extends OutboundRequestHeaders> extends BaseSubscriber<ByteBuf> implements HttpConnectionRequest {
 	
 	private final ObjectConverter<String> parameterConverter;
 	

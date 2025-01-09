@@ -200,82 +200,82 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 
 	private void sanitizeResponse() {
 		HttpHeaders httpTrailers = EmptyHttpHeaders.INSTANCE;
-		switch(Http1xResponse.this.headers.getStatusCode()) {
+		switch(this.headers.getStatusCode()) {
 			case 204:
 			case 304: {
-				Http1xResponse.this.headers.remove(HttpHeaderNames.TRANSFER_ENCODING);
+				this.headers.remove(HttpHeaderNames.TRANSFER_ENCODING);
 				break;
 			}
 			default: {
-				if(!Http1xResponse.this.headers.contains(HttpHeaderNames.CONTENT_LENGTH)) {
-					List<String> transferEncodings = Http1xResponse.this.headers.getAll(HttpHeaderNames.TRANSFER_ENCODING);
+				if(!this.headers.contains(HttpHeaderNames.CONTENT_LENGTH)) {
+					List<String> transferEncodings = this.headers.getAll(HttpHeaderNames.TRANSFER_ENCODING);
 					if(!this.many && (transferEncodings.isEmpty() || !transferEncodings.getLast().endsWith(Headers.VALUE_CHUNKED))) {
-						Http1xResponse.this.headers.set(HttpHeaderNames.CONTENT_LENGTH, "" + Http1xResponse.this.transferredLength);
+						this.headers.set(HttpHeaderNames.CONTENT_LENGTH, Integer.toString(this.transferredLength));
 					}
 					else {
 						if(transferEncodings.isEmpty()) {
-							Http1xResponse.this.headers.add(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
+							this.headers.add(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
 						}
-						Http1xResponse.this.headers.get(HttpHeaderNames.CONTENT_TYPE)
+						this.headers.get(HttpHeaderNames.CONTENT_TYPE)
 							.ifPresent(contentType -> this.sse = contentType.regionMatches(true, 0, MediaTypes.TEXT_EVENT_STREAM, 0, MediaTypes.TEXT_EVENT_STREAM.length()));
 					}
 				}
 
-				if(Http1xResponse.this.trailers != null) {
-					httpTrailers = Http1xResponse.this.trailers.unwrap();
-					Http1xResponse.this.headers.set(HttpHeaderNames.TRAILER, String.join(", ", httpTrailers.names()));
+				if(this.trailers != null) {
+					httpTrailers = this.trailers.unwrap();
+					this.headers.set(HttpHeaderNames.TRAILER, String.join(", ", httpTrailers.names()));
 				}
 			}
 		}
 		this.httpTrailers = httpTrailers;
-		this.httpStatus = HttpResponseStatus.valueOf(Http1xResponse.this.headers.getStatusCode());
+		this.httpStatus = HttpResponseStatus.valueOf(this.headers.getStatusCode());
 	}
 
 	private Charset getCharset() {
-		if(Http1xResponse.this.isHeadersWritten()) {
-			this.charset = Http1xResponse.this.headers.<Headers.ContentType>getHeader(HttpHeaderNames.CONTENT_TYPE).map(Headers.ContentType::getCharset).orElse(Charsets.DEFAULT);
+		if(this.isHeadersWritten()) {
+			this.charset = this.headers.<Headers.ContentType>getHeader(HttpHeaderNames.CONTENT_TYPE).map(Headers.ContentType::getCharset).orElse(Charsets.DEFAULT);
 		}
 		if(this.charset == null) {
-			return Http1xResponse.this.headers.<Headers.ContentType>getHeader(HttpHeaderNames.CONTENT_TYPE).map(Headers.ContentType::getCharset).orElse(Charsets.DEFAULT);
+			return this.headers.<Headers.ContentType>getHeader(HttpHeaderNames.CONTENT_TYPE).map(Headers.ContentType::getCharset).orElse(Charsets.DEFAULT);
 		}
 		return this.charset;
 	}
 
 	@Override
 	protected void hookOnSubscribe(Subscription subscription) {
-		Http1xResponse.this.disposable = this;
+		this.disposable = this;
 		subscription.request(this.mono ? 1 : Long.MAX_VALUE);
 	}
 
 	@Override
 	protected void hookOnNext(ByteBuf value) {
-		Http1xResponse.this.transferredLength += value.readableBytes();
+		this.transferredLength += value.readableBytes();
 		if(this.mono || (!this.many && this.singleChunk == null)) {
 			this.singleChunk = value;
 		}
 		else {
 			this.many = true;
-			if(!Http1xResponse.this.headers.isWritten()) {
+			if(!this.headers.isWritten()) {
 				this.sanitizeResponse();
 				if(this.sse) {
 					ByteBuf chunked_header = Unpooled.copiedBuffer(Integer.toHexString(this.singleChunk.readableBytes()) + "\r\n", Charsets.orDefault(this.getCharset()));
 					ByteBuf chunked_trailer = Unpooled.copiedBuffer("\r\n", Charsets.orDefault(this.getCharset()));
-					Http1xResponse.this.connection.writeHttpObject(new FlatHttpResponse(Http1xResponse.this.version, this.httpStatus, Http1xResponse.this.headers.unwrap(), Unpooled.wrappedBuffer(chunked_header, this.singleChunk, chunked_trailer)));
+					this.connection.writeHttpObject(new FlatHttpResponse(this.version, this.httpStatus, this.headers.unwrap(), Unpooled.wrappedBuffer(chunked_header, this.singleChunk, chunked_trailer)));
 				}
 				else {
-					Http1xResponse.this.connection.writeHttpObject(new FlatHttpResponse(Http1xResponse.this.version, this.httpStatus, Http1xResponse.this.headers.unwrap(), this.singleChunk));
+					this.connection.writeHttpObject(new FlatHttpResponse(this.version, this.httpStatus, this.headers.unwrap(), this.singleChunk));
 				}
 				this.singleChunk = null;
-				Http1xResponse.this.headers.setWritten();
+				this.headers.setWritten();
 			}
 
 			if(this.sse) {
 				ByteBuf chunked_header = Unpooled.copiedBuffer(Integer.toHexString(value.readableBytes()) + "\r\n", Charsets.orDefault(this.getCharset()));
 				ByteBuf chunked_trailer = Unpooled.copiedBuffer("\r\n", Charsets.orDefault(this.getCharset()));
-				Http1xResponse.this.connection.writeHttpObject(new DefaultHttpContent(Unpooled.wrappedBuffer(chunked_header, value, chunked_trailer)));
+				this.connection.writeHttpObject(new DefaultHttpContent(Unpooled.wrappedBuffer(chunked_header, value, chunked_trailer)));
 			}
 			else {
-				Http1xResponse.this.connection.writeHttpObject(new DefaultHttpContent(value));
+				this.connection.writeHttpObject(new DefaultHttpContent(value));
 			}
 		}
 	}
@@ -284,22 +284,23 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 	protected void hookOnComplete() {
 		if(this.mono || !this.many) {
 			this.sanitizeResponse();
-			Http1xResponse.this.connection.writeHttpObject(new FlatFullHttpResponse(Http1xResponse.this.version, this.httpStatus, Http1xResponse.this.headers.unwrap(), this.singleChunk != null ? this.singleChunk : Unpooled.EMPTY_BUFFER, httpTrailers));
-			Http1xResponse.this.headers.setWritten();
-			if(Http1xResponse.this.trailers != null) {
-				Http1xResponse.this.trailers.setWritten();
+			this.connection.writeHttpObject(new FlatFullHttpResponse(this.version, this.httpStatus, this.headers.unwrap(), this.singleChunk != null ? this.singleChunk : Unpooled.EMPTY_BUFFER, httpTrailers));
+			this.headers.setWritten();
+			if(this.trailers != null) {
+				this.trailers.setWritten();
 			}
+			this.singleChunk = null;
 		}
 		else {
-			if(Http1xResponse.this.trailers == null) {
-				Http1xResponse.this.connection.writeHttpObject(LastHttpContent.EMPTY_LAST_CONTENT);
+			if(this.trailers == null) {
+				this.connection.writeHttpObject(LastHttpContent.EMPTY_LAST_CONTENT);
 			}
 			else {
-				Http1xResponse.this.connection.writeHttpObject(new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, this.httpTrailers));
-				Http1xResponse.this.trailers.setWritten();
+				this.connection.writeHttpObject(new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, this.httpTrailers));
+				this.trailers.setWritten();
 			}
 		}
-		Http1xResponse.this.connection.onExchangeComplete();
+		this.connection.onExchangeComplete();
 	}
 
 	@Override
@@ -311,7 +312,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 
 	@Override
 	protected void hookOnError(Throwable throwable) {
-		Http1xResponse.this.connection.onExchangeError(throwable);
+		this.connection.onExchangeError(throwable);
 	}
 
 	/**

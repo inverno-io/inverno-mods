@@ -26,6 +26,7 @@ import io.netty.buffer.Unpooled;
 import java.net.SocketAddress;
 import java.security.cert.Certificate;
 import java.util.Optional;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
 import reactor.core.publisher.BaseSubscriber;
@@ -105,7 +106,9 @@ public class Http2Request extends AbstractRequest<Http2RequestHeaders> {
 	 * </p>
 	 */
 	void sendBody() {
-		this.body.getData().subscribe(this.body.getData() instanceof Mono ? new Http2Request.MonoBodyDataSubscriber() : new Http2Request.BodyDataSubscriber());
+		Publisher<ByteBuf> data = this.body.getData();
+		this.mono = data instanceof Mono;
+		data.subscribe(this);
 	}
 	
 	/**
@@ -153,167 +156,99 @@ public class Http2Request extends AbstractRequest<Http2RequestHeaders> {
 	public Optional<Certificate[]> getRemoteCertificates() {
 		return this.connectionStream.getRemoteCertificates();
 	}
-	
-	/**
-	 * <p>
-	 * The request body data publisher optimized for {@link Mono} publisher that writes a single request object to the connection.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.11
-	 */
-	private class MonoBodyDataSubscriber extends BaseSubscriber<ByteBuf> {
-		private ByteBuf data;
-		
-		@Override
-		protected void hookOnSubscribe(Subscription subscription) {
-			Http2Request.this.disposable = this;
-			subscription.request(1);
-		}
-		
-		@Override
-		protected void hookOnNext(ByteBuf value) {
-			Http2Request.this.transferredLength += value.readableBytes();
-			this.data = value;
-		}
 
-		@Override
-		protected void hookOnComplete() {
-			if(!Http2Request.this.connectionStream.isReset()) {
-				if(Http2Request.this.headers.isWritten()) {
-					if(this.data == null) {
-						Http2Request.this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
+	private boolean mono;
+	private ByteBuf singleChunk;
+	private boolean many;
+
+	@Override
+	protected void hookOnSubscribe(Subscription subscription) {
+		this.disposable = this;
+		subscription.request(1);
+	}
+
+	@Override
+	protected void hookOnNext(ByteBuf value) {
+		this.transferredLength += value.readableBytes();
+		if(this.mono || (!this.many && this.singleChunk == null)) {
+			this.singleChunk = value;
+			this.request(1);
+		}
+		else if(!this.connectionStream.isReset()) {
+			this.many = true;
+			if(!this.headers.isWritten()) {
+				this.connectionStream.writeHeaders(this.headers.unwrap(), 0, false);
+				this.headers.setWritten();
+				this.connectionStream.writeData(this.singleChunk, 0, false);
+				this.singleChunk = null;
+			}
+
+			/*
+			 * In case of big request body, we can end up flooding the channel with WRITE operations, preventing READ to happen.
+			 * This is problematic and will result in connection errors when the server sends a response and terminates the exchange before the request has been entirely sent
+			 * (e.g. 413 REQUEST ENTITY TOO LARGE).
+			 * To fix this, we simply wait for the write operation to succeed before requesting the next chunk.
+			 *
+			 * TODO this basically serializes the write operation and might lead to buffering which has an impact on performance
+			 */
+			this.connectionStream.writeData(value, 0, false, this.connectionStream.newPromise().addListener(future -> {
+				if(future.isSuccess()) {
+					this.request(1);
+				}
+			}));
+		}
+	}
+
+	@Override
+	protected void hookOnComplete() {
+		if(!this.connectionStream.isReset()) {
+			if(this.mono || !this.many) {
+				if(this.headers.isWritten()) {
+					if(this.singleChunk == null) {
+						this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
 					}
 					else {
-						Http2Request.this.connectionStream.writeData(this.data, 0, true);
+						this.connectionStream.writeData(this.singleChunk, 0, true);
+						this.singleChunk = null;
 					}
 				}
 				else {
-					if(!Http2Request.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
-						Http2Request.this.headers.contentLength(Http2Request.this.transferredLength);
+					if(!this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
+						this.headers.contentLength(this.transferredLength);
 					}
-
-					if(this.data == null) {
-						Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, true);
-						Http2Request.this.headers.setWritten();
+					if(this.singleChunk == null) {
+						this.connectionStream.writeHeaders(this.headers.unwrap(), 0, true);
+						this.headers.setWritten();
 					}
 					else {
-						Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, false);
-						Http2Request.this.headers.setWritten();
-						Http2Request.this.connectionStream.writeData(this.data, 0, true);
+						this.connectionStream.writeHeaders(this.headers.unwrap(), 0, false);
+						this.headers.setWritten();
+						this.connectionStream.writeData(this.singleChunk, 0, true);
+						this.singleChunk = null;
 					}
 				}
 			}
-		}
-		
-		@Override
-		protected void hookOnError(Throwable throwable) {
-			if(!Http2Request.this.connectionStream.isReset()) {
-				Http2Request.this.connectionStream.onRequestError(throwable);
+			else {
+				this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
 			}
 		}
 	}
-	
-	/**
-	 * <p>
-	 * The request body data subscriber that writes request objects to the connection.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.11
-	 */
-	private class BodyDataSubscriber extends BaseSubscriber<ByteBuf> {
-		
-		private ByteBuf singleChunk;
-		private boolean many;
-		
-		@Override
-		protected void hookOnSubscribe(Subscription subscription) {
-			Http2Request.this.disposable = this;
-			subscription.request(1);
-		}
-		
-		@Override
-		protected void hookOnNext(ByteBuf value) {
-			if(!Http2Request.this.connectionStream.isReset()) {
-				Http2Request.this.transferredLength += value.readableBytes();
-				if(!this.many && this.singleChunk == null) {
-					this.singleChunk = value;
-					this.request(1);
-				}
-				else {
-					this.many = true;
-					if(!Http2Request.this.headers.isWritten()) {
-						Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, false);
-						Http2Request.this.headers.setWritten();
-						Http2Request.this.connectionStream.writeData(this.singleChunk, 0, false);
-						this.singleChunk = null;
-					}
 
-					/*
-					 * In case of big request body, we can end up flooding the channel with WRITE operations, preventing READ to happen.
-					 * This is problematic and will result in connection errors when the server sends a response and terminates the exchange before the request has been entirely sent
-					 * (e.g. 413 REQUEST ENTITY TOO LARGE).
-					 * To fix this, we simply wait for the write operation to succeed before requesting the next chunk.
-					 */
-					Http2Request.this.connectionStream.writeData(value, 0, false, Http2Request.this.connectionStream.newPromise().addListener(future -> {
-						if(future.isSuccess()) {
-							this.request(1);
-						}
-					}));
-				}
-			}
+	@Override
+	protected void hookOnCancel() {
+		if(this.singleChunk != null) {
+			this.singleChunk.release();
 		}
-
-		@Override
-		protected void hookOnComplete() {
-			if(!Http2Request.this.connectionStream.isReset()) {
-				if(this.many) {
-					Http2Request.this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
-				}
-				else {
-					if(Http2Request.this.headers.isWritten()) {
-						if(this.singleChunk == null) {
-							Http2Request.this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
-						}
-						else {
-							Http2Request.this.connectionStream.writeData(this.singleChunk, 0, true);
-						}
-					}
-					else {
-						if(!Http2Request.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
-							Http2Request.this.headers.contentLength(Http2Request.this.transferredLength);
-						}
-						if(this.singleChunk == null) {
-							Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, true);
-							Http2Request.this.headers.setWritten();
-						}
-						else {
-							Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, false);
-							Http2Request.this.headers.setWritten();
-							Http2Request.this.connectionStream.writeData(this.singleChunk, 0, true);
-							this.singleChunk = null;
-						}
-					}
-				}
-			}
+		if(this.many && !this.connectionStream.isReset()) {
+			// Make sure the HTTP protocol flow is correct
+			this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
 		}
+	}
 
-		@Override
-		protected void hookOnError(Throwable throwable) {
-			if(!Http2Request.this.connectionStream.isReset()) {
-				Http2Request.this.connectionStream.onRequestError(throwable);
-			}
-		}
-
-		@Override
-		protected void hookOnCancel() {
-			if(!Http2Request.this.connectionStream.isReset()) {
-				// Make sure the HTTP protocol flow is correct
-				if(this.many) {
-					Http2Request.this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
-				}
-			}
+	@Override
+	protected void hookOnError(Throwable throwable) {
+		if(!this.connectionStream.isReset()) {
+			this.connectionStream.onRequestError(throwable);
 		}
 	}
 }

@@ -184,47 +184,46 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 	@Override
 	protected void hookOnComplete() {
 		if(!this.connectionStream.isReset()) {
-			if(!this.connectionStream.isReset()) {
-				if(this.mono || !this.many) {
-					if(!this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
-						this.headers.contentLength(this.transferredLength);
-					}
+			if(this.mono || !this.many) {
+				if(!this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
+					this.headers.contentLength(this.transferredLength);
+				}
 
-					if(this.singleChunk == null) {
-						if(this.trailers == null) {
-							this.connectionStream.writeHeaders(this.headers.unwrap(), 0, true);
-							this.headers.setWritten();
-						}
-						else {
-							this.connectionStream.writeHeaders(this.headers.unwrap(), 0, false);
-							this.headers.setWritten();
-							this.connectionStream.writeHeaders(this.trailers.unwrap(), 0, true);
-							this.trailers.setWritten();
-						}
+				if(this.singleChunk == null) {
+					if(this.trailers == null) {
+						this.connectionStream.writeHeaders(this.headers.unwrap(), 0, true);
+						this.headers.setWritten();
 					}
 					else {
-						if(this.trailers == null) {
-							this.connectionStream.writeHeaders(this.headers.unwrap(), 0, false);
-							this.headers.setWritten();
-							this.connectionStream.writeData(this.singleChunk, 0, true);
-						}
-						else {
-							this.connectionStream.writeHeaders(this.headers.unwrap(), 0, false);
-							this.headers.setWritten();
-							this.connectionStream.writeData(this.singleChunk, 0, false);
-							this.connectionStream.writeHeaders(this.trailers.unwrap(), 0, true);
-							this.trailers.setWritten();
-						}
+						this.connectionStream.writeHeaders(this.headers.unwrap(), 0, false);
+						this.headers.setWritten();
+						this.connectionStream.writeHeaders(this.trailers.unwrap(), 0, true);
+						this.trailers.setWritten();
 					}
 				}
 				else {
 					if(this.trailers == null) {
-						this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
+						this.connectionStream.writeHeaders(this.headers.unwrap(), 0, false);
+						this.headers.setWritten();
+						this.connectionStream.writeData(this.singleChunk, 0, true);
 					}
 					else {
+						this.connectionStream.writeHeaders(this.headers.unwrap(), 0, false);
+						this.headers.setWritten();
+						this.connectionStream.writeData(this.singleChunk, 0, false);
 						this.connectionStream.writeHeaders(this.trailers.unwrap(), 0, true);
 						this.trailers.setWritten();
 					}
+					this.singleChunk = null;
+				}
+			}
+			else {
+				if(this.trailers == null) {
+					this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
+				}
+				else {
+					this.connectionStream.writeHeaders(this.trailers.unwrap(), 0, true);
+					this.trailers.setWritten();
 				}
 			}
 		}

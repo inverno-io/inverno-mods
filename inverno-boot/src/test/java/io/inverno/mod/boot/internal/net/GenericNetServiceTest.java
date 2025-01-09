@@ -17,8 +17,6 @@ package io.inverno.mod.boot.internal.net;
 
 import io.inverno.mod.boot.Boot;
 import io.inverno.mod.boot.BootConfigurationLoader;
-import io.netty.resolver.dns.DnsNameResolver;
-import io.netty.resolver.dns.DnsNameResolverBuilder;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;

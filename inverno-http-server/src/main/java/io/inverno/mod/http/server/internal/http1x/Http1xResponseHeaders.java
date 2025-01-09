@@ -115,7 +115,7 @@ class Http1xResponseHeaders extends AbstractResponseHeaders<Http1xResponseHeader
 
 	@Override
 	public Http1xResponseHeaders contentLength(long contentLength) {
-		this.headers.set((CharSequence)Headers.NAME_CONTENT_LENGTH, "" + contentLength);
+		this.headers.set((CharSequence)Headers.NAME_CONTENT_LENGTH, Long.toString(contentLength));
 		return this;
 	}
 	
