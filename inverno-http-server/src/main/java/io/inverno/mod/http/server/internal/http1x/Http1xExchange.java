@@ -131,7 +131,7 @@ class Http1xExchange extends AbstractHttp1xExchange {
 	@Override
 	public void start() {
 		try {
-			this.controller.defer(this).subscribe(new Http1xExchange.ExchangeHandlerSubscriber());
+			this.controller.defer(this).subscribe(this);
 		}
 		catch(Throwable throwable) {
 			this.handleError(throwable);
@@ -215,7 +215,34 @@ class Http1xExchange extends AbstractHttp1xExchange {
 		}
 		return Optional.empty();
 	}
-	
+
+
+	@Override
+	protected void hookOnSubscribe(Subscription subscription) {
+		this.disposable = this;
+		subscription.request(1);
+	}
+
+	@Override
+	protected void hookOnComplete() {
+		if(this.reset) {
+			return;
+		}
+		if(this.webSocket == null) {
+			this.response.send();
+		}
+		else {
+			this.webSocket.connect();
+		}
+	}
+
+	@Override
+	protected void hookOnError(Throwable throwable) {
+		if(!this.reset) {
+			this.connection.onExchangeError(throwable);
+		}
+	}
+
 	/**
 	 * <p>
 	 * The subscriber used to subscribe to the mono returned by the exchange handler and that sends the response on complete.

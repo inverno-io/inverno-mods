@@ -25,6 +25,7 @@ import io.inverno.mod.http.server.Request;
 import io.inverno.mod.http.server.Response;
 import io.inverno.mod.http.server.ServerController;
 import java.util.Optional;
+import reactor.core.publisher.BaseSubscriber;
 
 /**
  * <p>
@@ -38,7 +39,7 @@ import java.util.Optional;
  * @param <B> the response type
  * @param <C> the error exchange type
  */
-public abstract class AbstractExchange<A extends Request, B extends Response, C extends ErrorExchange<ExchangeContext>> implements Exchange<ExchangeContext> {
+public abstract class AbstractExchange<A extends Request, B extends Response, C extends ErrorExchange<ExchangeContext>> extends BaseSubscriber<Void> implements Exchange<ExchangeContext> {
 	
 	private static final HttpServerException EXCHANGE_DISPOSED_ERROR = new StacklessHttpServerException("Exchange was disposed");
 	

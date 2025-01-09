@@ -20,7 +20,9 @@ import io.inverno.mod.http.base.OutboundHeaders;
 import io.inverno.mod.http.base.OutboundResponseHeaders;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.Response;
+import io.netty.buffer.ByteBuf;
 import java.util.function.Consumer;
+import reactor.core.publisher.BaseSubscriber;
 
 /**
  * <p>
@@ -35,7 +37,7 @@ import java.util.function.Consumer;
  * @param <C> the response trailers type
  * @param <D> the response type
  */
-public abstract class AbstractResponse<A extends AbstractResponseHeaders<?>, B extends AbstractResponseBody<A, B>, C extends AbstractResponseTrailers<?>, D extends AbstractResponse<A, B, C, D>> implements Response {
+public abstract class AbstractResponse<A extends AbstractResponseHeaders<?>, B extends AbstractResponseBody<A, B>, C extends AbstractResponseTrailers<?>, D extends AbstractResponse<A, B, C, D>> extends BaseSubscriber<ByteBuf> implements Response {
 
 	/**
 	 * The header service.
