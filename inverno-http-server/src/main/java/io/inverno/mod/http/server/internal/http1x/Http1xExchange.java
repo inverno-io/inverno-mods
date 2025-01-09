@@ -247,36 +247,31 @@ class Http1xExchange extends AbstractHttp1xExchange {
 	 * <p>
 	 * The subscriber used to subscribe to the mono returned by the exchange handler and that sends the response on complete.
 	 * </p>
+	 *
+	 * <p>
+	 * This is actually only used when fall backing a failed WebSocket handshake.
+	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.10
+	 * 
+	 * @see #handleWebSocketHandshakeError(Throwable, Mono)
 	 */
 	private class ExchangeHandlerSubscriber extends BaseSubscriber<Void> {
 
 		@Override
 		protected void hookOnSubscribe(Subscription subscription) {
-			Http1xExchange.this.disposable = this;
-			subscription.request(1);
+			Http1xExchange.this.hookOnSubscribe(subscription);
 		}
 
 		@Override
 		protected void hookOnComplete() {
-			if(Http1xExchange.this.reset) {
-				return;
-			}
-			if(Http1xExchange.this.webSocket == null) {
-				Http1xExchange.this.response.send();
-			}
-			else {
-				Http1xExchange.this.webSocket.connect();
-			}
+			Http1xExchange.this.hookOnComplete();
 		}
 
 		@Override
 		protected void hookOnError(Throwable throwable) {
-			if(!Http1xExchange.this.reset) {
-				Http1xExchange.this.connection.onExchangeError(throwable);
-			}
+			Http1xExchange.this.hookOnError(throwable);
 		}
 	}
 }

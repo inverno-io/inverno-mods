@@ -33,7 +33,6 @@ import io.netty.handler.codec.http2.Http2Headers;
 import java.util.Optional;
 import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
-import reactor.core.publisher.BaseSubscriber;
 
 /**
  * <p>
@@ -96,7 +95,7 @@ class Http2Exchange extends AbstractHttp2Exchange {
 	public void start() {
 		this.connectionStream.exchange = this;
 		try {
-			this.controller.defer(this).subscribe(new Http2Exchange.ExchangeHandlerSubscriber());
+			this.controller.defer(this).subscribe(this);
 		}
 		catch(Throwable throwable) {
 			this.handleError(throwable);
@@ -152,34 +151,23 @@ class Http2Exchange extends AbstractHttp2Exchange {
 		return Optional.empty();
 	}
 
-	/**
-	 * <p>
-	 * The subscriber used to subscribe to the mono returned by the exchange handler and that sends the response on complete.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.10
-	 */
-	private class ExchangeHandlerSubscriber extends BaseSubscriber<Void> {
+	@Override
+	protected void hookOnSubscribe(Subscription subscription) {
+		this.disposable = this;
+		subscription.request(Long.MAX_VALUE);
+	}
 
-		@Override
-		protected void hookOnSubscribe(Subscription subscription) {
-			Http2Exchange.this.disposable = this;
-			super.hookOnSubscribe(subscription);
+	@Override
+	protected void hookOnComplete() {
+		if(!this.connectionStream.isReset()) {
+			this.response.send();
 		}
+	}
 
-		@Override
-		protected void hookOnComplete() {
-			if(!Http2Exchange.this.connectionStream.isReset()) {
-				Http2Exchange.this.response.send();
-			}
-		}
-
-		@Override
-		protected void hookOnError(Throwable throwable) {
-			if(!Http2Exchange.this.connectionStream.isReset()) {
-				Http2Exchange.this.connectionStream.onExchangeError(throwable);
-			}
+	@Override
+	protected void hookOnError(Throwable throwable) {
+		if(!this.connectionStream.isReset()) {
+			this.connectionStream.onExchangeError(throwable);
 		}
 	}
 }

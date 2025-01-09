@@ -23,9 +23,9 @@ import io.inverno.mod.http.server.internal.AbstractResponse;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
-import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Mono;
 
 /**
@@ -45,6 +45,11 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 	private Http2ResponseTrailers trailers;
 
 	private Disposable disposable;
+
+	/* Body data subscription */
+	private boolean mono;
+	private ByteBuf singleChunk;
+	private boolean many;
 
 	/**
 	 * <p>
@@ -69,7 +74,9 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 	public void send() {
 		if(this.connectionStream.executor().inEventLoop()) {
 			if(!this.head) {
-				this.body.getData().subscribe(this.body.getData() instanceof Mono ? new MonoBodyDataSubscriber() : new BodyDataSubscriber());
+				Publisher<ByteBuf> data = this.body.getData();
+				this.mono = data instanceof Mono;
+				data.subscribe(this);
 			}
 			else {
 				if(this.trailers == null) {
@@ -135,177 +142,106 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 		return this.trailers;
 	}
 
-	/**
-	 * <p>
-	 * The response body data publisher optimized for {@link Mono} publisher that writes response objects to the connection.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.10
-	 */
-	private class MonoBodyDataSubscriber extends BaseSubscriber<ByteBuf> {
-
-		private ByteBuf data;
-
-		@Override
-		protected void hookOnSubscribe(Subscription subscription) {
-			Http2Response.this.disposable = this;
-			subscription.request(1);
-		}
-
-		@Override
-		protected void hookOnNext(ByteBuf value) {
-			Http2Response.this.transferredLength += value.readableBytes();
-			this.data = value;
-		}
-
-		@Override
-		protected void hookOnComplete() {
-			if(!Http2Response.this.connectionStream.isReset()) {
-				if(!Http2Response.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
-					Http2Response.this.headers.contentLength(Http2Response.this.transferredLength);
-				}
-
-				if(this.data == null) {
-					if(Http2Response.this.trailers == null) {
-						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, true);
-						Http2Response.this.headers.setWritten();
-					}
-					else {
-						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
-						Http2Response.this.headers.setWritten();
-						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.trailers.unwrap(), 0, true);
-						Http2Response.this.trailers.setWritten();
-					}
-				}
-				else {
-					if(Http2Response.this.trailers == null) {
-						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
-						Http2Response.this.headers.setWritten();
-						Http2Response.this.connectionStream.writeData(this.data, 0, true);
-					}
-					else {
-						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
-						Http2Response.this.headers.setWritten();
-						Http2Response.this.connectionStream.writeData(this.data, 0, false);
-						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.trailers.unwrap(), 0, true);
-						Http2Response.this.trailers.setWritten();
-					}
-				}
-			}
-			Http2Response.this.connectionStream.onExchangeComplete();
-		}
-
-		@Override
-		protected void hookOnError(Throwable throwable) {
-			if(!Http2Response.this.connectionStream.isReset()) {
-				Http2Response.this.connectionStream.onExchangeError(throwable);
-			}
-		}
+	@Override
+	protected void hookOnSubscribe(Subscription subscription) {
+		this.disposable = this;
+		subscription.request(this.mono ? 1 : Long.MAX_VALUE);
 	}
 
-	/**
-	 * <p>
-	 * The response body data subscriber that writes response objects to the connection.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.10
-	 */
-	private class BodyDataSubscriber extends BaseSubscriber<ByteBuf> {
-
-		private ByteBuf singleChunk;
-		private boolean many;
-
-		@Override
-		protected void hookOnSubscribe(Subscription subscription) {
-			Http2Response.this.disposable = this;
-			subscription.request(Long.MAX_VALUE);
+	@Override
+	protected void hookOnNext(ByteBuf value) {
+		this.transferredLength += value.readableBytes();
+		if(this.mono) {
+			this.singleChunk = value;
 		}
-
-		@Override
-		protected void hookOnNext(ByteBuf value) {
-			if(!Http2Response.this.connectionStream.isReset()) {
-				Http2Response.this.transferredLength += value.readableBytes();
-				if(!this.many && this.singleChunk == null) {
-					this.singleChunk = value;
-				}
-				else {
-					this.many = true;
-					if (Http2Response.this.headers.isWritten()) {
-						Http2Response.this.connectionStream.writeData(value, 0, false);
-					} else {
-						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
-						Http2Response.this.headers.setWritten();
-						Http2Response.this.connectionStream.writeData(Unpooled.wrappedBuffer(this.singleChunk, value), 0, false);
-						this.singleChunk = null;
-					}
+		else if(!this.connectionStream.isReset()) {
+			if(!this.many && this.singleChunk == null) {
+				this.singleChunk = value;
+			}
+			else {
+				this.many = true;
+				if (this.headers.isWritten()) {
+					this.connectionStream.writeData(value, 0, false);
+				} else {
+					this.connectionStream.writeHeaders(this.headers.unwrap(), 0, false);
+					this.headers.setWritten();
+					this.connectionStream.writeData(Unpooled.wrappedBuffer(this.singleChunk, value), 0, false);
+					this.singleChunk = null;
 				}
 			}
-			
-			// TODO implement back pressure with the flow controller
-			/*this.encoder.flowController().listener(new Listener() {
-				
-				@Override
-				public void writabilityChanged(Http2Stream stream) {
-					
-				}
-			});*/
 		}
 
-		@Override
-		protected void hookOnComplete() {
-			if(!Http2Response.this.connectionStream.isReset()) {
-				if (this.many) {
-					if(Http2Response.this.trailers == null) {
-						Http2Response.this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
-					}
-					else {
-						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.trailers.unwrap(), 0, true);
-						Http2Response.this.trailers.setWritten();
-					}
+		// TODO implement back pressure with the flow controller
+			/*this.encoder.flowController().listener(new Listener() {
+
+				@Override
+				public void writabilityChanged(Http2Stream stream) {
+
 				}
-				else {
-					if(!Http2Response.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
-						Http2Response.this.headers.contentLength(Http2Response.this.transferredLength);
+			});*/
+	}
+
+	@Override
+	protected void hookOnComplete() {
+		if(!this.connectionStream.isReset()) {
+			if(!this.connectionStream.isReset()) {
+				if(this.mono || !this.many) {
+					if(!this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
+						this.headers.contentLength(this.transferredLength);
 					}
 
 					if(this.singleChunk == null) {
-						if(Http2Response.this.trailers == null) {
-							Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, true);
-							Http2Response.this.headers.setWritten();
+						if(this.trailers == null) {
+							this.connectionStream.writeHeaders(this.headers.unwrap(), 0, true);
+							this.headers.setWritten();
 						}
 						else {
-							Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
-							Http2Response.this.headers.setWritten();
-							Http2Response.this.connectionStream.writeHeaders(Http2Response.this.trailers.unwrap(), 0, true);
-							Http2Response.this.trailers.setWritten();
+							this.connectionStream.writeHeaders(this.headers.unwrap(), 0, false);
+							this.headers.setWritten();
+							this.connectionStream.writeHeaders(this.trailers.unwrap(), 0, true);
+							this.trailers.setWritten();
 						}
 					}
 					else {
-						if(Http2Response.this.trailers == null) {
-							Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
-							Http2Response.this.headers.setWritten();
-							Http2Response.this.connectionStream.writeData(this.singleChunk, 0, true);
+						if(this.trailers == null) {
+							this.connectionStream.writeHeaders(this.headers.unwrap(), 0, false);
+							this.headers.setWritten();
+							this.connectionStream.writeData(this.singleChunk, 0, true);
 						}
 						else {
-							Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
-							Http2Response.this.headers.setWritten();
-							Http2Response.this.connectionStream.writeData(this.singleChunk, 0, false);
-							Http2Response.this.connectionStream.writeHeaders(Http2Response.this.trailers.unwrap(), 0, true);
-							Http2Response.this.trailers.setWritten();
+							this.connectionStream.writeHeaders(this.headers.unwrap(), 0, false);
+							this.headers.setWritten();
+							this.connectionStream.writeData(this.singleChunk, 0, false);
+							this.connectionStream.writeHeaders(this.trailers.unwrap(), 0, true);
+							this.trailers.setWritten();
 						}
 					}
 				}
+				else {
+					if(this.trailers == null) {
+						this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
+					}
+					else {
+						this.connectionStream.writeHeaders(this.trailers.unwrap(), 0, true);
+						this.trailers.setWritten();
+					}
+				}
 			}
-			Http2Response.this.connectionStream.onExchangeComplete();
 		}
+		this.connectionStream.onExchangeComplete();
+	}
 
-		@Override
-		protected void hookOnError(Throwable throwable) {
-			if(!Http2Response.this.connectionStream.isReset()) {
-				Http2Response.this.connectionStream.onExchangeError(throwable);
-			}
+	@Override
+	protected void hookOnCancel() {
+		if(this.singleChunk != null) {
+			this.singleChunk.release();
+		}
+	}
+
+	@Override
+	protected void hookOnError(Throwable throwable) {
+		if(!this.connectionStream.isReset()) {
+			this.connectionStream.onExchangeError(throwable);
 		}
 	}
 }

@@ -28,10 +28,6 @@ import io.inverno.mod.http.server.HttpServerException;
 import io.inverno.mod.http.server.ServerController;
 import io.inverno.mod.http.server.internal.AbstractExchange;
 import io.netty.buffer.Unpooled;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaderValues;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**

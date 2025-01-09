@@ -26,7 +26,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
-import reactor.core.publisher.BaseSubscriber;
 
 /**
  * <p>
@@ -74,10 +73,9 @@ class Http2ErrorExchange extends AbstractHttp2Exchange implements ErrorExchange<
 	public void start() {
 		this.connectionStream.exchange = this;
 		try {
-			ErrorExchangeHandlerSubscriber handlerSubscriber = new Http2ErrorExchange.ErrorExchangeHandlerSubscriber();
 			if(this.lastResort) {
 				GenericErrorExchangeHandler.INSTANCE.handle(this);
-				handlerSubscriber.hookOnComplete();
+				this.hookOnComplete();
 			}
 			else {
 				LOGGER.log(
@@ -85,7 +83,7 @@ class Http2ErrorExchange extends AbstractHttp2Exchange implements ErrorExchange<
 					"Exchange processing error", 
 					this.error
 				);
-				this.controller.defer(this).subscribe(handlerSubscriber);
+				this.controller.defer(this).subscribe(this);
 			}
 		}
 		catch(Throwable throwable) {
@@ -147,35 +145,25 @@ class Http2ErrorExchange extends AbstractHttp2Exchange implements ErrorExchange<
 	public Throwable getError() {
 		return this.error;
 	}
-	
-	/**
-	 * <p>
-	 * The subscriber used to subscribe to the mono returned by the error exchange handler and that sends the response on complete.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.10
-	 */
-	private class ErrorExchangeHandlerSubscriber extends BaseSubscriber<Void> {
 
-		@Override
-		protected void hookOnSubscribe(Subscription subscription) {
-			Http2ErrorExchange.this.disposable = this;
-			super.hookOnSubscribe(subscription);
+
+	@Override
+	protected void hookOnSubscribe(Subscription subscription) {
+		this.disposable = this;
+		subscription.request(Long.MAX_VALUE);
+	}
+
+	@Override
+	protected void hookOnComplete() {
+		if(!this.connectionStream.isReset()) {
+			this.response.send();
 		}
+	}
 
-		@Override
-		protected void hookOnComplete() {
-			if(!Http2ErrorExchange.this.connectionStream.isReset()) {
-				Http2ErrorExchange.this.response.send();
-			}
-		}
-
-		@Override
-		protected void hookOnError(Throwable throwable) {
-			if(!Http2ErrorExchange.this.connectionStream.isReset()) {
-				Http2ErrorExchange.this.connectionStream.onExchangeError(throwable);
-			}
+	@Override
+	protected void hookOnError(Throwable throwable) {
+		if(!this.connectionStream.isReset()) {
+			this.connectionStream.onExchangeError(throwable);
 		}
 	}
 }

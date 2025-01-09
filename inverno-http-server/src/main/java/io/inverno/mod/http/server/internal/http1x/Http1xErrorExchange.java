@@ -25,7 +25,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
-import reactor.core.publisher.BaseSubscriber;
 
 /**
  * <p>
@@ -84,10 +83,9 @@ class Http1xErrorExchange extends AbstractHttp1xExchange implements ErrorExchang
 	public void start() {
 		this.connection.respondingExchange = this;
 		try {
-			Http1xErrorExchange.ErrorExchangeHandlerSubscriber handlerSubscriber = new Http1xErrorExchange.ErrorExchangeHandlerSubscriber();
 			if(this.lastResort) {
 				GenericErrorExchangeHandler.INSTANCE.handle(this);
-				handlerSubscriber.hookOnComplete();
+				this.hookOnComplete();
 			}
 			else {
 				LOGGER.log(
@@ -95,7 +93,7 @@ class Http1xErrorExchange extends AbstractHttp1xExchange implements ErrorExchang
 					"Exchange processing error", 
 					this.error
 				);
-				this.controller.defer(this).subscribe(handlerSubscriber);
+				this.controller.defer(this).subscribe(this);
 			}
 		}
 		catch(Throwable throwable) {
@@ -157,35 +155,24 @@ class Http1xErrorExchange extends AbstractHttp1xExchange implements ErrorExchang
 	public Http1xResponse response() {
 		return this.response;
 	}
-	
-	/**
-	 * <p>
-	 * The subscriber used to subscribe to the mono returned by the error exchange handler and that sends the response on complete.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.10
-	 */
-	private class ErrorExchangeHandlerSubscriber extends BaseSubscriber<Void> {
-		
-		@Override
-		protected void hookOnSubscribe(Subscription subscription) {
-			Http1xErrorExchange.this.disposable = this;
-			subscription.request(1);
-		}
 
-		@Override
-		protected void hookOnComplete() {
-			if(!Http1xErrorExchange.this.reset) {
-				Http1xErrorExchange.this.response.send();
-			}
+	@Override
+	protected void hookOnSubscribe(Subscription subscription) {
+		this.disposable = this;
+		subscription.request(1);
+	}
+
+	@Override
+	protected void hookOnComplete() {
+		if(!this.reset) {
+			this.response.send();
 		}
-		
-		@Override
-		protected void hookOnError(Throwable throwable) {
-			if(!Http1xErrorExchange.this.reset) {
-				Http1xErrorExchange.this.connection.onExchangeError(throwable);
-			}
+	}
+
+	@Override
+	protected void hookOnError(Throwable throwable) {
+		if(!this.reset) {
+			this.connection.onExchangeError(throwable);
 		}
 	}
 }
