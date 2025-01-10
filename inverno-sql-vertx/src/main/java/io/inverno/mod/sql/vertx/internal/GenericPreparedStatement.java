@@ -59,7 +59,7 @@ public class GenericPreparedStatement extends AbstractPreparedStatement {
 	@Override
 	public Publisher<SqlResult> execute() {
 		if(this.batch.size() == 1) {
-			return this.preparedQuery.flatMapMany(query -> 
+			return this.preparedQuery.flatMap(query ->
 				Mono.fromCompletionStage(query.execute(this.currentParameters).toCompletionStage())
 					.map(GenericSqlResult::new)
 			);

@@ -76,7 +76,7 @@ public class ConnectionPreparedStatement extends AbstractPreparedStatement {
 					.map(statement -> new StreamSqlResult(statement.cursor(this.currentParameters), this.fetchSize));
 			}
 			else {
-				return this.preparedQuery.flatMapMany(query -> 
+				return this.preparedQuery.flatMap(query ->
 					Mono.fromCompletionStage(query.execute(this.currentParameters).toCompletionStage())
 						.map(GenericSqlResult::new)
 				);

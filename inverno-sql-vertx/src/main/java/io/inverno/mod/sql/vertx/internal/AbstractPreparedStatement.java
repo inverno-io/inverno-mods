@@ -90,14 +90,28 @@ public abstract class AbstractPreparedStatement implements PreparedStatement {
 
 	@Override
 	public PreparedStatement bind(Object... values) {
+		if(values == null || values.length == 0) {
+			throw new IllegalArgumentException("Bindings list is null or empty");
+		}
 		this.batch.pollLast();
 		this.currentParameters = new ListTuple(Arrays.asList(values));
 		this.batch.add(this.currentParameters);
 		return this;
 	}
-	
+
 	@Override
-	public PreparedStatement bind(List<Object[]> values) {
+	public PreparedStatement bind(List<Object> values) {
+		if(values == null || values.isEmpty()) {
+			throw new IllegalArgumentException("Bindings list is null or empty");
+		}
+		this.batch.pollLast();
+		this.currentParameters = new ListTuple(values);
+		this.batch.add(this.currentParameters);
+		return this;
+	}
+
+	@Override
+	public PreparedStatement multiBind(List<Object[]> values) {
 		if(values == null || values.isEmpty()) {
 			throw new IllegalArgumentException("Bindings list is null or empty");
 		}
@@ -108,7 +122,7 @@ public abstract class AbstractPreparedStatement implements PreparedStatement {
 	}
 	
 	@Override
-	public PreparedStatement bind(Stream<Object[]> values) {
+	public PreparedStatement multiBind(Stream<Object[]> values) {
 		if(values == null) {
 			throw new IllegalArgumentException("Bindings stream is null");
 		}

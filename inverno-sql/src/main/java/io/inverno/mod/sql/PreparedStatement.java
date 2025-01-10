@@ -86,6 +86,21 @@ public interface PreparedStatement {
 	 * @return this statement
 	 */
 	PreparedStatement bind(Object... values);
+
+	/**
+	 * <p>
+	 * Sets the specified list of values as the current arguments binding.
+	 * </p>
+	 *
+	 * <p>
+	 * Note that this will replace current arguments binding.
+	 * </p>
+	 *
+	 * @param values the argument values to set
+	 *
+	 * @return this statement
+	 */
+	PreparedStatement bind(List<Object> values);
 	
 	/**
 	 * <p>
@@ -100,7 +115,7 @@ public interface PreparedStatement {
 	 *
 	 * @return this statement
 	 */
-	PreparedStatement bind(List<Object[]> values);
+	PreparedStatement multiBind(List<Object[]> values);
 	
 	/**
 	 * <p>
@@ -115,7 +130,7 @@ public interface PreparedStatement {
 	 *
 	 * @return this statement
 	 */
-	PreparedStatement bind(Stream<Object[]> values);
+	PreparedStatement multiBind(Stream<Object[]> values);
 	
 	/**
 	 * <p>
