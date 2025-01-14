@@ -85,8 +85,8 @@ public class HttpClientSpecificTest {
 			.annotationProcessorModuleOverride(AbstractInvernoModTest.ANNOTATION_PROCESSOR_MODULE_OVERRIDE)
 			.build();
 		
-		invernoCompiler.cleanModuleTarget();
-		
+//		invernoCompiler.cleanModuleTarget();
+
 		InvernoModuleLoader moduleLoader = invernoCompiler.compile(MODULE_WEBROUTE);
 		
 		testServerPort = ModsTestUtils.getFreePort();
