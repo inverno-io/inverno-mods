@@ -76,8 +76,10 @@ public class WebRouteTest extends AbstractInvernoModTest {
 			.moduleOverride(AbstractInvernoModTest.MODULE_OVERRIDE)
 			.annotationProcessorModuleOverride(AbstractInvernoModTest.ANNOTATION_PROCESSOR_MODULE_OVERRIDE)
 			.build();
-		
-		invernoCompiler.cleanModuleTarget();
+
+		// TODO this is causing stackoverflow error in compiler, an alternate approach might be to precompile the module before test and start it with different configurations in order to avoid
+		//  multiple compilations. The drawback is that the test is no longer isolated and becomes dependent on that preprocessing phase.
+//		invernoCompiler.cleanModuleTarget();
 		
 		InvernoModuleLoader moduleLoader = invernoCompiler.compile(MODULE_WEBROUTE);
 		
