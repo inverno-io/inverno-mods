@@ -43,7 +43,7 @@ public interface ContentRoute<A> extends Route<A> {
 	 */
 	String getContentType();
 
-	/**+
+	/**
 	 * <p>
 	 * A content route extractor.
 	 * </p>

@@ -97,7 +97,7 @@ public interface PathRoute<A> extends Route<A> {
 
 	/**
 	 * <p>
-	 * An path route manager.
+	 * A path route manager.
 	 * </p>
 	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

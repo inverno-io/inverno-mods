@@ -45,7 +45,7 @@ public interface AcceptContentRoute<A> extends Route<A> {
 	 */
 	String getAccept();
 
-	/**+
+	/**
 	 * <p>
 	 * An accept content route extractor.
 	 * </p>

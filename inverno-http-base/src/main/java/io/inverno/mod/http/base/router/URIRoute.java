@@ -36,21 +36,97 @@ import io.inverno.mod.base.net.URIPattern;
  */
 public interface URIRoute<A> extends Route<A> {
 
+	/**
+	 * <p>
+	 * Returns a URI.
+	 * </p>
+	 *
+	 * @return a URI
+	 */
 	String getURI();
 
+	/**
+	 * <p>
+	 * Returns a URI pattern.
+	 * </p>
+	 *
+	 * @return a URI pattern or null
+	 */
 	URIPattern getURIPattern();
 
+	/**
+	 * <p>
+	 * A URI route extractor.
+	 * </p>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.12
+	 *
+	 * @param <A> the resource type
+	 * @param <B> the URI route type
+	 * @param <C> the URI route extractor
+	 */
 	interface Extractor<A, B extends URIRoute<A>, C extends URIRoute.Extractor<A, B, C>> extends RouteExtractor<A, B> {
 
+		/**
+		 * <p>
+		 * Sets the extractor to extract routes defined with the specified URI.
+		 * </p>
+		 *
+		 * @param uri a URI
+		 *
+		 * @return a route extractor
+		 */
 		C uri(String uri);
 
+		/**
+		 * <p>
+		 * Sets the extractor to extract routes defined with the specified URI pattern.
+		 * </p>
+		 *
+		 * @param uriPattern a URI pattern
+		 *
+		 * @return a route extractor
+		 */
 		C uriPattern(URIPattern uriPattern);
 	}
 
+	/**
+	 * <p>
+	 * A URI route manager.
+	 * </p>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.12
+	 *
+	 * @param <A> the resource type
+	 * @param <B> the input type
+	 * @param <C> the URI route type
+	 * @param <D> the URI route manager type
+	 * @param <E> the router type
+	 */
 	interface Manager<A, B, C extends URIRoute<A>, D extends URIRoute.Manager<A, B, C, D, E>, E extends Router<A, B, C, D, E>> extends RouteManager<A, B, C, D, E> {
 
+		/**
+		 * <p>
+		 * Specifies the URI matching the URI in an input.
+		 * </p>
+		 *
+		 * @param uri a URI
+		 *
+		 * @return the route manager
+		 */
 		D uri(String uri);
 
+		/**
+		 * <p>
+		 * Specifies the URI pattern matching the URI in an input.
+		 * </p>
+		 *
+		 * @param uriPattern a URI pattern
+		 *
+		 * @return the route manager
+		 */
 		D uriPattern(URIPattern uriPattern);
 	}
 }
