@@ -72,12 +72,6 @@
  * ).run();
  * }</pre>
  * 
- * <p>
- * Note that in above example, all requests sent to the server are processed with the same handler, the {@code io.inverno.mod.web.server} is better suited to route requests based on gRPC service and
- * method names. It is recommended to rely on a <a href="https://protobuf.dev/reference/cpp/api-docs/google.protobuf.compiler.plugin/">protoc plugin</a> for generating a proper gRPC Web routes
- * configurer from Protocol buffer definitions.
- * </p>
- * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
