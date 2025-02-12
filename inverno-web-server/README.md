@@ -1220,8 +1220,8 @@ import io.inverno.mod.web.server.WebRouter;
 public class App_web_serverWebRouterConfigurer implements WebRouter.Configurer<ExchangeContext> {
 
     @Override
-    public void configure(WebRouter<ExchangeContext> routes) {
-        routes
+    public void configure(WebRouter<ExchangeContext> router) {
+        router
             .route()
                 .path("/hello")
                 .produce(MediaTypes.TEXT_PLAIN)
@@ -1267,9 +1267,9 @@ import reactor.core.publisher.Mono;
 public class App_web_serverErrorWebRouterConfigurer implements ErrorWebRouter.Configurer<ExchangeContext> {
 
     @Override
-    public void configure(ErrorWebRouter<ExchangeContext> errorRoutes) {
-        errorRoutes
-            .route()
+    public void configure(ErrorWebRouter<ExchangeContext> errorRouter) {
+        errorRouter
+            .routeError()
                 .error(SomeCustomException.class)
                 .handler(errorExchange -> errorExchange
                     .response()
@@ -1280,15 +1280,7 @@ public class App_web_serverErrorWebRouterConfigurer implements ErrorWebRouter.Co
                     .body()
                     .encoder()
                     .value("A custom exception was raised")
-                )
-            .intercept()
-                .error(UnauthorizedException.class)
-                .interceptor(errorExchange -> {
-                    errorExchange.response().headers(headers -> headers.add(Headers.NAME_WWW_AUTHENTICATE, "basic realm=inverno"));
-                    return Mono.just(errorExchange);
-                })
-            // We must apply interceptors to intercept error routes defined by default in the Web server module
-            .applyInterceptors();
+                );
     }
 }
 ```
@@ -1344,6 +1336,8 @@ A custom exception was raised
 When defining Web configurer beans, it is important to make them private inside the module in order to avoid side effects when composing the module as they may interfere with the generated Web server bean, which already aggregates module's Web configurer beans, resulting in routes being configured twice. Compilation warnings shall be raised when a Web configurer is defined as a public bean.
 
 Web configurers are applied by the generated Web server bean in the following order starting by `WebRouteInterceptor.Configurer` and `ErrorWebRouteInterceptor.Configurer` beans, then `WebServer.Configurer` beans and finally `WebRouter.Configurer` and `ErrorWebRouter.Configurer` beans. This basically means that the interceptors defined in `WebRouteInterceptor.Configurer` beans in the module will be applied to all routes defined in the module including those provided in component modules. Although it is possible to define multiple `WebRouteInterceptor.Configurer` beans, it is recommended to have only one because the order in which they are injected in the generated Web server bean is not guaranteed which might be problematic under certain circumstances.
+
+> Note that injection order can be specified explicitly by declaring a `@Wire` annotation on the module with the configurers in the desired order.
 
 #### Exchange context
 
@@ -1403,8 +1397,8 @@ import reactor.core.publisher.Mono;
 public class FrontOfficeRouterConfigurer implements WebRouter.Configurer<FrontOfficeContext>, WebRouteInterceptor.Configurer<FrontOfficeContext>  {
 
     @Override
-    public void configure(WebRouter<FrontOfficeContext> routes) {
-        routes
+    public void configure(WebRouter<FrontOfficeContext> router) {
+        router
             .route()
                 .path("/frontOffice")
                 .method(Method.GET)
@@ -1443,8 +1437,8 @@ import reactor.core.publisher.Mono;
 public class BackOfficeRouterConfigurer implements WebRouter.Configurer<BackOfficeContext>, WebRouteInterceptor.Configurer<BackOfficeContext> {
 
     @Override
-    public void configure(WebRouter<BackOfficeContext> routes) {
-        routes
+    public void configure(WebRouter<BackOfficeContext> router) {
+        router
             .route()
                 .path("/backOffice")
                 .method(Method.GET)
@@ -1596,8 +1590,8 @@ import io.inverno.mod.web.server.WhiteLabelErrorRoutesConfigurer;
 public class App_web_serverErrorWebRouterConfigurer implements ErrorWebRouter.Configurer<ExchangeContext> {
 
     @Override
-    public void configure(ErrorWebRouter<ExchangeContext> errorRoutes) {
-        errorRoutes
+    public void configure(ErrorWebRouter<ExchangeContext> errorRouter) {
+        errorRouter
             .configureErrorRoutes(new WhiteLabelErrorRoutesConfigurer<>());
     }
 }
@@ -1672,7 +1666,7 @@ router
 
 ### WebJars
 
-The `WebJarsRoutesConfigurer` is a `WebRoutesConfigurer` implementation used to configure routes to WebJars static resources available on the module path or class path. Paths to the resources are version agnostic: `/webjars/{webjar_module}/{path:.*}` where `{webjar_module}` corresponds to the *modularized* name of the WebJar minus `org.webjars`. For example the location of the Swagger UI WebJar would be `/webjars/swagger.ui/`.
+The `WebJarsRoutesConfigurer` is a `WebRouter.Configurer` implementation used to configure routes to WebJars static resources available on the module path or class path. Paths to the resources are version agnostic: `/webjars/{webjar_module}/{path:.*}` where `{webjar_module}` corresponds to the *modularized* name of the WebJar minus `org.webjars`. For example the location of the Swagger UI WebJar would be `/webjars/swagger.ui/`.
 
 The `WebJarsRoutesConfigurer` requires a `ResourceService` to resolve WebJars resources. WebJars routes can be configured as follows:
 
@@ -1744,7 +1738,7 @@ Note that when the application is run with non-modular WebJars specified on the 
 
 ### OpenAPI specification
 
-The `OpenApiRoutesConfigurer` is a `WebRoutesConfigurer` implementation used to configure routes to [OpenAPI specifications][open-api] defined in `/META-INF/inverno/web/openapi.yml` resources in application modules.
+The `OpenApiRoutesConfigurer` is a `WebRouter.Configurer` implementation used to configure routes to [OpenAPI specifications][open-api] defined in `/META-INF/inverno/web/openapi.yml` resources in application modules.
 
 OpenAPI routes can be configured on the Web router as follows:
 

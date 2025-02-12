@@ -84,7 +84,7 @@ import io.inverno.mod.http.client.HttpClientConfigurationLoader;
 import java.util.Set;
 
 public class Main {
-	
+    
     @Bean
     public static class Greeter {
 
@@ -226,47 +226,47 @@ import io.inverno.mod.web.client.WebClient;
 
 public class Main {
 
-	@Bean
-	public static class HttpGreeterGrpcClient extends GreeterGrpcClient.Http {
+    @Bean
+    public static class HttpGreeterGrpcClient extends GreeterGrpcClient.Http {
 
-		public HttpGreeterGrpcClient(HttpClient httpClient, GrpcClient grpcClient) {
-			super(httpClient, grpcClient);
-		}
-	}
+        public HttpGreeterGrpcClient(HttpClient httpClient, GrpcClient grpcClient) {
+            super(httpClient, grpcClient);
+        }
+    }
 
-	@Bean
-	public static class WebGreeterGrpcClient extends GreeterGrpcClient.Web<ExchangeContext> {
+    @Bean
+    public static class WebGreeterGrpcClient extends GreeterGrpcClient.Web<ExchangeContext> {
 
-		public WebGreeterGrpcClient(WebClient<? extends ExchangeContext> webClient, GrpcClient grpcClient) {
-			super(ServiceID.of("http://127.0.0.1:8080"), webClient, grpcClient);
-		}
-	}
+        public WebGreeterGrpcClient(WebClient<? extends ExchangeContext> webClient, GrpcClient grpcClient) {
+            super(ServiceID.of("http://127.0.0.1:8080"), webClient, grpcClient);
+        }
+    }
 
-	public static void main(String[] args) {
-		App_grpc_client app_grpc_client = Application.run(new App_grpc_client.Builder());
-		try {
-			// Using the HttpClient based implementation, the stub must be closed explicitly to close connections
-			try(GreeterGrpcClient.HttpClientStub<ExchangeContext> stub = app_grpc_client.httpGreeterGrpcClient().createStub("127.0.0.1", 8080)) {
-				HelloReply response = stub
-					.sayHello(HelloRequest.newBuilder()
-						.setName("Bob")
-						.build()
-					)
-					.block();
-			}
+    public static void main(String[] args) {
+        App_grpc_client app_grpc_client = Application.run(new App_grpc_client.Builder());
+        try {
+            // Using the HttpClient based implementation, the stub must be closed explicitly to close connections
+            try(GreeterGrpcClient.HttpClientStub<ExchangeContext> stub = app_grpc_client.httpGreeterGrpcClient().createStub("127.0.0.1", 8080)) {
+                HelloReply response = stub
+                    .sayHello(HelloRequest.newBuilder()
+                        .setName("Bob")
+                        .build()
+                    )
+                    .block();
+            }
 
-			// Using the WebClient based implementation, connections are closed by the WebClient when the application module is stopped
-			HelloReply response = app_grpc_client.webGreeterGrpcClient()
-				.sayHello(HelloRequest.newBuilder()
-					.setName("Bob")
-					.build()
-				)
-				.block();
-		}
-		finally {
-			app_grpc_client.stop();
-		}
-	}
+            // Using the WebClient based implementation, connections are closed by the WebClient when the application module is stopped
+            HelloReply response = app_grpc_client.webGreeterGrpcClient()
+                .sayHello(HelloRequest.newBuilder()
+                    .setName("Bob")
+                    .build()
+                )
+                .block();
+        }
+        finally {
+            app_grpc_client.stop();
+        }
+    }
 }
 ```
 
@@ -288,30 +288,30 @@ import io.inverno.mod.web.client.WebClient;
 
 public class Main {
 
-	@Bean
-	public static class WebGreeterGrpcClient extends GreeterGrpcClient.Web<ApiContext> {
+    @Bean
+    public static class WebGreeterGrpcClient extends GreeterGrpcClient.Web<ApiContext> {
 
-		public WebGreeterGrpcClient(WebClient<? extends ApiContext> webClient, GrpcClient grpcClient) {
-			super(ServiceID.of("http://127.0.0.1:8080"), webClient, grpcClient);
-		}
-	}
+        public WebGreeterGrpcClient(WebClient<? extends ApiContext> webClient, GrpcClient grpcClient) {
+            super(ServiceID.of("http://127.0.0.1:8080"), webClient, grpcClient);
+        }
+    }
 
-	public static void main(String[] args) {
-		App_grpc_client app_grpc_client = Application.run(new App_grpc_client.Builder());
-		try {
-			HelloReply response = app_grpc_client.webGreeterGrpcClient()
-				.sayHello(
-					HelloRequest.newBuilder()
+    public static void main(String[] args) {
+        App_grpc_client app_grpc_client = Application.run(new App_grpc_client.Builder());
+        try {
+            HelloReply response = app_grpc_client.webGreeterGrpcClient()
+                .sayHello(
+                    HelloRequest.newBuilder()
                         .setName("Bob")
                         .build(),
                     context -> context.setApiKey("xxxxxxx")
-				)
-				.block();
-		}
-		finally {
-			app_grpc_client.stop();
-		}
-	}
+                )
+                .block();
+        }
+        finally {
+            app_grpc_client.stop();
+        }
+    }
 }
 ```
 

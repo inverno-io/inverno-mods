@@ -83,10 +83,9 @@ import io.inverno.mod.grpc.server.GrpcServer;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.web.server.WebRouter;
-import io.inverno.mod.web.server.WebRoutesConfigurer;
 
 @Bean( visibility = Visibility.PRIVATE )
-public class GreeterRouteConfigurer implements WebRoutesConfigurer<ExchangeContext> {
+public class GreeterRouteConfigurer implements WebRouter.Configurer<ExchangeContext> {
 
     private final GrpcServer grpcServer;
 
@@ -95,13 +94,13 @@ public class GreeterRouteConfigurer implements WebRoutesConfigurer<ExchangeConte
     }
 
     @Override
-    public void configure(WebRoutable<ExchangeContext, ?> routes) {
-        routes
+    public void configure(WebRouter<ExchangeContext> router) {
+        router
             .route()
                 .path(GrpcServiceName.of("helloworld", "Greeter").methodPath("SayHello"))             // /helloworld.Greeter/SayHello
                 .method(Method.POST)
-                .consumes(MediaTypes.APPLICATION_GRPC)
-                .consumes(MediaTypes.APPLICATION_GRPC_PROTO)
+                .consume(MediaTypes.APPLICATION_GRPC)
+                .consume(MediaTypes.APPLICATION_GRPC_PROTO)
                 .handler(this.grpcServer.unary(                                                       // Create a unary exchange handler
                     HelloRequest.getDefaultInstance(),
                     HelloReply.getDefaultInstance(),
@@ -395,13 +394,13 @@ The following example shows how to expose a unary service method:
 ```java
 ...
 @Override
-public final void configure(WebRoutable<ExchangeContext, ?> routes) {
-    routes
+public final void configure(WebRouter<ExchangeContext> router) {
+    router
         .route()
             .path(SERVICE_NAME.methodPath("SayHello"))
             .method(Method.POST)
-            .consumes(MediaTypes.APPLICATION_GRPC)
-            .consumes(MediaTypes.APPLICATION_GRPC_PROTO)
+            .consume(MediaTypes.APPLICATION_GRPC)
+            .consume(MediaTypes.APPLICATION_GRPC_PROTO)
             .handler(this.grpcServer.unary(
                 SingleHelloRequest.getDefaultInstance(),
                 SingleHelloReply.getDefaultInstance(),
@@ -426,13 +425,13 @@ The following example shows how to expose a client streaming service method:
 ```java
 ...
 @Override
-public final void configure(WebRoutable<ExchangeContext, ?> routes) {
-    routes
+public final void configure(WebRouter<ExchangeContext> router) {
+    router
         .route()
             .path(SERVICE_NAME.methodPath("SayHelloToEverybody"))
             .method(Method.POST)
-            .consumes(MediaTypes.APPLICATION_GRPC)
-            .consumes(MediaTypes.APPLICATION_GRPC_PROTO)
+            .consume(MediaTypes.APPLICATION_GRPC)
+            .consume(MediaTypes.APPLICATION_GRPC_PROTO)
             .handler(this.grpcServer.clientStreaming(
                 SingleHelloRequest.getDefaultInstance(),
                 GroupHelloReply.getDefaultInstance(),
@@ -457,13 +456,13 @@ For instance, above example could be rewritten using a reduction operation like 
 ```java
 ...
 @Override
-public final void configure(WebRoutable<ExchangeContext, ?> routes) {
-    routes
+public final void configure(WebRouter<ExchangeContext> router) {
+    router
         .route()
             .path(SERVICE_NAME.methodPath("SayHelloToEverybody"))
             .method(Method.POST)
-            .consumes(MediaTypes.APPLICATION_GRPC)
-            .consumes(MediaTypes.APPLICATION_GRPC_PROTO)
+            .consume(MediaTypes.APPLICATION_GRPC)
+            .consume(MediaTypes.APPLICATION_GRPC_PROTO)
             .handler(this.grpcServer.clientStreaming(
                 SingleHelloRequest.getDefaultInstance(),
                 GroupHelloReply.getDefaultInstance(),
@@ -490,13 +489,13 @@ The following example shows how to expose a server streaming service method:
 ```java
 ...
 @Override
-public final void configure(WebRoutable<ExchangeContext, ?> routes) {
-    routes
+public final void configure(WebRouter<ExchangeContext> router) {
+    router
         .route()
             .path(SERVICE_NAME.methodPath("SayHelloToEveryoneInTheGroup"))
             .method(Method.POST)
-            .consumes(MediaTypes.APPLICATION_GRPC)
-            .consumes(MediaTypes.APPLICATION_GRPC_PROTO)
+            .consume(MediaTypes.APPLICATION_GRPC)
+            .consume(MediaTypes.APPLICATION_GRPC_PROTO)
             .handler(this.grpcServer.serverStreaming(
                 GroupHelloRequest.getDefaultInstance(),
                 SingleHelloReply.getDefaultInstance(),
@@ -525,13 +524,13 @@ The following example shows how to expose a bidirectional streaming service meth
 ```java
 ...
 @Override
-public final void configure(WebRoutable<ExchangeContext, ?> routes) {
-    routes
+public final void configure(WebRouter<ExchangeContext, ?> router) {
+    router
         .route()
             .path(SERVICE_NAME.methodPath("SayHelloToEveryoneInTheGroups"))
             .method(Method.POST)
-            .consumes(MediaTypes.APPLICATION_GRPC)
-            .consumes(MediaTypes.APPLICATION_GRPC_PROTO)
+            .consume(MediaTypes.APPLICATION_GRPC)
+            .consume(MediaTypes.APPLICATION_GRPC_PROTO)
             .handler(this.grpcServer.bidirectionalStreaming(
                 GroupHelloRequest.getDefaultInstance(),
                 SingleHelloReply.getDefaultInstance(),
@@ -590,10 +589,9 @@ import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.grpc.server.GrpcServer;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.web.server.ErrorWebRouter;
-import io.inverno.mod.web.server.ErrorWebRoutesConfigurer;
 
 @Bean(visibility = Visibility.PRIVATE)
-public class App_grpc_serverErrorWebRoutesConfigurer implements ErrorWebRoutesConfigurer<ExchangeContext> {
+public class App_grpc_serverErrorWebRoutesConfigurer implements ErrorWebRouter.Configurer<ExchangeContext> {
 
     private final GrpcServer grpcServer;
 
@@ -602,13 +600,13 @@ public class App_grpc_serverErrorWebRoutesConfigurer implements ErrorWebRoutesCo
     }
 
     @Override
-    public void configure(ErrorWebRoutable<ExchangeContext, ?> errorRoutes) {
-        errorRoutes
-            .route()
-            .consumes(MediaTypes.APPLICATION_GRPC)
-            .consumes(MediaTypes.APPLICATION_GRPC_JSON)
-            .consumes(MediaTypes.APPLICATION_GRPC_PROTO)
-            .handler(this.grpcServer.errorHandler());
+    public void configure(ErrorWebRouter<ExchangeContext> errorRouter) {
+        errorRouter
+            .routeError()
+                .consume(MediaTypes.APPLICATION_GRPC)
+                .consume(MediaTypes.APPLICATION_GRPC_JSON)
+                .consume(MediaTypes.APPLICATION_GRPC_PROTO)
+                .handler(this.grpcServer.errorHandler());
     }
 }
 ```

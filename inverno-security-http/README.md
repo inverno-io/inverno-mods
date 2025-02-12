@@ -61,7 +61,7 @@ compile 'io.inverno.mod:inverno-security-http:${VERSION_INVERNO_MODS}'
 Let's quickly see how to secure a simple Web application exposing a single hello world service using basic authentication. The application might initially look like:
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.v1.Application;
@@ -73,13 +73,13 @@ import io.inverno.mod.web.server.annotation.WebRoute;
 @WebController
 public class Main {
 
+    public static void main(String[] args) {
+        Application.run(new App_security_http.Builder());
+    }
+    
     @WebRoute( path = "/hello", method = Method.GET)
     public String hello() {
         return "Hello world!";
-    }
-
-    public static void main(String[] args) {
-        Application.run(new App_web_security.Builder());
     }
 }
 ```
@@ -108,15 +108,15 @@ $ mvn inverno:run
      ║ Java version        : 18+36-2087                                                           ║
      ║ Java home           : /home/jkuhn/Devel/jdk/jdk-18                                         ║
      ║                                                                                            ║
-     ║ Application module  : io.inverno.example.app_web_security                                  ║
-     ║ Application class   : io.inverno.example.app_web_security.Main                             ║
+     ║ Application module  : io.inverno.example.app_security_http                                 ║
+     ║ Application class   : io.inverno.example.app_security_http.Main                            ║
      ║                                                                                            ║
      ║ Modules             :                                                                      ║
      ║  ...                                                                                       ║
      ╚════════════════════════════════════════════════════════════════════════════════════════════╝
 
 
-10:19:32.801 [main] INFO  io.inverno.example.app_web_security.App_web_security - Starting Module io.inverno.example.app_web_security...
+10:19:32.801 [main] INFO  io.inverno.example.app_security_http.App_security_http - Starting Module io.inverno.example.app_security_http...
 10:19:32.801 [main] INFO  io.inverno.mod.boot.Boot - Starting Module io.inverno.mod.boot...
 10:19:33.002 [main] INFO  io.inverno.mod.boot.Boot - Module io.inverno.mod.boot started in 200ms
 10:19:33.002 [main] INFO  io.inverno.mod.web.server.Web - Starting Module io.inverno.mod.web.server...
@@ -126,8 +126,8 @@ $ mvn inverno:run
 10:19:33.110 [main] INFO  io.inverno.mod.http.server.internal.HttpServer - HTTP Server (nio) listening on http://0.0.0.0:8080
 10:19:33.111 [main] INFO  io.inverno.mod.http.server.Server - Module io.inverno.mod.http.server started in 109ms
 10:19:33.111 [main] INFO  io.inverno.mod.web.server.Web - Module io.inverno.mod.web.server started in 109ms
-10:19:33.112 [main] INFO  io.inverno.example.app_web_security.App_web_security - Module io.inverno.example.app_web_security started in 312ms
-10:19:33.115 [main] INFO  io.inverno.core.v1.Application - Application io.inverno.example.app_web_security started in 375ms
+10:19:33.112 [main] INFO  io.inverno.example.App_security_http - Module io.inverno.example.app_security_http started in 312ms
+10:19:33.115 [main] INFO  io.inverno.core.v1.Application - Application io.inverno.example.app_security_http started in 375ms
 ```
 
 ```plaintext
@@ -143,7 +143,7 @@ From there, let's say we want to protect the access to all routes requiring [HTT
 A Web configurer must be created to define a **security interceptor** that will authenticate requests and use a `BasicAuthenticationErrorInterceptor` to intercept unauthorized (401) errors and return the basic authentication challenge to the client.
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.http.base.ExchangeContext;
@@ -160,24 +160,21 @@ import io.inverno.mod.security.http.basic.BasicAuthenticationErrorInterceptor;
 import io.inverno.mod.security.http.basic.BasicCredentialsExtractor;
 import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 import io.inverno.mod.security.identity.Identity;
-import io.inverno.mod.web.server.ErrorWebRouter;
-import io.inverno.mod.web.server.ErrorWebRouterConfigurer;
+import io.inverno.mod.web.server.ErrorWebRouteInterceptor;
 import io.inverno.mod.web.server.WebRouteInterceptor;
-import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 import java.util.List;
 
 @Bean( visibility = Bean.Visibility.PRIVATE )
-public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>>, ErrorWebRouterConfigurer<ExchangeContext> {
+public class SecurityConfigurer implements WebRouteInterceptor.Configurer<InterceptingSecurityContext<Identity, AccessController>>, ErrorWebRouteInterceptor.Configurer<ExchangeContext> {
 
     @Override
-    public void configure(WebInterceptable<InterceptingSecurityContext<Identity, AccessController>, ?> interceptors) {
-        interceptors
+    public WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> configure(WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> interceptors) {
+        return interceptors
             .intercept()
-                .interceptors(List.of(SecurityInterceptor.of(                            // 1
-                        new BasicCredentialsExtractor(),                                 // 2
-                        new UserAuthenticator<>(                                         // 3
-                            InMemoryUserRepository
-                                .of(List.of(
+                .interceptors(List.of(SecurityInterceptor.of(                             // 1
+                        new BasicCredentialsExtractor(),                                  // 2
+                        new UserAuthenticator<>(                                          // 3
+                            InMemoryUserRepository.of(List.of(
                                     User.of("jsmith")
                                         .password(new RawPassword("password"))
                                         .build()
@@ -186,23 +183,21 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
                             new LoginCredentialsMatcher<>()
                         )
                     ),
-                    AccessControlInterceptor.authenticated()                             // 4
+                    AccessControlInterceptor.authenticated()                              // 4
                 ));
     }
 
     @Override
-    public void configure(ErrorWebRouter<ExchangeContext> errorRouter) {
-        errorRouter
-            .intercept()
+    public ErrorWebRouteInterceptor<ExchangeContext> configure(ErrorWebRouteInterceptor<ExchangeContext> errorInterceptors) {
+        return errorInterceptors
+            .interceptError()
                 .error(UnauthorizedException.class)
-                .interceptor(new BasicAuthenticationErrorInterceptor<>("inverno-basic")) // 5
-            // We must apply interceptors to intercept white labels error routes
-            .applyInterceptors();                                                        // 6
+                .interceptor(new BasicAuthenticationErrorInterceptor<>("inverno-basic")); // 5
     }
 }
 ```
 
-The Web configurer implements `WebInterceptorsConfigurer` in order to configure route interceptors and `ErrorWebRouterConfigurer` in order to configure error route interceptors and apply them to all error routes (including default ones). It declares the `InterceptingSecurityContext` exchange context type which is required by the `SecurityInterceptor` to set the security context. Interceptors are defined to intercept all routes.
+The Web configurer implements `WebRouteInterceptor.Configurer` and `ErrorWebRouteInterceptor.Configurer` in order to configure route and error route interceptors to apply to all routes. It declares the `InterceptingSecurityContext` exchange context type which is required by the `SecurityInterceptor` to set the security context. Interceptors are defined to intercept all routes.
 
 In above code, there are several things that deserve further explanation:
 
@@ -211,9 +206,6 @@ In above code, there are several things that deserve further explanation:
 3. The security interceptor can then use any authenticator that is able to authenticate login credentials such as the `UserAuthenticator`.
 4. An access control interceptor is added next in order to limit the access to authenticated users. Just like the security manager, the security interceptor authenticates credentials and creates the security context. But that does not mean authentication was successful, the resulting security context can be anonymous, denied or authenticated.
 5. The `BasicAuthenticationErrorInterceptor` intercepts unauthorized (401) errors and set the basic authentication scheme challenge in the `www-authenticate` HTTP header of the response with the `inverno-basic` realm.
-6. The Web server provides white labels error routes by default which must be explicitly intercepted since they have been created before on an unintercepted router.
-
-> Having to explicitly apply interceptors on default routes can be a source of errors and misunderstanding but there is unfortunately no other way if we want to make them overridable. A systematic and safe approach to this issue would be to always override default error routes.
 
 We should now receive an unauthorized (401) error with a basic authentication challenge when requesting http://localhost:8080/hello (or any other endpoint) without credentials:
 
@@ -237,68 +229,40 @@ Hello world!
 
 We can change the `/hello` route handler to respond with a personalized message. This requires to resolve the identity of the user and use it in the handler.
 
-We use a user repository which can provide user's identity, a `UserIdentityResolver` can then be used in the security interceptor to resolve it and make it available in the security context:
+A user repository allows to define users with identity such as `PersonIdentity`, the Web configurer can then be changed to expose `PersonIdentity` and use a `UserIdentityResolver` in the security interceptor to resolve the user identity and make it available in the security context:
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
-import io.inverno.core.annotation.Bean;
-import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.base.UnauthorizedException;
-import io.inverno.mod.security.accesscontrol.AccessController;
-import io.inverno.mod.security.authentication.LoginCredentialsMatcher;
-import io.inverno.mod.security.authentication.password.RawPassword;
-import io.inverno.mod.security.authentication.user.InMemoryUserRepository;
-import io.inverno.mod.security.authentication.user.User;
-import io.inverno.mod.security.authentication.user.UserAuthenticator;
-import io.inverno.mod.security.http.AccessControlInterceptor;
-import io.inverno.mod.security.http.SecurityInterceptor;
-import io.inverno.mod.security.http.basic.BasicAuthenticationErrorInterceptor;
-import io.inverno.mod.security.http.basic.BasicCredentialsExtractor;
-import io.inverno.mod.security.http.context.InterceptingSecurityContext;
+...
 import io.inverno.mod.security.identity.PersonIdentity;
 import io.inverno.mod.security.identity.UserIdentityResolver;
-import io.inverno.mod.web.server.ErrorWebRouter;
-import io.inverno.mod.web.server.ErrorWebRouterConfigurer;
-import io.inverno.mod.web.server.WebRouteInterceptor;
-import io.inverno.mod.web.server.WebInterceptorsConfigurer;
-import java.util.List;
 
 @Bean( visibility = Bean.Visibility.PRIVATE )
-public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<PersonIdentity, AccessController>>, ErrorWebRouterConfigurer<ExchangeContext> {
+public class SecurityConfigurer implements WebRouteInterceptor.Configurer<InterceptingSecurityContext<PersonIdentity, AccessController>>, ErrorWebRouteInterceptor.Configurer<ExchangeContext> {
 
     @Override
-    public void configure(WebInterceptable<InterceptingSecurityContext<PersonIdentity, AccessController>, ?> interceptors) {
-        interceptors
+    public WebRouteInterceptor<InterceptingSecurityContext<PersonIdentity, AccessController>> configure(WebRouteInterceptor<InterceptingSecurityContext<PersonIdentity, AccessController>> interceptors) {
+        return interceptors
             .intercept()
                 .interceptors(List.of(SecurityInterceptor.of(
                         new BasicCredentialsExtractor(),
                         new UserAuthenticator<>(
-                            InMemoryUserRepository
-                                .of(List.of(
+                            InMemoryUserRepository.of(List.of(
                                     User.of("jsmith")
                                         .password(new RawPassword("password"))
-                                        .identity(new PersonIdentity("jsmith", "John", "Smith", "jsmith@inverno.io"))
+                                        .identity(new PersonIdentity("jsmith", "John", "Smith", "jsmith@inverno.io")) // Define user identity
                                         .build()
                                 ))
                                 .build(),
                             new LoginCredentialsMatcher<>()
                         ),
-                        new UserIdentityResolver<>()
+                        new UserIdentityResolver<>() // Resolve user identity from UserAuthentication
                     ),
                     AccessControlInterceptor.authenticated()
                 ));
     }
-
-    @Override
-    public void configure(ErrorWebRouter<ExchangeContext> errorRouter) {
-        errorRouter
-            .intercept()
-                .error(UnauthorizedException.class)
-                .interceptor(new BasicAuthenticationErrorInterceptor<>("inverno-basic"))
-            // We must apply interceptors to intercept white labels error routes
-            .applyInterceptors();
-    }
+    ...
 }
 ```
 
@@ -307,20 +271,18 @@ The `PersonIdentity` type is now declared in the `InterceptingSecurityContext` e
 We can now inject the exchange security context in the route handler and get the identity to provide the personalized message:
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
-import io.inverno.core.annotation.Bean;
-import io.inverno.core.v1.Application;
-import io.inverno.mod.http.base.Method;
+...
 import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.http.context.SecurityContext;
 import io.inverno.mod.security.identity.PersonIdentity;
-import io.inverno.mod.web.server.annotation.WebController;
-import io.inverno.mod.web.server.annotation.WebRoute;
 
 @Bean
 @WebController
 public class Main {
+    
+    ...
 
     @WebRoute( path = "/hello", method = Method.GET)
     public String hello(SecurityContext<? extends PersonIdentity, ? extends AccessController> securityContext) {
@@ -341,23 +303,14 @@ content-length: 11
 Hello John!
 ```
 
-Let's create another endpoint for VIP users responding with an extra polite message. VIP users can be placed into the `vip` group and a `RoleBasedAccessContoller` can be resolved using a `GroupsRoleBasedAccessControllerResolver`.
-
-Let's start by creating the `/vip/hello` route:
+Let's create another endpoint for VIP users with `vip` role responding with an extra polite message:
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
-import io.inverno.core.annotation.Bean;
-import io.inverno.core.v1.Application;
+...
 import io.inverno.mod.http.base.ForbiddenException;
-import io.inverno.mod.http.base.Method;
-import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.accesscontrol.RoleBasedAccessController;
-import io.inverno.mod.security.http.context.SecurityContext;
-import io.inverno.mod.security.identity.PersonIdentity;
-import io.inverno.mod.web.server.annotation.WebController;
-import io.inverno.mod.web.server.annotation.WebRoute;
 import reactor.core.publisher.Mono;
 
 @Bean
@@ -365,10 +318,11 @@ import reactor.core.publisher.Mono;
 public class Main {
 
     ...
+    
     @WebRoute( path = "/vip/hello", method = Method.GET)
     public Mono<String> hello_vip(SecurityContext<? extends PersonIdentity, ? extends RoleBasedAccessController> securityContext) {
         return securityContext.getAccessController()
-            .orElseThrow(() -> new ForbiddenException())
+            .orElseThrow(ForbiddenException::new)
             .hasRole("vip")
             .map(isVip -> {
                 if(!isVip) {
@@ -383,46 +337,27 @@ public class Main {
 
 > You may have noticed that we did not have to change the `/hello` route definition which can still declare `SecurityContext<? extends PersonIdentity, ? extends AccessController>` since it is assignable from the actual context type `SecurityContext<PersonIdentity, RoleBasedAccessController>` declared in the security configurer. Note that a compilation error would have been raised to report inconsistent exchange context types if we had not used upper bound wildcards.
 
-We can now change the Web configurer to resolve the role-based access controller using a `GroupsRoleBasedAccessControllerResolver`.
+In the Web configurer, VIP users can be placed into the `vip` group and a `RoleBasedAccessContoller` can be resolved using a `GroupsRoleBasedAccessControllerResolver`:
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
-import io.inverno.core.annotation.Bean;
-import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.base.UnauthorizedException;
+...
+import io.inverno.mod.http.base.ForbiddenException;
 import io.inverno.mod.security.accesscontrol.GroupsRoleBasedAccessControllerResolver;
 import io.inverno.mod.security.accesscontrol.RoleBasedAccessController;
-import io.inverno.mod.security.authentication.LoginCredentialsMatcher;
-import io.inverno.mod.security.authentication.password.RawPassword;
-import io.inverno.mod.security.authentication.user.InMemoryUserRepository;
-import io.inverno.mod.security.authentication.user.User;
-import io.inverno.mod.security.authentication.user.UserAuthenticator;
-import io.inverno.mod.security.http.AccessControlInterceptor;
-import io.inverno.mod.security.http.SecurityInterceptor;
-import io.inverno.mod.security.http.basic.BasicAuthenticationErrorInterceptor;
-import io.inverno.mod.security.http.basic.BasicCredentialsExtractor;
-import io.inverno.mod.security.http.context.InterceptingSecurityContext;
-import io.inverno.mod.security.identity.PersonIdentity;
-import io.inverno.mod.security.identity.UserIdentityResolver;
-import io.inverno.mod.web.server.ErrorWebRouter;
-import io.inverno.mod.web.server.ErrorWebRouterConfigurer;
-import io.inverno.mod.web.server.WebRouteInterceptor;
-import io.inverno.mod.web.server.WebInterceptorsConfigurer;
-import java.util.List;
 
 @Bean( visibility = Bean.Visibility.PRIVATE )
-public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<PersonIdentity, RoleBasedAccessController>>, ErrorWebRouterConfigurer<ExchangeContext> {
+public class SecurityConfigurer implements WebRouteInterceptor.Configurer<InterceptingSecurityContext<PersonIdentity, RoleBasedAccessController>>, ErrorWebRouteInterceptor.Configurer<ExchangeContext> {
 
     @Override
-    public void configure(WebInterceptable<InterceptingSecurityContext<PersonIdentity, RoleBasedAccessController>, ?> interceptors) {
-        interceptors
+    public WebRouteInterceptor<InterceptingSecurityContext<PersonIdentity, RoleBasedAccessController>> configure(WebRouteInterceptor<InterceptingSecurityContext<PersonIdentity, RoleBasedAccessController>> interceptors) {
+        return interceptors
             .intercept()
                 .interceptors(List.of(SecurityInterceptor.of(
                         new BasicCredentialsExtractor(),
                         new UserAuthenticator<>(
-                            InMemoryUserRepository
-                                .of(List.of(
+                            InMemoryUserRepository.of(List.of(
                                     User.of("jsmith")
                                         .password(new RawPassword("password"))
                                         .identity(new PersonIdentity("jsmith", "John", "Smith", "jsmith@inverno.io"))
@@ -442,6 +377,7 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
                     AccessControlInterceptor.authenticated()
                 ));
     }
+    
     ...
 }
 ```
@@ -475,46 +411,24 @@ content-length: 0
 
 ```
 
-Here we have decided to control access inside the `/vip/hello` route handler, but we could have also globally restrict access to `/vip/**` routes to VIP users using an `AccessControlInterceptor` in the security configurer:
+Here we have decided to control access inside the `/vip/hello` route handler, but we could have also globally restricted access to `/vip/**` routes to VIP users using an `AccessControlInterceptor` in the security configurer:
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
-import io.inverno.core.annotation.Bean;
-import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.base.ForbiddenException;
-import io.inverno.mod.http.base.UnauthorizedException;
-import io.inverno.mod.security.accesscontrol.GroupsRoleBasedAccessControllerResolver;
-import io.inverno.mod.security.accesscontrol.RoleBasedAccessController;
-import io.inverno.mod.security.authentication.LoginCredentialsMatcher;
-import io.inverno.mod.security.authentication.password.RawPassword;
-import io.inverno.mod.security.authentication.user.InMemoryUserRepository;
-import io.inverno.mod.security.authentication.user.User;
-import io.inverno.mod.security.authentication.user.UserAuthenticator;
-import io.inverno.mod.security.http.AccessControlInterceptor;
-import io.inverno.mod.security.http.SecurityInterceptor;
-import io.inverno.mod.security.http.basic.BasicAuthenticationErrorInterceptor;
-import io.inverno.mod.security.http.basic.BasicCredentialsExtractor;
-import io.inverno.mod.security.http.context.InterceptingSecurityContext;
-import io.inverno.mod.security.identity.PersonIdentity;
-import io.inverno.mod.security.identity.UserIdentityResolver;
-import io.inverno.mod.web.server.ErrorWebRouter;
-import io.inverno.mod.web.server.ErrorWebRouterConfigurer;
-import io.inverno.mod.web.server.WebRouteInterceptor;
-import io.inverno.mod.web.server.WebInterceptorsConfigurer;
-import java.util.List;
+...
 
 @Bean( visibility = Bean.Visibility.PRIVATE )
-public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<PersonIdentity, RoleBasedAccessController>>, ErrorWebRouterConfigurer<ExchangeContext> {
+public class SecurityConfigurer implements WebRouteInterceptor.Configurer<InterceptingSecurityContext<PersonIdentity, RoleBasedAccessController>>, ErrorWebRouteInterceptor.Configurer<ExchangeContext> {
 
     @Override
-    public void configure(WebInterceptable<InterceptingSecurityContext<PersonIdentity, RoleBasedAccessController>, ?> interceptors) {
-        interceptors
+    public WebRouteInterceptor<InterceptingSecurityContext<PersonIdentity, RoleBasedAccessController>> configure(WebRouteInterceptor<InterceptingSecurityContext<PersonIdentity, RoleBasedAccessController>> interceptors) {
+        return interceptors
             ...
             .intercept()
                 .path("/vip/**")
                 .interceptor(AccessControlInterceptor.verify(securityContext -> securityContext.getAccessController()
-                    .orElseThrow(() -> new ForbiddenException())
+                    .orElseThrow(ForbiddenException::new)
                     .hasRole("vip")
                 ));
     }
@@ -525,17 +439,9 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
 The `/vip/hello` route handler can then be simplified while still being only accessible by VIP users:
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
-import io.inverno.core.annotation.Bean;
-import io.inverno.core.v1.Application;
-import io.inverno.mod.http.base.Method;
-import io.inverno.mod.security.accesscontrol.AccessController;
-import io.inverno.mod.security.accesscontrol.RoleBasedAccessController;
-import io.inverno.mod.security.http.context.SecurityContext;
-import io.inverno.mod.security.identity.PersonIdentity;
-import io.inverno.mod.web.server.annotation.WebController;
-import io.inverno.mod.web.server.annotation.WebRoute;
+...
 
 @Bean
 @WebController
@@ -546,7 +452,6 @@ public class Main {
     public String hello_vip(SecurityContext<? extends PersonIdentity, ? extends RoleBasedAccessController> securityContext) {
         return "Hello my dear friend " + securityContext.getIdentity().map(PersonIdentity::getFirstName).orElse("whoever you are") + "!";
     }
-    ...
 }
 ```
 
@@ -573,32 +478,35 @@ AccessControllerResolver<Authentication, AccessController> accessControllerResol
 SecurityInterceptor<Credentials, Identity, AccessController, InterceptingSecurityContext<Identity, AccessController>, Exchange<InterceptingSecurityContext<Identity, AccessController>>> securityInterceptor = SecurityInterceptor.of(credentialsExtractor, authenticator, identityResolver, accessControllerResolver);
 ```
 
-It can be applied to Web routes just like any other exchange interceptor by defining a Web configurer implementing `WebInterceptorsConfigurer` or `WebRouterConfigurer`. The following example shows how to secure access by applying the security interceptor to all `/vip/**` routes:
+It can be applied to Web routes just like any other exchange interceptor by defining a Web configurer implementing `WebRouteInterceptor.Configurer` or `WebServer.Configurer`. The following example shows how to secure access by applying the security interceptor to all `/vip/**` routes:
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
+import io.inverno.core.annotation.Bean;
 import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.accesscontrol.AccessControllerResolver;
+import io.inverno.mod.security.authentication.Authentication;
 import io.inverno.mod.security.authentication.Authenticator;
-import io.inverno.mod.security.identity.Identity;
-import io.inverno.mod.security.identity.IdentityResolver;
+import io.inverno.mod.security.authentication.Credentials;
 import io.inverno.mod.security.http.CredentialsExtractor;
 import io.inverno.mod.security.http.SecurityInterceptor;
 import io.inverno.mod.security.http.context.InterceptingSecurityContext;
+import io.inverno.mod.security.identity.Identity;
+import io.inverno.mod.security.identity.IdentityResolver;
 import io.inverno.mod.web.server.WebRouteInterceptor;
-import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 
-public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>> {
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class SecurityConfigurer implements WebRouteInterceptor.Configurer<InterceptingSecurityContext<Identity, AccessController>> {
 
     @Override
-    public void configure(WebInterceptable<InterceptingSecurityContext<PersonIdentity, AccessController>, ?> interceptors) {
+    public WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> configure(WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> interceptors) {
         CredentialsExtractor<Credentials> credentialsExtractor = ...
         Authenticator<Credentials, Authentication> authenticator = ...
         IdentityResolver<Authentication, Identity> identityResolver = ...
         AccessControllerResolver<Authentication, AccessController> accessControllerResolver = ...
 
-        interceptors
+        return interceptors
             .intercept()
                 .path("/vip/**")
                 .interceptor(SecurityInterceptor.of(credentialsExtractor, authenticator, identityResolver, accessControllerResolver));
@@ -654,7 +562,7 @@ The *security-http* module provides `io.inverno.mod.security.http.context.Securi
 
 It also provides the `io.inverno.mod.security.http.context.InterceptingSecurityContext` which extends `io.inverno.mod.security.http.context.SecurityContext` and exposes a single `setSecurityContext()` method. This is a mutable version of the `io.inverno.mod.security.http.context.SecurityContext` which enables security related interceptors or handlers, such as the `SecurityInterceptor`, to set the `io.inverno.mod.security.context.SecurityContext` in the security exchange context.
 
-> In the end, every `ExchangeContext` types should be implemented in the generated global `ExchangeContext` type which will basically implements both `io.inverno.mod.security.http.context.SecurityContext` and `io.inverno.mod.security.http.context.InterceptingSecurityContext`. However, making sure `io.inverno.mod.security.http.context.SecurityContext` is used in applicative interceptors and handlers and only allow the `io.inverno.mod.security.http.context.InterceptingSecurityContext` in specific trusted security interceptors and handlers is a good way to control and protect the security context against untrustful modifications.
+> In the end, every `ExchangeContext` types should be implemented in the generated global `ExchangeContext` type which will basically implements both `io.inverno.mod.security.http.context.SecurityContext` and `io.inverno.mod.security.http.context.InterceptingSecurityContext`. However, making sure `io.inverno.mod.security.http.context.SecurityContext` is used in applicative interceptors and handlers and only allow the `io.inverno.mod.security.http.context.InterceptingSecurityContext` in specific trusted security interceptors and handlers is a good way to control and protect the security context against untrustworthy modifications.
 
 ## Access Control Interceptor
 
@@ -663,49 +571,11 @@ As we just saw, the role of the security interceptor is to authenticate credenti
 In the following example, `AccessControlInterceptor.authenticated()` is used to create an interceptor that restricts access to authenticated users.
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
+import io.inverno.core.annotation.Bean;
 import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.accesscontrol.AccessControllerResolver;
-import io.inverno.mod.security.authentication.Authenticator;
-import io.inverno.mod.security.identity.Identity;
-import io.inverno.mod.security.identity.IdentityResolver;
-import io.inverno.mod.security.http.AccessControlInterceptor;
-import io.inverno.mod.security.http.CredentialsExtractor;
-import io.inverno.mod.security.http.SecurityInterceptor;
-import io.inverno.mod.security.http.context.InterceptingSecurityContext;
-import io.inverno.mod.web.server.WebRouteInterceptor;
-import io.inverno.mod.web.server.WebInterceptorsConfigurer;
-import java.util.List;
-
-public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>> {
-
-    @Override
-    public void configure(WebInterceptable<InterceptingSecurityContext<PersonIdentity, AccessController>, ?> interceptors) {
-        CredentialsExtractor<Credentials> credentialsExtractor = ...
-        Authenticator<Credentials, Authentication> authenticator = ...
-        IdentityResolver<Authentication, Identity> identityResolver = ...
-        AccessControllerResolver<Authentication, AccessController> accessControllerResolver = ...
-
-        interceptors
-            .intercept()
-                .path("/vip/**")
-                .interceptors(List.of(
-                    SecurityInterceptor.of(credentialsExtractor, authenticator, identityResolver, accessControllerResolver),
-                    AccessControlInterceptor.authenticated()
-                ));
-    }
-}
-```
-
-We can use `AccessControlInterceptor.anonymous()` to restrict access to anonymous users, or we can also provide custom access control using `AccessControlInterceptor.verify()` as follows:
-
-```java
-package io.inverno.example.app_web_security;
-
-import io.inverno.mod.http.base.ForbiddenException;
-import io.inverno.mod.security.accesscontrol.AccessControllerResolver;
-import io.inverno.mod.security.accesscontrol.RoleBasedAccessController;
 import io.inverno.mod.security.authentication.Authentication;
 import io.inverno.mod.security.authentication.Authenticator;
 import io.inverno.mod.security.authentication.Credentials;
@@ -716,28 +586,58 @@ import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 import io.inverno.mod.security.identity.Identity;
 import io.inverno.mod.security.identity.IdentityResolver;
 import io.inverno.mod.web.server.WebRouteInterceptor;
-import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 import java.util.List;
 
-public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, RoleBasedAccessController>> {
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class SecurityConfigurer implements WebRouteInterceptor.Configurer<InterceptingSecurityContext<Identity, AccessController>> {
 
     @Override
-    public void configure(WebInterceptable<InterceptingSecurityContext<Identity, RoleBasedAccessController>, ?> interceptors) {
-        CredentialsExtractor<Credentials> credentialsExtractor = null;
-        Authenticator<Credentials, Authentication> authenticator = null;
-        IdentityResolver<Authentication, Identity> identityResolver = null;
-        AccessControllerResolver<Authentication, RoleBasedAccessController> accessControllerResolver = null;
+    public WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> configure(WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> interceptors) {
+        CredentialsExtractor<Credentials> credentialsExtractor = ...
+        Authenticator<Credentials, Authentication> authenticator = ...
+        IdentityResolver<Authentication, Identity> identityResolver = ...
+        AccessControllerResolver<Authentication, AccessController> accessControllerResolver = ...
 
-        interceptors
+        return interceptors
             .intercept()
-                .path("/vip/**")
-                .interceptors(List.of(
-                    SecurityInterceptor.of(credentialsExtractor, authenticator, identityResolver, accessControllerResolver),
-                    AccessControlInterceptor.verify(securityContext -> securityContext.getAccessController()
-                        .orElseThrow(() -> new ForbiddenException())
-                        .hasRole("vip")
-                    )
-                ));
+            .path("/vip/**")
+            .interceptors(List.of(
+                SecurityInterceptor.of(credentialsExtractor, authenticator, identityResolver, accessControllerResolver),
+                AccessControlInterceptor.authenticated()
+            ));
+    }
+}
+```
+
+We can use `AccessControlInterceptor.anonymous()` to restrict access to anonymous users, or we can also provide custom access control using `AccessControlInterceptor.verify()` as follows:
+
+```java
+package io.inverno.example.app_security_http;
+
+...
+import io.inverno.mod.http.base.ForbiddenException;
+import io.inverno.mod.security.accesscontrol.RoleBasedAccessController;
+
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class SecurityConfigurer implements WebRouteInterceptor.Configurer<InterceptingSecurityContext<Identity, RoleBasedAccessController>> {
+
+    @Override
+    public WebRouteInterceptor<InterceptingSecurityContext<Identity, RoleBasedAccessController>> configure(WebRouteInterceptor<InterceptingSecurityContext<Identity, RoleBasedAccessController>> interceptors) {
+        CredentialsExtractor<Credentials> credentialsExtractor = ...
+        Authenticator<Credentials, Authentication> authenticator = ...
+        IdentityResolver<Authentication, Identity> identityResolver = ...
+        AccessControllerResolver<Authentication, RoleBasedAccessController> accessControllerResolver = ...
+
+        return interceptors
+            .intercept()
+            .path("/vip/**")
+            .interceptors(List.of(
+                SecurityInterceptor.of(credentialsExtractor, authenticator, identityResolver, accessControllerResolver),
+                AccessControlInterceptor.verify(securityContext -> securityContext.getAccessController()
+                    .orElseThrow(ForbiddenException::new)
+                    .hasRole("vip")
+                )
+            ));
     }
 }
 ```
@@ -753,18 +653,28 @@ The [basic HTTP authentication scheme][rfc7617] is, as its name suggests, a basi
 A security context implementing HTTP basic authentication is obtained by combining the `BasicCredentialsExtractor` which extracts `LoginCredentials` with a compatible `Authenticator` implementation. The following example uses a basic `PrincipalAuthenticator` with an in-memory login credentials resolver in order to secure `/basic/**` routes:
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
-...
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.security.accesscontrol.AccessController;
+import io.inverno.mod.security.authentication.InMemoryLoginCredentialsResolver;
+import io.inverno.mod.security.authentication.LoginCredentials;
+import io.inverno.mod.security.authentication.LoginCredentialsMatcher;
+import io.inverno.mod.security.authentication.PrincipalAuthenticator;
+import io.inverno.mod.security.authentication.password.MessageDigestPassword;
+import io.inverno.mod.security.http.SecurityInterceptor;
 import io.inverno.mod.security.http.basic.BasicCredentialsExtractor;
-...
+import io.inverno.mod.security.http.context.InterceptingSecurityContext;
+import io.inverno.mod.security.identity.Identity;
+import io.inverno.mod.web.server.WebRouteInterceptor;
+import java.util.List;
 
-...
-public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>> {
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class SecurityConfigurer implements WebRouteInterceptor.Configurer<InterceptingSecurityContext<Identity, AccessController>> {
 
     @Override
-    public void configure(WebInterceptable<InterceptingSecurityContext<Identity, AccessController>, ?> interceptors) {
-        interceptors
+    public WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> configure(WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> interceptors) {
+        return interceptors
             .intercept()
                 .path("/basic/**")
                 .interceptor(SecurityInterceptor.of(
@@ -785,25 +695,26 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
 In order to fully implement HTTP basic authentication scheme as defined by [RFC 7617][rfc7617], we also need to send a basic authentication challenge on unauthorized (401) errors. This can be done by intercepting `UnauthorizedException` on secured routes using a `BasicAuthenticationErrorInterceptor`:
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
 ...
+import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.UnauthorizedException;
 import io.inverno.mod.security.http.basic.BasicAuthenticationErrorInterceptor;
-...
+import io.inverno.mod.web.server.ErrorWebRouteInterceptor;
 
-...
-public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>>, ErrorWebRouterConfigurer<ExchangeContext> {
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class SecurityConfigurer implements WebRouteInterceptor.Configurer<InterceptingSecurityContext<Identity, AccessController>>, ErrorWebRouteInterceptor.Configurer<ExchangeContext> {
 
     ...
+    
     @Override
-    public void configure(ErrorWebRouter<ExchangeContext> errorRouter) {
-        errorRouter
-            .intercept()
+    public ErrorWebRouteInterceptor<ExchangeContext> configure(ErrorWebRouteInterceptor<ExchangeContext> errorInterceptors) {
+        return errorInterceptors
+            .interceptError()
                 .error(UnauthorizedException.class)
                 .path("/basic/**")
-                .interceptor(new BasicAuthenticationErrorInterceptor<>("inverno-basic"))
-                 // We must apply interceptors to intercept white labels error routes which are already defined
-                .applyInterceptors();
+                .interceptor(new BasicAuthenticationErrorInterceptor<>("inverno-basic"));
     }
 }
 ```
@@ -829,19 +740,28 @@ The [HTTP digest access authentication][rfc7616] is a more secured HTTP authenti
 A security context implementing HTTP digest authentication is obtained by combining the `DigestCredentialsExtractor` which extracts `DigestCredentials` with a compatible `Authenticator` implementation. The `DigestCredentialsMatcher` can be used within a `PrincipalAuthenticator` or a `UserAuthenticator` to match digest credentials against trusted login credentials (digest credentials basically represent digested login credentials). The following example uses a `UserAuthenticator` with an in-memory user repository and a `DigestCredentialsMatcher` in order to secure `/digest/**` routes:
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
-...
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.security.accesscontrol.AccessController;
+import io.inverno.mod.security.authentication.password.RawPassword;
+import io.inverno.mod.security.authentication.user.InMemoryUserRepository;
+import io.inverno.mod.security.authentication.user.User;
+import io.inverno.mod.security.authentication.user.UserAuthenticator;
+import io.inverno.mod.security.http.SecurityInterceptor;
+import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 import io.inverno.mod.security.http.digest.DigestCredentialsExtractor;
 import io.inverno.mod.security.http.digest.DigestCredentialsMatcher;
-...
+import io.inverno.mod.security.identity.Identity;
+import io.inverno.mod.web.server.WebRouteInterceptor;
+import java.util.List;
 
-...
-public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>> {
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class SecurityConfigurer implements WebRouteInterceptor.Configurer<InterceptingSecurityContext<Identity, AccessController>> {
 
     @Override
-    public void configure(WebInterceptable<InterceptingSecurityContext<Identity, AccessController>, ?> interceptors) {
-        interceptors
+    public WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> configure(WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> interceptors) {
+        return interceptors
             .intercept()
                 .path("/digest/**")
                 .interceptor(SecurityInterceptor.of(
@@ -849,12 +769,8 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
                     new UserAuthenticator<>(
                         InMemoryUserRepository
                             .of(List.of(
-                                User.of("jsmith")
-                                    .password(new RawPassword("password"))
-                                    .build(),
-                                User.of("adoe")
-                                    .password(new RawPassword("password"))
-                                    .build()
+                                User.of("jsmith").password(new RawPassword("password")).build(),
+                                User.of("adoe").password(new RawPassword("password")).build()
                             ))
                             .build(),
                         new DigestCredentialsMatcher<>("secret")
@@ -869,25 +785,26 @@ As previously mentioned, digest credentials expire at a fixed datetime specified
 The HTTP digest access authentication is based on a challenge-response mechanism as a result a digest authentication challenge must be generated server-side on an unauthorized access or expired nonce errors and sent to the client prior to authentication. This is done using a `DigestAuthenticationErrorInterceptor` on secured routes to intercept `UnauthorizedException` errors:
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
 ...
-import io.inverno.mod.security.http.basic.BasicAuthenticationErrorInterceptor;
-...
+import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.UnauthorizedException;
+import io.inverno.mod.security.http.digest.DigestAuthenticationErrorInterceptor;
+import io.inverno.mod.web.server.ErrorWebRouteInterceptor;
 
-...
-public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>>, ErrorWebRouterConfigurer<ExchangeContext> {
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class SecurityConfigurer implements WebRouteInterceptor.Configurer<InterceptingSecurityContext<Identity, AccessController>>, ErrorWebRouteInterceptor.Configurer<ExchangeContext> {
 
     ...
+    
     @Override
-    public void configure(ErrorWebRouter<ExchangeContext> errorRouter) {
-        errorRouter
-            .intercept()
+    public ErrorWebRouteInterceptor<ExchangeContext> configure(ErrorWebRouteInterceptor<ExchangeContext> errorInterceptors) {
+        return errorInterceptors
+            .interceptError()
                 .error(UnauthorizedException.class)
                 .path("/digest/**")
-                .interceptor(new DigestAuthenticationErrorInterceptor<>("inverno-digest", "secret"))
-                 // We must apply interceptors to intercept white labels error routes which are already defined
-                .applyInterceptors();
+                .interceptor(new DigestAuthenticationErrorInterceptor<>("inverno-digest", "secret"));
     }
 }
 ```
@@ -913,18 +830,25 @@ A token must be ideally difficult to forge and easy to validate which is why cry
 A security context implementing token based authentication can be obtained by combining a `TokenCredentials` extractor with a compatible `Authenticator` implementation. The following example uses a `CookieTokenCredentialsExtractor` to extract `TokenCredentials` from a specific cookie and a simplistic highly unsecure authenticator which validates tokens against a hardcoded list of authorized tokens:
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
-...
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.security.accesscontrol.AccessController;
+import io.inverno.mod.security.authentication.Authentication;
+import io.inverno.mod.security.http.SecurityInterceptor;
+import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 import io.inverno.mod.security.http.token.CookieTokenCredentialsExtractor;
-...
+import io.inverno.mod.security.identity.Identity;
+import io.inverno.mod.web.server.WebRouteInterceptor;
+import java.util.Set;
+import reactor.core.publisher.Mono;
 
-...
-public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>> {
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class SecurityConfigurer implements WebRouteInterceptor.Configurer<InterceptingSecurityContext<Identity, AccessController>> {
 
     @Override
-    public void configure(WebInterceptable<InterceptingSecurityContext<Identity, AccessController>, ?> interceptors) {
-        interceptors
+    public WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> configure(WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> interceptors) {
+        return interceptors
             .intercept()
                 .path("/token/**")
                 .interceptor(SecurityInterceptor.of(
@@ -957,19 +881,27 @@ Let's start by configuring Web routes to the login page and the login action.
 The API provides the `FormLoginPageHandler` which renders a white label login page containing the login form using an Inverno reactive template. The actual login action URI can be configured when creating the handler (defaults to `/login`). The login form sends three parameters: `username`, `password` and `redirect_uri`.
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
-...
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.http.base.Method;
+import io.inverno.mod.security.accesscontrol.AccessController;
+import io.inverno.mod.security.http.context.SecurityContext;
+import io.inverno.mod.security.http.form.FormLoginPageHandler;
+import io.inverno.mod.security.identity.Identity;
+import io.inverno.mod.web.server.WebRouter;
 
-public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<Identity, AccessController>> {
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class SecurityConfigurer implements WebRouter.Configurer<SecurityContext<Identity, AccessController>> {
 
     @Override
-    public void configure(WebRoutable<SecurityContext<Identity, AccessController>, ?> routes) {
-        routes
+    public void configure(WebRouter<SecurityContext<Identity, AccessController>> router) {
+        router
             .route()
                 .method(Method.GET)
                 .path("/login")
-                .produces(MediaTypes.TEXT_HTML)
+                .produce(MediaTypes.TEXT_HTML)
                 .handler(new FormLoginPageHandler<>("/login"));
     }
 }
@@ -984,11 +916,31 @@ In the following example, we decided to generate a [JWS][rfc7515] on successful 
 > Please refer to the [*security-jose* module documentation](#json-object-signing-and-encryption) to learn how to create and validate [JWS][rfc7515], [JWE][rfc7516] or [JWT][rfc7519].
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
 ...
+import io.inverno.mod.security.authentication.InMemoryLoginCredentialsResolver;
+import io.inverno.mod.security.authentication.LoginCredentials;
+import io.inverno.mod.security.authentication.LoginCredentialsMatcher;
+import io.inverno.mod.security.authentication.PrincipalAuthentication;
+import io.inverno.mod.security.authentication.PrincipalAuthenticator;
+import io.inverno.mod.security.authentication.password.MessageDigestPassword;
+import io.inverno.mod.security.http.form.FormCredentialsExtractor;
+import io.inverno.mod.security.http.form.RedirectLoginFailureHandler;
+import io.inverno.mod.security.http.form.RedirectLoginSuccessHandler;
+import io.inverno.mod.security.http.login.LoginActionHandler;
+import io.inverno.mod.security.http.login.LoginSuccessHandler;
+import io.inverno.mod.security.http.token.CookieTokenLoginSuccessHandler;
+import io.inverno.mod.security.jose.jwa.OCTAlgorithm;
+import io.inverno.mod.security.jose.jwk.JWKService;
+import io.inverno.mod.security.jose.jwk.oct.OCTJWK;
+import io.inverno.mod.security.jose.jws.JWSAuthentication;
+import io.inverno.mod.security.jose.jws.JWSService;
+import java.util.List;
+import reactor.core.publisher.Mono;
 
-public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<Identity, AccessController>> {
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class SecurityConfigurer implements WebRouter.Configurer<SecurityContext<Identity, AccessController>> {
 
     private final Mono<? extends OCTJWK> jwsKey;
     private final JWSService jwsService;
@@ -1002,36 +954,40 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
     }
 
     @Override
-    public void configure(WebRoutable<SecurityContext<Identity, AccessController>, ?> routes) {
-        routes
-            ...
+    public void configure(WebRouter<SecurityContext<Identity, AccessController>> router) {
+        router
+            .route()
+                .method(Method.GET)
+                .path("/login")
+                .produce(MediaTypes.TEXT_HTML)
+                .handler(new FormLoginPageHandler<>("/login"))
             .route()
                 .method(Method.POST)
                 .path("/login")
-                .handler(new LoginActionHandler<>(                                                                 // 1
-                    new FormCredentialsExtractor(),                                                                // 2
-                    new PrincipalAuthenticator<>(                                                                  // 3
-                        new InMemoryLoginCredentialsResolver(List.of(
-                            LoginCredentials.of("john", new MessageDigestPassword.Encoder().encode("password")),
-                            LoginCredentials.of("alice", new MessageDigestPassword.Encoder().encode("password")),
-                            LoginCredentials.of("bob", new MessageDigestPassword.Encoder().encode("password"))
-                        )),
-                        new LoginCredentialsMatcher<LoginCredentials, LoginCredentials>()
-                    )
-                    .failOnDenied()                                                                                // 4
-                    .flatMap(authentication -> this.jwsService.builder(PrincipalAuthentication.class, this.jwsKey) // 5
-                        .header(header -> header
-                            .algorithm(OCTAlgorithm.HS256.getAlgorithm())
+                .handler(new LoginActionHandler<>(                                                                     // 1
+                    new FormCredentialsExtractor(),                                                                    // 2
+                    new PrincipalAuthenticator<>(                                                                      // 3
+                            new InMemoryLoginCredentialsResolver(List.of(
+                                LoginCredentials.of("john", new MessageDigestPassword.Encoder().encode("password")),
+                                LoginCredentials.of("alice", new MessageDigestPassword.Encoder().encode("password")),
+                                LoginCredentials.of("bob", new MessageDigestPassword.Encoder().encode("password"))
+                            )),
+                            new LoginCredentialsMatcher<>()
                         )
-                        .payload(authentication)
-                        .build(MediaTypes.APPLICATION_JSON)
-                        .map(JWSAuthentication::new)
-                    ),
+                        .failOnDenied()                                                                                // 4
+                        .flatMap(authentication -> this.jwsService.builder(PrincipalAuthentication.class, this.jwsKey) // 5
+                            .header(header -> header
+                                .algorithm(OCTAlgorithm.HS256.getAlgorithm())
+                            )
+                            .payload(authentication)
+                            .build(MediaTypes.APPLICATION_JSON)
+                            .map(JWSAuthentication::new)
+                        ),
                     LoginSuccessHandler.of(
-                        new CookieTokenLoginSuccessHandler<>("/form"),                                             // 6
-                        new RedirectLoginSuccessHandler<>()                                                        // 7
+                        new CookieTokenLoginSuccessHandler<>("/form"),                                                 // 6
+                        new RedirectLoginSuccessHandler<>()                                                            // 7
                     ),
-                    new RedirectLoginFailureHandler<>("/login")                                                    // 8
+                    new RedirectLoginFailureHandler<>("/login")                                                        // 8
                 ));
     }
 }
@@ -1049,16 +1005,24 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
 The login page and the login action handler are all set, we can now move on and configure a token based authentication to secure `/form/**` routes and restrict access to authenticated users. Since the login action handler sets a JWS token in a cookie we need to use a `CookieTokenCredentialsExtractor` to extract the `TokenCredentials` and a `JWSAuthenticator` to validate the JWS. The JWS actually wraps the original `PrincipalAuthentication` we can then unwrap it in order to restore the original authentication.
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
 ...
+import io.inverno.mod.security.http.AccessControlInterceptor;
+import io.inverno.mod.security.http.SecurityInterceptor;
+import io.inverno.mod.security.http.context.InterceptingSecurityContext;
+import io.inverno.mod.security.http.token.CookieTokenCredentialsExtractor;
+import io.inverno.mod.security.jose.jws.JWSAuthenticator;
+import io.inverno.mod.web.server.WebRouteInterceptor;
 
-public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<Identity, AccessController>>, WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>> {
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class SecurityConfigurer implements WebRouter.Configurer<SecurityContext<Identity, AccessController>>, WebRouteInterceptor.Configurer<InterceptingSecurityContext<Identity, AccessController>> {
 
     ...
+
     @Override
-    public void configure(WebInterceptable<InterceptingSecurityContext<Identity, AccessController>, ?> interceptors) {
-        interceptors
+    public WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> configure(WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> interceptors) {
+        return interceptors
             .intercept()
                 .path("/form/**")
                 .interceptors(List.of(
@@ -1081,22 +1045,26 @@ In above code, the JWS authenticator uses the JWS service to parse and validate 
 Accessing a protected resource with no token or an invalid token results in an `UnauthorizedException` error since the access is restricted to authenticated users. the client should then be redirected to the login page. This can be done applying the `FormAuthenticationErrorInterceptor` on `UnauthorizedException` errors on `/form/**` routes.
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
 ...
+import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.UnauthorizedException;
+import io.inverno.mod.security.http.form.FormAuthenticationErrorInterceptor;
+import io.inverno.mod.web.server.ErrorWebRouteInterceptor;
 
-public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<Identity, AccessController>>, WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>>, ErrorWebRouterConfigurer<ExchangeContext> {
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class SecurityConfigurer implements WebRouter.Configurer<SecurityContext<Identity, AccessController>>, WebRouteInterceptor.Configurer<InterceptingSecurityContext<Identity, AccessController>>, ErrorWebRouteInterceptor.Configurer<ExchangeContext> {
 
     ...
+    
     @Override
-    public void configure(ErrorWebRouter<ExchangeContext> errorRouter) {
-        errorRouter
-            .intercept()
+    public ErrorWebRouteInterceptor<ExchangeContext> configure(ErrorWebRouteInterceptor<ExchangeContext> errorInterceptors) {
+        return errorInterceptors
+            .interceptError()
                 .error(UnauthorizedException.class)
                 .path("/form/**")
-                .interceptor(new FormAuthenticationErrorInterceptor<>("/login"))
-            // We must apply interceptors to intercept white labels error routes which are already defined
-            .applyInterceptors();
+                .interceptor(new FormAuthenticationErrorInterceptor<>("/login"));
     }
 }
 ```
@@ -1104,16 +1072,22 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
 Finally, a `/logout` route can also be defined using a `LogoutActionHandler` which uses an `AuthenticationReleaser` to release the security context and a `LogoutSuccessHandler` to handle successful logout and respond to the client. In the following example, a `CookieTokenLogoutSuccessHandler` is used to delete the token cookie and a `RedirectLogoutSuccessHandler` is used to redirect the user after a successful logout to the root of the server (`/`).
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
 ...
+import io.inverno.mod.security.http.form.RedirectLogoutSuccessHandler;
+import io.inverno.mod.security.http.login.LogoutActionHandler;
+import io.inverno.mod.security.http.login.LogoutSuccessHandler;
+import io.inverno.mod.security.http.token.CookieTokenLogoutSuccessHandler;
 
-public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<Identity, AccessController>>, WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>>, ErrorWebRouterConfigurer<ExchangeContext> {
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class SecurityConfigurer implements WebRouter.Configurer<SecurityContext<Identity, AccessController>>, WebRouteInterceptor.Configurer<InterceptingSecurityContext<Identity, AccessController>>, ErrorWebRouteInterceptor.Configurer<ExchangeContext> {
 
     ...
+
     @Override
-    public void configure(WebRoutable<SecurityContext<Identity, AccessController>, ?> routes) {
-        routes
+    public void configure(WebRouter<SecurityContext<Identity, AccessController>> router) {
+        router
             ...
             .route()
                 .method(Method.GET)
@@ -1126,6 +1100,7 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
                     )
                 ));
     }
+
     ...
 }
 ```
@@ -1133,7 +1108,7 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
 Here is the complete code of the `SecurityConfigurer` used to configure form login flow:
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.resource.MediaTypes;
@@ -1171,17 +1146,14 @@ import io.inverno.mod.security.jose.jwk.oct.OCTJWK;
 import io.inverno.mod.security.jose.jws.JWSAuthentication;
 import io.inverno.mod.security.jose.jws.JWSAuthenticator;
 import io.inverno.mod.security.jose.jws.JWSService;
-import io.inverno.mod.web.server.ErrorWebRouter;
-import io.inverno.mod.web.server.ErrorWebRouterConfigurer;
+import io.inverno.mod.web.server.ErrorWebRouteInterceptor;
 import io.inverno.mod.web.server.WebRouteInterceptor;
-import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 import io.inverno.mod.web.server.WebRouter;
-import io.inverno.mod.web.server.WebRoutesConfigurer;
 import java.util.List;
 import reactor.core.publisher.Mono;
 
 @Bean( visibility = Bean.Visibility.PRIVATE )
-public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<Identity, AccessController>>, WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>>, ErrorWebRouterConfigurer<ExchangeContext> {
+public class SecurityConfigurer implements WebRouter.Configurer<SecurityContext<Identity, AccessController>>, WebRouteInterceptor.Configurer<InterceptingSecurityContext<Identity, AccessController>>, ErrorWebRouteInterceptor.Configurer<ExchangeContext> {
 
     private final Mono<? extends OCTJWK> jwsKey;
     private final JWSService jwsService;
@@ -1195,12 +1167,12 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
     }
 
     @Override
-    public void configure(WebRoutable<SecurityContext<Identity, AccessController>, ?> routes) {
-        routes
+    public void configure(WebRouter<SecurityContext<Identity, AccessController>> router) {
+        router
             .route()
                 .method(Method.GET)
                 .path("/login")
-                .produces(MediaTypes.TEXT_HTML)
+                .produce(MediaTypes.TEXT_HTML)
                 .handler(new FormLoginPageHandler<>("/login"))
             .route()
                 .method(Method.POST)
@@ -1213,17 +1185,17 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
                             LoginCredentials.of("alice", new MessageDigestPassword.Encoder().encode("password")),
                             LoginCredentials.of("bob", new MessageDigestPassword.Encoder().encode("password"))
                         )),
-                        new LoginCredentialsMatcher<LoginCredentials, LoginCredentials>()
+                        new LoginCredentialsMatcher<>()
                     )
-                    .failOnDenied()
-                    .flatMap(authentication -> this.jwsService.builder(PrincipalAuthentication.class, this.jwsKey)
-                        .header(header -> header
-                            .algorithm(OCTAlgorithm.HS256.getAlgorithm())
-                        )
-                        .payload(authentication)
-                        .build(MediaTypes.APPLICATION_JSON)
-                        .map(JWSAuthentication::new)
-                    ),
+                        .failOnDenied()
+                        .flatMap(authentication -> this.jwsService.builder(PrincipalAuthentication.class, this.jwsKey)
+                            .header(header -> header
+                                .algorithm(OCTAlgorithm.HS256.getAlgorithm())
+                            )
+                            .payload(authentication)
+                            .build(MediaTypes.APPLICATION_JSON)
+                            .map(JWSAuthentication::new)
+                        ),
                     LoginSuccessHandler.of(
                         new CookieTokenLoginSuccessHandler<>("/form"),
                         new RedirectLoginSuccessHandler<>()
@@ -1232,7 +1204,7 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
                 ))
             .route()
                 .method(Method.GET)
-                .path("/form/logout")
+                .path("/logout")
                 .handler(new LogoutActionHandler<>(
                     authentication -> Mono.empty(),
                     LogoutSuccessHandler.of(
@@ -1243,8 +1215,8 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
     }
 
     @Override
-    public void configure(WebInterceptable<InterceptingSecurityContext<Identity, AccessController>, ?> interceptors) {
-        interceptors
+    public WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> configure(WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> interceptors) {
+        return interceptors
             .intercept()
                 .path("/form/**")
                 .interceptors(List.of(
@@ -1259,14 +1231,12 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
     }
 
     @Override
-    public void configure(ErrorWebRouter<ExchangeContext> errorRouter) {
-        errorRouter
-            .intercept()
+    public ErrorWebRouteInterceptor<ExchangeContext> configure(ErrorWebRouteInterceptor<ExchangeContext> errorInterceptors) {
+        return errorInterceptors
+            .interceptError()
                 .error(UnauthorizedException.class)
                 .path("/form/**")
-                .interceptor(new FormAuthenticationErrorInterceptor<>("/login"))
-            // We must apply interceptors to intercept white labels error routes which are already defined
-            .applyInterceptors();
+                .interceptor(new FormAuthenticationErrorInterceptor<>("/login"));
     }
 }
 ```
@@ -1292,18 +1262,21 @@ The `CORSInterceptor` can be used to configure the CORS policy, it can be applie
 Assuming the HTTP server runs locally on port `8080`, the following example shows how to authorize all requests from `http://127.0.0.1:9090`:
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
-import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.security.accesscontrol.AccessController;
+import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 import io.inverno.mod.security.http.cors.CORSInterceptor;
+import io.inverno.mod.security.identity.Identity;
 import io.inverno.mod.web.server.WebRouteInterceptor;
-import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 
-public class SecurityConfigurer implements WebInterceptorsConfigurer<ExchangeContext> {
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class SecurityConfigurer implements WebRouteInterceptor.Configurer<InterceptingSecurityContext<Identity, AccessController>> {
 
     @Override
-    public void configure(WebInterceptable<ExchangeContext, ?> interceptors) {
-        interceptors
+    public WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> configure(WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> interceptors) {
+        return interceptors
             .intercept()
                 .interceptor(CORSInterceptor.builder("http://127.0.0.1:9090").build());
     }
@@ -1321,20 +1294,23 @@ The `CSRFDoubleSubmitCookieInterceptor` can be used to protect against CSRF atta
 The following example shows how to configure the Web server in order to prevent CSRF attacks:
 
 ```java
-package io.inverno.example.app_web_security;
+package io.inverno.example.app_security_http;
 
-import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.security.accesscontrol.AccessController;
+import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 import io.inverno.mod.security.http.csrf.CSRFDoubleSubmitCookieInterceptor;
+import io.inverno.mod.security.identity.Identity;
 import io.inverno.mod.web.server.WebRouteInterceptor;
-import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 
-public class SecurityConfigurer implements WebInterceptorsConfigurer<ExchangeContext> {
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class SecurityConfigurer implements WebRouteInterceptor.Configurer<InterceptingSecurityContext<Identity, AccessController>> {
 
     @Override
-    public void configure(WebInterceptable<ExchangeContext, ?> interceptors) {
-        interceptors
+    public WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> configure(WebRouteInterceptor<InterceptingSecurityContext<Identity, AccessController>> interceptors) {
+        return interceptors
             .intercept()
-                .interceptor(CSRFDoubleSubmitCookieInterceptor.builder().httpOnly(false).build());;
+                .interceptor(CSRFDoubleSubmitCookieInterceptor.builder().httpOnly(false).build());
     }
 }
 ```
