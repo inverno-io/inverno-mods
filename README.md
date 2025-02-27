@@ -28,7 +28,9 @@
 
 # Inverno Modules
 
+[![Maven Central](https://img.shields.io/maven-central/v/io.inverno/inverno-mods-root)](https://central.sonatype.com/search?namespace=io.inverno.mod)
 [![CI/CD](https://github.com/inverno-io/inverno-mods/actions/workflows/maven.yml/badge.svg)](https://github.com/inverno-io/inverno-mods/actions/workflows/maven.yml)
+[![GitHub License](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
 
 The [Inverno modules framework][inverno-io] project provides a collection of components for building highly modular and powerful applications on top of the [Inverno IoC/DI framework][inverno-core-root].
 
