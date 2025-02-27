@@ -58,7 +58,7 @@ public interface LoginSuccessHandler<A extends Authentication, B extends Exchang
 	 * 
 	 * @return a composed login success handler that invokes in sequence this handler followed by the specified handler
 	 */
-	default LoginSuccessHandler<A, B, C> andThen(LoginSuccessHandler<? super A, ? super B, ?super C> after) {
+	default LoginSuccessHandler<A, B, C> andThen(LoginSuccessHandler<? super A, ? super B, ? super C> after) {
 		return (exchange, authentication) -> this.handleLoginSuccess(exchange, authentication).then(after.handleLoginSuccess(exchange, authentication));
 	}
 	
@@ -71,7 +71,7 @@ public interface LoginSuccessHandler<A extends Authentication, B extends Exchang
 	 * 
 	 * @return a composed login success handler that invokes in sequence the specified handler followed by this handler
 	 */
-	default LoginSuccessHandler<A, B, C> compose(LoginSuccessHandler<? super A, ? super B, ?super C> before) {
+	default LoginSuccessHandler<A, B, C> compose(LoginSuccessHandler<? super A, ? super B, ? super C> before) {
 		return (exchange, authentication) -> before.handleLoginSuccess(exchange, authentication).then(this.handleLoginSuccess(exchange, authentication));
 	}
 	
@@ -89,7 +89,7 @@ public interface LoginSuccessHandler<A extends Authentication, B extends Exchang
 	 */
 	@SafeVarargs
     @SuppressWarnings("varargs")
-	static <A extends Authentication, B extends ExchangeContext, C extends Exchange<B>> LoginSuccessHandler<A, B, C> of(LoginSuccessHandler<? super A, ? super B, ?super C>... handlers) {
+	static <A extends Authentication, B extends ExchangeContext, C extends Exchange<B>> LoginSuccessHandler<A, B, C> of(LoginSuccessHandler<? super A, ? super B, ? super C>... handlers) {
 		return (exchange, authentication) -> {
 			Mono<Void> handlerChain = null;
 			for(LoginSuccessHandler<? super A, ? super B, ?super C> handler : handlers) {

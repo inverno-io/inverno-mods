@@ -27,6 +27,7 @@ import io.netty.buffer.ByteBuf;
 import java.lang.reflect.Type;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -60,6 +61,18 @@ public class GenericWebResponseBody implements WebResponseBody {
 	@Override
 	public WebResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
 		this.responseBody.transform(transformer);
+		return this;
+	}
+
+	@Override
+	public WebResponseBody before(Mono<Void> before) {
+		this.responseBody.before(before);
+		return this;
+	}
+
+	@Override
+	public WebResponseBody after(Mono<Void> after) {
+		this.responseBody.after(after);
 		return this;
 	}
 

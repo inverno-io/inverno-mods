@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.security.http.digest;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
@@ -34,7 +35,7 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public class DigestCredentialsExtractor implements CredentialsExtractor<DigestCredentials> {
+public class DigestCredentialsExtractor<A extends ExchangeContext, B extends Exchange<A>> implements CredentialsExtractor<DigestCredentials, A, B> {
 
 	/**
 	 * The {@code algorithm} parameter name as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7616#section-3.4">RFC 7616 Section 3.4</a>.
@@ -92,7 +93,7 @@ public class DigestCredentialsExtractor implements CredentialsExtractor<DigestCr
 	private static final String PARAMETER_NONCE = "nonce";
 	
 	@Override
-	public Mono<DigestCredentials> extract(Exchange<?> exchange) throws MalformedCredentialsException {
+	public Mono<DigestCredentials> extract(B exchange) throws MalformedCredentialsException {
 		return Mono.fromSupplier(() -> exchange.request().headers()
 			.<Headers.Authorization>getHeader(Headers.NAME_AUTHORIZATION)
 			.filter(authorizationHeader -> authorizationHeader.getAuthScheme().equals(Headers.Authorization.AUTH_SCHEME_DIGEST))

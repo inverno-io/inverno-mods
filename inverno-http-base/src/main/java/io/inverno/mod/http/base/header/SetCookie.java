@@ -82,6 +82,15 @@ public interface SetCookie extends Cookie {
 	 * @return the HTTP only flag or null
 	 */
 	Boolean isHttpOnly();
+
+	/**
+	 * <p>
+	 * Returns cookie's partitioned flag attribute.
+	 * </p>
+	 *
+	 * @return the partitioned flag or null
+	 */
+	Boolean isPartitioned();
 	
 	/**
 	 * <p>
@@ -193,6 +202,17 @@ public interface SetCookie extends Cookie {
 		 * @return the configurator
 		 */
 		Configurator httpOnly(boolean httpOnly);
+
+		/**
+		 * <p>
+		 * Sets the cookie partitioned flag attribute.
+		 * </p>
+		 *
+		 * @param partitioned the cookie partitioned flag
+		 *
+		 * @return the configurator
+		 */
+		Configurator partitioned(boolean partitioned);
 		
 		/**
 		 * <p>

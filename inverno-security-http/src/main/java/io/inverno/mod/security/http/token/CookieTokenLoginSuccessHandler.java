@@ -16,6 +16,7 @@
 package io.inverno.mod.security.http.token;
 
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.security.authentication.TokenAuthentication;
 import io.inverno.mod.security.http.login.LoginActionHandler;
@@ -51,6 +52,11 @@ public class CookieTokenLoginSuccessHandler<A extends TokenAuthentication, B ext
 	 * </p>
 	 */
 	public static final String DEFAULT_PATH = "/";
+
+	/**
+	 * The default cookie same site policy.
+	 */
+	public static final Headers.SetCookie.SameSitePolicy DEFAULT_SAME_SITE_POLICY = Headers.SetCookie.SameSitePolicy.LAX;
 	
 	/**
 	 * The token cookie path.
@@ -61,6 +67,11 @@ public class CookieTokenLoginSuccessHandler<A extends TokenAuthentication, B ext
 	 * The token cookie name.
 	 */
 	private final String tokenCookie;
+
+	/**
+	 * The cookie same site policy.
+	 */
+	private Headers.SetCookie.SameSitePolicy sameSitePolicy;
 	
 	/**
 	 * <p>
@@ -93,6 +104,8 @@ public class CookieTokenLoginSuccessHandler<A extends TokenAuthentication, B ext
 	public CookieTokenLoginSuccessHandler(String path, String tokenCookie) {
 		this.path = path;
 		this.tokenCookie = tokenCookie;
+
+		this.sameSitePolicy = DEFAULT_SAME_SITE_POLICY;
 	}
 
 	/**
@@ -116,7 +129,29 @@ public class CookieTokenLoginSuccessHandler<A extends TokenAuthentication, B ext
 	public String getTokenCookie() {
 		return tokenCookie;
 	}
-	
+
+	/**
+	 * <p>
+	 * Returns the cookie same site policy.
+	 * </p>
+	 *
+	 * @return the same site policy
+	 */
+	public Headers.SetCookie.SameSitePolicy getSameSitePolicy() {
+		return sameSitePolicy;
+	}
+
+	/**
+	 * <p>
+	 * Sets the cookie same site policy
+	 * </p>
+	 *
+	 * @param sameSitePolicy a same site policy
+	 */
+	public void setSameSitePolicy(Headers.SetCookie.SameSitePolicy sameSitePolicy) {
+		this.sameSitePolicy = sameSitePolicy;
+	}
+
 	@Override
 	public Mono<Void> handleLoginSuccess(C exchange, A authentication) {
 		return Mono.fromRunnable(() -> exchange.response().headers(headers -> headers.cookies(cookies -> cookies
@@ -126,6 +161,7 @@ public class CookieTokenLoginSuccessHandler<A extends TokenAuthentication, B ext
 				// But we can also be behind an ssl offloader
 				.path(this.path)
 				.secure("https".equals(exchange.request().getScheme()))
+				.sameSite(Headers.SetCookie.SameSitePolicy.STRICT)
 				.httpOnly(true)
 				.name(this.tokenCookie)
 				.value(authentication.getToken())

@@ -22,10 +22,9 @@ import io.inverno.mod.security.accesscontrol.AccessControllerResolver;
 import io.inverno.mod.security.authentication.Authentication;
 import io.inverno.mod.security.authentication.Authenticator;
 import io.inverno.mod.security.authentication.Credentials;
+import io.inverno.mod.security.http.context.SecurityContext;
 import io.inverno.mod.security.identity.Identity;
 import io.inverno.mod.security.identity.IdentityResolver;
-import io.inverno.mod.security.http.CredentialsExtractor;
-import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 
 /**
  *
@@ -34,12 +33,12 @@ import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 public class Readme {
 
 	public void doc() {
-		CredentialsExtractor<Credentials> credentialsExtractor = null;
+		CredentialsExtractor<Credentials, SecurityContext.Intercepted<Identity, AccessController>, Exchange<SecurityContext.Intercepted<Identity, AccessController>>> credentialsExtractor = null;
 		
 		Authenticator<Credentials, Authentication> authenticator = null;
 		IdentityResolver<Authentication, Identity> identityResolver = null;
 		AccessControllerResolver<Authentication, AccessController> accessControllerResolver = null;
 		
-		SecurityInterceptor<Credentials, Identity, AccessController, InterceptingSecurityContext<Identity, AccessController>, Exchange<InterceptingSecurityContext<Identity, AccessController>>> securityInterceptor = SecurityInterceptor.of(credentialsExtractor, authenticator, identityResolver, accessControllerResolver);
+		SecurityInterceptor<Credentials, Identity, AccessController, SecurityContext.Intercepted<Identity, AccessController>, Exchange<SecurityContext.Intercepted<Identity, AccessController>>> securityInterceptor = SecurityInterceptor.of(credentialsExtractor, authenticator, identityResolver, accessControllerResolver);
 	}
 }

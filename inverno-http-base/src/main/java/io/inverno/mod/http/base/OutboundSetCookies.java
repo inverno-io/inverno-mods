@@ -16,6 +16,8 @@
 package io.inverno.mod.http.base;
 
 import io.inverno.mod.http.base.header.SetCookie;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -58,4 +60,58 @@ public interface OutboundSetCookies extends InboundSetCookies {
 	 * @return the outbound set-cookies
 	 */
 	OutboundSetCookies addCookie(Consumer<SetCookie.Configurator> configurer);
+
+	/**
+	 * <p>
+	 * Sets the set-cookie with the specified name and value.
+	 * </p>
+	 *
+	 * @param name  a cookie name
+	 * @param value a cookie value
+	 *
+	 * @return the outbound set-cookies
+	 */
+	default OutboundSetCookies setCookie(String name, String value) {
+		return this.setCookie(configurator -> {
+			configurator.name(name);
+			configurator.value(value);
+		});
+	}
+
+	/**
+	 * <p>
+	 * Sets a set-cookie.
+	 * </p>
+	 *
+	 * @param configurer a set-cookie configurer
+	 *
+	 * @return the outbound set-cookies
+	 */
+	OutboundSetCookies setCookie(Consumer<SetCookie.Configurator> configurer);
+
+	/**
+	 * <p>
+	 * Removes the set-cookie with the specified names.
+	 * </p>
+	 *
+	 * @param names the names of the set-cookies to remove
+	 *
+	 * @return the outbound set-cookies
+	 */
+	default OutboundSetCookies removeCookie(String... names) {
+		return this.removeCookie(Set.of(names));
+	}
+
+	/**
+	 * <p>
+	 * Removes the set-cookie with the specified names.
+	 * </p>
+	 *
+	 * @param names the names of the set-cookies to remove
+	 *
+	 * @return the outbound set-cookies
+	 */
+	OutboundSetCookies removeCookie(Set<String> names);
+
+
 }

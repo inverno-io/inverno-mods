@@ -155,7 +155,7 @@ public class Http2ResponseHeaders extends AbstractResponseHeaders {
 			}
 
 			@Override
-			public OutboundResponseHeaders add(Header... headers) {
+			public OutboundResponseHeaders add(List<? extends Header> headers) {
 				for(Header header : headers) {
 					Http2ResponseHeaders.this.headers.add(header.getHeaderName(), Http2ResponseHeaders.this.headerService.encodeValue(header));
 				}
@@ -179,7 +179,7 @@ public class Http2ResponseHeaders extends AbstractResponseHeaders {
 			}
 
 			@Override
-			public OutboundResponseHeaders set(Header... headers) {
+			public OutboundResponseHeaders set(List<? extends Header> headers) {
 				for(Header header : headers) {
 					Http2ResponseHeaders.this.headers.set(header.getHeaderName(), Http2ResponseHeaders.this.headerService.encodeValue(header));
 				}
@@ -187,7 +187,7 @@ public class Http2ResponseHeaders extends AbstractResponseHeaders {
 			}
 
 			@Override
-			public OutboundResponseHeaders remove(CharSequence... names) {
+			public OutboundResponseHeaders remove(Set<? extends CharSequence> names) {
 				for(CharSequence name : names) {
 					Http2ResponseHeaders.this.headers.remove(name);
 				}

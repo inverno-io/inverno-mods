@@ -22,6 +22,7 @@ import io.netty.buffer.ByteBuf;
 import java.lang.reflect.Type;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -47,6 +48,12 @@ public interface WebResponseBody extends ResponseBody {
 
 	@Override
 	WebResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer);
+
+	@Override
+	WebResponseBody before(Mono<Void> before);
+
+	@Override
+	WebResponseBody after(Mono<Void> after);
 
 	/**
 	 * <p>

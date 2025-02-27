@@ -21,6 +21,8 @@ import io.netty.buffer.ByteBuf;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -38,7 +40,7 @@ public interface RequestBody {
 	
 	/**
 	 * <p>
-	 * Transforms the request payload publisher.
+	 * Transforms the payload publisher.
 	 * </p>
 	 *
 	 * @param transformer a payload publisher transformer
@@ -46,7 +48,41 @@ public interface RequestBody {
 	 * @return the request body
 	 */
 	RequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer);
-	
+
+	/**
+	 * <p>
+	 * Transforms the payload publisher to subscribe to the specified publisher before subscribing to the payload publisher.
+	 * </p>
+	 *
+	 * <p>
+	 * This basically allows to perform actions before the request is actually sent.
+	 * </p>
+	 *
+	 * @param before the publisher to subscribe before the request body publisher
+	 *
+	 * @return the request body
+	 */
+	default RequestBody before(Mono<Void> before) {
+		return this.transform(before::thenMany);
+	}
+
+	/**
+	 * <p>
+	 * Transforms the payload publisher to subscribe to the specified publisher after payload publisher completion.
+	 * </p>
+	 *
+	 * <p>
+	 * This basically allows to perform actions after the request has been sent.
+	 * </p>
+	 *
+	 * @param after the publisher to subscribe before the request body publisher
+	 *
+	 * @return the request body
+	 */
+	default RequestBody after(Mono<Void> after) {
+		return this.transform(body -> Flux.from(body).concatWith(after.cast(ByteBuf.class)));
+	}
+
 	/**
 	 * <p>
 	 * Produces an empty payload.

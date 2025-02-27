@@ -132,7 +132,7 @@ class Http1xRequestHeaders extends AbstractRequestHeaders<LinkedHttpHeaders> {
 	}
 
 	@Override
-	public Http1xRequestHeaders add(Header... headers) {
+	public Http1xRequestHeaders add(List<? extends Header> headers) {
 		this.endpointHeaders.add(headers);
 		return this;
 	}
@@ -156,13 +156,13 @@ class Http1xRequestHeaders extends AbstractRequestHeaders<LinkedHttpHeaders> {
 	}
 
 	@Override
-	public Http1xRequestHeaders set(Header... headers) {
+	public Http1xRequestHeaders set(List<? extends Header> headers) {
 		this.endpointHeaders.set(headers);
 		return this;
 	}
 
 	@Override
-	public Http1xRequestHeaders remove(CharSequence... names) {
+	public Http1xRequestHeaders remove(Set<? extends CharSequence> names) {
 		this.endpointHeaders.remove(names);
 		return this;
 	}

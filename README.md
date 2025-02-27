@@ -255,6 +255,7 @@ The Inverno Security module specifies an API for authenticating request to an ap
 
 - User/password authentication against a user repository (in-memory, Redis...).
 - Token based authentication.
+- Session-based authentication.
 - Strong user identification against a user repository (in-memory, Redis...).
 - Secured password encoding using message digest, Argon2, Password-Based Key Derivation Function (PBKDF2), BCrypt, SCrypt... 
 - Role-based access control.
@@ -287,6 +288,18 @@ The Inverno Security JOSE module is a complete implementation of JSON Object Sig
 - support for JWS Unencoded Payload Option as specified by [RFC 7797][rfc7797].
 - CFRG Elliptic Curve Diffie-Hellman (ECDH) and Signatures support as specified by [RFC 8037][rfc8037].
 - CBOR Object Signing and Encryption (COSE) as specified by [RFC 8812][rfc8812].
+
+### io.inverno.mod.session
+
+The Inverno Session module specifies an API for managing session that persist across more than one request to an application. It provides:
+
+- Basic session support with data stored on the application side.
+- JWT session support allowing a hybrid approach where stateless data can be stored in a JWT used as session identifier on the client side along with basic session data on the application side. 
+- In-memory and Redis session store implementations.
+
+### io.inverno.mod.session.http
+
+The Inverno Session HTTP module is an extension to the Inverno Session module that provides specific API and components to support session in a Web application.
 
 ### io.inverno.mod.sql
 

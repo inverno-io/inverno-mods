@@ -65,10 +65,10 @@ public class RedirectLogoutSuccessHandler<A extends Authentication, B extends Id
 	 * Creates a redirect logout success handler which redirects the client to the specified logout success URI.
 	 * </p>
 	 * 
-	 * @param loginSuccessUri the URI where to redirect the client after a successful logout
+	 * @param logoutSuccessUri the URI where to redirect the client after a successful logout
 	 */
-	public RedirectLogoutSuccessHandler(String loginSuccessUri) {
-		this.logoutSuccessUri = loginSuccessUri;
+	public RedirectLogoutSuccessHandler(String logoutSuccessUri) {
+		this.logoutSuccessUri = logoutSuccessUri;
 	}
 
 	/**

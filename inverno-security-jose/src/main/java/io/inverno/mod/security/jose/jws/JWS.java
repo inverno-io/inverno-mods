@@ -44,7 +44,7 @@ public interface JWS<A> extends JOSEObject<A, JWSHeader> {
 	
 	/**
 	 * <p>
-	 * Returns the the detached compact representation of the JWS as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7797">RFC7797</a>.
+	 * Returns the detached compact representation of the JWS as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7797">RFC7797</a>.
 	 * </p>
 	 * 
 	 * <p>

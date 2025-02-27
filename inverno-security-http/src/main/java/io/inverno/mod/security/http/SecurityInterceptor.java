@@ -23,8 +23,7 @@ import io.inverno.mod.security.accesscontrol.AccessControllerResolver;
 import io.inverno.mod.security.authentication.Authentication;
 import io.inverno.mod.security.authentication.Authenticator;
 import io.inverno.mod.security.authentication.Credentials;
-import io.inverno.mod.security.context.SecurityContext;
-import io.inverno.mod.security.http.context.InterceptingSecurityContext;
+import io.inverno.mod.security.http.context.SecurityContext;
 import io.inverno.mod.security.http.internal.GenericSecurityInterceptor;
 import io.inverno.mod.security.identity.Identity;
 import io.inverno.mod.security.identity.IdentityResolver;
@@ -57,7 +56,7 @@ import io.inverno.mod.security.identity.IdentityResolver;
  * @param <D> the intercepting security context type
  * @param <E> the exchange type
  */
-public interface SecurityInterceptor<A extends Credentials, B extends Identity, C extends AccessController, D extends InterceptingSecurityContext<B, C>, E extends Exchange<D>> extends ExchangeInterceptor<D, E> {
+public interface SecurityInterceptor<A extends Credentials, B extends Identity, C extends AccessController, D extends SecurityContext.Intercepted<B, C>, E extends Exchange<D>> extends ExchangeInterceptor<D, E> {
 	
 	/**
 	 * <p>
@@ -75,10 +74,10 @@ public interface SecurityInterceptor<A extends Credentials, B extends Identity, 
 	 * 
 	 * @return a new security interceptor
 	 */
-	static <A extends Credentials, B extends Authentication, C extends Identity, D extends AccessController, E extends InterceptingSecurityContext<C, D>, F extends Exchange<E>> SecurityInterceptor<A, C, D, E, F> of(CredentialsExtractor<? extends A> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator) {
-		return new GenericSecurityInterceptor<>(credentialsExtractor, authenticator);
+	static <A extends Credentials, B extends Authentication, C extends Identity, D extends AccessController, E extends SecurityContext.Intercepted<C, D>, F extends Exchange<E>> SecurityInterceptor<A, C, D, E, F> of(CredentialsExtractor<? extends A, ? super E, ? super F> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator) {
+		return new GenericSecurityInterceptor<A, B, C, D, E, F>(credentialsExtractor, authenticator);
 	}
-	
+
 	/**
 	 * <p>
 	 * Creates a security interceptor with the specified credentials extractor, authenticator and identity resolver.
@@ -96,8 +95,8 @@ public interface SecurityInterceptor<A extends Credentials, B extends Identity, 
 	 * 
 	 * @return a new security interceptor
 	 */
-	static <A extends Credentials, B extends Authentication, C extends Identity, D extends AccessController, E extends InterceptingSecurityContext<C, D>, F extends Exchange<E>> SecurityInterceptor<A, C, D, E, F> of(CredentialsExtractor<? extends A> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator, IdentityResolver<? super B, ? extends C> identityResolver) {
-		return new GenericSecurityInterceptor<>(credentialsExtractor, authenticator, identityResolver);
+	static <A extends Credentials, B extends Authentication, C extends Identity, D extends AccessController, E extends SecurityContext.Intercepted<C, D>, F extends Exchange<E>> SecurityInterceptor<A, C, D, E, F> of(CredentialsExtractor<? extends A, ? super E, ? super F> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator, IdentityResolver<? super B, ? extends C> identityResolver) {
+		return new GenericSecurityInterceptor<A, B, C, D, E, F>(credentialsExtractor, authenticator, identityResolver);
 	}
 	
 	/**
@@ -117,8 +116,8 @@ public interface SecurityInterceptor<A extends Credentials, B extends Identity, 
 	 * 
 	 * @return a new security interceptor
 	 */
-	static <A extends Credentials, B extends Authentication, C extends Identity, D extends AccessController, E extends InterceptingSecurityContext<C, D>, F extends Exchange<E>> SecurityInterceptor<A, C, D, E, F> of(CredentialsExtractor<? extends A> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator, AccessControllerResolver<? super B, ? extends D> accessControllerResolver) {
-		return new GenericSecurityInterceptor<>(credentialsExtractor, authenticator, accessControllerResolver);
+	static <A extends Credentials, B extends Authentication, C extends Identity, D extends AccessController, E extends SecurityContext.Intercepted<C, D>, F extends Exchange<E>> SecurityInterceptor<A, C, D, E, F> of(CredentialsExtractor<? extends A, ? super E, ? super F> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator, AccessControllerResolver<? super B, ? extends D> accessControllerResolver) {
+		return new GenericSecurityInterceptor<A, B, C, D, E, F>(credentialsExtractor, authenticator, accessControllerResolver);
 	}
 	
 	/**
@@ -139,7 +138,7 @@ public interface SecurityInterceptor<A extends Credentials, B extends Identity, 
 	 * 
 	 * @return a new security interceptor
 	 */
-	static <A extends Credentials, B extends Authentication, C extends Identity, D extends AccessController, E extends InterceptingSecurityContext<C, D>, F extends Exchange<E>> SecurityInterceptor<A, C, D, E, F> of(CredentialsExtractor<? extends A> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator, IdentityResolver<? super B, ? extends C> identityResolver, AccessControllerResolver<? super B, ? extends D> accessControllerResolver) {
-		return new GenericSecurityInterceptor<>(credentialsExtractor, authenticator, identityResolver, accessControllerResolver);
+	static <A extends Credentials, B extends Authentication, C extends Identity, D extends AccessController, E extends SecurityContext.Intercepted<C, D>, F extends Exchange<E>> SecurityInterceptor<A, C, D, E, F> of(CredentialsExtractor<? extends A, ? super E, ? super F> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator, IdentityResolver<? super B, ? extends C> identityResolver, AccessControllerResolver<? super B, ? extends D> accessControllerResolver) {
+		return new GenericSecurityInterceptor<A, B, C, D, E, F>(credentialsExtractor, authenticator, identityResolver, accessControllerResolver);
 	}
 }

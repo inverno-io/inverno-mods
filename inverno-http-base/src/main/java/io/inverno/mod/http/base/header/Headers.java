@@ -666,6 +666,10 @@ public final class Headers {
 		 */
 		String HTTPONLY = "HttpOnly";
 		/**
+		 * Partitioned parameter
+		 */
+		String PARTITIONED = "Partitioned";
+		/**
 		 * HttpOnly parameter
 		 */
 		String SAME_SITE = "SameSite";
@@ -741,6 +745,15 @@ public final class Headers {
 		 * @return the cookie HTTP only flag or null
 		 */
 		Boolean isHttpOnly();
+
+		/**
+		 * <p>
+		 * Returns the cookie partitioned flag.
+		 * </p>
+		 *
+		 * @return the cookie partitioned flag or null
+		 */
+		Boolean isPartitioned();
 
 		/**
 		 * <p>

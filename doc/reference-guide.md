@@ -51,7 +51,7 @@
 
 Built on top of the [Inverno core IoC/DI framework][inverno-core-root], Inverno modules suite aimed to provide a complete set of features to develop high end production-grade applications.
 
-The advent of cloud computing and highly distributed architecture based on microservices has changed the way applications should be conceived, maintained, executed and operated. While it was perfectly fine to have application started in couple of seconds or even minutes some years ago with long release cycles, today's application must be highly efficient, agile in terms of development and deployment and start in a heart beat.
+The advent of cloud computing and highly distributed architecture based on microservices has changed the way applications should be conceived, maintained, executed and operated. While it was perfectly fine to have application started in a couple of seconds or even minutes some years ago with long release cycles, today's application must be highly efficient, agile in terms of development and deployment and start in a heart beat.
 
 The Inverno framework was created to reduce framework overhead at runtime to the minimum, allowing to create applications that start in milliseconds. Inverno modules extend this approach to provide functionalities with low footprint, relying on the compiler when it makes sense to generate human-readable code for easy maintenance and improved performance.
 
@@ -69,7 +69,7 @@ The primary goals can be summarized as follows:
 
 ## Prerequisites
 
-Before we can dig into the various modules provided in the framework, it is important to understand how to setup a modular Inverno project, so please have a look at the [Inverno distribution documentation][inverno-dist-root] which describes in details how to create, build, run, package and distribute a modular Inverno component or application.
+Before we can dig into the various modules provided in the framework, it is important to understand how to set up a modular Inverno project, so please have a look at the [Inverno distribution documentation][inverno-dist-root] which describes in details how to create, build, run, package and distribute a modular Inverno component or application.
 
 Inverno modules are built on top of the Inverno core IoC/DI framework, please refer to the [Inverno core documentation][inverno-core-root-doc] to understand how IoC/DI is working in the framework.
 
@@ -104,7 +104,7 @@ public class Main {
 
 Inverno modules are fully integrated which means they have been designed to work together in an Inverno component or application but this doesn't mean it's not possible to embed them independently in any kind of application following the agile principle. For instance, the *configuration* module, can be easily used in any application with limited dependency overhead. More generally, an Inverno module can be created and started very easily in pure Java thanks to the Inverno core IoC/DI framework. 
 
-For instance, an application can embed a HTTP server as follows:
+For instance, an application can embed an HTTP server as follows:
 
 ```java
 Boot boot = new Boot.Builder().build();

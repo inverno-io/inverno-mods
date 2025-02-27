@@ -22,6 +22,7 @@ import io.netty.buffer.ByteBuf;
 import java.lang.reflect.Type;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -39,6 +40,12 @@ public interface WebRequestBody extends RequestBody {
 
 	@Override
 	WebRequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer);
+
+	@Override
+	RequestBody before(Mono<Void> before);
+
+	@Override
+	RequestBody after(Mono<Void> after);
 
 	/**
 	 * <p>

@@ -153,16 +153,42 @@ public abstract class AbstractRequest<A extends AbstractRequestHeaders, B extend
 	}
 
 	@Override
-	public abstract Optional<B> body();
-	
+	public Optional<B> body() {
+		return Optional.ofNullable(this.getBody());
+	}
+
 	/**
 	 * <p>
-	 * Returns the request body if any was created/requested.
+	 * Creates the request body when the method allows it.
+	 * </p>
+	 *
+	 * @return a request body or null
+	 */
+	protected abstract B createBody();
+
+	/**
+	 * <p>
+	 * Returns the request body.
+	 * </p>
+	 *
+	 * <p>
+	 * This method creates the body when the method allows it.
 	 * </p>
 	 * 
 	 * @return the request body or null
 	 */
 	public B getBody() {
+		if(this.body == null) {
+			switch(this.getMethod()) {
+				case POST:
+				case PUT:
+				case PATCH:
+				case DELETE: {
+					this.body = this.createBody();
+					break;
+				}
+			}
+		}
 		return this.body;
 	}
 }

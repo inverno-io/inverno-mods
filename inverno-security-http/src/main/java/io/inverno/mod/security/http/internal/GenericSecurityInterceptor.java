@@ -25,7 +25,6 @@ import io.inverno.mod.security.authentication.Credentials;
 import io.inverno.mod.security.context.SecurityContext;
 import io.inverno.mod.security.http.CredentialsExtractor;
 import io.inverno.mod.security.http.SecurityInterceptor;
-import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 import io.inverno.mod.security.identity.Identity;
 import io.inverno.mod.security.identity.IdentityResolver;
 import java.util.Objects;
@@ -50,14 +49,14 @@ import reactor.core.publisher.Mono;
  * @param <E> the intercepting security context type
  * @param <F> the exchange type
  */
-public class GenericSecurityInterceptor<A extends Credentials, B extends Authentication, C extends Identity, D extends AccessController, E extends InterceptingSecurityContext<C, D>, F extends Exchange<E>> implements SecurityInterceptor<A, C, D, E, F> {
+public class GenericSecurityInterceptor<A extends Credentials, B extends Authentication, C extends Identity, D extends AccessController, E extends io.inverno.mod.security.http.context.SecurityContext.Intercepted<C, D>, F extends Exchange<E>> implements SecurityInterceptor<A, C, D, E, F> {
 
 	private static final Logger LOGGER = LogManager.getLogger(GenericSecurityInterceptor.class);
 
 	/**
 	 * The credentials' extractor.
 	 */
-	private final CredentialsExtractor<? extends A> credentialsExtractor;
+	private final CredentialsExtractor<? extends A, ? super E, ? super F> credentialsExtractor;
 
 	/**
 	 * The authenticator.
@@ -82,7 +81,7 @@ public class GenericSecurityInterceptor<A extends Credentials, B extends Authent
 	 * @param credentialsExtractor a credentials extractor
 	 * @param authenticator        an authenticator
 	 */
-	public GenericSecurityInterceptor(CredentialsExtractor<? extends A> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator) {
+	public GenericSecurityInterceptor(CredentialsExtractor<? extends A, ? super E, ? super F> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator) {
 		this(credentialsExtractor, authenticator, null, null);
 	}
 
@@ -95,7 +94,7 @@ public class GenericSecurityInterceptor<A extends Credentials, B extends Authent
 	 * @param authenticator        an authenticator
 	 * @param identityResolver     an identity resolver
 	 */
-	public GenericSecurityInterceptor(CredentialsExtractor<? extends A> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator, IdentityResolver<? super B, ? extends C> identityResolver) {
+	public GenericSecurityInterceptor(CredentialsExtractor<? extends A, ? super E, ? super F> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator, IdentityResolver<? super B, ? extends C> identityResolver) {
 		this(credentialsExtractor, authenticator, identityResolver, null);
 	}
 
@@ -108,7 +107,7 @@ public class GenericSecurityInterceptor<A extends Credentials, B extends Authent
 	 * @param authenticator        an authenticator
 	 * @param accessControllerResolver     an access controller resolver
 	 */
-	public GenericSecurityInterceptor(CredentialsExtractor<? extends A> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator, AccessControllerResolver<? super B, ? extends D> accessControllerResolver) {
+	public GenericSecurityInterceptor(CredentialsExtractor<? extends A, ? super E, ? super F> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator, AccessControllerResolver<? super B, ? extends D> accessControllerResolver) {
 		this(credentialsExtractor, authenticator, null, accessControllerResolver);
 	}
 
@@ -122,7 +121,7 @@ public class GenericSecurityInterceptor<A extends Credentials, B extends Authent
 	 * @param identityResolver     an identity resolver
 	 * @param accessControllerResolver     an access controller resolver
 	 */
-	public GenericSecurityInterceptor(CredentialsExtractor<? extends A> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator, IdentityResolver<? super B, ? extends C> identityResolver, AccessControllerResolver<? super B, ? extends D> accessControllerResolver) {
+	public GenericSecurityInterceptor(CredentialsExtractor<? extends A, ? super E, ? super F> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator, IdentityResolver<? super B, ? extends C> identityResolver, AccessControllerResolver<? super B, ? extends D> accessControllerResolver) {
 		this.credentialsExtractor = Objects.requireNonNull(credentialsExtractor);
 		this.authenticator = Objects.requireNonNull(authenticator);
 		this.identityResolver = Optional.ofNullable(identityResolver);

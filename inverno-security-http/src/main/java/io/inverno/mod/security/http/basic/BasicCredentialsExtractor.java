@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.security.http.basic;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.security.authentication.LoginCredentials;
@@ -32,10 +33,10 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public class BasicCredentialsExtractor implements CredentialsExtractor<LoginCredentials> {
+public class BasicCredentialsExtractor<A extends ExchangeContext, B extends Exchange<A>> implements CredentialsExtractor<LoginCredentials, A, B> {
 	
 	@Override
-	public Mono<LoginCredentials> extract(Exchange<?> exchange) throws MalformedCredentialsException {
+	public Mono<LoginCredentials> extract(B exchange) throws MalformedCredentialsException {
 		return Mono.fromSupplier(() -> exchange.request().headers()
 			.<Headers.Authorization>getHeader(Headers.NAME_AUTHORIZATION)
 			.filter(authorizationHeader -> authorizationHeader.getAuthScheme().equals(Headers.Authorization.AUTH_SCHEME_BASIC))

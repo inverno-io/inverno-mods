@@ -80,6 +80,11 @@ public class GenericSetCookieParameter extends GenericParameter implements SetCo
 	}
 
 	@Override
+	public Boolean isPartitioned() {
+		return this.setCookieHeader.isPartitioned();
+	}
+
+	@Override
 	public Headers.SetCookie.SameSitePolicy getSameSite() {
 		return this.setCookieHeader.getSameSite();
 	}

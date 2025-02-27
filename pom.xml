@@ -129,6 +129,8 @@
 		<module>inverno-security-http</module>
 		<module>inverno-security-jose</module>
 		<module>inverno-security-ldap</module>
+		<module>inverno-session</module>
+		<module>inverno-session-http</module>
 		<module>inverno-sql</module>
 		<module>inverno-sql-vertx</module>
 		<module>inverno-web-base</module>

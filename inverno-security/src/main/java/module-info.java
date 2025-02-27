@@ -29,7 +29,7 @@
  * <dt><b>Identification</b></dt>
  * <dd>which is the process of identifying the authenticated entity.</dd>
  * <dt><b>Access control</b></dt>
- * <dd>which is the process of controling the access to protected services or resources for the authenticated entity.</dd>
+ * <dd>which is the process of controlling the access to protected services or resources for the authenticated entity.</dd>
  * </dl>
  * 
  * <p>

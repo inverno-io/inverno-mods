@@ -475,7 +475,8 @@ public class WebServerClassGenerator implements WebServerModuleInfoVisitor<Strin
 							StringBuilder contextMethod = new StringBuilder();
 							String methodName = exectuableElement.getSimpleName().toString();
 							if( (methodName.startsWith("get") || methodName.startsWith("is")) && executableType.getParameterTypes().isEmpty() && executableType.getReturnType().getKind() != TypeKind.VOID) {
-								fieldName = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
+								int fileNameIndex = methodName.startsWith("get") ? 3 : 2;
+								fieldName = Character.toLowerCase(methodName.charAt(fileNameIndex)) + methodName.substring(fileNameIndex + 1);
 								fieldType = executableType.getReturnType();
 
 								contextMethod.append(moduleContext.indent(2)).append("@Override").append(System.lineSeparator());

@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.security.http;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.security.authentication.Credentials;
 import reactor.core.publisher.Mono;
@@ -34,7 +35,7 @@ import reactor.core.publisher.Mono;
  * @param <A> the credentials type
  */
 @FunctionalInterface
-public interface CredentialsExtractor<A extends Credentials> {
+public interface CredentialsExtractor<A extends Credentials, B extends ExchangeContext, C extends Exchange<B>> {
 
 	/**
 	 * <p>
@@ -47,7 +48,7 @@ public interface CredentialsExtractor<A extends Credentials> {
 	 * 
 	 * @throws MalformedCredentialsException if credentials in the exchange are malformed
 	 */
-	Mono<A> extract(Exchange<?> exchange) throws MalformedCredentialsException;
+	Mono<A> extract(C exchange) throws MalformedCredentialsException;
 	
 	/**
 	 * <p>
@@ -58,7 +59,7 @@ public interface CredentialsExtractor<A extends Credentials> {
 	 *
 	 * @return a composed credentials extractor
 	 */
-	default CredentialsExtractor<A> or(CredentialsExtractor<? extends A> other) {
+	default CredentialsExtractor<A, B, C> or(CredentialsExtractor<? extends A, ? super B, ? super C> other) {
 		return exchange -> this.extract(exchange).switchIfEmpty(other.extract(exchange));
 	}
 }

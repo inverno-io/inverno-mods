@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.security.http.token;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.security.authentication.TokenCredentials;
@@ -32,10 +33,10 @@ import reactor.core.publisher.Mono;
  * @since 1.5
  */
 // TODO this has to be moved to OAuth2 specific security module
-public class BearerTokenCredentialsExtractor implements CredentialsExtractor<TokenCredentials> {
+public class BearerTokenCredentialsExtractor<A extends ExchangeContext, B extends Exchange<A>> implements CredentialsExtractor<TokenCredentials, A, B> {
 
 	@Override
-	public Mono<TokenCredentials> extract(Exchange<?> exchange) throws MalformedCredentialsException {
+	public Mono<TokenCredentials> extract(B exchange) throws MalformedCredentialsException {
 		return Mono.fromSupplier(() -> exchange.request().headers()
 			.<Headers.Authorization>getHeader(Headers.NAME_AUTHORIZATION)
 			.filter(authorizationHeader -> authorizationHeader.getAuthScheme().equals(Headers.Authorization.AUTH_SCHEME_BEARER))

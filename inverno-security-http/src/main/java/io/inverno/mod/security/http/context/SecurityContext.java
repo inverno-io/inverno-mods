@@ -32,4 +32,32 @@ import io.inverno.mod.security.identity.Identity;
  * @param <B> the access controller type
  */
 public interface SecurityContext<A extends Identity, B extends AccessController> extends io.inverno.mod.security.context.SecurityContext<A, B>, ExchangeContext {
+
+	/**
+	 * <p>
+	 * An intercepted security exchange context used by security interceptors to populate the security context.
+	 * </p>
+	 *
+	 * <p>
+	 * It should be only considered when configuring security interceptors and handlers which must be the only one allowed to set the security context, applicative interceptors and handlers should always
+	 * use the {@link io.inverno.mod.security.context.SecurityContext} instead.
+	 * </p>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.13
+	 *
+	 * @param <A> the identity type
+	 * @param <B> the access controller type
+	 */
+	interface Intercepted<A extends Identity, B extends AccessController> extends DelegatingSecurityContext<A, B> {
+
+		/**
+		 * <p>
+		 * Sets the security context in the security exchange context.
+		 * </p>
+		 *
+		 * @param securityContext the security context
+		 */
+		void setSecurityContext(io.inverno.mod.security.context.SecurityContext<? extends A, ? extends B> securityContext);
+	}
 }

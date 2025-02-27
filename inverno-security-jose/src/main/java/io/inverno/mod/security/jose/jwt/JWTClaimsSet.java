@@ -105,7 +105,6 @@ public class JWTClaimsSet {
 	 *
 	 * When/if this is supported, we must move this to the @JsonCreator constructor
 	 */
-	@JsonAnySetter
 	private final Map<String, Object> customClaims;
 	
 	/**
@@ -129,18 +128,8 @@ public class JWTClaimsSet {
 	 * 
 	 * @throws JWTBuildException if there was an error building the JWT claims set
 	 */
-	@JsonCreator
 	public JWTClaimsSet(@JsonProperty("iss") String iss, @JsonProperty("sub") String sub, @JsonProperty("aud") String aud, @JsonProperty("exp") Long exp, @JsonProperty("nbf") Long nbf, @JsonProperty("iat") Long iat, @JsonProperty("jti") String jti) throws JWTBuildException {
-		this.iss = iss != null ? new StringOrURI(iss) : null;
-		this.sub = sub != null ? new StringOrURI(sub) : null;
-		this.aud = aud;
-		this.exp = exp != null ? ZonedDateTime.ofInstant(Instant.ofEpochSecond(exp), ZoneOffset.UTC) : null;
-		this.nbf = nbf != null ? ZonedDateTime.ofInstant(Instant.ofEpochSecond(nbf), ZoneOffset.UTC) : null;
-		this.iat = iat != null ? ZonedDateTime.ofInstant(Instant.ofEpochSecond(iat), ZoneOffset.UTC) : null;
-		this.jti =jti;
-		this.customClaims = new HashMap<>();
-		this.validators = new LinkedList<>();
-		this.validate(JWTClaimsSetValidator.expiration()).validate(JWTClaimsSetValidator.notBefore());
+		this(iss, sub, aud, exp, nbf, iat, jti, null);
 	}
 	
 	/**
@@ -159,7 +148,8 @@ public class JWTClaimsSet {
 	 *
 	 * @throws JWTBuildException if there was an error building the JWT claims set
 	 */
-	public JWTClaimsSet(@JsonProperty("iss") String iss, @JsonProperty("sub") String sub, @JsonProperty("aud") String aud, @JsonProperty("exp") Long exp, @JsonProperty("nbf") Long nbf, @JsonProperty("iat") Long iat, @JsonProperty("jti") String jti, Map<String, Object> customClaims) throws JWTBuildException {
+	@JsonCreator
+	public JWTClaimsSet(@JsonProperty("iss") String iss, @JsonProperty("sub") String sub, @JsonProperty("aud") String aud, @JsonProperty("exp") Long exp, @JsonProperty("nbf") Long nbf, @JsonProperty("iat") Long iat, @JsonProperty("jti") String jti, @JsonAnySetter Map<String, Object> customClaims) throws JWTBuildException {
 		this.iss = iss != null ? new StringOrURI(iss) : null;
 		this.sub = sub != null ? new StringOrURI(sub) : null;
 		this.aud = aud;
@@ -167,7 +157,7 @@ public class JWTClaimsSet {
 		this.nbf = nbf != null ? ZonedDateTime.ofInstant(Instant.ofEpochSecond(nbf), ZoneOffset.UTC) : null;
 		this.iat = iat != null ? ZonedDateTime.ofInstant(Instant.ofEpochSecond(iat), ZoneOffset.UTC) : null;
 		this.jti =jti;
-		this.customClaims = customClaims;
+		this.customClaims = customClaims != null ? Collections.unmodifiableMap(customClaims) : Map.of();
 		this.validators = new LinkedList<>();
 		this.validate(JWTClaimsSetValidator.expiration()).validate(JWTClaimsSetValidator.notBefore());
 	}
@@ -222,7 +212,7 @@ public class JWTClaimsSet {
 		this.nbf = nbf;
 		this.iat = iat;
 		this.jti = jti;
-		this.customClaims = customClaims != null ? Collections.unmodifiableMap(customClaims) : null;
+		this.customClaims = customClaims != null ? Collections.unmodifiableMap(customClaims) : Map.of();
 		this.validators = new LinkedList<>();
 		this.validate(JWTClaimsSetValidator.expiration()).validate(JWTClaimsSetValidator.notBefore());
 	}
@@ -376,7 +366,7 @@ public class JWTClaimsSet {
 	 * Returns the map of custom claims.
 	 * </p>
 	 * 
-	 * @return a map of custom claims
+	 * @return an unmodifiable map of custom claims
 	 */
 	@JsonAnyGetter
 	public final Map<String, Object> getCustomClaims() {
@@ -647,7 +637,7 @@ public class JWTClaimsSet {
 		public Object getValue() {
 			return this.value;
 		}
-		
+
 		@Override
 		public <T> T as(Class<T> type) {
 			return OBJECT_DECODER.decode(this.value, type);
@@ -1105,7 +1095,7 @@ public class JWTClaimsSet {
 
 		@Override
 		public GenericJWTClaimsSetBuilder issuedAt(Long iat) {
-			this.nbf = ZonedDateTime.ofInstant(Instant.ofEpochSecond(iat), ZoneOffset.UTC);
+			this.iat = ZonedDateTime.ofInstant(Instant.ofEpochSecond(iat), ZoneOffset.UTC);
 			return this;
 		}
 

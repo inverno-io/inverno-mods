@@ -152,7 +152,7 @@ public class EndpointInterceptedResponseHeaders implements OutboundResponseHeade
 	}
 
 	@Override
-	public EndpointInterceptedResponseHeaders add(Header... headers) {
+	public EndpointInterceptedResponseHeaders add(List<? extends Header> headers) {
 		for(Header header : headers) {
 			this.underlyingHeaders.addCharSequence(header.getHeaderName(), header.getHeaderValue());
 		}
@@ -176,7 +176,7 @@ public class EndpointInterceptedResponseHeaders implements OutboundResponseHeade
 	}
 
 	@Override
-	public EndpointInterceptedResponseHeaders set(Header... headers) {
+	public EndpointInterceptedResponseHeaders set(List<? extends Header> headers) {
 		for(Header header : headers) {
 			this.underlyingHeaders.setCharSequence(header.getHeaderName(), header.getHeaderValue());
 		}
@@ -184,7 +184,7 @@ public class EndpointInterceptedResponseHeaders implements OutboundResponseHeade
 	}
 	
 	@Override
-	public EndpointInterceptedResponseHeaders remove(CharSequence... names) {
+	public EndpointInterceptedResponseHeaders remove(Set<? extends CharSequence> names) {
 		for(CharSequence name : names) {
 			this.underlyingHeaders.remove(name);
 		}

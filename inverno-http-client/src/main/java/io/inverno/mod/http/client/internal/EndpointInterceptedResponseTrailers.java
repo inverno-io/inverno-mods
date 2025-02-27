@@ -80,7 +80,7 @@ public class EndpointInterceptedResponseTrailers implements OutboundHeaders<Endp
 	}
 
 	@Override
-	public EndpointInterceptedResponseTrailers add(Header... headers) {
+	public EndpointInterceptedResponseTrailers add(List<? extends Header> headers) {
 		for(Header header : headers) {
 			this.underlyingHeaders.addCharSequence(header.getHeaderName(), header.getHeaderValue());
 		}
@@ -104,7 +104,7 @@ public class EndpointInterceptedResponseTrailers implements OutboundHeaders<Endp
 	}
 
 	@Override
-	public EndpointInterceptedResponseTrailers set(Header... headers) {
+	public EndpointInterceptedResponseTrailers set(List<? extends Header> headers) {
 		for(Header header : headers) {
 			this.underlyingHeaders.setCharSequence(header.getHeaderName(), header.getHeaderValue());
 		}
@@ -112,7 +112,7 @@ public class EndpointInterceptedResponseTrailers implements OutboundHeaders<Endp
 	}
 	
 	@Override
-	public EndpointInterceptedResponseTrailers remove(CharSequence... names) {
+	public EndpointInterceptedResponseTrailers remove(Set<? extends CharSequence> names) {
 		for(CharSequence name : names) {
 			this.underlyingHeaders.remove(name);
 		}

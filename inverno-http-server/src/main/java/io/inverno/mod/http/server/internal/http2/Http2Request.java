@@ -132,18 +132,7 @@ class Http2Request extends AbstractRequest<Http2RequestHeaders, Http2RequestBody
 	}
 
 	@Override
-	public Optional<Http2RequestBody> body() {
-		if(this.body == null) {
-			switch(this.getMethod()) {
-				case POST:
-				case PUT:
-				case PATCH:
-				case DELETE: {
-					this.body = new Http2RequestBody(this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.headers);
-					break;
-				}
-			}
-		}
-		return Optional.ofNullable(this.body);
+	protected Http2RequestBody createBody() {
+		return new Http2RequestBody(this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.headers);
 	}
 }

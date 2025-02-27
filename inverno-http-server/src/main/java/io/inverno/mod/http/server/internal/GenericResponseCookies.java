@@ -26,7 +26,10 @@ import io.inverno.mod.http.base.internal.header.GenericSetCookieParameter;
 import io.inverno.mod.http.base.internal.header.SetCookieCodec;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -71,6 +74,55 @@ public class GenericResponseCookies implements OutboundSetCookies {
 			this.responseHeaders.add(setCookie);
 			if(this.pairs != null) {
 				this.pairs.computeIfAbsent(setCookie.getName(), ign -> new ArrayList<>()).add(new GenericSetCookieParameter(setCookie, this.parameterConverter));
+			}
+		}
+		return this;
+	}
+
+	@Override
+	public OutboundSetCookies setCookie(Consumer<SetCookie.Configurator> configurer) {
+		if(configurer != null) {
+			SetCookieCodec.SetCookie setCookie = new SetCookieCodec.SetCookie();
+			configurer.accept(setCookie);
+			setCookie.setHeaderValue(this.headerService.encodeValue(setCookie));
+
+			List<String> setCookies = new LinkedList<>(this.responseHeaders.getAll(Headers.NAME_SET_COOKIE));
+			for(ListIterator<String> setCookiesIterator = setCookies.listIterator();setCookiesIterator.hasNext();) {
+				String current = setCookiesIterator.next().trim();
+				if(setCookie != null && current.startsWith(setCookie.getName())) {
+					current = setCookie.getHeaderValue();
+					setCookie = null;
+					setCookiesIterator.set(current);
+				}
+			}
+
+			if(setCookie != null) {
+				this.responseHeaders.add(setCookie);
+			}
+			else {
+				this.responseHeaders.remove(Headers.NAME_SET_COOKIE);
+				for(String setCookieValue : setCookies) {
+					this.responseHeaders.add(Headers.NAME_SET_COOKIE, setCookieValue);
+				}
+			}
+		}
+		return this;
+	}
+
+	@Override
+	public OutboundSetCookies removeCookie(Set<String> names) {
+		if(!names.isEmpty()) {
+			List<String> setCookies = new LinkedList<>(this.responseHeaders.getAll(Headers.NAME_SET_COOKIE));
+			for(Iterator<String> setCookiesIterator = setCookies.iterator(); setCookiesIterator.hasNext();) {
+				String current = setCookiesIterator.next().trim();
+				if(names.stream().anyMatch(current::startsWith)) {
+					setCookiesIterator.remove();
+				}
+			}
+
+			this.responseHeaders.remove(Headers.NAME_SET_COOKIE);
+			for(String setCookieValue : setCookies) {
+				this.responseHeaders.add(Headers.NAME_SET_COOKIE, setCookieValue);
 			}
 		}
 		return this;

@@ -138,18 +138,7 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders, Http1xRequestB
 	}
 	
 	@Override
-	public Optional<Http1xRequestBody> body() {
-		if(this.body == null) {
-			switch(this.getMethod()) {
-				case POST:
-				case PUT:
-				case PATCH:
-				case DELETE: {
-					this.body = new Http1xRequestBody(this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.headers);
-					break;
-				}
-			}
-		}
-		return Optional.ofNullable(this.body);
+	public Http1xRequestBody createBody() {
+		return new Http1xRequestBody(this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.headers);
 	}
 }

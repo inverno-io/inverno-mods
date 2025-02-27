@@ -1,0 +1,450 @@
+/*
+ * Copyright 2025 Jeremy KUHN
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package io.inverno.mod.session;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.inverno.mod.base.reflect.Types;
+import io.inverno.mod.redis.RedisClient;
+import io.inverno.mod.redis.lettuce.PoolRedisClient;
+import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.support.AsyncConnectionPoolSupport;
+import io.lettuce.core.support.BoundedAsyncPool;
+import io.lettuce.core.support.BoundedPoolConfig;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+import org.awaitility.Awaitility;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
+
+/**
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ */
+@EnabledIf( value = "isEnabled", disabledReason = "Failed to connect to test Redis database" )
+public class RedisBasicSessionStoreTest {
+
+	private static final ObjectMapper MAPPER = new ObjectMapper();
+
+	private static final io.lettuce.core.RedisClient REDIS_CLIENT = io.lettuce.core.RedisClient.create();
+
+	public static boolean isEnabled() {
+		try (StatefulRedisConnection<String, String> connection = REDIS_CLIENT.connect(RedisURI.create("redis://localhost:6379"))) {
+			return true;
+		}
+		catch (RedisConnectionException e) {
+			return false;
+		}
+	}
+
+	private static RedisClient<String, String> redisClient;
+
+	@BeforeAll
+	public static void init() {
+		BoundedAsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
+			() -> REDIS_CLIENT.connectAsync(StringCodec.UTF8, RedisURI.create("redis://localhost:6379")),
+			BoundedPoolConfig.create()
+		);
+
+		redisClient = new PoolRedisClient<>(pool, String.class, String.class);
+	}
+
+	@AfterEach
+	public void cleanup() {
+		REDIS_CLIENT.connect(RedisURI.create("redis://localhost:6379")).reactive().flushall().block();
+	}
+
+	public static RedisBasicSessionStore.Builder<Map<String, String>> newSessionStoreBuilder() {
+		return RedisBasicSessionStore.builder(redisClient, MAPPER, Types.type(Map.class).type(String.class).and().type(String.class).and().build());
+	}
+
+	@Test
+	public void create_should_create_and_persist_session() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.maxInactiveInterval(300000L)
+			.build();
+
+		Assertions.assertEquals(300000L, sessionStore.getMaxInactiveInterval());
+		Assertions.assertNull(sessionStore.getExpireAfterPeriod());
+		Assertions.assertEquals(SessionIdGenerator.uuid(), sessionStore.getSessionIdGenerator());
+
+		Session<Map<String, String>> session = sessionStore.create().block();
+
+		Assertions.assertNotNull(session);
+		Assertions.assertNull(session.getOriginalId());
+		Assertions.assertNotNull(session.getId());
+		Assertions.assertTrue(session.getCreationTime() <= System.currentTimeMillis());
+		Assertions.assertTrue(session.getLastAccessedTime() <= System.currentTimeMillis());
+		Assertions.assertEquals(300000L, session.getMaxInactiveInterval());
+		Assertions.assertEquals(300000L + session.getLastAccessedTime(), session.getExpirationTime());
+		Assertions.assertTrue(session.isNew());
+		Assertions.assertFalse(session.isInvalidated());
+		Assertions.assertFalse(session.isExpired());
+		Assertions.assertNull(session.getData().block());
+
+		Session<Map<String, String>> resolvedSession = sessionStore.get(session.getId()).block();
+
+		Assertions.assertNotNull(resolvedSession);
+	}
+
+	@Test
+	public void given_expireAfterPeriod_create_should_create_fixed_time_expiring_session() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.expireAfterPeriod(300000L)
+			.build();
+
+		Session<Map<String, String>> session = sessionStore.create().block();
+		Assertions.assertNotNull(session);
+		Assertions.assertNull(session.getMaxInactiveInterval());
+		Assertions.assertEquals(session.getCreationTime() + 300000L, session.getExpirationTime(), 10L);
+	}
+
+	@Test
+	public void given_invalid_session_id_get_should_return_empty() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.build();
+
+		Assertions.assertNull(sessionStore.get("invalid").block());
+	}
+
+	@Test
+	public void given_updates_session_should_not_be_updated_on_the_fly() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.build();
+
+		Session<Map<String, String>> session = sessionStore.create().block();
+		Assertions.assertNotNull(session);
+		Assertions.assertNotNull(session.getMaxInactiveInterval());
+
+		session.setExpirationTime(System.currentTimeMillis() + 300000L);
+		Assertions.assertNull(session.getMaxInactiveInterval());
+		session.getData(HashMap::new).block().put("someKey", "someValue");
+
+		Session<Map<String, String>> resolvedSession = sessionStore.get(session.getId()).block();
+		Assertions.assertNotNull(resolvedSession);
+		Assertions.assertNotNull(resolvedSession.getMaxInactiveInterval());
+		Assertions.assertNotEquals(session.getExpirationTime(), resolvedSession.getExpirationTime());
+		Assertions.assertNull(resolvedSession.getData().block());
+
+		resolvedSession.setExpirationTime(System.currentTimeMillis() + 300000L);
+		Assertions.assertNull(resolvedSession.getMaxInactiveInterval());
+		resolvedSession.getData(HashMap::new).block().put("someKey", "someValue");
+
+		Session<Map<String, String>> resolvedSession2 = sessionStore.get(session.getId()).block();
+		Assertions.assertNotNull(resolvedSession2);
+		Assertions.assertNotNull(resolvedSession2.getMaxInactiveInterval());
+		Assertions.assertNotEquals(resolvedSession.getExpirationTime(), resolvedSession2.getExpirationTime());
+		Assertions.assertNull(resolvedSession2.getData().block());
+	}
+
+	@Test
+	public void given_updates_session_save_should_persist_session() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.build();
+
+		Session<Map<String, String>> session = sessionStore.create().block();
+		Assertions.assertNotNull(session);
+		Assertions.assertNotNull(session.getMaxInactiveInterval());
+
+		session.setExpirationTime(System.currentTimeMillis() + 300000L);
+		Assertions.assertNull(session.getMaxInactiveInterval());
+		session.getData(HashMap::new).block().put("someKey", "someValue");
+
+		session.save().block();
+
+		Session<Map<String, String>> resolvedSession = sessionStore.get(session.getId()).block();
+		Assertions.assertNotNull(resolvedSession);
+		Assertions.assertNull(resolvedSession.getMaxInactiveInterval());
+		Assertions.assertEquals(session.getExpirationTime(), resolvedSession.getExpirationTime());
+		Assertions.assertEquals(Map.of("someKey", "someValue"), resolvedSession.getData().block());
+	}
+
+	@Test
+	public void given_onSetOnly_data_save_strategy_and_new_data_save_should_persist_data() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.sessionDataSaveStrategy(SessionDataSaveStrategy.onSetOnly())
+			.build();
+
+		Session<Map<String, String>> session = sessionStore.create().block();
+		Assertions.assertNotNull(session);
+
+		session.getData(HashMap::new).block().put("someKey", "someValue");
+
+		session.save().block();
+
+		Session<Map<String, String>> resolvedSession = sessionStore.get(session.getId()).block();
+		Assertions.assertNotNull(resolvedSession);
+		Assertions.assertEquals(Map.of("someKey", "someValue"), resolvedSession.getData().block());
+	}
+
+	@Test
+	public void given_onSetOnly_data_save_strategy_and_existing_data_and_setData_not_invoked_save_should_not_persist_data() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.sessionDataSaveStrategy(SessionDataSaveStrategy.onSetOnly())
+			.build();
+
+		Session<Map<String, String>> session = sessionStore.create().block();
+		Assertions.assertNotNull(session);
+
+		session.getData(HashMap::new).block().put("someKey", "someValue");
+
+		session.save().block();
+
+		session = sessionStore.get(session.getId()).block();
+		Assertions.assertNotNull(session);
+
+		session.getData().block().put("someOtherKey", "someOtherValue");
+
+		session.save().block();
+
+		Session<Map<String, String>> resolvedSession = sessionStore.get(session.getId()).block();
+		Assertions.assertNotNull(resolvedSession);
+		Assertions.assertEquals(Map.of("someKey", "someValue"), resolvedSession.getData().block());
+	}
+
+	@Test
+	public void given_onSetOnly_data_save_strategy_and_existing_data_and_setData_invoked_save_should_persist_data() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.sessionDataSaveStrategy(SessionDataSaveStrategy.onSetOnly())
+			.build();
+
+		Session<Map<String, String>> session = sessionStore.create().block();
+		Assertions.assertNotNull(session);
+
+		session.getData(HashMap::new).block().put("someKey", "someValue");
+
+		session.save().block();
+
+		session = sessionStore.get(session.getId()).block();
+		Assertions.assertNotNull(session);
+
+		Map<String, String> sessionData = session.getData().block();
+		Assertions.assertNotNull(sessionData);
+		sessionData.put("someOtherKey", "someOtherValue");
+		session.setData(sessionData);
+
+		session.save().block();
+
+		Session<Map<String, String>> resolvedSession = sessionStore.get(session.getId()).block();
+		Assertions.assertNotNull(resolvedSession);
+		Assertions.assertEquals(Map.of("someKey", "someValue", "someOtherKey", "someOtherValue"), resolvedSession.getData().block());
+	}
+
+	@Test
+	public void soft_refreshId_should_not_update_session_id() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.build();
+
+		Session<Map<String, String>> session = sessionStore.create().block();
+		Assertions.assertNotNull(session);
+		Assertions.assertNotNull(session.getMaxInactiveInterval());
+
+		session.setExpirationTime(System.currentTimeMillis() + 300000L);
+		Assertions.assertNull(session.getMaxInactiveInterval());
+		session.getData(HashMap::new).block().put("someKey", "someValue");
+
+		session.save().block();
+
+		String sessionIdBeforeRefresh = session.getId();
+		String refreshedSessionId = session.refreshId().block();
+
+		Assertions.assertEquals(sessionIdBeforeRefresh, refreshedSessionId);
+		Assertions.assertEquals(sessionIdBeforeRefresh, session.getId());
+	}
+
+	@Test
+	public void hard_refreshId_should_update_session_id_and_move_session() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.build();
+
+		Session<Map<String, String>> session = sessionStore.create().block();
+		Assertions.assertNotNull(session);
+		Assertions.assertNotNull(session.getMaxInactiveInterval());
+
+		session.setExpirationTime(System.currentTimeMillis() + 300000L);
+		Assertions.assertNull(session.getMaxInactiveInterval());
+		session.getData(HashMap::new).block().put("someKey", "someValue");
+
+		session.save().block();
+
+		String sessionIdBeforeRefresh = session.getId();
+		String refreshedSessionId = session.refreshId(true).block();
+
+		Assertions.assertNotEquals(sessionIdBeforeRefresh, refreshedSessionId);
+		Assertions.assertNotEquals(session.getOriginalId(), session.getId());
+		Assertions.assertNotEquals(sessionIdBeforeRefresh, session.getId());
+		Assertions.assertEquals(refreshedSessionId, session.getId());
+
+		Session<Map<String, String>> resolvedSession = sessionStore.get(sessionIdBeforeRefresh).block();
+		Assertions.assertNull(resolvedSession);
+
+		resolvedSession = sessionStore.get(refreshedSessionId).block();
+		Assertions.assertNotNull(resolvedSession);
+		Assertions.assertNull(resolvedSession.getMaxInactiveInterval());
+		Assertions.assertEquals(session.getExpirationTime(), resolvedSession.getExpirationTime());
+		Assertions.assertEquals(Map.of("someKey", "someValue"), resolvedSession.getData().block());
+	}
+
+
+	@Test
+	public void getData_should_return_data() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.build();
+
+		Session<Map<String, String>> session = sessionStore.create().block();
+		Assertions.assertNotNull(session);
+		Assertions.assertNotNull(session.getMaxInactiveInterval());
+
+		session.setExpirationTime(System.currentTimeMillis() + 300000L);
+		Assertions.assertNull(session.getMaxInactiveInterval());
+		session.getData(HashMap::new).block().put("someKey", "someValue");
+
+		session.save().block();
+
+		Map<String, String> resolvedData = sessionStore.getData(session.getId()).block();
+
+		Assertions.assertEquals(Map.of("someKey", "someValue"), resolvedData);
+	}
+
+	@Test
+	public void move_should_move_session() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.build();
+
+		Session<Map<String, String>> session = sessionStore.create().block();
+		Assertions.assertNotNull(session);
+		Assertions.assertNotNull(session.getMaxInactiveInterval());
+
+		session.setExpirationTime(System.currentTimeMillis() + 300000L);
+		Assertions.assertNull(session.getMaxInactiveInterval());
+		session.getData(HashMap::new).block().put("someKey", "someValue");
+
+		String sessionId = session.getId();
+		session.save().block();
+
+		String newSessionId = sessionStore.getSessionIdGenerator().generate(session).block();
+
+		sessionStore.move(session.getId(), newSessionId).block();
+
+		Session<Map<String, String>> resolvedSession = sessionStore.get(newSessionId).block();
+		Assertions.assertNotNull(resolvedSession);
+		Assertions.assertEquals(newSessionId, resolvedSession.getId());
+		Assertions.assertNull(resolvedSession.getMaxInactiveInterval());
+		Assertions.assertEquals(session.getExpirationTime(), resolvedSession.getExpirationTime());
+		Assertions.assertEquals(Map.of("someKey", "someValue"), resolvedSession.getData().block());
+
+		Assertions.assertNull(sessionStore.get(sessionId).block());
+	}
+
+	@Test
+	public void save_should_save_session() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.build();
+
+		Session<Map<String, String>> session = sessionStore.create().block();
+		Assertions.assertNotNull(session);
+		Assertions.assertNotNull(session.getMaxInactiveInterval());
+
+		session.setExpirationTime(System.currentTimeMillis() + 300000L);
+		Assertions.assertNull(session.getMaxInactiveInterval());
+		session.getData(HashMap::new).block().put("someKey", "someValue");
+
+		sessionStore.save(session).block();
+		Session<Map<String, String>> resolvedSession = sessionStore.get(session.getId()).block();
+		Assertions.assertNotNull(resolvedSession);
+		Assertions.assertNull(resolvedSession.getMaxInactiveInterval());
+		Assertions.assertEquals(session.getExpirationTime(), resolvedSession.getExpirationTime());
+		Assertions.assertEquals(Map.of("someKey", "someValue"), resolvedSession.getData().block());
+	}
+
+	@Test
+	public void remove_should_remove_session() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.build();
+
+		Session<Map<String, String>> session = sessionStore.create().block();
+		Assertions.assertNotNull(session);
+
+		sessionStore.remove(session.getId()).block();
+
+		Session<Map<String, String>> resolvedSession = sessionStore.get(session.getId()).block();
+		Assertions.assertNull(resolvedSession);
+	}
+
+	@Test
+	public void session_invalidate_should_remove_session() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.build();
+
+		Session<Map<String, String>> session = sessionStore.create().block();
+		Assertions.assertNotNull(session);
+
+		session.invalidate().block();
+		Assertions.assertTrue(session.isInvalidated());
+
+		Session<Map<String, String>> resolvedSession = sessionStore.get(session.getId()).block();
+		Assertions.assertNull(resolvedSession);
+	}
+
+	@Test
+	public void session_should_expire_after_inactivity_period() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.maxInactiveInterval(250L)
+			.build();
+
+		Session<Map<String, String>> session = sessionStore.create().block();
+		Assertions.assertNotNull(session);
+		Assertions.assertEquals(session.getLastAccessedTime() + 250L, session.getExpirationTime());
+
+		Awaitility.await().pollDelay(Duration.ofMillis(100)).pollInterval(Duration.ofMillis(10)).atMost(Duration.ofMillis(110)).until(() -> !session.isExpired());
+
+		Assertions.assertNotNull(sessionStore.get(session.getId()).block());
+		session.save().block();
+		Assertions.assertEquals(session.getCreationTime() + 100L, session.getLastAccessedTime(), 10);
+		Assertions.assertEquals(session.getLastAccessedTime() + 250L, session.getExpirationTime());
+
+		Awaitility.await().pollDelay(Duration.ofMillis(250)).pollInterval(Duration.ofMillis(10)).atMost(Duration.ofMillis(260)).until(session::isExpired);
+		Assertions.assertNull(sessionStore.get(session.getId()).block());
+	}
+
+	@Test
+	public void session_should_expire_at_expiration_time() {
+		RedisBasicSessionStore<Map<String, String>> sessionStore = newSessionStoreBuilder()
+			.expireAfterPeriod(250L)
+			.build();
+
+		Session<Map<String, String>> session = sessionStore.create().block();
+		Assertions.assertNotNull(session);
+		Assertions.assertEquals(session.getCreationTime() + 250L, session.getExpirationTime(), 10);
+
+		Awaitility.await().pollDelay(Duration.ofMillis(100)).pollInterval(Duration.ofMillis(10)).atMost(Duration.ofMillis(110)).until(() -> !session.isExpired());
+
+		Assertions.assertNotNull(sessionStore.get(session.getId()).block());
+		session.save().block();
+		Assertions.assertEquals(session.getCreationTime() + 100L, session.getLastAccessedTime(), 10);
+		Assertions.assertEquals(session.getCreationTime() + 250L, session.getExpirationTime(), 10);
+
+		Awaitility.await().pollDelay(Duration.ofMillis(140)).pollInterval(Duration.ofMillis(10)).atMost(Duration.ofMillis(160)).until(() -> System.currentTimeMillis() >= session.getExpirationTime());
+		Assertions.assertTrue(session.isExpired());
+		Assertions.assertNull(sessionStore.get(session.getId()).block());
+	}
+}

@@ -53,7 +53,7 @@ public class LoginActionHandler<A extends LoginCredentials, B extends Authentica
 	/**
 	 * The credentials' extractor.
 	 */
-	private final CredentialsExtractor<A> credentialsExtractor;
+	private final CredentialsExtractor<A, C, D> credentialsExtractor;
 	
 	/**
 	 * The authenticator.
@@ -78,7 +78,7 @@ public class LoginActionHandler<A extends LoginCredentials, B extends Authentica
 	 * @param credentialsExtractor a credentials extractor
 	 * @param authenticator        an authenticator
 	 */
-	public LoginActionHandler(CredentialsExtractor<A> credentialsExtractor, Authenticator<A, B> authenticator) {
+	public LoginActionHandler(CredentialsExtractor<A, C, D> credentialsExtractor, Authenticator<A, B> authenticator) {
 		this(credentialsExtractor, authenticator, null, null);
 	}
 	
@@ -92,7 +92,7 @@ public class LoginActionHandler<A extends LoginCredentials, B extends Authentica
 	 * @param loginSuccessHandler  a login success handler
 	 * @param loginFailureHandler  a login failure handler
 	 */
-	public LoginActionHandler(CredentialsExtractor<A> credentialsExtractor, Authenticator<A, B> authenticator, LoginSuccessHandler<B, C, D> loginSuccessHandler, LoginFailureHandler<C, D> loginFailureHandler) {
+	public LoginActionHandler(CredentialsExtractor<A, C, D> credentialsExtractor, Authenticator<A, B> authenticator, LoginSuccessHandler<B, C, D> loginSuccessHandler, LoginFailureHandler<C, D> loginFailureHandler) {
 		this.credentialsExtractor = credentialsExtractor;
 		this.authenticator = authenticator;
 		this.loginSuccessHandler = loginSuccessHandler;
@@ -106,7 +106,7 @@ public class LoginActionHandler<A extends LoginCredentials, B extends Authentica
 	 * 
 	 * @return the credentials extractor
 	 */
-	public CredentialsExtractor<A> getCredentialsExtractor() {
+	public CredentialsExtractor<A, C, D> getCredentialsExtractor() {
 		return credentialsExtractor;
 	}
 

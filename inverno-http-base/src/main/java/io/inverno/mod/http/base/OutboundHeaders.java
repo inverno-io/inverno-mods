@@ -17,6 +17,8 @@ package io.inverno.mod.http.base;
 
 import io.inverno.mod.http.base.header.Header;
 import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Set;
 
 /**
  * <p>
@@ -107,7 +109,20 @@ public interface OutboundHeaders<A extends OutboundHeaders<A>> extends InboundHe
 	 * 
 	 * @return the outbound headers
 	 */
-	A add(Header... headers);
+	default A add(Header... headers) {
+		return this.add(List.of(headers));
+	}
+
+	/**
+	 * <p>
+	 * Adds the specified headers.
+	 * </p>
+	 *
+	 * @param headers the headers to add
+	 *
+	 * @return the outbound headers
+	 */
+	A add(List<? extends Header> headers);
 
 	/**
 	 * <p>
@@ -173,7 +188,20 @@ public interface OutboundHeaders<A extends OutboundHeaders<A>> extends InboundHe
 	 * 
 	 * @return the outbound headers
 	 */
-	A set(Header... headers);
+	default A set(Header... headers) {
+		return this.set(List.of(headers));
+	}
+
+	/**
+	 * <p>
+	 * Sets the specified headers.
+	 * </p>
+	 *
+	 * @param headers the headers to set
+	 *
+	 * @return the outbound headers
+	 */
+	A set(List<? extends Header> headers);
 
 	/**
 	 * <p>
@@ -184,5 +212,18 @@ public interface OutboundHeaders<A extends OutboundHeaders<A>> extends InboundHe
 	 * 
 	 * @return the outbound headers
 	 */
-	A remove(CharSequence... names);
+	default A remove(CharSequence... names) {
+		return this.remove(Set.of(names));
+	}
+
+	/**
+	 * <p>
+	 * Removes the headers with the specified names.
+	 * </p>
+	 *
+	 * @param names the names of the headers to remove
+	 *
+	 * @return the outbound headers
+	 */
+	A remove(Set<? extends CharSequence> names);
 }

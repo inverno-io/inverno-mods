@@ -131,7 +131,7 @@ class Http1xResponseHeaders extends AbstractResponseHeaders<Http1xResponseHeader
 	}
 
 	@Override
-	public Http1xResponseHeaders add(Header... headers) {
+	public Http1xResponseHeaders add(List<? extends Header> headers) {
 		for(Header header : headers) {
 			this.headers.addCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
@@ -145,7 +145,7 @@ class Http1xResponseHeaders extends AbstractResponseHeaders<Http1xResponseHeader
 	}
 
 	@Override
-	public Http1xResponseHeaders set(Header... headers) {
+	public Http1xResponseHeaders set(List<? extends Header> headers) {
 		for(Header header : headers) {
 			this.headers.setCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
@@ -153,7 +153,7 @@ class Http1xResponseHeaders extends AbstractResponseHeaders<Http1xResponseHeader
 	}
 
 	@Override
-	public Http1xResponseHeaders remove(CharSequence... names) {
+	public Http1xResponseHeaders remove(Set<? extends CharSequence> names) {
 		for(CharSequence name : names) {
 			this.headers.remove(name);
 		}

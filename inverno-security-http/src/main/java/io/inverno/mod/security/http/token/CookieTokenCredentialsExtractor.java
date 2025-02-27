@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.security.http.token;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.security.authentication.TokenCredentials;
 import io.inverno.mod.security.http.CredentialsExtractor;
@@ -29,7 +30,7 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public class CookieTokenCredentialsExtractor implements CredentialsExtractor<TokenCredentials> {
+public class CookieTokenCredentialsExtractor<A extends ExchangeContext, B extends Exchange<A>> implements CredentialsExtractor<TokenCredentials, A, B> {
 
 	/**
 	 * The default token cookie name: {@code AUTH-TOKEN}.
@@ -77,7 +78,7 @@ public class CookieTokenCredentialsExtractor implements CredentialsExtractor<Tok
 	}
 	
 	@Override
-	public Mono<TokenCredentials> extract(Exchange<?> exchange) throws MalformedCredentialsException {
+	public Mono<TokenCredentials> extract(B exchange) throws MalformedCredentialsException {
 		return Mono.fromSupplier(() -> exchange.request().headers().cookies()
 			.get(this.tokenCookie)
 			.map(cookie -> new TokenCredentials(cookie.asString()))

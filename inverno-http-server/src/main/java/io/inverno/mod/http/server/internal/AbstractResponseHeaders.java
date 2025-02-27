@@ -22,6 +22,8 @@ import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
 import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -118,7 +120,12 @@ public abstract class AbstractResponseHeaders<A extends AbstractResponseHeaders<
 	}
 
 	@Override
-	public abstract A add(Header... headers);
+	public A add(Header... headers) {
+		return this.add(List.of(headers));
+	}
+
+	@Override
+	public abstract A add(List<? extends Header> headers);
 
 	@Override
 	public abstract A set(CharSequence name, CharSequence value);
@@ -134,8 +141,18 @@ public abstract class AbstractResponseHeaders<A extends AbstractResponseHeaders<
 	}
 
 	@Override
-	public abstract A set(Header... headers);
+	public A set(Header... headers) {
+		return this.set(List.of(headers));
+	}
 
 	@Override
-	public abstract A remove(CharSequence... names);
+	public abstract A set(List<? extends Header> headers);
+
+	@Override
+	public A remove(CharSequence... names) {
+		return this.remove(Set.of(names));
+	}
+
+	@Override
+	public abstract A remove(Set<? extends CharSequence> names);
 }

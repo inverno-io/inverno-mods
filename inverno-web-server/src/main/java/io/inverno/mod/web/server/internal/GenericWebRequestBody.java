@@ -31,6 +31,7 @@ import java.lang.reflect.Type;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -64,6 +65,18 @@ public class GenericWebRequestBody implements WebRequestBody {
 	@Override
 	public WebRequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
 		this.requestBody.transform(transformer);
+		return this;
+	}
+
+	@Override
+	public WebRequestBody before(Mono<Void> before) {
+		this.requestBody.before(before);
+		return this;
+	}
+
+	@Override
+	public WebRequestBody after(Mono<Void> after) {
+		this.requestBody.after(after);
 		return this;
 	}
 

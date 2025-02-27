@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.security.http.form;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.security.authentication.InvalidCredentialsException;
@@ -32,7 +33,7 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public class FormCredentialsExtractor implements CredentialsExtractor<LoginCredentials> {
+public class FormCredentialsExtractor<A extends ExchangeContext, B extends Exchange<A>> implements CredentialsExtractor<LoginCredentials, A, B> {
 
 	/**
 	 * The default username parameter name.
@@ -99,7 +100,7 @@ public class FormCredentialsExtractor implements CredentialsExtractor<LoginCrede
 	}
 	
 	@Override
-	public Mono<LoginCredentials> extract(Exchange<?> exchange) throws MalformedCredentialsException {
+	public Mono<LoginCredentials> extract(B exchange) throws MalformedCredentialsException {
 		return exchange.request().body().get().urlEncoded().collectMap()
 			.map(parameterMap -> {
 				Parameter username = parameterMap.get(this.usernameParameter);

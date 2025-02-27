@@ -43,11 +43,6 @@
 		</dependency>
 		<dependency>
 			<groupId>io.inverno.mod</groupId>
-			<artifactId>inverno-security</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>io.inverno.mod</groupId>
 			<artifactId>inverno-http-server</artifactId>
 			<version>${project.version}</version>
 		</dependency>
@@ -55,6 +50,17 @@
 			<groupId>io.inverno.mod</groupId>
 			<artifactId>inverno-irt</artifactId>
 			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.inverno.mod</groupId>
+			<artifactId>inverno-security</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.inverno.mod</groupId>
+			<artifactId>inverno-session-http</artifactId>
+			<version>${project.version}</version>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>

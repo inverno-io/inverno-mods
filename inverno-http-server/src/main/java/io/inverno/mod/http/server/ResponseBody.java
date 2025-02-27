@@ -17,11 +17,12 @@ package io.inverno.mod.http.server;
 
 import io.inverno.mod.http.base.OutboundData;
 import io.netty.buffer.ByteBuf;
-import org.reactivestreams.Publisher;
-
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -50,11 +51,45 @@ public interface ResponseBody {
 	 *
 	 * @param transformer a request payload publisher transformer
 	 *
-	 * @return the request body
+	 * @return the response body
 	 * 
 	 * @throws IllegalArgumentException if data were already sent to the client
 	 */
 	ResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) throws IllegalArgumentException;
+
+	/**
+	 * <p>
+	 * Transforms the payload publisher to subscribe to the specified publisher before subscribing to the payload publisher.
+	 * </p>
+	 *
+	 * <p>
+	 * This basically allows to perform actions before the response is actually sent.
+	 * </p>
+	 *
+	 * @param before the publisher to subscribe before the response body publisher
+	 *
+	 * @return the response body
+	 */
+	default ResponseBody before(Mono<Void> before) {
+		return this.transform(before::thenMany);
+	}
+
+	/**
+	 * <p>
+	 * Transforms the payload publisher to subscribe to the specified publisher after payload publisher completion.
+	 * </p>
+	 *
+	 * <p>
+	 * This basically allows to perform actions after the response body has been sent.
+	 * </p>
+	 *
+	 * @param after the publisher to subscribe before the response body publisher
+	 *
+	 * @return the response body
+	 */
+	default ResponseBody after(Mono<Void> after) {
+		return this.transform(body -> Flux.from(body).concatWith(after.cast(ByteBuf.class)));
+	}
 
 	/**
 	 * <p>

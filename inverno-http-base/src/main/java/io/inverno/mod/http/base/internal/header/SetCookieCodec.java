@@ -69,8 +69,11 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		if(headerField.isHttpOnly() != null && headerField.isHttpOnly()) {
 			result.append("; ").append(Headers.SetCookie.HTTPONLY);
 		}
+		if(headerField.isPartitioned() != null && headerField.isPartitioned()) {
+			result.append("; ").append(Headers.SetCookie.PARTITIONED);
+		}
 		if(headerField.getSameSite() != null) {
-			result.append("; ").append(Headers.SetCookie.SAME_SITE).append("=").append(headerField.getSameSite());
+			result.append("; ").append(Headers.SetCookie.SAME_SITE).append("=").append(headerField.getSameSite().getValue());
 		}
 		return result.toString();
 	}
@@ -95,6 +98,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		private String path;
 		private Boolean secure;
 		private Boolean httpOnly;
+		private Boolean partitioned;
 		private Headers.SetCookie.SameSitePolicy sameSite;
 		
 		/**
@@ -106,7 +110,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 			super(Headers.NAME_SET_COOKIE, null, null, null);
 		}
 		
-		private SetCookie(String headerValue, String name, String value, ZonedDateTime expires, Integer maxAge, String domain, String path, Boolean secure, Boolean httpOnly, Headers.SetCookie.SameSitePolicy sameSite, Map<String, String> parameters) {
+		private SetCookie(String headerValue, String name, String value, ZonedDateTime expires, Integer maxAge, String domain, String path, Boolean secure, Boolean httpOnly, Boolean partitioned, Headers.SetCookie.SameSitePolicy sameSite, Map<String, String> parameters) {
 			super(Headers.NAME_SET_COOKIE, headerValue, null, parameters);
 			
 			this.name = name;
@@ -117,6 +121,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 			this.path = path;
 			this.secure = secure;
 			this.httpOnly = httpOnly;
+			this.partitioned = partitioned;
 			this.sameSite = sameSite;
 		}
 		
@@ -158,6 +163,11 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		@Override
 		public Boolean isHttpOnly() {
 			return this.httpOnly;
+		}
+
+		@Override
+		public Boolean isPartitioned() {
+			return this.partitioned;
 		}
 
 		@Override
@@ -214,6 +224,12 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		}
 
 		@Override
+		public Configurator partitioned(boolean partitioned) {
+			this.partitioned = partitioned;
+			return this;
+		}
+
+		@Override
 		public Configurator sameSite(Headers.SetCookie.SameSitePolicy sameSite) {
 			this.sameSite = sameSite;
 			return this;
@@ -239,6 +255,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 			private String path;
 			private Boolean secure;
 			private Boolean httpOnly;
+			private Boolean partitioned;
 			private Headers.SetCookie.SameSitePolicy sameSite;
 			
 			private boolean expectCookiePair = true;
@@ -270,6 +287,9 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 					if(name.equalsIgnoreCase(HTTPONLY)) {
 						this.httpOnly = true;
 					}
+					if(name.equalsIgnoreCase(PARTITIONED)) {
+						this.partitioned = true;
+					}
 					if(name.equalsIgnoreCase(SAME_SITE)) {
 						this.sameSite = Headers.SetCookie.SameSitePolicy.fromValue(value);
 					}
@@ -279,7 +299,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 			
 			@Override
 			public SetCookie build() {
-				return new SetCookie(this.headerValue, this.name, this.value, this.expires, this.maxAge, this.domain, this.path, this.secure, this.httpOnly, this.sameSite, this.parameters);
+				return new SetCookie(this.headerValue, this.name, this.value, this.expires, this.maxAge, this.domain, this.path, this.secure, this.httpOnly, this.partitioned, this.sameSite, this.parameters);
 			}
 		}
 	}

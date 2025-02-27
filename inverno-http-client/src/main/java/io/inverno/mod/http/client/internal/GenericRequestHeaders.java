@@ -161,7 +161,7 @@ public class GenericRequestHeaders<A extends GenericRequestHeaders<A>> implement
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public A add(Header... headers) {
+	public A add(List<? extends Header> headers) {
 		for(Header header : headers) {
 			this.underlyingHeaders.addCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
@@ -187,7 +187,7 @@ public class GenericRequestHeaders<A extends GenericRequestHeaders<A>> implement
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public A set(Header... headers) {
+	public A set(List<? extends Header> headers) {
 		for(Header header : headers) {
 			this.underlyingHeaders.setCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
@@ -196,7 +196,7 @@ public class GenericRequestHeaders<A extends GenericRequestHeaders<A>> implement
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public A remove(CharSequence... names) {
+	public A remove(Set<? extends CharSequence> names) {
 		for(CharSequence name : names) {
 			this.underlyingHeaders.remove(name);
 		}

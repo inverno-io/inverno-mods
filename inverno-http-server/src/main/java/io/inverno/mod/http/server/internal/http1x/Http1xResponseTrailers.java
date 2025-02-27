@@ -78,7 +78,7 @@ class Http1xResponseTrailers extends AbstractResponseTrailers<Http1xResponseTrai
 	}
 
 	@Override
-	public Http1xResponseTrailers add(Header... headers) {
+	public Http1xResponseTrailers add(List<? extends Header> headers) {
 		for(Header header : headers) {
 			this.trailers.addCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
@@ -92,7 +92,7 @@ class Http1xResponseTrailers extends AbstractResponseTrailers<Http1xResponseTrai
 	}
 
 	@Override
-	public Http1xResponseTrailers set(Header... headers) {
+	public Http1xResponseTrailers set(List<? extends Header> headers) {
 		for(Header header : headers) {
 			this.trailers.setCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
@@ -100,7 +100,7 @@ class Http1xResponseTrailers extends AbstractResponseTrailers<Http1xResponseTrai
 	}
 
 	@Override
-	public Http1xResponseTrailers remove(CharSequence... names) {
+	public Http1xResponseTrailers remove(Set<? extends CharSequence> names) {
 		for(CharSequence name : names) {
 			this.trailers.remove(name);
 		}

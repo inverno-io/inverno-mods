@@ -809,22 +809,22 @@ webServer
 Error routes can also be configured as blocks in reusable `ErrorWebRouter.Configurer` by invoking `configureErrorRoutes()` methods:
 
 ```java
-ErrorWebRouter.Configurer<ExchangeContext> public_routes_configurer = router -> {
+ErrorWebRouter.Configurer<ExchangeContext> public_error_routes_configurer = router -> {
     router
         .route()
     routeError
 };
 
-ErrorWebRouter.Configurer<ExchangeContext> private_routes_configurer = router -> {
+ErrorWebRouter.Configurer<ExchangeContext> private_error_routes_configurer = router -> {
     router
         .routeError()
         ...
 };
 
 webServer
-    .configureRoutes(public_routes_configurer)
-    .configureRoutes(private_routes_configurer)
-    .route()
+    .configureErrorRoutes(public_error_routes_configurer)
+    .configureErrorRoutes(private_error_routes_configurer)
+    .routeError()
     ...
 ```
 
@@ -991,15 +991,15 @@ Multiple Error Web exchange interceptors (i.e. `ExchangeInterceptor<ExchangeCont
 
 The `ErrorWebRouteInterceptor` interface, implemented by the `WebServer`, defines a fluent API similar to the `ErrorWebRouter` for the definition of Error Web interceptors. The following is an example of the definition of an error Web route interceptor for intercepting error Web exchange with `SomeCustomException` errors and `/some_path` path:
 
-̀```java
+```java
 webServer
     .interceptError()
         .path("/some_path")
         .error(SomeCustomException.class)
-        .interceptor(errorExchange -> {
-            ...
-        });
-̀```
+        .interceptor(errorExchange -> ...)
+    .routeError()
+        .handler(errorExchange -> ...);
+```
 
 As for route interceptors, error interceptors are chained in a tree of Web servers which allows to define interceptors and routes in isolation. In order to be intercepted, an error Web route must be defined on an intercepted Web server.
 
@@ -1010,12 +1010,12 @@ webServer
     .routeError()
         .error(NotFoundException.class)
         .handler(exchange -> exchange.response().body().string().value("I'm not intercepted"))
-    .intercept()
+    .interceptError()
         .interceptor(exchange -> { // returns an intercepted Web server
             LOGGER.info("intercepted");
             return Mono.just(exchange);
         })
-    .route()
+    .routeError()
         .error(BadRequestException.class)
         .handler(exchange -> exchange.response().body().string().value("I'm intercepted"))
 ```
@@ -1045,16 +1045,33 @@ ErrorWebRouteInterceptor.Configurer<ExchangeContext> public_error_interceptors_c
 
 ErrorWebRouteInterceptor.Configurer<ExchangeContext> private_error_interceptors_configurer = interceptors -> {
     interceptors
-        .intercept()
+        .interceptError()
         ...
 };
 
 webServer
     .configureErrorInterceptors(public_error_interceptors_configurer)
     .configureErrorInterceptors(private_error_interceptors_configurer)
-    .intercept()
+    .interceptError()
     ...
 ```
+
+It is important to remember that an interceptor only applies to matching routes defined in the intercepted Web server where it is defined, so basically routes defined *after* the interceptor. In the particular case of error Web routes, an error Web route interceptor defined on a Web server without any subsequent error Web route will never be invoked, that doesn't mean errors won't be handled as the HTTP server has a default error exchange handler but this can be easily misleading: since the error is handled, one can expect the error interceptor to be invoked but interceptors only applies to routes and the default error exchange handler is not a route.
+
+In order to circumvent this issue, it is recommended to always define error Web routes right after error Web interceptors. For instance, [white labels error routes][#white-labels-error-routes] can be easily configured using the `WhiteLabelErrorRoutesConfigurer`. In the following example, the error interceptor is invoked since error routes are defined:
+
+```java
+webServer
+    .interceptError()
+        .interceptor(exchange -> {
+            LOGGER.info("intercepted");
+            return Mono.just(exchange);
+        })
+    .configureErrorRoutes(new WhiteLabelErrorRoutesConfigurer<>())
+    ...
+```
+
+> This is less of an issue when considering Web route interceptors since requests targeting undefined route resulting in 404 errors are not expected to be intercepted anyway.
 
 ## Web Server
 
