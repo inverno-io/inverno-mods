@@ -33,6 +33,11 @@ import reactor.core.publisher.Mono;
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.13
+ *
+ * @param <A> the session data type
+ * @param <B> the session type
+ * @param <C> the exchange context type
+ * @param <D> the exchange type
  */
 public class CookieSessionInjector<A, B extends Session<A>, C extends ExchangeContext, D extends Exchange<C>> implements SessionInjector<A, B, C, D> {
 

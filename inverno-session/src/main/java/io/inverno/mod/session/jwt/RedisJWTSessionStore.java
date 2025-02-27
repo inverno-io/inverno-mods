@@ -64,6 +64,9 @@ import reactor.core.publisher.Mono;
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.13
+ *
+ * @param <A> the session data type
+ * @param <B> the stateless session data type
  */
 public class RedisJWTSessionStore<A, B> extends AbstractSessionStore<A, JWTSession<A, B>> implements JWTSessionStore<A, B> {
 

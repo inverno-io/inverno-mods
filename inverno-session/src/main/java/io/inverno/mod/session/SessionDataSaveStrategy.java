@@ -30,6 +30,8 @@ import io.inverno.mod.session.internal.GenericSessionDataSaveStrategies;
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.13
+ *
+ * @param <A> the session data type
  */
 @FunctionalInterface
 public interface SessionDataSaveStrategy<A> {

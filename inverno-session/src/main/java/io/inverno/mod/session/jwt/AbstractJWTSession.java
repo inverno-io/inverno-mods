@@ -28,6 +28,9 @@ import reactor.core.publisher.Mono;
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.13
+ *
+ * @param <A> the session data type
+ * @param <B> the stateless session data type
  */
 public abstract class AbstractJWTSession<A, B> extends AbstractSession<A, JWTSession<A, B>> implements JWTSession<A, B> {
 

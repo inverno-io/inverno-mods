@@ -42,6 +42,8 @@ import reactor.core.publisher.Mono;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.13
+ *
+ * @param <A> the session data type
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public interface Session<A> {

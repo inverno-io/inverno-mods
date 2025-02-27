@@ -40,7 +40,13 @@ import reactor.core.publisher.Mono;
  */
 abstract class AbstractJWTSessionIdGenerator<A, B, C extends JOSEObject<JWTClaimsSet, ?>> implements JWTSessionIdGenerator<A, B> {
 
+	/**
+	 * The JWT service.
+	 */
 	protected final JWTService jwtService;
+	/**
+	 * The JWT issuer.
+	 */
 	protected final String issuer;
 
 	/**
